@@ -1,0 +1,69 @@
+<!-- Breadcrumb -->
+<div class="breadcrumb-card mb-25 d-md-flex align-items-center justify-content-between">
+    <h5 class="mb-0">Ərazi Üzrə İlkin Məlumatlar</h5>
+    <ol class="breadcrumb list-unstyled mt-0 mb-0 p-0">
+        <li class="breadcrumb-item d-inline-block position-relative">
+            <a routerLink="/dashboard" class="d-inline-block position-relative">
+                <i class="material-symbols-outlined">home</i>
+                Dashboard
+            </a>
+        </li>
+        <li class="breadcrumb-item d-inline-block position-relative">Profiles</li>
+        <li class="breadcrumb-item d-inline-block position-relative">Location Profile</li>
+    </ol>
+</div>
+
+<!-- Filter Card -->
+<div class="g-filter-card mb-25 audit-table-loading-shell audit-table-loading-shell--compact">
+    <div class="g-filter-header">
+        <span class="material-symbols-outlined">filter_list</span>
+        <span>Filtrlər</span>
+    </div>
+    <form [formGroup]="searchForm" (ngSubmit)="onSearchForm()">
+        <div class="g-filter-grid">
+
+            <div class="g-filter-field">
+                <label class="g-field-label">
+                    <span class="material-symbols-outlined">business</span>
+                    Müəssisə
+                </label>
+                <mat-form-field appearance="outline" class="g-modern-field">
+                    <mat-select formControlName="firmId" (selectionChange)="onSelectFirm($event.value)">
+                        <mat-option *ngFor="let firm of firms" [value]="firm.id">
+                            {{ firm.name }}
+                        </mat-option>
+                    </mat-select>
+                </mat-form-field>
+            </div>
+
+            <div class="g-filter-field">
+                <label class="g-field-label">
+                    <span class="material-symbols-outlined">location_on</span>
+                    Lokasiya
+                </label>
+                <mat-form-field appearance="outline" class="g-modern-field">
+                    <mat-select formControlName="locationCode">
+                        <mat-option *ngFor="let location of locations" [value]="location.locationCode">
+                            {{ location.locationName }}
+                        </mat-option>
+                    </mat-select>
+                </mat-form-field>
+            </div>
+
+            <div class="g-filter-actions">
+                <button type="submit" class="g-search-btn" [disabled]="isLoading">
+                    <span class="material-symbols-outlined">search</span>
+                    Axtar
+                </button>
+            </div>
+
+        </div>
+    </form>
+    <app-audit-loading-overlay *ngIf="isLoading"></app-audit-loading-overlay>
+</div>
+
+<!-- KPI Overview Cards -->
+<app-location-overview [profile]="profileView" />
+
+<!-- Store Profile + Analytics Chart -->
+<app-middle-section [profile]="profileView" />

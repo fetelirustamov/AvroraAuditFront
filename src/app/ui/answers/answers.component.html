@@ -1,0 +1,150 @@
+<div class="g-filter-card">
+    <div class="g-filter-header">
+        <span class="material-symbols-outlined">filter_list</span>
+        <span>Filtrlər</span>
+    </div>
+    <form [formGroup]="answerForm" (ngSubmit)="onFormSubmit()">
+        <div class="g-filter-grid">
+            <div class="g-filter-field">
+                <label class="g-field-label">
+                    <span class="material-symbols-outlined">business</span>
+                    Müəssisə
+                </label>
+                <mat-form-field appearance="outline" class="g-modern-field">
+                    <mat-select formControlName="firmId" (selectionChange)="onSelectFirm($event.value)">
+                        <mat-option *ngFor="let firm of firms" [value]="firm.id">{{ firm.name }}</mat-option>
+                    </mat-select>
+                </mat-form-field>
+            </div>
+            <div class="g-filter-field">
+                <label class="g-field-label">
+                    <span class="material-symbols-outlined">location_on</span>
+                    Lokasiya
+                </label>
+                <mat-form-field appearance="outline" class="g-modern-field">
+                    <mat-select formControlName="locationCode" (selectionChange)="onSelectLocation($event.value)">
+                        <mat-option *ngFor="let location of locations" [value]="location.locationCode">{{
+                            location.locationName }}</mat-option>
+                    </mat-select>
+                </mat-form-field>
+            </div>
+            <div class="g-filter-field-wide">
+                <label class="g-field-label">
+                    <span class="material-symbols-outlined">date_range</span>
+                    Tarix aralığı
+                </label>
+                <mat-form-field appearance="outline" class="g-modern-field" formGroupName="dateRange">
+                    <mat-date-range-input [rangePicker]="picker">
+                        <input matStartDate formControlName="start" placeholder="Başlanğıc">
+                        <input matEndDate formControlName="end" placeholder="Son">
+                    </mat-date-range-input>
+                    <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+                    <mat-date-range-picker #picker></mat-date-range-picker>
+                </mat-form-field>
+            </div>
+            <div class="g-filter-actions">
+                <button type="submit" class="g-search-btn" [disabled]="isLoading" [attr.aria-busy]="isLoading">
+                    <span class="material-symbols-outlined">search</span>
+                    Axtar
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+<mat-card class="answers-results-card mb-25 border-radius d-block bg-white border-0 shadow-none">
+    <div class="row align-items-center mb-25">
+        <div class="col-md-3">
+            <span>Page</span>
+            <select class="page-select" on required>
+                <option value="10">10</option>
+                <option value="20">20</option>
+                <option value="50">50</option>
+            </select>
+        </div>
+    </div>
+    <mat-card-content class="answers-card-content">
+        <div class="answers-card-inner audit-table-loading-shell" [attr.aria-busy]="isLoading">
+            <div class="table-responsive" [class.audit-table-muted]="isLoading">
+                <table mat-table [dataSource]="dataSource">
+
+                    <ng-container matColumnDef="position">
+                        <th mat-header-cell *matHeaderCellDef>#</th>
+                        <td mat-cell *matCellDef="let element; let i = index">
+                            {{ getRowNumber(i) }}
+                        </td>
+                    </ng-container>
+
+                    <!-- Agent Name Column -->
+                    <ng-container matColumnDef="inspectorName">
+                        <th mat-header-cell *matHeaderCellDef class="text-center">
+                            Auditor
+                        </th>
+                        <td mat-cell *matCellDef="let element" class="text-center">
+
+                            {{element.inspectorName}}
+                        </td>
+                    </ng-container>
+
+                    <!-- Total Tickets Column -->
+                    <ng-container matColumnDef="locationCode">
+                        <th mat-header-cell *matHeaderCellDef class="text-center">
+                            Ərazi Kodu
+                        </th>
+                        <td mat-cell *matCellDef="let element" class="text-center">
+                            {{element.locationCode}}
+                        </td>
+                    </ng-container>
+
+                    <!-- Resolved Tickets Column -->
+                    <ng-container matColumnDef="locationName">
+                        <th mat-header-cell *matHeaderCellDef class="text-center">
+                            Ərazi
+                        </th>
+                        <td mat-cell *matCellDef="let element" class="text-center">
+                            {{element.locationName}}
+                        </td>
+                    </ng-container>
+
+                    <!-- Avg. Resolution Time Column -->
+                    <ng-container matColumnDef="startDate">
+                        <th mat-header-cell *matHeaderCellDef class="text-center">
+                            Tarix
+                        </th>
+                        <td mat-cell *matCellDef="let element" class="text-center">
+                            {{element.startDate | date: 'yyyy-MM-dd'}}
+                        </td>
+                    </ng-container>
+
+                    <!-- Action Column -->
+                    <ng-container matColumnDef="details">
+                        <th mat-header-cell *matHeaderCellDef class="text-center">
+                            Details
+                        </th>
+                        <td mat-cell *matCellDef="let element" class="text-center">
+                            <div class="d-flex justify-content-center">
+                                <button mat-flat-button
+                                    class="d-flex align-items-center btn-xs justify-content-center text-center"
+                                    style="gap: 6px;" (click)="onDetails(element)">
+                                    <span class="material-symbols-outlined"
+                                        style="font-size: 20px; margin-right: 5px;">visibility</span>
+                                    <span>Detallar</span>
+                                </button>
+                            </div>
+                        </td>
+                    </ng-container>
+
+
+
+                    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+                    <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+
+                </table>
+            </div>
+            <mat-paginator [pageSizeOptions]="[6]" showFirstLastButtons [disabled]="isLoading"></mat-paginator>
+
+            <app-audit-loading-overlay *ngIf="isLoading"
+                ariaLabel="Məlumatlar yüklənir, zəhmət olmasa gözləyin."></app-audit-loading-overlay>
+        </div>
+    </mat-card-content>
+
+</mat-card>

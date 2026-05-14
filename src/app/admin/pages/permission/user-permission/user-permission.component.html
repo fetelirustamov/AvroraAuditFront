@@ -1,0 +1,122 @@
+<app-admin-breadcrumb title="İstifadəçi İcazələri"
+    [crumbs]="[{label: 'Səlahiyyətlər'}, {label: 'İstifadəçi İcazələri'}]">
+</app-admin-breadcrumb>
+
+<!-- User Permissions Table -->
+<mat-card class="users-card mb-25 border-radius d-block bg-white border-0 shadow-none">
+    <mat-card-header class="admin-card-header">
+        <mat-card-title>
+            <button class="add-btn" type="button" mat-flat-button color="primary" (click)="addNewUser()">
+                <i class="material-symbols-outlined">add</i>
+                Əlavə Et
+            </button>
+        </mat-card-title>
+        <mat-card-subtitle>
+            <form class="search-box position-relative">
+                <label>
+                    <i class="material-symbols-outlined">search</i>
+                </label>
+                <input type="text" class="input-search" placeholder="Axtarış sözü..." (keyup)="applyFilter($event)"
+                    #input>
+            </form>
+        </mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content class="audit-table-loading-shell" [attr.aria-busy]="isLoading">
+
+        <div class="table-responsive" [class.audit-table-muted]="isLoading">
+            <table mat-table [dataSource]="dataSource" matSort>
+
+                <!-- ID Column -->
+                <ng-container matColumnDef="id">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> # </th>
+                    <td mat-cell *matCellDef="let user"> {{user.id}} </td>
+                </ng-container>
+
+                <!-- User Name Column -->
+                <ng-container matColumnDef="userName">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> İSTİFADƏÇİ ADI </th>
+                    <td mat-cell *matCellDef="let user"> {{user.userName}} </td>
+                </ng-container>
+
+                <!-- Institutions Column -->
+                <ng-container matColumnDef="institutions">
+                    <th mat-header-cell *matHeaderCellDef> MÜƏSSİSƏLƏR </th>
+                    <td mat-cell *matCellDef="let user">
+                        <div class="institution-tags">
+                            <span class="tag institution-tag" *ngFor="let institution of user.institutions">
+                                {{institution}}
+                            </span>
+                        </div>
+                    </td>
+                </ng-container>
+
+                <!-- Groups Column -->
+                <ng-container matColumnDef="groups">
+                    <th mat-header-cell *matHeaderCellDef> QRUPLAR </th>
+                    <td mat-cell *matCellDef="let user">
+                        <div class="group-tags">
+                            <span class="tag group-tag" *ngFor="let group of user.groups">
+                                {{group}}
+                            </span>
+                        </div>
+                    </td>
+                </ng-container>
+
+                <!-- Status Column — API: status 1 = Aktiv, 0 = Passiv -->
+                <ng-container matColumnDef="status">
+                    <th mat-header-cell *matHeaderCellDef> STATUS </th>
+                    <td mat-cell *matCellDef="let user">
+                        <span class="status-badge" [class.active]="user.status === 'active'"
+                            [class.passive]="user.status === 'passive'">
+                            {{ user.status === 'active' ? 'Aktiv' : 'Passiv' }}
+                        </span>
+                    </td>
+                </ng-container>
+
+                <!-- Actions Column -->
+                <ng-container matColumnDef="actions">
+                    <th mat-header-cell *matHeaderCellDef> ƏMƏLİYYATLAR </th>
+                    <td mat-cell *matCellDef="let user">
+                        <div class="action-buttons">
+                            <!-- <button type="button" class="action-btn view-btn" (click)="viewUser(user)" matTooltip="Bax"
+                                matTooltipPosition="above">
+                                <span class="material-symbols-outlined">visibility</span>
+                            </button> -->
+                            <button type="button" class="action-btn edit-btn" (click)="editUser(user)"
+                                matTooltip="Redaktə Et" matTooltipPosition="above">
+                                <span class="material-symbols-outlined">edit</span>
+                            </button>
+                            <button type="button" class="action-btn delete-btn" (click)="deleteUser(user)"
+                                matTooltip="Sil" matTooltipPosition="above">
+                                <span class="material-symbols-outlined">delete</span>
+                            </button>
+                        </div>
+                    </td>
+                </ng-container>
+
+                <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+                <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+
+                <!-- Row shown when there is no matching data. -->
+                <tr class="mat-row" *matNoDataRow>
+                    <td class="mat-cell text-center" colspan="6">
+                        <div class="no-data-message">
+                            <span class="material-symbols-outlined">search_off</span>
+                            <p>Məlumat tapılmadı</p>
+                            <small>Zəhmət olmasa axtarış kriteriyalarını dəyişin</small>
+                        </div>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        <mat-paginator [pageSizeOptions]="[10, 25, 50, 100]" showFirstLastButtons aria-label="Select page of users"
+            [disabled]="isLoading">
+        </mat-paginator>
+        <app-audit-loading-overlay *ngIf="isLoading"
+            title="İstifadəçilər yüklənir"
+            hint="İcazə məlumatları hazırlanır…"></app-audit-loading-overlay>
+    </mat-card-content>
+</mat-card>

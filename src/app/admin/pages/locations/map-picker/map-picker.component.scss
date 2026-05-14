@@ -1,0 +1,38 @@
+.map-picker {
+    height: 100%;
+    min-height: 380px;
+    max-height: 400px;
+    width: 100%;
+    border-radius: 10px;
+    overflow: hidden;
+    /* Scroll-u tamamilə söndürürük */
+}
+
+/* Responsive adjustments */
+@media (max-width: 1200px) {
+    .map-picker {
+        min-height: 350px;
+        max-height: 370px;
+    }
+}
+
+@media (max-width: 991px) {
+    .map-picker {
+        min-height: 320px;
+        max-height: 340px;
+    }
+}
+
+@media (max-width: 767px) {
+    .map-picker {
+        min-height: 280px;
+        max-height: 300px;
+    }
+}
+
+@media (max-width: 576px) {
+    .map-picker {
+        min-height: 240px;
+        max-height: 260px;
+    }
+}

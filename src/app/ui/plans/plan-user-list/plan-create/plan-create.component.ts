@@ -1,0 +1,167 @@
+import { CommonModule, NgFor } from '@angular/common';
+import { Component } from '@angular/core';
+import { FormArray, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
+import { MatNativeDateModule } from '@angular/material/core';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatExpansionModule } from '@angular/material/expansion';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
+import { ActivatedRoute, Router } from '@angular/router';
+import { NgxMaterialTimepickerModule } from 'ngx-material-timepicker';
+import { InspectionsService } from '../../../inspections/inspections.service';
+import { PlanService } from '../../plan.service';
+import { InspectionPlan } from '../../../inspections/InpectionPlan.model';
+import { Location } from '../../../inspections/location.model';
+import { NotificationService } from '../../../../shared/services/notification.service';
+
+@Component({
+  selector: 'app-plan-create',
+  standalone: true,
+  imports: [
+    ReactiveFormsModule,
+    FormsModule,
+    CommonModule,
+    MatCardModule,
+    MatInputModule,
+    MatFormFieldModule,
+    MatSelectModule,
+    MatNativeDateModule,
+    MatButtonModule,
+    MatDatepickerModule,
+    NgxMaterialTimepickerModule,
+    MatExpansionModule,
+    NgFor,
+  ],
+  templateUrl: './plan-create.component.html',
+  styleUrls: ['./plan-create.component.scss']
+})
+export class PlanCreateComponent {
+  public locations: Location[] = [];
+  public data: any;
+  public isLoading = false;
+  public planForm!: FormGroup;
+  // planForm: FormGroup<any> = this.fb.group({
+  //   panels: this.fb.array([])ı;
+
+  constructor(
+    private fb: FormBuilder,
+    private router: Router,
+    private inspectionService: InspectionsService,
+    private route: ActivatedRoute,
+    private planService: PlanService,
+    private notify: NotificationService
+  ) {
+    const navigation = this.router.getCurrentNavigation();
+    const state = navigation?.extras?.state as { data?: any };
+    console.log(state?.data);
+    // if (!state?.data) {
+    //   this.router.navigate(["plans/add"]);
+    //   return;
+    // }
+
+    this.data = state.data;
+    this.initializeForm();
+    this.loadLocations();
+  }
+
+  private initializeForm(): void {
+    this.planForm = this.fb.group({
+      panels: this.fb.array([])
+    });
+    this.addPanel(); // Default panel
+  }
+
+  private loadLocations(): void {
+    this.inspectionService
+      .getLocationByFirmId(this.data.organization)
+      .subscribe((locations) => {
+        this.locations = locations.data;
+      });
+  }
+
+  get panels(): FormArray {
+    return this.planForm.get('panels') as FormArray;
+  }
+
+  createPanelFormGroup(): FormGroup {
+    return this.fb.group({
+      location: ['', Validators.required],
+      date: [null, Validators.required],
+      startTime: ['', Validators.required],
+      endTime: ['', Validators.required]
+    });
+  }
+
+  addPanel(): void {
+    const panelGroup = this.fb.group({
+      location: ['', Validators.required],
+      date: [null, Validators.required],
+      startTime: ['', Validators.required],
+      endTime: ['', Validators.required]
+    });
+    this.panels.push(panelGroup);
+  }
+
+  removePanel(index: number): void {
+    this.panels.removeAt(index);
+  }
+
+  createPlan(): void {
+    if (this.planForm.invalid) {
+      this.planForm.markAllAsTouched();
+      this.notify.warning('Forma tamamlanmayıb', {
+        message: 'Zəhmət olmasa bütün məcburi sahələri doldurun.',
+      });
+      return;
+    }
+
+    const formValues = this.planForm.value;
+    const now = new Date();
+
+    formValues.panels.forEach((formValue: any) => {
+      const plan = new InspectionPlan(
+        0,
+        formValue.location,
+        this.combineDateAndTimeToUTC(formValue.date, formValue.startTime).toISOString(),
+        this.combineDateAndTimeToUTC(formValue.date, formValue.endTime).toISOString(),
+        1,
+        this.data.selected,
+        "0",
+        "0",
+        this.data.organization,
+        0,
+        now.toISOString()
+      );
+
+      this.planService.addPlan(plan).subscribe({
+        next: (data) => {
+          if (data.success) {
+            this.notify.success('Plan uğurla əlavə olundu!', {
+              message: 'Yeni plan sistemə qeydə alındı.',
+            });
+            this.router.navigate(['plans/add']);
+          } else {
+            this.notify.error('Əməliyyat uğursuz oldu', {
+              message: 'Plan əlavə edilərkən xəta baş verdi.',
+            });
+          }
+        },
+        error: () => {
+          this.notify.error('Server xətası', {
+            message: 'Serverə qoşulmaq mümkün olmadı. Yenidən cəhd edin.',
+          });
+        },
+      });
+    });
+  }
+
+  combineDateAndTimeToUTC(date: Date, time: string): Date {
+    const [hours, minutes] = time.trim().split(':').map(Number);
+    const combinedDate = new Date(date);
+    combinedDate.setHours(hours, minutes, 0, 0);
+    return combinedDate;
+  }
+}

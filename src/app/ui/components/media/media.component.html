@@ -1,0 +1,74 @@
+<ng-content select="[media-trigger]"></ng-content>
+<ng-template #mediaModalTemplate>
+    <div class="dialog-header">
+        <!-- <h2 mat-dialog-title>Media</h2> -->
+        <h2 mat-dialog-title>
+            <div (click)="rotateLeft()" class="left"><span class="material-symbols-outlined">
+                    rotate_90_degrees_ccw
+                </span></div>
+            <div (click)="rotateRight()" class="right"><span class="material-symbols-outlined">
+                    rotate_90_degrees_cw
+                </span></div>
+            <!-- <div></div> -->
+        </h2>
+        <span class="material-symbols-outlined close-button" (click)="close()">close</span>
+    </div>
+    <mat-dialog-content class="dialog-padding">
+        <div *ngIf="images.length > 0">
+            <div style="display: flex; align-items: center; justify-content: center; gap: 4px; min-height: 180px;">
+                <button mat-icon-button (click)="prevImage()" [disabled]="images.length < 2"
+                    style="background: #f5f5f5; border-radius: 50%;">
+                    <span class="material-symbols-outlined" style="font-size: 28px;">chevron_left</span>
+                </button>
+                <ng-container *ngIf="images.length > 0 && currentImage && !imageError">
+                    <img [@rotatedState]='state' [src]="MEDIA + currentImage" alt="Şəkil" (error)="onImageError()"
+                        style="min-width: 600px; max-width: 700px; max-height: 800px; border-radius: 8px; border: 1px solid #eee; box-shadow: 0 2px 8px #0001;" />
+                </ng-container>
+
+
+                <button mat-icon-button (click)="nextImage()" [disabled]="images.length < 2"
+                    style="background: #f5f5f5; border-radius: 50%;">
+                    <span class="material-symbols-outlined" style="font-size: 28px;">chevron_right</span>
+                </button>
+            </div>
+            <div style="text-align:center; font-size:13px; color:#888; margin-top:4px;">
+                {{ currentImageIndex + 1 }} / {{ images.length }}
+            </div>
+        </div>
+        <div *ngIf="videos.length > 0" style="margin-top: 20px;">
+            <h4>Videolar</h4>
+            <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+                <video *ngFor="let vid of videos" [src]="MEDIA + vid" controls
+                    style="max-width: 250px; max-height: 150px; border-radius: 8px; border: 1px solid #eee;"></video>
+            </div>
+        </div>
+
+        <div *ngIf="documents.length > 0" style="margin-top: 8px;">
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+                <a *ngFor="let doc of documents"
+                    [href]="document_url + doc"
+                    target="_blank"
+                    style="display: flex; align-items: center; gap: 10px; padding: 12px 16px;
+                           background: #f8f9fa; border-radius: 8px; border: 1px solid #e0e0e0;
+                           text-decoration: none; color: #333; cursor: pointer;"
+                    [title]="doc">
+                    <span class="material-symbols-outlined" style="font-size: 28px; color: #1976d2;">
+                        {{ getFileIcon(doc) }}
+                    </span>
+                    <span style="font-size: 14px; word-break: break-all;">{{ doc }}</span>
+                    <span class="material-symbols-outlined" style="margin-left: auto; color: #888; font-size: 20px;">
+                        download
+                    </span>
+                </a>
+            </div>
+        </div>
+
+        <div *ngIf="imageError"
+            style="min-height: 300px; display: flex; flex-direction: column; align-items: center;
+                   justify-content: center; background: #f5f5f5; border-radius: 8px; border: 1px solid #eee;">
+            <span class="material-symbols-outlined" style="font-size: 64px; color: #bbb;">image_not_supported</span>
+            <span style="margin-top: 8px; color: #888;">Fayl tapılmadı</span>
+        </div>
+
+    </mat-dialog-content>
+</ng-template>

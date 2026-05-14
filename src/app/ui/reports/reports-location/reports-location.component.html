@@ -1,0 +1,185 @@
+<!-- Page Header -->
+<div class="report-page-header">
+    <div class="header-content">
+        <div class="header-text">
+            <h1 class="page-title">
+                <span class="material-symbols-outlined title-icon">analytics</span>
+                Aylıq Hesabat
+            </h1>
+            <p class="page-subtitle">Məkan üzrə aylıq audit nəticələri</p>
+        </div>
+        <div class="header-actions">
+            <button class="export-btn" [matMenuTriggerFor]="downloadMenu">
+                <span class="material-symbols-outlined">download</span>
+                Yüklə
+                <span class="material-symbols-outlined arrow-icon">expand_more</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<mat-menu #downloadMenu="matMenu" class="modern-menu">
+    <button mat-menu-item (click)="exportExcel()">
+        <span class="material-symbols-outlined menu-icon excel-icon">table_chart</span>
+        <span>Excel (.xlsx)</span>
+    </button>
+    <button mat-menu-item (click)="exportPdf()">
+        <span class="material-symbols-outlined menu-icon pdf-icon">picture_as_pdf</span>
+        <span>PDF (.pdf)</span>
+    </button>
+</mat-menu>
+
+<!-- Filter Card -->
+<div class="filter-card">
+    <div class="filter-card-header">
+        <span class="material-symbols-outlined filter-header-icon">filter_list</span>
+        <span>Filtrlər</span>
+    </div>
+    <form [formGroup]="filtersForm" (ngSubmit)="onSearch()">
+        <div class="filter-grid">
+            <div class="filter-field">
+                <label class="field-label">
+                    <span class="material-symbols-outlined label-icon">business</span>
+                    Müəssisə
+                    <span class="required-badge">*</span>
+                </label>
+                <mat-form-field appearance="outline" class="modern-field">
+                    <mat-select formControlName="firmId" required placeholder="Seçin">
+                        <mat-option [value]="null">Hamısı</mat-option>
+                        <mat-option *ngFor="let f of firms" [value]="f.id">{{ f.name }}</mat-option>
+                    </mat-select>
+                </mat-form-field>
+            </div>
+
+            <div class="filter-field">
+                <label class="field-label">
+                    <span class="material-symbols-outlined label-icon">calendar_today</span>
+                    İl
+                </label>
+                <mat-form-field appearance="outline" class="modern-field">
+                    <mat-select formControlName="year">
+                        <mat-option *ngFor="let y of years" [value]="y">{{ y }}</mat-option>
+                    </mat-select>
+                </mat-form-field>
+            </div>
+
+            <div class="filter-field">
+                <label class="field-label">
+                    <span class="material-symbols-outlined label-icon">date_range</span>
+                    Ay
+                </label>
+                <mat-form-field appearance="outline" class="modern-field">
+                    <mat-select formControlName="month" placeholder="Hamısı">
+                        <mat-option [value]="null">Hamısı</mat-option>
+                        <mat-option *ngFor="let m of months" [value]="m.value">{{ m.label }}</mat-option>
+                    </mat-select>
+                </mat-form-field>
+            </div>
+
+            <div class="filter-actions">
+                <button type="submit" class="search-btn">
+                    <span class="material-symbols-outlined">search</span>
+                    Axtar
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Table Card -->
+<div class="table-card audit-table-loading-shell">
+    <div [class.audit-table-muted]="isLoading">
+    <div class="table-card-header">
+        <div class="table-info">
+            <span class="material-symbols-outlined table-info-icon">table_view</span>
+            <span class="table-title">Nəticələr</span>
+            <span class="result-badge">{{ allCount }} qeyd</span>
+        </div>
+    </div>
+
+    <div class="table-responsive-wrapper">
+        <table mat-table [dataSource]="dataSource" class="modern-table">
+
+            <!-- Grouped section headers -->
+            <ng-container *ngFor="let g of groupColumns" [matColumnDef]="g.key">
+                <th mat-header-cell *matHeaderCellDef [attr.colspan]="g.colspan" class="group-header-cell">
+                    {{ g.label }}
+                </th>
+            </ng-container>
+
+            <!-- Base columns -->
+            <ng-container *ngFor="let col of baseColumns" [matColumnDef]="col.key">
+                <th mat-header-cell *matHeaderCellDef class="data-header-cell">
+                    <span class="header-label">{{ col.label }}</span>
+                </th>
+                <td mat-cell *matCellDef="let row; let i = index" [class.sticky-col]="col.key !== 'row'">
+                    <ng-container [ngSwitch]="col.key">
+                        <span *ngSwitchCase="'row'" class="row-number">{{ getRowNumber(i) }}</span>
+                        <span *ngSwitchCase="'branchName'" class="branch-name">{{ row[col.key] }}</span>
+                        <span *ngSwitchCase="'branchCode'" class="code-badge">{{ row[col.key] }}</span>
+                        <span *ngSwitchDefault>{{ row[col.key] }}</span>
+                    </ng-container>
+                </td>
+            </ng-container>
+
+            <!-- Pair columns -->
+            <ng-container *ngFor="let col of pairColumns" [matColumnDef]="col.key">
+                <th mat-header-cell *matHeaderCellDef class="data-header-cell">
+                    <span class="header-label">{{ col.label }}</span>
+                </th>
+                <td mat-cell *matCellDef="let row">
+                    <ng-container *ngIf="col.key.endsWith('Score'); else ncTemplate">
+                        <span class="score-chip" [class.score-high]="row[col.key] >= 90" [class.score-mid]="row[col.key] >= 75 && row[col.key] < 90" [class.score-low]="row[col.key] < 75">
+                            {{ row[col.key] }}
+                        </span>
+                    </ng-container>
+                    <ng-template #ncTemplate>
+                        <span class="nc-badge" [class.nc-zero]="row[col.key] == 0" [class.nc-low]="row[col.key] > 0 && row[col.key] <= 2" [class.nc-high]="row[col.key] > 2">
+                            {{ row[col.key] }}
+                        </span>
+                    </ng-template>
+                </td>
+            </ng-container>
+
+            <!-- Filter row columns -->
+            <ng-container *ngFor="let col of baseColumns" [matColumnDef]="col.key + '__filter'">
+                <th mat-header-cell *matHeaderCellDef class="filter-header-cell">
+                    <div class="filter-input-wrap" *ngIf="col.key !== 'row'">
+                        <span class="material-symbols-outlined filter-input-icon">search</span>
+                        <input class="filter-input" (input)="applyColumnFilter($event, col.key)"
+                            [placeholder]="col.label + '...'" />
+                    </div>
+                </th>
+            </ng-container>
+            <ng-container *ngFor="let col of pairColumns" [matColumnDef]="col.key + '__filter'">
+                <th mat-header-cell *matHeaderCellDef class="filter-header-cell">
+                    <div class="filter-input-wrap">
+                        <span class="material-symbols-outlined filter-input-icon">search</span>
+                        <input class="filter-input" (input)="applyColumnFilter($event, col.key)"
+                            [placeholder]="col.label + '...'" />
+                    </div>
+                </th>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="groupHeaderColumnKeys" class="group-header-row"></tr>
+            <tr mat-header-row *matHeaderRowDef="headerColumns" class="data-header-row"></tr>
+            <tr mat-header-row *matHeaderRowDef="filterColumns" class="filter-row"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns" class="data-row"></tr>
+        </table>
+
+        <div class="empty-state" *ngIf="!isLoading && dataSource.data.length === 0">
+            <span class="material-symbols-outlined empty-icon">inbox</span>
+            <p>Nəticə tapılmadı</p>
+        </div>
+    </div>
+
+    <div class="paginator-wrapper">
+        <mat-paginator [length]="allCount" [pageSize]="10" [pageSizeOptions]="[10,25,50]"
+            [disabled]="isLoading"
+            showFirstLastButtons class="modern-paginator"></mat-paginator>
+    </div>
+    </div>
+    <app-audit-loading-overlay *ngIf="isLoading"
+        title="Hesabat hazırlanır"
+        hint="Ərazi üzrə hesabat yüklənir…"></app-audit-loading-overlay>
+</div>

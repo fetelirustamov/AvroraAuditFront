@@ -1,0 +1,228 @@
+<mat-card class="mb-25 border-radius d-block bg-white border-0 shadow-none">
+    <div class="row align-items-center mb-25">
+        <div class="col-md-3">
+            <span>Page</span>
+            <select class="page-select" on required>
+                <option value="10">10</option>
+                <option value="20">20</option>
+                <option value="50">50</option>
+            </select>
+        </div>
+    </div>
+    <mat-card-content>
+        <div class="table-responsive" style="max-height: 500px; overflow-y: auto;">
+            <table mat-table [dataSource]="dataSource" class="w-100">
+
+                <ng-container matColumnDef="position">
+                    <th mat-header-cell *matHeaderCellDef>#</th>
+                    <td mat-cell *matCellDef="let element; let i = index">
+                        {{ getRowNumber(i) }}
+                    </td>
+                </ng-container>
+
+
+                <!-- Customer Column -->
+                <ng-container matColumnDef="inspectorName">
+                    <th mat-header-cell *matHeaderCellDef>Müfəttiş</th>
+                    <td mat-cell *matCellDef="let element">{{ element.inspectorName }}</td>
+                </ng-container>
+
+                <ng-container matColumnDef="sectionName">
+                    <th mat-header-cell *matHeaderCellDef>Şöbə</th>
+                    <td mat-cell *matCellDef="let element">{{ element.sectionName }}</td>
+                </ng-container>
+                <ng-container matColumnDef="disruptionCategoryName">
+                    <th mat-header-cell *matHeaderCellDef>Kategoriya</th>
+                    <td mat-cell *matCellDef="let element">{{ element.disruptionCategoryName }}</td>
+                </ng-container>
+                <ng-container matColumnDef="reasonName">
+                    <th mat-header-cell *matHeaderCellDef>Səbəb</th>
+                    <td mat-cell *matCellDef="let element">{{ element.reasonName }}</td>
+                </ng-container>
+                <ng-container matColumnDef="note">
+                    <th mat-header-cell *matHeaderCellDef>Açıqlama</th>
+                    <td mat-cell *matCellDef="let element">{{ element.description }}</td>
+                </ng-container>
+
+                <ng-container matColumnDef="internalStatus">
+                    <th mat-header-cell *matHeaderCellDef>Status</th>
+                    <td mat-cell *matCellDef="let element">
+                        <span
+                            [class]="element.isReturned ? 'status-chip status-chip--returned' : 'status-chip status-chip--first'"
+                            matTooltip="Rəhbər tərəfindən rədd olunub, yenidən cavab gözlənilir"
+                            [matTooltipDisabled]="!element.isReturned"
+                            matTooltipPosition="above">
+                            <span class="material-symbols-outlined status-chip__icon" aria-hidden="true">{{ element.isReturned ? 'published_with_changes' : 'edit_note' }}</span>
+                            <span>{{ element.isReturned ? 'Yenidən cavab' : 'İlk cavab' }}</span>
+                        </span>
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="returnReason">
+                    <th mat-header-cell *matHeaderCellDef>Rədd səbəbi</th>
+                    <td mat-cell *matCellDef="let element" class="return-reason-cell">
+                        <span class="return-reason-text" [matTooltip]="element.returnReason"
+                            [matTooltipDisabled]="!element.returnReason?.trim()"
+                            matTooltipPosition="above">{{ element.returnReason?.trim() || '—' }}</span>
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="media">
+                    <th mat-header-cell *matHeaderCellDef>Media</th>
+                    <td mat-cell *matCellDef="let element">
+                        <!-- Şərtli image icon -->
+                        <app-media #mediaCompImg [id]="element.id" [type]="MediaType.Image"
+                            [module]="Module.Disruption">
+                            <span *ngIf="element.images > 0" class="material-symbols-outlined primary"
+                                (click)="mediaCompImg.open()" style="cursor:pointer;" media-trigger>
+                                image
+                            </span>
+                        </app-media>
+                        <app-media #mediaCompVid [id]="element.id" [type]="MediaType.Video"
+                            [module]="Module.Disruption">
+                            <span *ngIf="element.videos > 0" class="material-symbols-outlined primary"
+                                (click)="mediaCompVid.open()" style="cursor:pointer;" media-trigger>
+                                video
+                            </span>
+                        </app-media>
+                    </td>
+
+                </ng-container>
+                <!-- Avg. Resolution Time Column -->
+                <ng-container matColumnDef="createdDate">
+                    <th mat-header-cell *matHeaderCellDef class="text-center">
+                        Tarix
+                    </th>
+                    <td mat-cell *matCellDef="let element" class="text-center">
+                        {{element.createdDate | date: 'yyyy-MM-dd'}}
+                    </td>
+                </ng-container>
+
+                <!-- Action Column -->
+                <ng-container matColumnDef="details">
+                    <th mat-header-cell *matHeaderCellDef class="text-center">
+                        Detallar
+                    </th>
+                    <!-- <td mat-cell *matCellDef="let element">
+                        <button mat-flat-button
+                            class="d-flex align-items-center btn-xs justify-content-center text-center"
+                            style="gap: 6px;" (click)="openEditDialog(element)">
+                            <span class="material-symbols-outlined"
+                                style="font-size: 20px; margin-right: 5px;">visibility</span>
+                            <span>Cavabla</span>
+                        </button>
+                    </td> -->
+                    <td mat-cell *matCellDef="let element">
+                        <button mat-flat-button
+                            class="d-flex align-items-center btn-xs justify-content-center text-center"
+                            style="gap: 6px;" (click)="openEditDialog(element)">
+                            <span class="material-symbols-outlined"
+                                style="font-size: 20px; margin-right: 5px;">movie_edit</span>
+                            <span>Cavabla</span>
+                        </button>
+                    </td>
+                </ng-container>
+
+
+
+                <tr mat-header-row *matHeaderRowDef="displayedColumns" class="sticky-header"></tr>
+                <tr mat-row *matRowDef="let row; columns: displayedColumns;"
+                    [class.answer-row--returned]="row.isReturned"></tr>
+
+            </table>
+        </div>
+        <mat-paginator [pageSizeOptions]="[6]" showFirstLastButtons></mat-paginator>
+
+    </mat-card-content>
+</mat-card>
+
+<!-- Edit Dialog Popup -->
+<div class="add-new-popup" [class.active]="isEditDialogOpen">
+    <div class="popup-dialog">
+        <mat-card class="border-radius d-block bg-white border-0 shadow-none">
+            <mat-card-header>
+                <mat-card-title>
+                    <h5 class="mb-0">Uyğunsuzluğa cavab ver</h5>
+                </mat-card-title>
+                <mat-card-subtitle>
+                    <button mat-button (click)="closeEditDialog()">
+                        <i class="material-symbols-outlined">close</i>
+                    </button>
+                </mat-card-subtitle>
+            </mat-card-header>
+            <mat-card-content>
+                <form [formGroup]="editForm" *ngIf="editForm">
+                    <div class="row" *ngIf="editedRow?.isReturned">
+                        <div class="col-md-12">
+                            <div class="returned-banner" role="status">
+                                <span class="material-symbols-outlined returned-banner__icon">info</span>
+                                <div class="returned-banner__body">
+                                    <strong>Yenidən cavab tələbi</strong>
+                                    <p class="mb-0" *ngIf="editedRow?.returnReason?.trim()">
+                                        <span class="text-muted">Rədd səbəbi:</span>
+                                        {{ editedRow?.returnReason }}
+                                    </p>
+                                    <p class="mb-0 text-muted small" *ngIf="editedRow && !editedRow.returnReason?.trim()">
+                                        Bu uyğunsuzluq əvvəl cavablanıb, rəhbər tərəfindən rədd edilib.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label class="main-label d-block fw-medium text-black">Səbəb</label>
+                                <mat-form-field>
+                                    <mat-label>Status</mat-label>
+                                    <mat-select formControlName="answerStatus">
+                                        <mat-option *ngFor="let status of answerStatus" [value]="status.value">
+                                            {{ status.viewValue }}
+                                        </mat-option>
+                                    </mat-select>
+                                    <mat-error *ngIf="editForm.get('answerStatus')?.hasError('required')">
+                                        Bu sahə tələb olunur
+                                    </mat-error>
+                                </mat-form-field>
+                            </div>
+                        </div>
+
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label class="main-label d-block fw-medium text-black" for="answer-note-textarea">Açıqlama</label>
+                                <mat-form-field class="w-100 answer-note-field">
+                                    <textarea id="answer-note-textarea" matInput formControlName="note" rows="4"
+                                        minlength="10"></textarea>
+                                    <mat-error *ngIf="editForm.get('note')?.hasError('required')">
+                                        Açıqlama tələb olunur
+                                    </mat-error>
+                                    <mat-error *ngIf="editForm.get('note')?.hasError('minlength')">
+                                        Açıqlama ən azı 10 simvol olmalıdır
+                                    </mat-error>
+                                </mat-form-field>
+                            </div>
+                        </div>
+                        <div class="col-md-12">
+                            <div class="form-group ">
+                                <label class="main-label d-block fw-medium text-black">
+                                    Şəkil Yüklə
+                                </label>
+                                <input #fileInput type="file" (change)="onNativeFileChange($event)" class="form-control"
+                                    [multiple]="false" accept="image/*">
+                                <mat-error
+                                    *ngIf="editForm.get('files')?.invalid && (editForm.get('files')?.touched || editForm.get('files')?.dirty)">
+                                    Şəkil seçmək mütləqdir
+                                </mat-error>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="button-group">
+                        <button mat-button (click)="closeEditDialog()" class="cancel">Ləğv Et</button>
+                        <button mat-button class="primary" (click)="saveEdit()">Yadda Saxla</button>
+                    </div>
+                </form>
+            </mat-card-content>
+        </mat-card>
+    </div>
+</div>

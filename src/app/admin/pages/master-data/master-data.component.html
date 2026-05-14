@@ -1,0 +1,18 @@
+<app-admin-breadcrumb
+    title="Sistem Parametrləri"
+    [crumbs]="[{label: 'Sistem Parametrləri'}, {label: 'Şöbələr və Kateqoriyalar'}]">
+</app-admin-breadcrumb>
+
+<mat-tab-group class="master-data-tabs">
+    <mat-tab label="Şöbələr">
+        <div class="tab-content">
+            <app-sections [showBreadcrumb]="false"></app-sections>
+        </div>
+    </mat-tab>
+
+    <mat-tab label="Kateqoriyalar">
+        <div class="tab-content">
+            <app-categories [showBreadcrumb]="false"></app-categories>
+        </div>
+    </mat-tab>
+</mat-tab-group>

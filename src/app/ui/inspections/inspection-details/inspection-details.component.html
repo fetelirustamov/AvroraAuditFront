@@ -1,0 +1,29 @@
+<div class="details-header d-flex align-items-center justify-content-end mb-10">
+    <button mat-stroked-button color="primary" (click)="goBack()" class="back-btn">
+        <span class="material-symbols-outlined mr-5">arrow_back</span>
+        Geri
+    </button>
+</div>
+
+<app-plan-info-section [planId]="planId"></app-plan-info-section>
+
+<mat-card class=" border-radius d-block bg-white border-0 shadow-none">
+    <!-- <mat-card-header>
+        <mat-card-title>
+            <h5 class="mb-0">
+                Yoxlamalar
+            </h5>
+        </mat-card-title>
+    </mat-card-header> -->
+    <mat-card-content>
+        <mat-tab-group>
+            <mat-tab label="Checklist" (click)="onSection()">
+                <app-inspection-section *ngFor="let section of sections" [plan]="planId"
+                    [section]="section"></app-inspection-section>
+            </mat-tab>
+            <mat-tab label="Uyğunsuzluqlar">
+                <app-diruption-section [data]="stateDate"></app-diruption-section>
+            </mat-tab>
+        </mat-tab-group>
+    </mat-card-content>
+</mat-card>

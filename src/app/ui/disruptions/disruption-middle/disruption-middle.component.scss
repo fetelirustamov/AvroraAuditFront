@@ -1,0 +1,60 @@
+button .material-symbols-outlined {
+    font-size: 20px !important;
+    /* istəyə uyğun dəyiş */
+    line-height: 1;
+    vertical-align: middle;
+}
+
+button span.text-center {
+    vertical-align: middle;
+}
+
+.cancel {
+    color: red !important;
+
+}
+
+
+
+
+.approveSnackbarColor {
+    background-image: none !important;
+    background-color: greenyellow !important;
+    color: black !important;
+}
+
+.page-select {
+    padding: 5px 10px;
+    border-radius: 5px;
+    margin: 5px;
+}
+
+.topMargin {
+    margin-top: 0;
+}
+
+.material-symbols-outlined {
+    &.approve-icon {
+
+        color: #4CAF50 !important; // Green
+    }
+
+    &.reject-icon {
+        color: #f44336 !important; // Red
+    }
+
+    &.edit-icon {
+        color: #2196F3 !important; // Blue
+    }
+
+    &.back-icon {
+        color: #FF9800 !important; // Orange
+    }
+}
+
+button span.material-symbols-outlined {
+    font-size: 20px !important;
+    /* istəyə uyğun dəyiş */
+    line-height: 1;
+    vertical-align: middle;
+}

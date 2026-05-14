@@ -1,0 +1,32 @@
+.dialog-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.close-button {
+    cursor: pointer;
+    margin-right: 15px;
+    padding: 2px;
+    min-width: auto;
+}
+
+.close-button:hover {
+    background-color: rgb(237, 235, 235);
+    border-radius: 20px;
+}
+
+.dialog-padding {
+    padding: 8px !important;
+}
+
+.left {
+    display: inline-block;
+    cursor: pointer;
+    margin-right: 10px;
+}
+
+.right {
+    display: inline-block;
+    cursor: pointer;
+}

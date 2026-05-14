@@ -1,0 +1,115 @@
+.primary {
+    color: #6178fa !important;
+}
+
+.accordion {
+    .accordion-item {
+        display: block;
+        border: 1px solid var(--borderColor);
+
+        &:first-child {
+            border: {
+                top: {
+                    left-radius: 4px;
+                    right-radius: 4px;
+                }
+            }
+
+            ;
+        }
+
+        &:last-child {
+            border: {
+                bottom: {
+                    left-radius: 4px;
+                    right-radius: 4px;
+                }
+            }
+
+            ;
+        }
+    }
+
+    .accordion-item+.accordion-item {
+        border-top: none;
+    }
+
+    .accordion-item-header {
+        padding: 15px;
+        display: flex;
+        align-content: center;
+        justify-content: space-between;
+
+        &:hover {
+            cursor: pointer;
+            background-color: var(--borderColor);
+        }
+    }
+
+    .accordion-item-body {
+        padding: 15px;
+        border-top: solid 1px var(--borderColor);
+    }
+
+
+}
+
+.mat-mdc-card {
+    padding: 8px 0;
+}
+
+.accordion[_ngcontent-ng-c988488910] .accordion-item-body[_ngcontent-ng-c988488910] {
+    padding: 5px !important;
+}
+
+.accordion-item-header {
+    background-color: rgba(246, 246, 246, 0.936);
+}
+
+.category-header-flex {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.horizontal-group {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+}
+
+::ng-deep mat-radio-group {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+}
+
+::ng-deep mat-radio-button {
+    margin-bottom: 8px !important;
+    display: block !important;
+}
+
+::ng-deep mat-checkbox {
+    margin-bottom: 8px !important;
+    display: block !important;
+}
+
+.wrap-long-text {
+    display: inline;
+    word-break: break-word;
+    white-space: pre-line;
+    max-width: 100%;
+}
+
+.checkLeft {
+    margin-left: 10px !important;
+}
+
+.checkSpace {
+    width: 10px;
+}
+
+::ng-deep .mat-checkbox-layout .mat-checkbox-label {
+    margin-left: 10px !important;
+}

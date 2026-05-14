@@ -1,0 +1,79 @@
+<div class="kpi-grid mb-25" [class.dark-theme]="themeService.isDark()">
+    <div class="row g-4">
+
+        <div class="col-sm-6 col-xxl-3">
+            <div class="kpi-card kpi-blue">
+                <div class="kpi-header">
+                    <div class="kpi-icon">
+                        <span class="material-symbols-outlined">app_registration</span>
+                    </div>
+                </div>
+                <div class="kpi-number">
+                    <ng-container *ngIf="profile; else emptyKpi">{{ profile.avgPlanResult | number : '1.1-1' }}%</ng-container>
+                </div>
+                <div class="kpi-label">Checklist ortalaması</div>
+                <div class="kpi-sub">Seçilmiş lokasiya üzrə planlar</div>
+                <div class="kpi-bar">
+                    <div class="kpi-fill" [style.width.%]="profile ? barPct(profile.avgPlanResult, 100) : 0"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-sm-6 col-xxl-3">
+            <div class="kpi-card kpi-orange">
+                <div class="kpi-header">
+                    <div class="kpi-icon">
+                        <span class="material-symbols-outlined">manage_search</span>
+                    </div>
+                </div>
+                <div class="kpi-number">
+                    <ng-container *ngIf="profile; else emptyKpi">{{ profile.totalDiscrepancies | number }}</ng-container>
+                </div>
+                <div class="kpi-label">Ümumi uyğunsuzluq</div>
+                <div class="kpi-sub">Bütün planlar üzrə cəm</div>
+                <div class="kpi-bar">
+                    <div class="kpi-fill" [style.width.%]="profile ? barPct(profile.totalDiscrepancies, maxCap(profile)) : 0"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-sm-6 col-xxl-3">
+            <div class="kpi-card kpi-green">
+                <div class="kpi-header">
+                    <div class="kpi-icon">
+                        <span class="material-symbols-outlined">add_task</span>
+                    </div>
+                </div>
+                <div class="kpi-number">
+                    <ng-container *ngIf="profile; else emptyKpi">{{ profile.solved | number }}</ng-container>
+                </div>
+                <div class="kpi-label">Həll edilmiş</div>
+                <div class="kpi-sub">solvedCount cəmi</div>
+                <div class="kpi-bar">
+                    <div class="kpi-fill" [style.width.%]="profile ? barPct(profile.solved, (profile.solved + profile.open) || 1) : 0"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-sm-6 col-xxl-3">
+            <div class="kpi-card kpi-purple">
+                <div class="kpi-header">
+                    <div class="kpi-icon">
+                        <span class="material-symbols-outlined">data_alert</span>
+                    </div>
+                </div>
+                <div class="kpi-number">
+                    <ng-container *ngIf="profile; else emptyKpi">{{ profile.open | number }}</ng-container>
+                </div>
+                <div class="kpi-label">Açıqda qalan</div>
+                <div class="kpi-sub">openCount cəmi</div>
+                <div class="kpi-bar">
+                    <div class="kpi-fill" [style.width.%]="profile ? barPct(profile.open, (profile.solved + profile.open) || 1) : 0"></div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<ng-template #emptyKpi>—</ng-template>

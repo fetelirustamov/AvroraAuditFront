@@ -1,0 +1,17 @@
+/* Compact top header for back button */
+.details-header {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    padding: 8px 0;
+}
+
+.back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.mr-5 {
+    margin-right: 5px;
+}

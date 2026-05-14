@@ -1,0 +1,85 @@
+<form [formGroup]="planForm" (ngSubmit)="createPlan()" class="row g-0">
+    <mat-accordion [multi]="true">
+        <!-- FormArray üçün div -->
+        <div formArrayName="panels">
+            <!-- *ngFor ilə panel-ləri göstər -->
+            <mat-expansion-panel *ngFor="let panel of panels.controls; let i = index" [formGroupName]="i"
+                [expanded]="true" class=" row-margin "> <!-- İlk panel açıq olsun -->
+
+
+                <div class="row horizontalSpace compact-mat-fields">
+                    <!-- Location -->
+                    <div class="col-md-4">
+                        <mat-form-field>
+                            <mat-label>Ərazi</mat-label>
+                            <mat-select formControlName="location" required>
+                                <mat-option *ngFor="let location of locations" [value]="location.locationCode">
+                                    {{ location.locationName }}
+                                </mat-option>
+                            </mat-select>
+                            <mat-error *ngIf="panel.get('location')?.invalid && panel.get('location')?.touched">
+                                Bu sahə tələb olunur
+                            </mat-error>
+                        </mat-form-field>
+                    </div>
+
+                    <!-- Date -->
+                    <div class="col-md-2">
+                        <mat-form-field>
+                            <mat-label>Tarix</mat-label>
+                            <input matInput [matDatepicker]="picker" formControlName="date" required>
+                            <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+                            <mat-datepicker #picker></mat-datepicker>
+                            <mat-error *ngIf="panel.get('date')?.invalid && panel.get('date')?.touched">
+                                Tarix tələb olunur
+                            </mat-error>
+                        </mat-form-field>
+                    </div>
+
+                    <!-- Start Time -->
+                    <div class="col-md-2">
+                        <mat-form-field>
+                            <mat-label>Başlanğıc vaxtı</mat-label>
+                            <input matInput [ngxTimepicker]="startPicker" [format]="24"
+                                formControlName="startTime" readonly required>
+                            <ngx-material-timepicker #startPicker></ngx-material-timepicker>
+                            <mat-error *ngIf="panel.get('startTime')?.invalid && panel.get('startTime')?.touched">
+                                Vaxt tələb olunur
+                            </mat-error>
+                        </mat-form-field>
+                    </div>
+
+                    <!-- End Time -->
+                    <div class="col-md-2">
+                        <mat-form-field>
+                            <mat-label>Bitmə vaxtı</mat-label>
+                            <input matInput [ngxTimepicker]="endPicker" [format]="24"
+                                formControlName="endTime" readonly required>
+                            <ngx-material-timepicker #endPicker></ngx-material-timepicker>
+                            <mat-error *ngIf="panel.get('endTime')?.invalid && panel.get('endTime')?.touched">
+                                Vaxt tələb olunur
+                            </mat-error>
+                        </mat-form-field>
+                    </div>
+
+                    <!-- Remove Button -->
+                    <div class="col-md-1">
+                        <button type="button" mat-stroked-button class="text-soft-danger" (click)="removePanel(i)">
+                            <span class="material-symbols-outlined">close</span>
+                        </button>
+                    </div>
+                </div>
+            </mat-expansion-panel>
+        </div>
+    </mat-accordion>
+
+    <!-- Buttons -->
+    <div class="row ">
+        <div class="col-md-6 text-start">
+            <button type="button" mat-flat-button (click)="addPanel()">Əlavə Et</button>
+        </div>
+        <div class="col-md-6 text-end">
+            <button type="submit" mat-flat-button color="primary">Yadda Saxla</button>
+        </div>
+    </div>
+</form>

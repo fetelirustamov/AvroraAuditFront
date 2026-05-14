@@ -1,0 +1,152 @@
+<div class="adm-dash">
+
+  <!-- ─── Hero Banner ─────────────────────────────────────────────────────── -->
+  <div class="hero-banner">
+    <div class="hero-left">
+      <h1>Admin Dashboard</h1>
+      <p class="subtitle">Sistem idarəetmə və konfiqurasiya paneli</p>
+    </div>
+    <div class="hero-right">
+      <div class="hero-meta">
+        <span class="material-symbols-outlined">calendar_today</span>
+        <span>{{ today | date:'d MMMM, yyyy' }}</span>
+      </div>
+      <div class="hero-meta">
+        <span class="material-symbols-outlined">people</span>
+        <span>47 aktiv istifadəçi</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── KPI Cards ────────────────────────────────────────────────────────── -->
+  <div class="kpi-row">
+    <div class="kpi-card" *ngFor="let k of kpiCards" [routerLink]="k.route">
+      <div class="kpi-top">
+        <div class="kpi-icon-wrap" [style.background]="k.bgColor">
+          <span class="material-symbols-outlined" [style.color]="k.color">{{ k.icon }}</span>
+        </div>
+        <div class="kpi-info">
+          <p class="kpi-label">{{ k.label }}</p>
+          <h3 class="kpi-value">{{ k.value }}</h3>
+        </div>
+      </div>
+      <div class="kpi-bottom">
+        <div [id]="k.sparkId" class="kpi-spark"></div>
+        <span class="kpi-change" [class.pos]="k.changePositive" [class.neg]="!k.changePositive">
+          <span class="material-symbols-outlined">{{ k.changePositive ? 'trending_up' : 'trending_down' }}</span>
+          {{ k.change }}
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── Charts Row ───────────────────────────────────────────────────────── -->
+  <div class="charts-row">
+    <mat-card class="chart-card">
+      <mat-card-header>
+        <mat-card-title>
+          <span class="material-symbols-outlined title-icon">group</span>
+          İstifadəçi Rolları
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div id="adm_chart_user_roles"></div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="chart-card chart-wide">
+      <mat-card-header>
+        <mat-card-title>
+          <span class="material-symbols-outlined title-icon">show_chart</span>
+          Aylıq Sistem Aktivliyi
+        </mat-card-title>
+        <span class="year-badge">{{ today | date:'yyyy' }}</span>
+      </mat-card-header>
+      <mat-card-content>
+        <div id="adm_chart_activity"></div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- ─── Bottom Row ───────────────────────────────────────────────────────── -->
+  <div class="bottom-row">
+
+    <!-- Quick Actions -->
+    <mat-card class="bottom-card">
+      <mat-card-header>
+        <mat-card-title>
+          <span class="material-symbols-outlined title-icon">bolt</span>
+          Sürətli Keçidlər
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="action-list">
+          <a class="action-item" *ngFor="let a of quickActions" [routerLink]="a.route">
+            <div class="action-icon-wrap" [style.background]="a.bgColor">
+              <span class="material-symbols-outlined" [style.color]="a.color">{{ a.icon }}</span>
+            </div>
+            <div class="action-text">
+              <span class="action-title">{{ a.label }}</span>
+              <span class="action-desc">{{ a.desc }}</span>
+            </div>
+            <span class="action-count" [style.color]="a.color">{{ a.count }}</span>
+            <span class="material-symbols-outlined arrow-icon">chevron_right</span>
+          </a>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Config Progress -->
+    <mat-card class="bottom-card">
+      <mat-card-header>
+        <mat-card-title>
+          <span class="material-symbols-outlined title-icon">tune</span>
+          Konfiqurasiya İcmalı
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="config-list">
+          <div class="config-item" *ngFor="let c of configItems">
+            <div class="config-row">
+              <span class="config-label">{{ c.label }}</span>
+              <span class="config-count">
+                {{ c.current }}<span class="config-total">/{{ c.total }}</span>
+              </span>
+            </div>
+            <div class="config-track">
+              <div
+                class="config-fill"
+                [style.width.%]="(c.current / c.total) * 100"
+                [style.background]="c.color"
+              ></div>
+            </div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Recent Activity -->
+    <mat-card class="bottom-card">
+      <mat-card-header>
+        <mat-card-title>
+          <span class="material-symbols-outlined title-icon">history</span>
+          Son Fəaliyyətlər
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="activity-list">
+          <div class="activity-item" *ngFor="let a of recentActivity">
+            <div class="activity-icon-wrap" [style.background]="a.bgColor">
+              <span class="material-symbols-outlined" [style.color]="a.color">{{ a.icon }}</span>
+            </div>
+            <div class="activity-body">
+              <p class="activity-text"><strong>{{ a.user }}</strong> {{ a.action }}</p>
+              <span class="activity-time">{{ a.time }}</span>
+            </div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+  </div>
+</div>

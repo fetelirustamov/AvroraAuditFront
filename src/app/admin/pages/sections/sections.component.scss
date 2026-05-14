@@ -1,0 +1,159 @@
+/* Styles scoped to sections list */
+.sections-card {
+    .add-btn {
+        i {
+            vertical-align: middle;
+            margin-right: 6px;
+        }
+    }
+}
+
+.sections-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 12px;
+    flex-wrap: nowrap;
+}
+
+.firm-filter {
+    width: 320px !important;
+    min-width: 320px;
+    flex: 0 0 320px;
+    margin-bottom: -0.25em;
+}
+
+/* Fix Material Select component alignment and dropdown panel */
+::ng-deep .mat-mdc-select {
+    .mat-mdc-select-trigger {
+        display: flex !important;
+        align-items: center !important;
+        min-height: 40px !important;
+    }
+
+    .mat-mdc-select-value-text {
+        display: flex;
+        align-items: center;
+        line-height: 1 !important;
+    }
+
+    /* Fix dropdown panel width and visibility */
+    .mat-mdc-select-panel {
+        min-width: 120px !important;
+        max-width: 200px !important;
+
+        .mat-mdc-option {
+            height: 40px !important;
+            line-height: 40px !important;
+            padding: 0 16px !important;
+            font-size: 14px !important;
+
+            .mat-mdc-option-text {
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                width: 100% !important;
+            }
+        }
+    }
+}
+
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .sections-card {
+        .search-box {
+            width: 220px;
+            margin-left: 0;
+        }
+
+        .admin-card-header .mat-card-subtitle .d-flex {
+            column-gap: 6px !important;
+        }
+
+        .sections-card .search-ff {
+            width: 220px;
+        }
+    }
+
+    .d-flex.align-items-center.justify-content-start {
+        gap: 0 !important; // Remove gap completely
+
+        .search-box {
+            margin-left: -6px; // Smaller negative margin on medium screens
+        }
+    }
+
+    @media (max-width: 768px) {
+        .sections-card {
+            .search-ff {
+                width: 220px;
+            }
+        }
+    }
+}
+
+@media (max-width: 576px) {
+    .sections-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .firm-filter {
+        width: 100%;
+        min-width: 100%;
+        margin-bottom: 0;
+    }
+
+    .d-flex.align-items-center.justify-content-start {
+        flex-direction: column;
+        gap: 0 !important; // Remove gap completely
+        align-items: flex-start !important;
+
+        .search-box {
+            margin-left: 0; // Reset margin on mobile
+        }
+    }
+
+    .search-box {
+        width: 100%;
+    }
+
+    @media (max-width: 576px) {
+        .sections-card {
+            .search-ff {
+                width: 100%;
+                margin-left: 0;
+            }
+        }
+    }
+}
+
+.table-responsive {
+    overflow-x: auto;
+}
+
+.category-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+
+    .category-tag {
+        display: inline-block;
+        padding: 4px 12px;
+        background: var(--primaryColor);
+        color: var(--whiteColor);
+        border-radius: 16px;
+        font-size: 12px;
+        font-weight: 500;
+        white-space: nowrap;
+    }
+}
+
+.mat-mdc-card-subtitle {
+    width: auto !important;
+}
+
+.cdk-overlay-pane {
+    width: 62px !important;
+}

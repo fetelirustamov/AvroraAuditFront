@@ -1,0 +1,208 @@
+.cancel {
+    color: red !important;
+}
+
+.primary {
+    color: #6178fa !important;
+}
+
+.spaceBetween {
+    margin-right: 10px !important;
+}
+
+// Action icons colors
+.material-symbols-outlined {
+    &.approve-icon {
+        color: #4CAF50 !important; // Green
+    }
+
+    &.reject-icon {
+        color: #f44336 !important; // Red
+    }
+
+    &.edit-icon {
+        color: #2196F3 !important; // Blue
+    }
+
+    &.back-icon {
+        color: #FF9800 !important; // Orange
+    }
+}
+
+.approveSnackbarColor {
+    background-image: none !important;
+    background-color: greenyellow !important;
+    color: black !important;
+}
+
+.mat-form-field {
+    width: 200px;
+    margin-bottom: 1rem;
+}
+
+.table-style-two {
+    .table-responsive {
+        overflow-x: auto;
+    }
+}
+
+.spaceBetween {
+    margin-right: 10px;
+}
+
+.action-buttons {
+    gap: 10px;
+}
+
+.button-group {
+    display: flex;
+    gap: 10px;
+    /* Düymələr arasında boşluq */
+}
+
+.custom-button {
+    cursor: pointer;
+    padding: 8px 16px;
+    /* Düymələrin daxili boşluqları */
+    font-size: 14px;
+    /* Mətn ölçüsü */
+    border-radius: 8px;
+    /* Daha yumşaq künclər */
+    transition: all 0.3s ease;
+    /* Hover effekti üçün animasiya */
+}
+
+.custom-button:hover {
+    opacity: 0.9;
+    /* Hover zamanı yüngül şəffaflıq */
+    transform: translateY(-2px);
+    /* Yüngül qaldırma effekti */
+}
+
+/* Responsivlik üçün */
+.button-group {
+    display: flex;
+    gap: 10px;
+    /* Düymələr arasında boşluq */
+}
+
+.custom-button {
+    padding: 8px 16px;
+    /* Düymələrin daxili boşluqları */
+    font-size: 14px;
+    /* Mətn ölçüsü */
+    border-radius: 8px;
+    /* Daha yumşaq künclər */
+    transition: all 0.3s ease;
+    /* Hover effekti üçün animasiya */
+}
+
+.custom-button:hover {
+    opacity: 0.9;
+    /* Hover zamanı yüngül şəffaflıq */
+    transform: translateY(-2px);
+    /* Yüngül qaldırma effekti */
+}
+
+/* Responsivlik üçün */
+@media (max-width: 576px) {
+    .button-group {
+        flex-wrap: wrap;
+        /* Kiçik ekranlarda düymələri alt-alta sırala */
+        justify-content: center;
+        /* Mərkəzə hizala */
+    }
+
+    .custom-button {
+        cursor: pointer;
+        width: 100%;
+        /* Düymələri tam eninə yay */
+        margin-bottom: 8px;
+        /* Düymələr arasında şaquli boşluq */
+    }
+}
+
+.page-select {
+    padding: 5px 10px;
+    border-radius: 5px;
+    margin: 5px;
+}
+
+.edit-dialog {
+    padding: 0 !important;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #fff !important;
+    border-radius: 12px;
+    z-index: 1000;
+    width: 90%;
+    max-width: 600px;
+    max-height: 90vh;
+    overflow-y: auto;
+
+    mat-card-header {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        padding: 24px 24px 0 24px;
+        margin-bottom: 0;
+        background: #fff;
+        border-top-left-radius: 12px;
+        border-top-right-radius: 12px;
+
+        .header-title {
+            flex: 1;
+            text-align: center;
+            font-size: 1.5rem;
+            color: #333;
+            font-weight: 600;
+            margin-left: -40px; // x iconunun yerini kompensasiya etmək üçün
+        }
+
+        .close-button {
+            margin-left: auto;
+            color: #888;
+        }
+    }
+
+    mat-card-content {
+        padding: 24px;
+        background: #fff;
+        border-bottom-left-radius: 12px;
+        border-bottom-right-radius: 12px;
+
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        .form-group {
+            margin-bottom: 0;
+            width: 100%;
+        }
+
+        mat-form-field {
+            width: 100%;
+            margin-bottom: 0;
+        }
+
+        .dialog-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            margin-top: 24px;
+        }
+    }
+}
+
+.edit-dialog::before {
+    display: none !important;
+}
+
+.add-new-popup .popup-dialog .mat-mdc-card .mat-mdc-card-content .btn-box .mat-mdc-button.mat-primary .mdc-button__label {
+    padding-left: 0 !important;
+}

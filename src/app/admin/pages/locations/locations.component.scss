@@ -1,0 +1,118 @@
+.right-panel .mat-mdc-dialog-container {
+    padding: 0;
+    height: 100vh;
+}
+
+.right-panel .mat-mdc-dialog-content {
+    max-height: calc(100vh - 64px);
+}
+
+.dialog-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 20px;
+}
+
+.search-title {
+    font-size: 18px;
+    font-weight: 500;
+    color: #333;
+    margin: 0;
+}
+
+.close-button {
+    cursor: pointer;
+    margin: 18px;
+    padding: 5px !important;
+    min-width: auto;
+}
+
+.close-button:hover {
+    background-color: rgb(237, 235, 235);
+    border-radius: 20px;
+}
+
+.main-label {
+    font-size: 15px;
+    font-weight: 500;
+    margin-bottom: 8px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+mat-form-field {
+    display: grid;
+    gap: 10px !important;
+    padding-bottom: 5px !important;
+}
+
+.searchButtons {
+    display: flex;
+    gap: 16px;
+    margin-top: 24px;
+}
+
+.searchButtons button {
+    flex: 1;
+    height: 48px;
+    border-radius: 6px;
+    font-weight: 600;
+    text-transform: none;
+    font-size: 14px;
+    letter-spacing: 0.3px;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+}
+
+.searchButtons button:first-child {
+    background-color: var(--primary-color, #1976D2);
+    color: white;
+    border: none;
+    box-shadow: 0 2px 4px rgba(25, 118, 210, 0.3);
+}
+
+.searchButtons button:first-child:hover {
+    background-color: var(--primary-color-dark, #1565C0);
+    box-shadow: 0 4px 8px rgba(25, 118, 210, 0.4);
+}
+
+.searchButtons button:last-child {
+    background-color: white;
+    color: #2196F3;
+    border: 1px solid #E0E0E0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.searchButtons button:last-child:hover {
+    background-color: #F5F5F5;
+    border-color: #BDBDBD;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.searchButtons button span.material-symbols-outlined {
+    margin-right: 10px;
+    font-size: 18px;
+    vertical-align: middle;
+}
+
+
+@media screen and (max-width: 992px) and (min-width: 769px) {
+    .button-group {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .button-group button {
+        margin-bottom: 16px;
+    }
+
+    .button-group button:last-child {
+        margin-bottom: 0;
+    }
+}

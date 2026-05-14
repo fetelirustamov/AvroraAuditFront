@@ -1,0 +1,113 @@
+<div class="login-container" [class.dark-theme]="themeService.isDark()">
+    <div class="login-wrapper" [class.component-dark-theme]="themeService.isDark()"
+        [class.component-rtl-enabled]="themeService.isRTLEnabled()">
+        <div class="login-content">
+            <!-- Left Side - Image Section -->
+            <div class="login-image-section">
+                <div class="image-overlay"></div>
+                <div class="image-content">
+                    <div class="welcome-text">
+                        <h2>AuditPro-ya Xoş Gəlmisiniz</h2>
+                        <p>Hesabınıza daxil olun və audit proseslərini, maliyyə idarəetməsini və bütün biznes əməliyyatlarınızı effektiv şəkildə idarə edin</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Side - Form Section -->
+            <div class="login-form-section">
+                <div class="form-container">
+                    <!-- Logo -->
+                    <div class="logo-container">
+                        <div class="logo">
+                            <img src="images/logo-big.svg" alt="Audit" class="logo-img">
+                            <img src="images/white-logo-big.svg" alt="Audit" class="logo-img-white d-none">
+                        </div>
+                        <h1 class="welcome-title">Xoş Gəlmisiniz</h1>
+                        <p class="welcome-subtitle">Hesabınıza daxil olun</p>
+                    </div>
+
+                    <!-- Form -->
+                    <form [formGroup]="loginForm" class="login-form" (ngSubmit)="login()">
+                        <!-- Email Field -->
+                        <div class="form-field-group">
+                            <label for="email" class="field-label">
+                                Email Ünvanı
+                                <span class="required-indicator">*</span>
+                            </label>
+                            <mat-form-field appearance="fill" class="custom-form-field">
+                                <mat-icon matPrefix class="field-icon">email</mat-icon>
+                                <input 
+                                    matInput 
+                                    id="email"
+                                    formControlName="email" 
+                                    type="email"
+                                    placeholder="example@email.com"
+                                    autocomplete="email">
+                                <mat-error *ngIf="loginForm.get('email')?.hasError('required') && loginForm.get('email')?.touched">
+                                    Email ünvanı tələb olunur
+                                </mat-error>
+                                <mat-error *ngIf="loginForm.get('email')?.hasError('email') && loginForm.get('email')?.touched">
+                                    Doğru email daxil edin
+                                </mat-error>
+                            </mat-form-field>
+                        </div>
+
+                        <!-- Password Field -->
+                        <div class="form-field-group">
+                            <label for="password" class="field-label">
+                                Parol
+                                <span class="required-indicator">*</span>
+                            </label>
+                            <mat-form-field appearance="fill" class="custom-form-field">
+                                <mat-icon matPrefix class="field-icon">lock</mat-icon>
+                                <input 
+                                    matInput 
+                                    id="password"
+                                    [type]="hide ? 'password' : 'text'" 
+                                    formControlName="password"
+                                    placeholder="Parolunuzu daxil edin"
+                                    autocomplete="current-password">
+                                <button 
+                                    mat-icon-button 
+                                    matSuffix 
+                                    (click)="hide = !hide" 
+                                    type="button"
+                                    class="toggle-password-btn"
+                                    [attr.aria-label]="hide ? 'Show password' : 'Hide password'">
+                                    <mat-icon class="toggle-password-icon">
+                                        {{hide ? 'visibility_off' : 'visibility'}}
+                                    </mat-icon>
+                                </button>
+                                <mat-error *ngIf="loginForm.get('password')?.hasError('required') && loginForm.get('password')?.touched">
+                                    Parol tələb olunur
+                                </mat-error>
+                                <mat-error *ngIf="loginForm.get('password')?.hasError('minlength') && loginForm.get('password')?.touched">
+                                    Parol ən azı 5 simvol olmalıdır
+                                </mat-error>
+                            </mat-form-field>
+                        </div>
+
+                        <!-- Error Message -->
+                        <div *ngIf="errorMessage" class="error-alert" role="alert">
+                            <mat-icon class="error-icon">error</mat-icon>
+                            <span>{{ errorMessage }}</span>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <button 
+                            type="submit" 
+                            mat-flat-button 
+                            class="login-button"
+                            [disabled]="isLoading || loginForm.invalid"
+                            [class.loading]="isLoading">
+                            <span *ngIf="isLoading" class="button-spinner" role="status" aria-hidden="true"></span>
+                            <span class="button-text">
+                                {{ isLoading ? 'Giriş edilir...' : 'Giriş Et' }}
+                            </span>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

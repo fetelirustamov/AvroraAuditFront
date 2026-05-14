@@ -1,0 +1,118 @@
+$primary: #605DFF;
+$primary-light: #EEF0FF;
+$primary-dark: #4B48CC;
+$success: #25B003;
+$success-light: #E8F9E3;
+$warning: #FF8C00;
+$warning-light: #FFF4E5;
+$danger: #FF4023;
+$danger-light: #FFECE9;
+$red: #C62828;
+$red-light: #FFEBEE;
+$surface: #ffffff;
+$surface-2: #F6F7F9;
+$border: #ECEEF2;
+$text-primary: #1E2533;
+$text-secondary: #64748B;
+$text-muted: #9AA5B4;
+$shadow-sm: 0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+$shadow-md: 0 4px 16px rgba(96,93,255,.10), 0 1px 4px rgba(0,0,0,.06);
+$radius-sm: 8px;
+$radius-md: 12px;
+$radius-lg: 16px;
+
+.report-page-header {
+    background: linear-gradient(135deg, #E84545 0%, #F47070 100%);
+    border-radius: $radius-lg; padding: 24px 28px; margin-bottom: 20px; position: relative; overflow: hidden;
+    &::before { content: ''; position: absolute; top: -40px; right: -40px; width: 180px; height: 180px; border-radius: 50%; background: rgba(255,255,255,.08); }
+    &::after { content: ''; position: absolute; bottom: -60px; right: 80px; width: 130px; height: 130px; border-radius: 50%; background: rgba(255,255,255,.05); }
+    .header-content { display: flex; align-items: center; justify-content: space-between; position: relative; z-index: 1; }
+    .header-text {
+        .page-title { margin: 0 0 4px; font-size: 22px; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 10px; .title-icon { font-size: 26px; opacity: .9; } }
+        .page-subtitle { margin: 0; font-size: 13px; color: rgba(255,255,255,.75); }
+    }
+}
+
+.export-btn { display: flex; align-items: center; gap: 6px; background: rgba(255,255,255,.18); color: #fff; border: 1px solid rgba(255,255,255,.3); border-radius: $radius-sm; padding: 9px 18px; font-size: 13px; font-weight: 600; cursor: pointer; transition: background .2s, transform .15s; backdrop-filter: blur(4px); &:hover { background: rgba(255,255,255,.28); transform: translateY(-1px); } .arrow-icon { font-size: 18px; opacity: .8; } }
+
+@import '../report-filter-toolbar';
+
+// Filtr etiketləri adi yazılışda (İl, Ay, Şirkət); ortaq toolbar-da uppercase olduğu üçün burada sıfırlanır.
+.filter-field .field-label {
+    text-transform: none;
+    letter-spacing: 0.02em;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.search-btn:disabled {
+    opacity: 0.62;
+    cursor: not-allowed;
+    transform: none !important;
+    box-shadow: 0 2px 8px rgba(96, 93, 255, 0.18) !important;
+}
+
+// â”€â”€â”€ Table Card with Tabs â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+.table-card { background: $surface; border-radius: $radius-md; border: 1px solid $border; box-shadow: $shadow-sm; overflow: hidden; }
+
+:host ::ng-deep .report-tabs {
+    .mat-mdc-tab-header { background: $surface; border-bottom: 2px solid $border; }
+    .mat-mdc-tab { font-size: 13px; font-weight: 600; color: $text-secondary; min-width: 180px; &.mdc-tab--active { color: $red; } }
+    .mdc-tab-indicator__content--underline { border-color: $red; border-top-width: 3px; }
+    .mat-mdc-tab-body-content { overflow: hidden; }
+}
+
+.tab-icon { font-size: 18px; margin-right: 6px; vertical-align: middle; }
+
+// â”€â”€â”€ KPI Cards â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+.kpi-row { display: flex; gap: 16px; padding: 20px 20px 0; flex-wrap: wrap; }
+.kpi-card { flex: 1; min-width: 160px; background: $surface-2; border: 1px solid $border; border-radius: $radius-md; padding: 16px; display: flex; align-items: center; gap: 14px; transition: box-shadow .2s; &:hover { box-shadow: $shadow-md; } }
+.kpi-icon { width: 44px; height: 44px; border-radius: $radius-sm; display: flex; align-items: center; justify-content: center; flex-shrink: 0; .material-symbols-outlined { font-size: 22px; } &.danger-icon { background: $red-light; color: $red; } &.store-icon { background: $primary-light; color: $primary; } &.quiz-icon { background: $warning-light; color: $warning; } &.faiz-icon { background: $success-light; color: $success; } }
+.kpi-body { .kpi-value { font-size: 22px; font-weight: 700; color: $text-primary; line-height: 1; } .kpi-label { font-size: 11px; color: $text-secondary; margin-top: 4px; font-weight: 500; } }
+
+.clear-filter-btn { display: flex; align-items: center; gap: 6px; background: $danger-light; color: $danger; border: 1px solid rgba($danger,.2); border-radius: $radius-sm; padding: 6px 14px; font-size: 12px; font-weight: 600; cursor: pointer; transition: background .2s; .material-symbols-outlined { font-size: 16px; } &:hover { background: $danger; color: #fff; } }
+
+:host ::ng-deep .filter-row th.filter-header-cell { background: $surface; padding: 6px 8px; border-bottom: 2px solid $border; }
+
+.filter-input-wrap { display: flex; align-items: center; gap: 4px; background: $surface-2; border: 1px solid $border; border-radius: $radius-sm; padding: 4px 8px; transition: border-color .2s; &:focus-within { border-color: $primary; box-shadow: 0 0 0 3px rgba(96,93,255,.1); } .filter-input-icon { font-size: 14px; color: $text-muted; } .filter-input { border: none; outline: none; background: transparent; font-size: 12px; color: $text-primary; width: 100%; min-width: 60px; &::placeholder { color: $text-muted; } } }
+
+// â”€â”€â”€ Tab table header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+.tab-table-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 20px; border-bottom: 1px solid $border; margin-top: 16px; .table-info { display: flex; align-items: center; gap: 10px; .table-info-icon { font-size: 20px; color: $primary; } .table-title { font-size: 14px; font-weight: 600; color: $text-primary; } .result-badge { background: $red-light; color: $red; font-size: 11px; font-weight: 700; padding: 2px 10px; border-radius: 20px; } } }
+
+// â”€â”€â”€ Table â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+.table-responsive-wrapper { overflow-x: auto; }
+.modern-table { width: 100%; th, td { white-space: nowrap; } }
+
+:host ::ng-deep .data-header-row th.data-header-cell { background: #FFF5F5; color: $text-secondary; font-size: 11.5px; font-weight: 700; text-align: center; padding: 10px 14px; border-bottom: 2px solid $border; }
+:host ::ng-deep .data-row { height: 46px; td.mat-mdc-cell { padding: 8px 14px; border-bottom: 1px solid $border; text-align: center; } &:hover td.mat-mdc-cell { background: #FFF5F5; } &:last-child td.mat-mdc-cell { border-bottom: none; } }
+:host ::ng-deep .data-row:nth-child(even) td.mat-mdc-cell { background: $surface-2; }
+:host ::ng-deep .data-row:nth-child(even):hover td.mat-mdc-cell { background: #FFCDD2; }
+
+.row-number { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; background: $primary-light; color: $primary; border-radius: 50%; font-size: 12px; font-weight: 700; }
+.branch-name { font-weight: 600; color: $text-primary; }
+.code-badge { display: inline-block; background: #EEF2FF; color: #4B5DA8; font-size: 11.5px; font-weight: 700; padding: 3px 10px; border-radius: 6px; }
+.region-badge { display: inline-block; background: #E8F4FD; color: #1565C0; font-size: 11.5px; font-weight: 600; padding: 3px 10px; border-radius: 6px; }
+.sobe-badge { display: inline-block; background: #FFF3E0; color: #E65100; font-size: 11.5px; font-weight: 600; padding: 3px 10px; border-radius: 6px; }
+.tasnifat-badge { display: inline-block; background: $red-light; color: $red; font-size: 11.5px; font-weight: 600; padding: 3px 10px; border-radius: 6px; }
+.sual-text { font-size: 12px; color: $text-primary; font-weight: 500; max-width: 300px; white-space: normal; display: inline-block; text-align: left; }
+.score-num { font-weight: 700; color: $text-primary; font-size: 13px; }
+.score-num.faktiki { color: #C62828; }
+
+.nc-badge { display: inline-flex; align-items: center; justify-content: center; min-width: 32px; height: 26px; border-radius: 20px; font-size: 13px; font-weight: 700; padding: 0 8px; }
+.nc-low  { background: $success-light; color: darken($success, 8%); }
+.nc-mid  { background: $warning-light; color: darken($warning, 10%); }
+.nc-high { background: $danger-light;  color: darken($danger, 5%); }
+
+.faiz-chip { display: inline-block; font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 20px; min-width: 50px; text-align: center; }
+.faiz-high { background: $success-light; color: darken($success, 8%); }
+.faiz-mid  { background: $warning-light; color: darken($warning, 10%); }
+.faiz-low  { background: $danger-light;  color: darken($danger, 5%); }
+
+.empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 24px; color: $text-muted; .empty-icon { font-size: 52px; margin-bottom: 12px; opacity: .5; } p { font-size: 14px; margin: 0; } }
+
+:host ::ng-deep .modern-paginator { background: $surface; color: $text-secondary; font-size: 13px; border-top: 1px solid $border; }
+:host ::ng-deep .mat-mdc-menu-panel { border-radius: $radius-sm !important; min-width: 160px !important; }
+:host ::ng-deep .mat-mdc-menu-item { font-size: 13px; &:hover { background: $primary-light; color: $primary; } }
+.menu-icon { font-size: 18px; }
+.excel-icon { color: #1D6F42; }
+.pdf-icon { color: $danger; }

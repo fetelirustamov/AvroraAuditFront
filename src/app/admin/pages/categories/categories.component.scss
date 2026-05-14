@@ -1,0 +1,13 @@
+/* Styles scoped to categories list */
+.categories-card {
+    .add-btn {
+        i {
+            vertical-align: middle;
+            margin-right: 6px;
+        }
+    }
+}
+
+.table-responsive {
+    overflow-x: auto;
+}

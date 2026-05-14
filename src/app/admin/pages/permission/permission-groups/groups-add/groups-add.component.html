@@ -1,0 +1,97 @@
+<!-- Breadcrumb -->
+<div class="breadcrumb-card mb-25 d-md-flex align-items-center justify-content-between">
+        <div class="d-flex align-items-center flex-wrap gap-2">
+            <h5 class="mb-0 me-3">
+                {{ isEditMode ? (form.get('name')?.value || 'Qrup') : 'Yeni qrup' }}
+            </h5>
+        </div>
+        <div class="breadcrumb-actions d-flex align-items-center gap-2">
+            <button *ngIf="isViewMode" class="btn-back" mat-flat-button color="primary" type="button"
+                (click)="goBack()">Geri</button>
+            <button *ngIf="isEditMode" mat-flat-button class="btn-success" (click)="save()"
+                [disabled]="form.invalid || isLoading">Düzəliş Et</button>
+            <button *ngIf="isEditMode" mat-stroked-button color="warn" type="button" (click)="cancel()">İmtina</button>
+        </div>
+    </div>
+
+<div class="audit-table-loading-shell groups-add-loading-shell" [attr.aria-busy]="isLoading">
+<div [class.audit-table-muted]="isLoading">
+
+<form [formGroup]="form" class="groups-add-container">
+    <div class="d-flex gap-3 mb-20 action-buttons" *ngIf="!isEditMode && !isViewMode">
+        <button mat-flat-button color="primary" (click)="save()" [disabled]="form.invalid || isLoading">
+            <i class="material-symbols-outlined">save</i>
+            Əlavə Et
+        </button>
+        <button mat-stroked-button color="warn" type="button" (click)="cancel()">
+            <i class="material-symbols-outlined">close</i>
+            İmtina
+        </button>
+    </div>
+
+    <mat-card class="mb-25 border-radius d-block bg-white border-0 shadow-none">
+        <mat-card-content>
+            <div class="row g-3">
+                <div class="col-md-2">
+                    <mat-form-field class="w-100" appearance="outline">
+                        <mat-label>Kodu</mat-label>
+                        <input matInput formControlName="code" placeholder="0" />
+                    </mat-form-field>
+                </div>
+                <div class="col-md-5">
+                    <mat-form-field class="w-100" appearance="outline">
+                        <mat-label>Adı</mat-label>
+                        <input matInput formControlName="name" placeholder="Adı" />
+                        <mat-error *ngIf="form.get('name')?.touched && form.get('name')?.hasError('required')">Ad
+                            məcburidir</mat-error>
+                    </mat-form-field>
+                </div>
+                <div class="col-md-5">
+                    <mat-form-field class="w-100" appearance="outline">
+                        <mat-label>Təsviri</mat-label>
+                        <input matInput formControlName="description" placeholder="Təsviri" />
+                    </mat-form-field>
+                </div>
+            </div>
+        </mat-card-content>
+    </mat-card>
+
+    <mat-card class="mb-25 border-radius d-block bg-white border-0 shadow-none">
+        <mat-card-header>
+            <mat-card-title>Səlahiyyətlər</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+            <div class="table-responsive">
+                <table class="permissions-table">
+                    <thead>
+                        <tr>
+                            <th>ŞƏHİFƏ</th>
+                            <th>OXUMA</th>
+                            <th>YARATMA</th>
+                            <th>DƏYİŞMƏ</th>
+                            <th>SİLMƏ</th>
+                        </tr>
+                    </thead>
+                    <tbody formArrayName="rows">
+                        <tr *ngFor="let row of rows.controls; let i = index" [formGroupName]="i">
+                            <td><input matInput formControlName="pageName" class="page-cell" /></td>
+                            <td><mat-checkbox formControlName="show" color="primary"></mat-checkbox></td>
+                            <td><mat-checkbox formControlName="add" color="primary"></mat-checkbox></td>
+                            <td><mat-checkbox formControlName="edit" color="primary"></mat-checkbox></td>
+                            <td><mat-checkbox formControlName="delete" color="primary"></mat-checkbox></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div *ngIf="rows.length === 0" class="text-center text-muted py-3">
+                Heç bir səhifə tapılmadı
+            </div>
+        </mat-card-content>
+    </mat-card>
+</form>
+
+</div>
+<app-audit-loading-overlay *ngIf="isLoading"
+    title="Qrup məlumatları yüklənir"
+    hint="Səhifələr və icazələr hazırlanır…"></app-audit-loading-overlay>
+</div>

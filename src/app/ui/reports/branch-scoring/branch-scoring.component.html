@@ -1,0 +1,181 @@
+<!-- Page Header -->
+<div class="report-page-header">
+    <div class="header-content">
+        <div class="header-text">
+            <h1 class="page-title">
+                <span class="material-symbols-outlined title-icon">dashboard_customize</span>
+                Şöbələr üzrə Puanlama Faizi
+            </h1>
+            <p class="page-subtitle">Ərazi və bölgə bazında şöbə puanlama statistikası</p>
+        </div>
+        <div class="header-actions">
+            <button class="export-btn" [matMenuTriggerFor]="downloadMenu">
+                <span class="material-symbols-outlined">download</span>
+                Yüklə
+                <span class="material-symbols-outlined arrow-icon">expand_more</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<mat-menu #downloadMenu="matMenu" class="modern-menu">
+    <button mat-menu-item (click)="exportExcel()">
+        <span class="material-symbols-outlined menu-icon excel-icon">table_chart</span>
+        <span>Excel (.xlsx)</span>
+    </button>
+    <button mat-menu-item (click)="exportPdf()">
+        <span class="material-symbols-outlined menu-icon pdf-icon">picture_as_pdf</span>
+        <span>PDF (.pdf)</span>
+    </button>
+</mat-menu>
+
+<!-- Filter toolbar -->
+<div class="filter-card">
+    <div class="filter-card-accent" aria-hidden="true"></div>
+    <div class="filter-card-body">
+        <div class="filter-card-header">
+            <span class="material-symbols-outlined filter-header-icon">tune</span>
+            <div class="filter-header-text">
+                <span class="filter-header-title">Filtrlər</span>
+                <span class="filter-header-hint">İl, ay və firma seçib hesabatı yeniləyin</span>
+            </div>
+        </div>
+        <form [formGroup]="filtersForm" (ngSubmit)="onSearch()" class="filter-form">
+            <div class="filter-toolbar">
+                <div class="filter-field">
+                    <span class="field-label">
+                        <span class="material-symbols-outlined label-icon">calendar_today</span>
+                        İl
+                    </span>
+                    <mat-form-field appearance="outline" class="modern-field" subscriptSizing="dynamic">
+                        <mat-select formControlName="year">
+                            <mat-option *ngFor="let y of years" [value]="y">{{ y }}</mat-option>
+                        </mat-select>
+                    </mat-form-field>
+                </div>
+                <div class="filter-field">
+                    <span class="field-label">
+                        <span class="material-symbols-outlined label-icon">date_range</span>
+                        Ay
+                    </span>
+                    <mat-form-field appearance="outline" class="modern-field" subscriptSizing="dynamic">
+                        <mat-select formControlName="month" placeholder="Hamısı">
+                            <mat-option [value]="null">Hamısı</mat-option>
+                            <mat-option *ngFor="let m of months" [value]="m.value">{{ m.label }}</mat-option>
+                        </mat-select>
+                    </mat-form-field>
+                </div>
+                <div class="filter-field filter-field-firm">
+                    <span class="field-label">
+                        <span class="material-symbols-outlined label-icon">business</span>
+                        Firma
+                    </span>
+                    <mat-form-field appearance="outline" class="modern-field" subscriptSizing="dynamic">
+                        <mat-select formControlName="firmId" placeholder="Hamısı">
+                            <mat-option [value]="null">Hamısı</mat-option>
+                            <mat-option *ngFor="let firm of firms" [value]="firm.id">{{ firm.name }}</mat-option>
+                        </mat-select>
+                    </mat-form-field>
+                </div>
+                <div class="filter-toolbar-action">
+                    <button type="submit" class="search-btn">
+                        <span class="material-symbols-outlined">search</span>
+                        Axtar
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- KPI Cards -->
+<div class="kpi-row" *ngIf="allCount > 0">
+    <div class="kpi-card">
+        <div class="kpi-icon total-icon"><span class="material-symbols-outlined">list_alt</span></div>
+        <div class="kpi-body">
+            <div class="kpi-value">{{ allCount }}</div>
+            <div class="kpi-label">Cəmi qeyd</div>
+        </div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-icon faiz-icon"><span class="material-symbols-outlined">percent</span></div>
+        <div class="kpi-body">
+            <div class="kpi-value">{{ getAvgFaiz() }}%</div>
+            <div class="kpi-label">Ortalama faiz nisbəti</div>
+        </div>
+    </div>
+</div>
+
+<!-- Table Card -->
+<div class="table-card audit-table-loading-shell">
+    <div [class.audit-table-muted]="isLoading">
+    <div class="table-card-header">
+        <div class="table-info">
+            <span class="material-symbols-outlined table-info-icon">table_view</span>
+            <span class="table-title">Nəticələr</span>
+            <span class="result-badge">{{ allCount }} qeyd</span>
+        </div>
+        <button class="clear-filter-btn" *ngIf="hasActiveColumnFilters" (click)="clearFilters()">
+            <span class="material-symbols-outlined">filter_alt_off</span>
+            Filtrləri sil
+        </button>
+    </div>
+    <div class="table-responsive-wrapper">
+        <table mat-table [dataSource]="dataSource" class="modern-table">
+            <ng-container *ngFor="let col of columns" [matColumnDef]="col.key">
+                <th mat-header-cell *matHeaderCellDef class="data-header-cell">{{ col.label }}</th>
+                <td mat-cell *matCellDef="let row">
+                    <ng-container [ngSwitch]="col.key">
+                        <span *ngSwitchCase="'row'" class="row-number">{{ row[col.key] }}</span>
+                        <span *ngSwitchCase="'bolge'" class="region-badge">{{ row[col.key] }}</span>
+                        <span *ngSwitchCase="'magaza_kodu'" class="code-badge">{{ row[col.key] }}</span>
+                        <span *ngSwitchCase="'magaza_adi'" class="branch-name">{{ row[col.key] }}</span>
+                        <span *ngSwitchCase="'tasnifat'" class="tasnifat-badge">{{ row[col.key] }}</span>
+                        <span *ngSwitchCase="'sobe'" class="sobe-badge">{{ row[col.key] }}</span>
+                        <span *ngSwitchCase="'umumi_total_bal'" class="score-num">{{ row[col.key] }}</span>
+                        <span *ngSwitchCase="'toplanan_total_bal'" class="score-num faktiki">{{ row[col.key] }}</span>
+                        <span *ngSwitchCase="'faiz_nisbeti'" class="faiz-chip"
+                            [class.faiz-high]="row[col.key] >= 90"
+                            [class.faiz-mid]="row[col.key] >= 75 && row[col.key] < 90"
+                            [class.faiz-low]="row[col.key] < 75">
+                            {{ row[col.key] }}%
+                        </span>
+                        <span *ngSwitchDefault>{{ row[col.key] }}</span>
+                    </ng-container>
+                </td>
+            </ng-container>
+
+            <!-- Column filter row definitions -->
+            <ng-container *ngFor="let col of columns" [matColumnDef]="col.key + '__filter'">
+                <th mat-header-cell *matHeaderCellDef class="filter-header-cell">
+                    <div class="filter-input-wrap" *ngIf="col.key !== 'row'">
+                        <span class="material-symbols-outlined filter-input-icon">search</span>
+                        <input class="filter-input"
+                            (input)="applyColumnFilter($event, col.key)"
+                            [placeholder]="col.label + '...'" />
+                    </div>
+                </th>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="displayedColumns" class="data-header-row"></tr>
+            <tr mat-header-row *matHeaderRowDef="filterColumns" class="filter-row"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns" class="data-row"></tr>
+        </table>
+        <div class="empty-state" *ngIf="!isLoading && dataSource.data.length === 0">
+            <span class="material-symbols-outlined empty-icon">inbox</span>
+            <p>Filtrlər seçib "Axtar" düyməsini basın</p>
+        </div>
+    </div>
+    <mat-paginator
+        [length]="allCount"
+        [pageIndex]="tableState.paginator.page"
+        [pageSize]="tableState.paginator.size"
+        [pageSizeOptions]="[10, 25, 50]"
+        (page)="onPage($event)"
+        showFirstLastButtons
+        class="modern-paginator"></mat-paginator>
+    </div>
+    <app-audit-loading-overlay *ngIf="isLoading"
+        title="Hesabat hazırlanır"
+        hint="Şöbələr üzrə məlumatlar yüklənir…"></app-audit-loading-overlay>
+</div>

@@ -1,0 +1,653 @@
+// Modern Login Page Styles - UI/UX Best Practices
+// Following 10 UI/UX Principles:
+// 1. Visual Hierarchy, 2. Consistency, 3. Accessibility, 4. Feedback, 5. Simplicity
+// 6. Responsiveness, 7. Visual Appeal, 8. User Guidance, 9. Error Prevention, 10. Performance
+
+:host {
+    display: block;
+    width: 100%;
+}
+
+// 1. VISUAL HIERARCHY - Clear structure with proper spacing and emphasis
+.login-container {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #ffffff; // Clean white background
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+}
+
+.login-wrapper {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+// 2. CONSISTENCY - Unified design language with consistent spacing and colors
+.login-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    min-height: 700px;
+    background: #ffffff;
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08); // Subtle shadow for depth
+    animation: slideUp 0.6s ease-out;
+    border: 1px solid #F0F0F0; // Subtle border for definition
+
+    &.component-dark-theme {
+        background: #0C1427;
+        border-color: #172036;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    }
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+// 3. ACCESSIBILITY - High contrast, clear labels, proper focus states
+// Image Section - Welcome area
+.login-image-section {
+    position: relative;
+    background: linear-gradient(135deg, #605DFF 0%, #3584FC 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 40px;
+    overflow: hidden;
+
+    &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: 
+            radial-gradient(circle at 20% 50%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+            radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+            radial-gradient(circle at 40% 20%, rgba(255, 255, 255, 0.05) 0%, transparent 50%);
+        opacity: 1;
+        z-index: 1;
+    }
+
+    .image-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(135deg, rgba(96, 93, 255, 0.92) 0%, rgba(53, 132, 252, 0.92) 100%);
+        z-index: 2;
+    }
+
+    .image-content {
+        position: relative;
+        z-index: 3;
+        text-align: center;
+        color: #ffffff;
+        max-width: 400px;
+
+        .welcome-text {
+            h2 {
+                font-size: 36px;
+                font-weight: 700;
+                margin-bottom: 20px;
+                line-height: 1.2;
+                text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+                color: #ffffff;
+            }
+
+            p {
+                font-size: 18px;
+                line-height: 1.6;
+                opacity: 0.95;
+                margin: 0;
+                color: #ffffff;
+            }
+        }
+    }
+}
+
+// Form Section
+.login-form-section {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 50px;
+    background: #ffffff;
+
+    &.component-dark-theme {
+        background: #0C1427;
+    }
+}
+
+.form-container {
+    width: 100%;
+    max-width: 420px;
+}
+
+// Logo Container - Clear branding
+.logo-container {
+    text-align: center;
+    margin-bottom: 40px;
+
+    .logo {
+        margin-bottom: 24px;
+        display: inline-block;
+
+        img {
+            height: 50px;
+            width: auto;
+            transition: transform 0.3s ease;
+
+            &:hover {
+                transform: scale(1.05);
+            }
+        }
+
+        .logo-img-white {
+            display: none;
+        }
+    }
+
+    .welcome-title {
+        font-size: 32px;
+        font-weight: 700;
+        color: #1A1F2E;
+        margin: 0 0 8px 0;
+        line-height: 1.2;
+        text-align: center;
+        display: block;
+    }
+
+    .welcome-subtitle {
+        font-size: 16px;
+        color: #64748B;
+        margin: 0;
+        text-align: center;
+        display: block;
+        line-height: 1.5;
+    }
+}
+
+// 4. FEEDBACK - Clear visual feedback for all interactions
+// Form Styles
+.login-form {
+    .form-field-group {
+        margin-bottom: 24px;
+
+        .field-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: #1A1F2E;
+            margin-bottom: 8px;
+            transition: color 0.3s ease;
+
+            .required-indicator {
+                color: #FF4023;
+                margin-left: 4px;
+            }
+        }
+
+        .custom-form-field {
+            width: 100%;
+
+            ::ng-deep {
+                .mat-mdc-text-field-wrapper {
+                    background-color: #F8F9FA !important;
+                    border-radius: 12px !important;
+                    transition: all 0.3s ease;
+                    border: 2px solid #E5E7EB !important;
+                    padding: 0 16px !important;
+
+                    &:hover {
+                        background-color: #F1F3F5 !important;
+                        border-color: #D1D5DB !important;
+                    }
+                }
+
+                .mat-mdc-form-field-focus-overlay {
+                    background-color: transparent !important;
+                }
+
+                .mat-mdc-form-field-subscript-wrapper {
+                    margin-top: 6px;
+                }
+
+                .mdc-text-field--filled:not(.mdc-text-field--disabled) {
+                    background-color: transparent !important;
+                }
+
+                .mdc-text-field--filled .mdc-line-ripple::after {
+                    border-bottom-color: #605DFF !important;
+                    border-bottom-width: 2px !important;
+                }
+
+                .mat-mdc-form-field.mat-focused {
+                    .mat-mdc-text-field-wrapper {
+                        background-color: #ffffff !important;
+                        border-color: #605DFF !important;
+                        box-shadow: 0 0 0 4px rgba(96, 93, 255, 0.1) !important;
+                    }
+                }
+
+                .mat-mdc-form-field-invalid {
+                    .mat-mdc-text-field-wrapper {
+                        border-color: #FF4023 !important;
+                        background-color: #FFF5F5 !important;
+                    }
+                }
+
+                .mdc-text-field__input {
+                    padding: 16px 0 !important;
+                    font-size: 15px !important;
+                    color: #1A1F2E !important;
+                    font-weight: 500 !important;
+                }
+
+                .mat-mdc-form-field-icon-prefix {
+                    padding-right: 12px !important;
+                    padding-left: 0 !important;
+                }
+
+                .mat-mdc-form-field-icon-suffix {
+                    padding-left: 12px !important;
+                    padding-right: 0 !important;
+                }
+
+                .mat-mdc-form-field-infix {
+                    padding-top: 0 !important;
+                    padding-bottom: 0 !important;
+                    min-height: auto !important;
+                }
+
+                // Icon styles - 3. ACCESSIBILITY
+                mat-icon {
+                    color: #64748B !important;
+                    font-family: 'Material Icons' !important;
+                    font-weight: normal !important;
+                    font-style: normal !important;
+                    font-size: 24px !important;
+                    line-height: 1 !important;
+                    letter-spacing: normal !important;
+                    text-transform: none !important;
+                    display: inline-block !important;
+                    white-space: nowrap !important;
+                    word-wrap: normal !important;
+                    direction: ltr !important;
+                    -webkit-font-feature-settings: 'liga' !important;
+                    -webkit-font-smoothing: antialiased !important;
+                    
+                    &.field-icon {
+                        font-size: 22px !important;
+                        width: 22px !important;
+                        height: 22px !important;
+                        line-height: 22px !important;
+                    }
+                }
+
+                .mat-mdc-form-field.mat-focused {
+                    mat-icon {
+                        color: #605DFF !important;
+                    }
+                }
+            }
+
+            .toggle-password-btn {
+                color: #64748B;
+                transition: color 0.3s ease;
+
+                &:hover {
+                    color: #605DFF;
+                }
+
+                &:focus-visible {
+                    outline: 2px solid #605DFF;
+                    outline-offset: 2px;
+                    border-radius: 4px;
+                }
+
+                mat-icon {
+                    font-family: 'Material Icons' !important;
+                    font-size: 22px !important;
+                    width: 22px !important;
+                    height: 22px !important;
+                    line-height: 22px !important;
+                }
+            }
+        }
+    }
+
+    // 4. FEEDBACK - Error messages with clear visual indicators
+    .error-alert {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 14px 16px;
+        background-color: #FFF5F5;
+        border: 1px solid #FFE0E0;
+        border-radius: 12px;
+        color: #FF4023;
+        font-size: 14px;
+        margin-bottom: 20px;
+        animation: shake 0.5s ease;
+
+        mat-icon {
+            font-family: 'Material Icons' !important;
+            font-size: 20px !important;
+            width: 20px !important;
+            height: 20px !important;
+            flex-shrink: 0;
+            color: #FF4023 !important;
+        }
+    }
+
+    @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        25% { transform: translateX(-10px); }
+        75% { transform: translateX(10px); }
+    }
+
+    // 4. FEEDBACK - Button states with clear visual feedback
+    .login-button {
+        width: 100%;
+        height: 52px;
+        border-radius: 12px;
+        font-size: 16px;
+        font-weight: 600;
+        text-transform: none;
+        background: linear-gradient(135deg, #605DFF 0%, #3584FC 100%);
+        color: #ffffff;
+        box-shadow: 0 4px 15px rgba(96, 93, 255, 0.3);
+        transition: all 0.3s ease;
+        margin-top: 8px;
+        position: relative;
+        overflow: hidden;
+        border: none;
+        cursor: pointer;
+
+        &::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s ease;
+        }
+
+        &:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(96, 93, 255, 0.4);
+
+            &::before {
+                left: 100%;
+            }
+        }
+
+        &:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        &:focus-visible {
+            outline: 3px solid rgba(96, 93, 255, 0.5);
+            outline-offset: 2px;
+        }
+
+        &:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .button-spinner {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top-color: #ffffff;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-right: 8px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .button-text {
+            display: inline-flex;
+            align-items: center;
+        }
+
+        &.loading {
+            .button-text {
+                opacity: 0.8;
+            }
+        }
+    }
+}
+
+// Dark Theme Support - 2. CONSISTENCY
+.component-dark-theme {
+    .login-form-section {
+        background: #0C1427;
+    }
+
+    .logo-container {
+        .welcome-title {
+            color: #ffffff !important;
+        }
+
+        .welcome-subtitle {
+            color: #8695AA !important;
+        }
+    }
+
+    .login-form {
+        .form-field-group {
+            .field-label {
+                color: #ffffff;
+            }
+
+            .custom-form-field {
+                ::ng-deep {
+                    .mat-mdc-text-field-wrapper {
+                        background-color: #15203c !important;
+                        border-color: #172036 !important;
+
+                        &:hover {
+                            background-color: #1a2545 !important;
+                            border-color: #1a2545 !important;
+                        }
+                    }
+
+                    .mat-mdc-form-field.mat-focused {
+                        .mat-mdc-text-field-wrapper {
+                            background-color: #1a2545 !important;
+                            border-color: #605DFF !important;
+                        }
+                    }
+
+                    .mat-mdc-form-field-invalid {
+                        .mat-mdc-text-field-wrapper {
+                            background-color: #2a1a1a !important;
+                            border-color: #FF4023 !important;
+                        }
+                    }
+
+                    .mdc-text-field__input {
+                        color: #ffffff !important;
+                    }
+
+                    mat-icon {
+                        color: #8695AA !important;
+                        font-family: 'Material Icons' !important;
+                    }
+
+                    .mat-mdc-form-field.mat-focused {
+                        mat-icon {
+                            color: #605DFF !important;
+                        }
+                    }
+                }
+
+                .toggle-password-btn {
+                    color: #8695AA;
+
+                    &:hover {
+                        color: #605DFF;
+                    }
+                }
+            }
+        }
+
+        .error-alert {
+            background-color: #2a1a1a;
+            border-color: #3a2a2a;
+            color: #ff6b6b;
+
+            mat-icon {
+                color: #ff6b6b !important;
+            }
+        }
+    }
+
+    .logo-container {
+        .logo {
+            .logo-img {
+                display: none;
+            }
+
+            .logo-img-white {
+                display: inline-block !important;
+            }
+        }
+    }
+}
+
+// RTL Support - 6. RESPONSIVENESS
+.component-rtl-enabled {
+    .login-content {
+        direction: rtl;
+    }
+
+    .form-field-group {
+        .custom-form-field {
+            ::ng-deep {
+                .mat-mdc-form-field-icon-prefix {
+                    padding-right: 0 !important;
+                    padding-left: 12px !important;
+                }
+
+                .mat-mdc-form-field-icon-suffix {
+                    padding-left: 0 !important;
+                    padding-right: 12px !important;
+                }
+            }
+        }
+    }
+}
+
+// 6. RESPONSIVENESS - Mobile-first approach
+@media only screen and (max-width: 991px) {
+    .login-content {
+        grid-template-columns: 1fr;
+        min-height: auto;
+    }
+
+    .login-image-section {
+        display: none;
+    }
+
+    .login-form-section {
+        padding: 40px 30px;
+    }
+
+    .form-container {
+        max-width: 100%;
+    }
+}
+
+@media only screen and (max-width: 767px) {
+    .login-container {
+        padding: 15px;
+    }
+
+    .login-content {
+        border-radius: 16px;
+    }
+
+    .login-form-section {
+        padding: 30px 20px;
+    }
+
+    .logo-container {
+        margin-bottom: 30px;
+
+        .welcome-title {
+            font-size: 26px !important;
+        }
+
+        .welcome-subtitle {
+            font-size: 14px !important;
+        }
+    }
+
+    .login-form {
+        .form-field-group {
+            margin-bottom: 20px;
+        }
+
+        .login-button {
+            height: 48px;
+            font-size: 15px;
+        }
+    }
+}
+
+@media only screen and (max-width: 575px) {
+    .login-container {
+        padding: 10px;
+    }
+
+    .login-form-section {
+        padding: 25px 15px;
+    }
+
+    .logo-container {
+        .logo img {
+            height: 40px;
+        }
+
+        .welcome-title {
+            font-size: 24px !important;
+        }
+    }
+}
+
+// 3. ACCESSIBILITY - Focus states for keyboard navigation
+.login-button:focus-visible,
+.toggle-password-btn:focus-visible {
+    outline: 2px solid #605DFF;
+    outline-offset: 2px;
+}
+
+// 10. PERFORMANCE - Optimized transitions
+* {
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}

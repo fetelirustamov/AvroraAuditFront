@@ -1,0 +1,102 @@
+<mat-card class="tables-of-content-card mb-25 border-radius d-block bg-white border-0 shadow-none"
+    [class.component-rtl-enabled]="themeService.isRTLEnabled()" [class.component-dark-theme]="themeService.isDark()">
+
+    <mat-card-content>
+        <div class="row align-items-center">
+            <div class="col-xxl-12">
+                <div class="tables-of-content-list">
+                    <mat-accordion>
+
+                        <!-- bu fora dusecek -->
+
+                        <mat-expansion-panel *ngFor="let section of sections" class="mb-10"
+                            (opened)="onPanelOpened(section)">
+                            <mat-expansion-panel-header>
+                                <mat-panel-title>
+                                    {{ section.sectionName }}
+                                </mat-panel-title>
+                            </mat-expansion-panel-header>
+
+
+                            <mat-card-content>
+                                <div class="table-style-two">
+                                    <div class="table-responsive">
+                                        <table mat-table [dataSource]="disruptionsMap.get(section.id) || []">
+                                            <!-- Checkbox Column -->
+                                            <ng-container matColumnDef="position">
+                                                <th mat-header-cell *matHeaderCellDef class="text-center">#</th>
+                                                <td mat-cell *matCellDef="let element; let i = index"
+                                                    class="text-center">
+                                                    {{ getRowNumber(i) }}
+                                                </td>
+                                            </ng-container>
+                                            <ng-container matColumnDef="disruptionCategoryName">
+                                                <th mat-header-cell *matHeaderCellDef>Kateqoriya</th>
+                                                <td mat-cell *matCellDef="let element">{{ element.disruptionCategoryName
+                                                    }}</td>
+                                            </ng-container>
+
+                                            <ng-container matColumnDef="reasonName">
+                                                <th mat-header-cell *matHeaderCellDef>Səbəb</th>
+                                                <td mat-cell *matCellDef="let element">{{ element.reasonName }}</td>
+                                            </ng-container>
+
+                                            <ng-container matColumnDef="description">
+                                                <th mat-header-cell *matHeaderCellDef>Açıqlama</th>
+                                                <td mat-cell *matCellDef="let element">{{ element.description }}</td>
+                                            </ng-container>
+                                            <ng-container matColumnDef="createdDate">
+                                                <th mat-header-cell *matHeaderCellDef>Tarix</th>
+                                                <td mat-cell *matCellDef="let element">{{ element.createdDate }}</td>
+                                            </ng-container>
+
+                                            <ng-container matColumnDef="media">
+                                                <th mat-header-cell *matHeaderCellDef>Media</th>
+                                                <td mat-cell *matCellDef="let element">
+                                                    <!-- Şərtli image icon -->
+                                                    <app-media #mediaCompImg [id]="element.id" [type]="MediaType.Image"
+                                                        [module]="Module.Disruption">
+                                                        <span *ngIf="element.images > 0"
+                                                            class="material-symbols-outlined primary"
+                                                            (click)="mediaCompImg.open()" style="cursor:pointer;"
+                                                            media-trigger>
+                                                            image
+                                                        </span>
+                                                    </app-media>
+                                                    <app-media #mediaCompVid [id]="element.id" [type]="MediaType.Video"
+                                                        [module]="Module.Disruption">
+                                                        <span *ngIf="element.videos > 0"
+                                                            class="material-symbols-outlined primary"
+                                                            (click)="mediaCompVid.open()" style="cursor:pointer;"
+                                                            media-trigger>
+                                                            video
+                                                        </span>
+                                                    </app-media>
+                                                </td>
+
+                                            </ng-container>
+
+
+                                            <div>
+                                                <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+                                                <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+                                            </div>
+                                        </table>
+
+                                        <mat-paginator #paginator [length]="allDataCount" [pageSize]="pageSize"
+                                            [pageSizeOptions]="pageSizeOptions" showFirstLastButtons>
+                                        </mat-paginator>
+                                    </div>
+                                </div>
+                            </mat-card-content>
+
+                        </mat-expansion-panel>
+
+
+                    </mat-accordion>
+                </div>
+            </div>
+
+        </div>
+    </mat-card-content>
+</mat-card>

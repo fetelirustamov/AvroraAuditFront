@@ -1,0 +1,22 @@
+<div class="toast-wrapper" [ngClass]="data.type">
+  <!-- Left accent icon strip -->
+  <div class="toast-icon-strip">
+    <span class="toast-icon material-symbols-outlined">{{ icon }}</span>
+  </div>
+
+  <!-- Content -->
+  <div class="toast-body">
+    <p class="toast-title">{{ data.title }}</p>
+    <p class="toast-message" *ngIf="data.message">{{ data.message }}</p>
+  </div>
+
+  <!-- Close -->
+  <button class="toast-close" (click)="dismiss()" aria-label="Bağla">
+    <span class="material-symbols-outlined">close</span>
+  </button>
+
+  <!-- Progress bar -->
+  <div class="toast-progress">
+    <div class="toast-progress-bar" [style.animation-duration]="data.duration + 'ms'"></div>
+  </div>
+</div>

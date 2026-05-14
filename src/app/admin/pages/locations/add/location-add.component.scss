@@ -1,0 +1,275 @@
+/* Location add form styles */
+.modal-like {
+    mat-card {
+        margin-bottom: 25px;
+        background-color: #ffffff !important;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        max-height: 100%;
+        overflow: hidden;
+        /* Card-da scroll-u söndürürük */
+    }
+
+    .header-container {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 20px 24px 0;
+        margin-bottom: 20px;
+
+        .top-actions {
+            display: flex;
+            gap: 12px;
+
+            button {
+                border-radius: 8px;
+                font-weight: 500;
+                padding: 8px 20px;
+                height: 40px;
+            }
+        }
+    }
+
+    mat-card-content {
+        padding: 0 24px 24px;
+        max-height: calc(100vh - 200px);
+        overflow-y: auto !important;
+        /* Yalnız burada scroll olsun */
+        overflow-x: hidden !important;
+        /* Horizontal scroll-u söndürürük */
+        /* Scroll bar stilləri */
+        scrollbar-width: thin;
+        scrollbar-color: #c1c1c1 #f1f1f1;
+        /* Digər scroll-u söndürürük */
+        scrollbar-width: auto;
+        -ms-overflow-style: auto;
+    }
+
+    /* Custom scroll bar stilləri */
+    mat-card-content::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    mat-card-content::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 4px;
+    }
+
+    mat-card-content::-webkit-scrollbar-thumb {
+        background: #c1c1c1;
+        border-radius: 4px;
+    }
+
+    mat-card-content::-webkit-scrollbar-thumb:hover {
+        background: #a8a8a8;
+    }
+
+    .row {
+        margin: 0 -12px;
+
+        .col-md-4,
+        .col-md-6,
+        .col-md-8,
+        .col-md-12,
+        .col-sm-6,
+        .col-12 {
+            padding: 0 12px;
+            margin-bottom: 20px;
+        }
+    }
+}
+
+// Modern input dizaynı - admin modal form (login dizaynı ilə eyni xəttdə)
+.admin-modal-form {
+    .form-field-group {
+        margin-bottom: 24px;
+
+        .field-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: #1A1F2E;
+            margin-bottom: 8px;
+
+            .required-indicator {
+                color: #FF4023;
+                margin-left: 4px;
+            }
+        }
+
+        .custom-form-field {
+            width: 100%;
+
+            ::ng-deep {
+                .mat-mdc-text-field-wrapper {
+                    background-color: #F8F9FA !important;
+                    border-radius: 12px !important;
+                    transition: all 0.3s ease;
+                    border: 2px solid #E5E7EB !important;
+                    padding: 0 16px !important;
+                }
+
+                .mat-mdc-form-field-focus-overlay {
+                    background-color: transparent !important;
+                }
+
+                .mat-mdc-form-field-subscript-wrapper {
+                    margin-top: 6px;
+                }
+
+                .mdc-text-field--filled:not(.mdc-text-field--disabled) {
+                    background-color: transparent !important;
+                }
+
+                .mdc-text-field--filled .mdc-line-ripple::after {
+                    border-bottom-color: #605DFF !important;
+                    border-bottom-width: 2px !important;
+                }
+
+                .mat-mdc-form-field.mat-focused {
+                    .mat-mdc-text-field-wrapper {
+                        background-color: #ffffff !important;
+                        border-color: #605DFF !important;
+                        box-shadow: 0 0 0 4px rgba(96, 93, 255, 0.1) !important;
+                    }
+                }
+
+                .mat-mdc-form-field-invalid {
+                    .mat-mdc-text-field-wrapper {
+                        border-color: #FF4023 !important;
+                        background-color: #FFF5F5 !important;
+                    }
+                }
+
+                .mdc-text-field__input {
+                    padding: 8px 0 !important;
+                    font-size: 15px !important;
+                    color: #1A1F2E !important;
+                    font-weight: 500 !important;
+                    background-color: #ffffff !important;
+                }
+
+                textarea.mdc-text-field__input {
+                    padding: 12px 0 !important;
+                    font-size: 15px !important;
+                    color: #1A1F2E !important;
+                    font-weight: 500 !important;
+                    background-color: #ffffff !important;
+                }
+
+                .mat-mdc-form-field-icon-prefix {
+                    padding-right: 12px !important;
+                    padding-left: 0 !important;
+                }
+
+                .mat-mdc-form-field-icon-suffix {
+                    padding-left: 12px !important;
+                    padding-right: 0 !important;
+                }
+
+                .mat-mdc-form-field-infix {
+                    padding-top: 0 !important;
+                    padding-bottom: 0 !important;
+                    min-height: auto !important;
+                }
+
+                // Select-specific hündürlük və hizalama
+                .mat-mdc-form-field.mat-mdc-form-field-type-mat-select {
+                    .mat-mdc-select-trigger {
+                        min-height: 40px;
+                        display: flex;
+                        align-items: center;
+                    }
+
+                    .mat-mdc-select-value,
+                    .mat-mdc-select-placeholder {
+                        display: flex;
+                        align-items: center;
+                        font-size: 15px;
+                    }
+
+                    .mat-mdc-select-arrow {
+                        align-self: center;
+                    }
+                }
+            }
+        }
+    }
+}
+
+/* Spacing below map */
+.after-map {
+    margin-top: 12px;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+    .modal-like {
+        mat-card-content {
+            max-height: calc(100vh - 180px);
+            overflow-y: auto !important;
+            overflow-x: hidden !important;
+        }
+    }
+}
+
+@media (max-width: 991px) {
+    .modal-like {
+        mat-card-content {
+            max-height: calc(100vh - 160px);
+            overflow-y: auto !important;
+            overflow-x: hidden !important;
+        }
+    }
+}
+
+@media (max-width: 767px) {
+    .modal-like {
+        .header-container {
+            flex-direction: column;
+            gap: 16px;
+            align-items: flex-start;
+        }
+
+        .top-actions {
+            width: 100%;
+            justify-content: flex-end;
+        }
+
+        mat-card-content {
+            max-height: calc(100vh - 140px);
+            padding: 0 16px 16px;
+            overflow-y: auto !important;
+            overflow-x: hidden !important;
+
+            .row {
+                margin: 0 -8px;
+
+                .col-md-4,
+                .col-md-6,
+                .col-md-8,
+                .col-md-12,
+                .col-sm-6,
+                .col-12 {
+                    padding: 0 8px;
+                    margin-bottom: 16px;
+                }
+            }
+        }
+    }
+}
+
+@media (max-width: 576px) {
+    .modal-like {
+        mat-card-content {
+            max-height: calc(100vh - 120px);
+            padding: 0 12px 12px;
+            overflow-y: auto !important;
+            overflow-x: hidden !important;
+        }
+
+        .header-container {
+            padding: 16px 16px 0;
+        }
+    }
+}

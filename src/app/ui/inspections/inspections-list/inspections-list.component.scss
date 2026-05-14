@@ -1,0 +1,136 @@
+// Yoxlamalar siyahısı — yenidən istifadə olunan yükləmə: audit-loading-overlay
+.inspections-list-card {
+    overflow: hidden;
+}
+
+.inspections-table-shell {
+    position: relative;
+    min-height: 220px;
+
+    &--loading .table-responsive,
+    &--loading mat-paginator {
+        user-select: none;
+    }
+}
+
+.button-group {
+    display: flex;
+    align-items: center;
+    flex-direction: row;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.spaceBetween {
+    margin: 0 !important;
+}
+
+// .text-center {
+//     text-align: center;
+//     margin-bottom: 10px;
+// }
+
+// button .button {
+//     position: absolute;
+// }
+button .material-symbols-outlined {
+    font-size: 20px;
+    line-height: 1;
+    vertical-align: middle;
+}
+
+// button span.text-center {
+//     vertical-align: middle;
+// }
+
+.page-select {
+    padding: 5px 10px;
+    border-radius: 5px;
+    margin: 5px;
+}
+
+.filter-input {
+    padding-left: 6px;
+    font-size: 13px;
+    height: 35px;
+    margin-top: 4px;
+    background-color: white;
+}
+
+// .header-title {
+//     text-align: center;
+//     margin-left: 50%;
+// }
+
+.mat-mdc-dialog-container .mat-mdc-dialog-title {
+    font-weight: 700 !important;
+}
+
+
+.dialog-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    // padding: 0 8px !important;
+}
+
+.close-button {
+    cursor: pointer;
+    margin-right: 15px;
+    padding: 2px;
+    min-width: auto;
+}
+
+.close-button:hover {
+    background-color: rgb(237, 235, 235);
+    border-radius: 20px;
+}
+
+.main-label {
+    font-size: 15px;
+    font-weight: 500;
+    margin-bottom: 8px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+
+
+mat-form-field {
+    display: grid;
+    gap: 10px !important;
+
+    @media screen and (max-width: 992px) and (min-width: 768px) {
+        gap: 10px !important;
+        flex-direction: column !important;
+    }
+}
+
+// .button-group {
+//     padding-bottom: 10px !important;
+//     display: flex;
+//     flex-direction: row;
+//     gap: 10px;
+//     padding: 10px !important;
+// }
+
+
+@media screen and (max-width: 992px) and (min-width: 769px) {
+    .button-group {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+        width: 100%;
+    }
+}
+
+@media screen and (max-width: 768px) {
+    .button-group {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+        margin-bottom: 8px;
+    }
+}
