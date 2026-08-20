@@ -1,0 +1,203 @@
+.filter-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 8px 20px;
+}
+
+.filter-field {
+    flex: 1 1 220px;
+    max-width: 280px;
+}
+
+.filter-row button {
+    height: 56px;
+    padding: 0 24px;
+    border-radius: 8px;
+    flex-shrink: 0;
+
+    span.material-symbols-outlined {
+        vertical-align: middle;
+        margin-right: 4px;
+        font-size: 18px;
+    }
+}
+
+.export-row {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #f0f0f0;
+}
+
+.route-layout {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.map-card {
+    flex: 2 1 500px;
+}
+
+.summary-card {
+    flex: 1 1 280px;
+}
+
+.route-map {
+    height: 520px;
+    width: 100%;
+    border-radius: 6px;
+}
+
+.totals {
+    display: flex;
+    gap: 24px;
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 16px;
+
+    span.material-symbols-outlined {
+        vertical-align: middle;
+        margin-right: 4px;
+    }
+}
+
+.skipped-warning {
+    background-color: #fff8e1;
+    color: #8a6d1a;
+    border-radius: 6px;
+    padding: 10px 12px;
+    margin-bottom: 16px;
+    font-size: 13px;
+}
+
+.stop-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+
+    li {
+        padding: 8px 0;
+        border-bottom: 1px solid #f0f0f0;
+    }
+}
+
+.stop-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.stop-details {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin-top: 4px;
+    margin-left: 34px;
+    font-size: 12px;
+    color: #6b7280;
+
+    span.material-symbols-outlined {
+        font-size: 14px;
+        vertical-align: middle;
+        margin-right: 2px;
+    }
+}
+
+.stop-order {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #3d4fff;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.stop-visited .stop-order {
+    background: #10b981;
+}
+
+.stop-name {
+    flex: 1;
+    font-weight: 500;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    cursor: default;
+}
+
+.stop-code {
+    color: #4b5563;
+    font-weight: 500;
+    font-size: 12px;
+}
+
+.stop-visited-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #10b981;
+    white-space: nowrap;
+
+    span.material-symbols-outlined {
+        font-size: 14px;
+    }
+}
+
+.stop-distance {
+    font-size: 12px;
+    color: #6b7280;
+    white-space: nowrap;
+}
+
+::ng-deep .route-marker-wrapper {
+    background: transparent;
+    border: none;
+}
+
+::ng-deep .route-marker {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #3d4fff;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+    box-shadow: 0 0 0 2px #fff;
+}
+
+::ng-deep .route-marker--visited {
+    background: #10b981;
+}
+
+.select-search-box {
+    padding: 6px 12px;
+    position: sticky;
+    top: 0;
+    background: #fff;
+    z-index: 1;
+
+    input {
+        width: 100%;
+        padding: 6px 8px;
+        border: 1px solid #e0e0e0;
+        border-radius: 4px;
+        font-size: 13px;
+        outline: none;
+
+        &:focus {
+            border-color: #3d4fff;
+        }
+    }
+}

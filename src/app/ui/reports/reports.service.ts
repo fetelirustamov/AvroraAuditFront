@@ -37,4 +37,11 @@ export class ReportsService {
             headers: new HttpHeaders({ 'Content-Type': 'application/json' }),
         });
     }
+
+    /** Yoxlama planı üzrə iş statusu hesabatı */
+    getInspectionPlanWorkDetails(state: TableState): Observable<TableResponse<unknown>> {
+        return this.http.post<TableResponse<unknown>>(`${this.baseUrl}/getInspectionPlanWorkDetails`, state, {
+            headers: new HttpHeaders({ 'Content-Type': 'application/json' }),
+        });
+    }
 }

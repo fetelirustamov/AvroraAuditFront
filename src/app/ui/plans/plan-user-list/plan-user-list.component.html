@@ -17,6 +17,15 @@
                 </mat-select>
             </mat-form-field>
         </div>
+        <div class="g-filter-field">
+            <label class="g-field-label">
+                <span class="material-symbols-outlined">search</span>
+                Müfəttiş axtar
+            </label>
+            <mat-form-field appearance="outline" class="g-modern-field">
+                <input matInput [(ngModel)]="searchTerm" (ngModelChange)="applyFilter()" placeholder="Ad və ya email...">
+            </mat-form-field>
+        </div>
         <div class="g-filter-actions">
             <button class="g-search-btn" (click)="onPlanClick()">
                 <span class="material-symbols-outlined">event_available</span>

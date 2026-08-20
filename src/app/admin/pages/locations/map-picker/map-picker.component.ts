@@ -1,14 +1,20 @@
 import { AfterViewInit, Component, ElementRef, EventEmitter, HostListener, Input, NgZone, OnDestroy, Output, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import * as L from 'leaflet';
 
-// Leaflet will be loaded from CDN
-declare const L: any;
+// Leaflet's default marker images are served from angular.json's "leaflet/" asset output
+// instead of the package's relative dist/images path, which the Angular build doesn't resolve.
+L.Icon.Default.mergeOptions({
+    iconRetinaUrl: 'leaflet/marker-icon-2x.png',
+    iconUrl: 'leaflet/marker-icon.png',
+    shadowUrl: 'leaflet/marker-shadow.png'
+});
 
 @Component({
     selector: 'app-map-picker',
     standalone: true,
     imports: [CommonModule],
-    template: `<div #mapEl class=\"map-picker\"></div>`,
+    template: `<div #mapEl class="map-picker"></div>`,
     styleUrl: './map-picker.component.scss'
 })
 export class MapPickerComponent implements AfterViewInit, OnDestroy {
@@ -18,16 +24,13 @@ export class MapPickerComponent implements AfterViewInit, OnDestroy {
 
     @ViewChild('mapEl', { static: true }) mapEl!: ElementRef<HTMLDivElement>;
 
-    private map: any;
-    private marker: any;
-    private scriptEl?: HTMLScriptElement;
-    private linkEl?: HTMLLinkElement;
+    private map!: L.Map;
+    private marker!: L.Marker;
     private ro?: ResizeObserver;
 
     constructor(private zone: NgZone) { }
 
-    async ngAfterViewInit(): Promise<void> {
-        await this.ensureLeaflet();
+    ngAfterViewInit(): void {
         this.initMap();
         // Multiple invalidations to handle dialog animations and initial layout
         this.zone.runOutsideAngular(() => {
@@ -50,26 +53,7 @@ export class MapPickerComponent implements AfterViewInit, OnDestroy {
     @HostListener('window:resize') onWindowResize() { this.invalidate(); }
 
     private invalidate() {
-        if (this.map && this.map.invalidateSize) {
-            this.map.invalidateSize(true);
-        }
-    }
-
-    private ensureLeaflet(): Promise<void> {
-        return new Promise((resolve) => {
-            const w: any = window as any;
-            if (w.L && w.L.map) return resolve();
-            this.linkEl = document.createElement('link');
-            this.linkEl.rel = 'stylesheet';
-            this.linkEl.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
-            document.head.appendChild(this.linkEl);
-
-            this.scriptEl = document.createElement('script');
-            this.scriptEl.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
-            this.scriptEl.async = true;
-            this.scriptEl.onload = () => resolve();
-            document.head.appendChild(this.scriptEl);
-        });
+        this.map?.invalidateSize(true);
     }
 
     private initMap() {
@@ -84,7 +68,7 @@ export class MapPickerComponent implements AfterViewInit, OnDestroy {
             const p = this.marker.getLatLng();
             this.emitPick(p.lat, p.lng);
         });
-        this.map.on('click', (e: any) => {
+        this.map.on('click', (e: L.LeafletMouseEvent) => {
             const { lat, lng } = e.latlng;
             this.marker.setLatLng([lat, lng]);
             this.emitPick(lat, lng);
@@ -95,4 +79,4 @@ export class MapPickerComponent implements AfterViewInit, OnDestroy {
         this.lat = lat; this.lng = lng;
         this.pick.emit({ lat, lng });
     }
-} 
+}

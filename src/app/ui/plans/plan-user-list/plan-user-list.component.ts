@@ -38,7 +38,7 @@ export interface PeriodicElement {
 @Component({
   selector: 'app-plan-user-list',
   standalone: true,
-  imports: [MatCardModule, MatInputModule, MatFormFieldModule, MatSelectModule, MatNativeDateModule, MatButtonModule, MatPaginatorModule, MatTableModule, MatCheckboxModule, MatMenuModule, NgFor],
+  imports: [MatCardModule, MatInputModule, MatFormFieldModule, MatSelectModule, MatNativeDateModule, MatButtonModule, MatPaginatorModule, MatTableModule, MatCheckboxModule, MatMenuModule, NgFor, FormsModule],
   templateUrl: './plan-user-list.component.html',
   styleUrl: './plan-user-list.component.scss'
 })
@@ -64,6 +64,7 @@ export class PlanUserListComponent {
   public firms: Firm[] = [];
   public users$: Observable<User[]> = new Observable<User[]>();
   public pageSize: number[] = [10, 25];
+  public searchTerm: string = '';
 
   constructor(
     private inspectionsService: InspectionsService,
@@ -79,7 +80,14 @@ export class PlanUserListComponent {
       this.notify.success(state.message);
     }
 
+    this.dataSource.filterPredicate = (data: any, filter: string) =>
+      `${data.customer?.name ?? ''} ${data.email ?? ''}`.toLowerCase().includes(filter);
+
     this.getFirms();
+  }
+
+  applyFilter(): void {
+    this.dataSource.filter = this.searchTerm.trim().toLowerCase();
   }
 
 
@@ -152,6 +160,8 @@ export class PlanUserListComponent {
 
   onSelectFirm(selectedFirmId: number) {
     this.selectedFirmId = selectedFirmId;
+    this.searchTerm = '';
+    this.dataSource.filter = '';
     this.getInspectors(selectedFirmId);
   }
 

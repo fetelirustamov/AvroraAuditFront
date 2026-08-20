@@ -210,48 +210,52 @@ export class PlanCheckedComponent {
   // }
 
   changePlanStatus(row: any, status: number) {
-    this.planApproveList = [];
-    this.planApprove = new PlanApprove();
-    this.planApprove.planId = row.id;
-    this.planApprove.status = status;
-    this.planApproveList.push(this.planApprove);
-
-    if (this.planApproveList.length == 0) {
-      this.notify.warning('Heç bir plan seçilməyib');
+    const planId = this.resolvePlanId(row);
+    if (!planId) {
+      this.notify.warning('Plan tapılmadı');
       return;
     }
 
-    // Burada row.id və ya row-un başqa istədiyin property-lərini işlədə bilərsə
-    this.planService.aprovePlan(this.planApproveList).subscribe((data) => {
-      if (data.success) {
-        this.notify.success('Əməliyyat uğurla tamamlandı');
-      }
-      this.fill();
-    });
+    this.submitPlanStatus([{ planId, status } as PlanApprove], status);
   }
 
   changeSelectedPlanStatus(status: number) {
-    this.planApproveList = [];
-
-    this.selection.selected.forEach((row) => {
-      this.planApprove = new PlanApprove();
-      this.planApprove.planId = row.id;
-      this.planApprove.status = status;
-      this.planApproveList.push(this.planApprove);
-    })
+    this.planApproveList = this.selection.selected
+      .map((row) => {
+        const planApprove = new PlanApprove();
+        planApprove.planId = this.resolvePlanId(row);
+        planApprove.status = status;
+        return planApprove;
+      })
+      .filter((item) => item.planId > 0);
 
     if (this.planApproveList.length == 0) {
       this.notify.warning('Heç bir plan seçilməyib');
       return;
     }
 
+    this.submitPlanStatus(this.planApproveList, status);
+  }
 
-    this.planService.aprovePlan(this.planApproveList).subscribe((data) => {
-      console.log(data);
-      if (data.success) {
-        this.notify.success('Plan təstiqləndi');
+  private resolvePlanId(row: any): number {
+    return Number(row?.id ?? row?.Id ?? row?.planId ?? 0);
+  }
+
+  private submitPlanStatus(items: PlanApprove[], status: number): void {
+    this.planService.aprovePlan(items).subscribe({
+      next: (data) => {
+        const updatedCount = Number(data?.data ?? 0);
+        if (data?.success && updatedCount > 0) {
+          this.notify.success(status === 4 ? 'Yoxlama təsdiqləndi' : 'Yoxlama rədd edildi');
+          this.selection.clear();
+          this.fill();
+          return;
+        }
+        this.notify.error(data?.message || 'Status dəyişmədi');
+      },
+      error: () => {
+        this.notify.error('Status dəyişmədi');
       }
-      this.fill();
     });
   }
 

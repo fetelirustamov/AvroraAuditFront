@@ -7,6 +7,7 @@ import { PlanCheckedComponent } from './plans/plan-checked/plan-checked.componen
 import { PlansApproveComponent } from './plans/plans-approve/plans-approve.component';
 import { PlanActionsComponent } from './plans/plan-actions/plan-actions.component';
 import { PlanCreateComponent } from './plans/plan-user-list/plan-create/plan-create.component';
+import { PlanRouteComponent } from './plans/plan-route/plan-route.component';
 import { InspectionsComponent } from './inspections/inspections.component';
 import { InspectionsListComponent } from './inspections/inspections-list/inspections-list.component';
 import { DisruptionsComponent } from './disruptions/disruptions.component';
@@ -32,6 +33,7 @@ import { SobelerPuanlamasiComponent } from './reports/branch-scoring/branch-scor
 import { UygunsuzluqAnaliziComponent } from './reports/nonconformity-analysis/nonconformity-analysis.component';
 import { ChecklistAnalysisComponent } from './reports/checklist-analysis/checklist-analysis.component';
 import { UygunsuzluqTasnifatHesabatiComponent } from './reports/nonconformity-category-report/nonconformity-category-report.component';
+import { InspectionPlanWorkComponent } from './reports/inspection-plan-work/inspection-plan-work.component';
 
 export const uiRoutes: Routes = [
     {
@@ -49,6 +51,12 @@ export const uiRoutes: Routes = [
             { path: 'reports/checklist-analysis', component: ChecklistAnalysisComponent },
             { path: 'reports/nonconformity-category-report', component: UygunsuzluqTasnifatHesabatiComponent },
             {
+                path: 'reports/inspection-plan-work',
+                component: InspectionPlanWorkComponent,
+                canActivate: [RoleGuard],
+                data: { roles: ['Admin', 'HeadInspector'] },
+            },
+            {
                 path: 'plans',
                 component: PlansComponent,
                 children: [
@@ -59,6 +67,12 @@ export const uiRoutes: Routes = [
                     { path: 'add', component: PlanUserListComponent },
                     { path: 'create', component: PlanCreateComponent },
                     { path: 'calendar', component: PlanCalendarComponent },
+                    {
+                        path: 'route',
+                        component: PlanRouteComponent,
+                        canActivate: [RoleGuard],
+                        data: { roles: ['Admin', 'HeadInspector'] },
+                    },
 
                 ],
             },

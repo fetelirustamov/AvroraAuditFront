@@ -48,9 +48,6 @@ interface LocationPayload {
     styleUrl: './location-add.component.scss'
 })
 export class LocationAddComponent implements OnInit {
-    /** Bu firmalar üçün eyni əraziyə yalnız bir bağlantı icazə verilir */
-    private static readonly SINGLE_REGION_FIRM_IDS = new Set([5, 6, 35]);
-
     form!: FormGroup;
     firms: FirmDto[] = [];
     regions: any[] = [];
@@ -168,10 +165,6 @@ export class LocationAddComponent implements OnInit {
         });
     }
 
-    private isSingleRegionFirm(firmId: number | null): boolean {
-        return firmId != null && LocationAddComponent.SINGLE_REGION_FIRM_IDS.has(firmId);
-    }
-
     private resolveRegionId(location: LocationDto): number | null {
         return this.toNullableNumber(location.regionId ?? location.RegionId ?? location.regionID);
     }
@@ -194,7 +187,7 @@ export class LocationAddComponent implements OnInit {
         }
 
         const firmId = this.toNullableNumber(this.form.get('firmId')?.value);
-        if (!firmId || !this.isSingleRegionFirm(firmId)) {
+        if (!firmId) {
             this.regions = [...this.allRegions];
             return;
         }
@@ -286,7 +279,7 @@ export class LocationAddComponent implements OnInit {
 
         const firmId = this.toNullableNumber(raw.firmId);
         const regionId = this.toNullableNumber(raw.regionId);
-        if (firmId != null && regionId != null && this.isSingleRegionFirm(firmId)) {
+        if (firmId != null && regionId != null) {
             const excludeId = this.isEditMode ? this.data?.item?.id : undefined;
             if (this.getOccupiedRegionIds(firmId, excludeId).has(regionId)) {
                 this.notify.warning(

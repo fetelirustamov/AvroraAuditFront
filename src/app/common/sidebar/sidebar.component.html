@@ -65,6 +65,12 @@
                                     Yoxlanılmış
                                 </a>
                             </li>
+                            <li class="sidemenu-item" *hasRole="['Admin', 'HeadInspector']">
+                                <a routerLink="/plans/route" routerLinkActive="active"
+                                    [routerLinkActiveOptions]="{exact: true}" class="sidemenu-link">
+                                    Marşrut
+                                </a>
+                            </li>
                         </ul>
                     </mat-expansion-panel>
                     <mat-expansion-panel (opened)="panelOpenState.set(true)" (closed)="panelOpenState.set(false)">
@@ -221,6 +227,12 @@
                                 <a routerLink="/reports/nonconformity-category-report" routerLinkActive="active"
                                     [routerLinkActiveOptions]="{exact: true}" class="sidemenu-link">
                                     Uyğunsuzluq təsnifatı
+                                </a>
+                            </li>
+                            <li class="sidemenu-item" *hasRole="['Admin', 'HeadInspector']">
+                                <a routerLink="/reports/inspection-plan-work" routerLinkActive="active"
+                                    [routerLinkActiveOptions]="{exact: true}" class="sidemenu-link">
+                                    Plan iş statusu
                                 </a>
                             </li>
                             <!-- <li class="sidemenu-item">

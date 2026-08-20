@@ -80,6 +80,7 @@ export class InspectionsListComponent implements AfterViewInit {
   public receivedData: any; // Yeni data üçün dəyişən
   private searchTerm: string = "";
   private pendingPaginatorSync = false;
+  private skipPaginatorPageEventOnce = false;
 
   constructor(private inspectionsService: InspectionsService,
     private _tableService: TableService,
@@ -128,8 +129,19 @@ export class InspectionsListComponent implements AfterViewInit {
   }
 
   ngAfterViewInit(): void {
-    if (this.pendingPaginatorSync && this.paginator) {
+    this.paginator.page.subscribe(() => {
+      this._tableState.paginator.page = this.paginator.pageIndex;
+      this.pageSize = this.paginator.pageSize;
+      if (this.skipPaginatorPageEventOnce) {
+        this.skipPaginatorPageEventOnce = false;
+        return;
+      }
+      this.fill();
+    });
+
+    if (this.pendingPaginatorSync) {
       this.pendingPaginatorSync = false;
+      this.skipPaginatorPageEventOnce = true;
       queueMicrotask(() => {
         if (!this.paginator) {
           return;
@@ -138,6 +150,10 @@ export class InspectionsListComponent implements AfterViewInit {
         this.paginator.pageSize = Number(this._tableState.paginator.size);
       });
     }
+
+    setTimeout(() => {
+      this.skipPaginatorPageEventOnce = false;
+    }, 0);
   }
 
   ngOnChanges(changes: SimpleChanges): void {

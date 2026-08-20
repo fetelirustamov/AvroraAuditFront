@@ -21,9 +21,7 @@ import { NestedTreeControl } from '@angular/cdk/tree';
 import { MatTreeModule, MatTreeNestedDataSource } from '@angular/material/tree';
 import { ChangeDetectorRef, Component, Input, signal, SimpleChanges, TemplateRef, ViewChild } from '@angular/core';
 import { CdkAccordionModule } from '@angular/cdk/accordion';
-import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatRadioModule } from '@angular/material/radio';
-import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { AuditLoadingOverlayComponent } from '../audit-loading-overlay/audit-loading-overlay.component';
 
 // Tree node interfaces
@@ -40,9 +38,7 @@ interface QuestionNode {
   selector: 'app-inspection-section',
   imports: [MatCardModule, MatButtonModule, MatExpansionModule, CommonModule, MatPaginatorModule,
     MatTableModule, MatDialogModule, MediaComponent, MatTreeModule, CdkAccordionModule,
-    MatCheckboxModule,
-    MatRadioModule,
-    MatSlideToggleModule,
+    MatTooltipModule,
     AuditLoadingOverlayComponent
   ],
   providers: [DatePipe],
@@ -108,6 +104,24 @@ export class InspectionSectionComponent {
 
   isArray(val: any): boolean {
     return Array.isArray(val);
+  }
+
+  /** Bəli/Xeyr tipli sualda cavabın müsbət olub-olmadığını yoxlayır */
+  isYes(element: QuestionWithDetails): boolean {
+    const r = String(element.result);
+    return r === 'true' || r === '1' || r === '1.00';
+  }
+
+  /** Radio/checkbox tipli sualda variantın seçilib-seçilmədiyini yoxlayır */
+  isAnswerSelected(element: QuestionWithDetails, ansId: number): boolean {
+    if (Array.isArray(element.result)) {
+      return (element.result as any[]).map(String).includes(String(ansId));
+    }
+    return String(element.result) === String(ansId);
+  }
+
+  hasMedia(element: QuestionWithDetails): boolean {
+    return (element.images ?? 0) > 0 || (element.videos ?? 0) > 0;
   }
 
   onPanelOpened() {

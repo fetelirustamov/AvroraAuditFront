@@ -9,8 +9,8 @@ import { MatExpansionModule } from '@angular/material/expansion';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
-import { ActivatedRoute, Router } from '@angular/router';
 import { NgxMaterialTimepickerModule } from 'ngx-material-timepicker';
+import { ActivatedRoute, Router } from '@angular/router';
 import { InspectionsService } from '../../../inspections/inspections.service';
 import { PlanService } from '../../plan.service';
 import { InspectionPlan } from '../../../inspections/InpectionPlan.model';
@@ -31,8 +31,8 @@ import { NotificationService } from '../../../../shared/services/notification.se
     MatNativeDateModule,
     MatButtonModule,
     MatDatepickerModule,
-    NgxMaterialTimepickerModule,
     MatExpansionModule,
+    NgxMaterialTimepickerModule,
     NgFor,
   ],
   templateUrl: './plan-create.component.html',
@@ -40,6 +40,8 @@ import { NotificationService } from '../../../../shared/services/notification.se
 })
 export class PlanCreateComponent {
   public locations: Location[] = [];
+  public filteredLocations: Location[] = [];
+  public locationFilter: string = '';
   public data: any;
   public isLoading = false;
   public planForm!: FormGroup;
@@ -56,11 +58,11 @@ export class PlanCreateComponent {
   ) {
     const navigation = this.router.getCurrentNavigation();
     const state = navigation?.extras?.state as { data?: any };
-    console.log(state?.data);
-    // if (!state?.data) {
-    //   this.router.navigate(["plans/add"]);
-    //   return;
-    // }
+
+    if (!state?.data) {
+      this.router.navigate(["plans/add"]);
+      return;
+    }
 
     this.data = state.data;
     this.initializeForm();
@@ -79,7 +81,16 @@ export class PlanCreateComponent {
       .getLocationByFirmId(this.data.organization)
       .subscribe((locations) => {
         this.locations = locations.data;
+        this.filteredLocations = locations.data;
       });
+  }
+
+  onLocationFilterChange(): void {
+    const term = this.locationFilter.trim().toLowerCase();
+    this.filteredLocations = !term
+      ? this.locations
+      : this.locations.filter(l =>
+        `${l.locationCode} ${l.locationName}`.toLowerCase().includes(term));
   }
 
   get panels(): FormArray {
@@ -90,19 +101,13 @@ export class PlanCreateComponent {
     return this.fb.group({
       location: ['', Validators.required],
       date: [null, Validators.required],
-      startTime: ['', Validators.required],
-      endTime: ['', Validators.required]
+      startTime: ['07:00', Validators.required],
+      endTime: ['23:00', Validators.required]
     });
   }
 
   addPanel(): void {
-    const panelGroup = this.fb.group({
-      location: ['', Validators.required],
-      date: [null, Validators.required],
-      startTime: ['', Validators.required],
-      endTime: ['', Validators.required]
-    });
-    this.panels.push(panelGroup);
+    this.panels.push(this.createPanelFormGroup());
   }
 
   removePanel(index: number): void {

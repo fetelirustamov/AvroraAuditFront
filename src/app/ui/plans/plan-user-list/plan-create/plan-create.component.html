@@ -13,8 +13,12 @@
                         <mat-form-field>
                             <mat-label>Ərazi</mat-label>
                             <mat-select formControlName="location" required>
-                                <mat-option *ngFor="let location of locations" [value]="location.locationCode">
-                                    {{ location.locationName }}
+                                <div class="select-search-box" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
+                                    <input type="text" placeholder="Axtar..." [(ngModel)]="locationFilter"
+                                        [ngModelOptions]="{standalone: true}" (ngModelChange)="onLocationFilterChange()">
+                                </div>
+                                <mat-option *ngFor="let location of filteredLocations" [value]="location.locationCode">
+                                    {{ location.locationCode }} - {{ location.locationName }}
                                 </mat-option>
                             </mat-select>
                             <mat-error *ngIf="panel.get('location')?.invalid && panel.get('location')?.touched">
@@ -38,11 +42,11 @@
 
                     <!-- Start Time -->
                     <div class="col-md-2">
-                        <mat-form-field>
+                        <mat-form-field class="time-form-field">
                             <mat-label>Başlanğıc vaxtı</mat-label>
-                            <input matInput [ngxTimepicker]="startPicker" [format]="24"
-                                formControlName="startTime" readonly required>
-                            <ngx-material-timepicker #startPicker></ngx-material-timepicker>
+                            <input matInput [format]="24" [ngxTimepicker]="startPicker" formControlName="startTime" class="time-input" required readonly>
+                            <span matIconSuffix class="material-symbols-outlined time-input__icon" (click)="startPicker.open()">schedule</span>
+                            <ngx-material-timepicker #startPicker [format]="24"></ngx-material-timepicker>
                             <mat-error *ngIf="panel.get('startTime')?.invalid && panel.get('startTime')?.touched">
                                 Vaxt tələb olunur
                             </mat-error>
@@ -51,11 +55,11 @@
 
                     <!-- End Time -->
                     <div class="col-md-2">
-                        <mat-form-field>
+                        <mat-form-field class="time-form-field">
                             <mat-label>Bitmə vaxtı</mat-label>
-                            <input matInput [ngxTimepicker]="endPicker" [format]="24"
-                                formControlName="endTime" readonly required>
-                            <ngx-material-timepicker #endPicker></ngx-material-timepicker>
+                            <input matInput [format]="24" [ngxTimepicker]="endPicker" formControlName="endTime" class="time-input" required readonly>
+                            <span matIconSuffix class="material-symbols-outlined time-input__icon" (click)="endPicker.open()">schedule</span>
+                            <ngx-material-timepicker #endPicker [format]="24"></ngx-material-timepicker>
                             <mat-error *ngIf="panel.get('endTime')?.invalid && panel.get('endTime')?.touched">
                                 Vaxt tələb olunur
                             </mat-error>
