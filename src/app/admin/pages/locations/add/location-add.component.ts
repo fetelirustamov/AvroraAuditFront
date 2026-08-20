@@ -48,9 +48,14 @@ interface LocationPayload {
     styleUrl: './location-add.component.scss'
 })
 export class LocationAddComponent implements OnInit {
+    /** Bu firmalar üçün eyni əraziyə yalnız bir bağlantı icazə verilir */
+    private static readonly SINGLE_REGION_FIRM_IDS = new Set([5, 6, 35]);
+
     form!: FormGroup;
     firms: FirmDto[] = [];
     regions: any[] = [];
+    private allRegions: any[] = [];
+    private allLocations: LocationDto[] = [];
     sections: SectionDto[] = [];
     selectedSectionIds: number[] = [];
     pageTitle = 'Yeni mağaza/location';
@@ -98,12 +103,12 @@ export class LocationAddComponent implements OnInit {
 
     ngOnInit(): void {
         this.loadFirms();
+        this.loadAllLocations();
     }
 
     private loadFirms(): void {
         this.firmService.getAllFirms().subscribe({
             next: (response: any) => {
-                console.log('Firmalar cavabı (location-add):', response);
 
                 let firms: FirmDto[] = [];
 
@@ -136,12 +141,75 @@ export class LocationAddComponent implements OnInit {
     onFirmChange(firmId: number | null): void {
         this.form.patchValue({ regionId: null }, { emitEvent: false });
         this.regions = [];
+        this.allRegions = [];
         this.sections = [];
         this.selectedSectionIds = [];
 
         if (!firmId) return;
         this.loadRegionsByFirmId(firmId);
         this.loadSectionsByFirmId(firmId);
+    }
+
+    private loadAllLocations(): void {
+        this.locationService.list().subscribe({
+            next: (response: any) => {
+                if (response && Array.isArray(response.data)) {
+                    this.allLocations = response.data as LocationDto[];
+                } else if (Array.isArray(response)) {
+                    this.allLocations = response as LocationDto[];
+                } else {
+                    this.allLocations = [];
+                }
+                this.applyRegionAvailability();
+            },
+            error: () => {
+                this.allLocations = [];
+            }
+        });
+    }
+
+    private isSingleRegionFirm(firmId: number | null): boolean {
+        return firmId != null && LocationAddComponent.SINGLE_REGION_FIRM_IDS.has(firmId);
+    }
+
+    private resolveRegionId(location: LocationDto): number | null {
+        return this.toNullableNumber(location.regionId ?? location.RegionId ?? location.regionID);
+    }
+
+    private getOccupiedRegionIds(firmId: number, excludeLocationId?: number): Set<number> {
+        const occupied = new Set<number>();
+        for (const loc of this.allLocations) {
+            if (loc.firmId !== firmId) continue;
+            if (excludeLocationId != null && loc.id === excludeLocationId) continue;
+            const regionId = this.resolveRegionId(loc);
+            if (regionId != null) occupied.add(regionId);
+        }
+        return occupied;
+    }
+
+    private applyRegionAvailability(): void {
+        if (!this.allRegions.length) {
+            this.regions = [];
+            return;
+        }
+
+        const firmId = this.toNullableNumber(this.form.get('firmId')?.value);
+        if (!firmId || !this.isSingleRegionFirm(firmId)) {
+            this.regions = [...this.allRegions];
+            return;
+        }
+
+        const excludeId = this.isEditMode ? this.data?.item?.id : undefined;
+        const occupied = this.getOccupiedRegionIds(firmId, excludeId);
+        this.regions = this.allRegions.filter(region => {
+            const regionId = this.toNullableNumber(region.id);
+            return regionId == null || !occupied.has(regionId);
+        });
+
+        const currentRegionId = this.toNullableNumber(this.form.get('regionId')?.value);
+        if (currentRegionId != null && !this.regions.some(r => this.toNullableNumber(r.id) === currentRegionId)) {
+            this.form.patchValue({ regionId: null }, { emitEvent: false });
+        }
     }
 
     private loadSectionsByFirmId(firmId: number): void {
@@ -165,25 +233,31 @@ export class LocationAddComponent implements OnInit {
                 const currentRegionId = this.toNullableNumber(this.form.get('regionId')?.value);
 
                 if (response && Array.isArray(response.data)) {
-                    this.regions = response.data.map((r: any) => ({
+                    this.allRegions = response.data.map((r: any) => ({
                         ...r,
                         id: this.toNullableNumber(r.id ?? r.regionId ?? r.RegionId ?? r.regionID)
                     }));
                 } else if (Array.isArray(response)) {
-                    this.regions = response.map((r: any) => ({
+                    this.allRegions = response.map((r: any) => ({
                         ...r,
                         id: this.toNullableNumber(r.id ?? r.regionId ?? r.RegionId ?? r.regionID)
                     }));
                 } else {
-                    this.regions = [];
+                    this.allRegions = [];
                 }
 
+                this.applyRegionAvailability();
+
                 if (currentRegionId != null) {
-                    this.form.patchValue({ regionId: currentRegionId }, { emitEvent: false });
+                    const stillValid = this.regions.some(r => this.toNullableNumber(r.id) === currentRegionId);
+                    if (stillValid) {
+                        this.form.patchValue({ regionId: currentRegionId }, { emitEvent: false });
+                    }
                 }
             },
             error: (error) => {
                 console.error('Regionlar yüklənərkən xəta (location-add):', error);
+                this.allRegions = [];
                 this.regions = [];
             }
         });
@@ -209,6 +283,19 @@ export class LocationAddComponent implements OnInit {
             return;
         }
         const raw: LocationPayload = this.form.getRawValue();
+
+        const firmId = this.toNullableNumber(raw.firmId);
+        const regionId = this.toNullableNumber(raw.regionId);
+        if (firmId != null && regionId != null && this.isSingleRegionFirm(firmId)) {
+            const excludeId = this.isEditMode ? this.data?.item?.id : undefined;
+            if (this.getOccupiedRegionIds(firmId, excludeId).has(regionId)) {
+                this.notify.warning(
+                    'Bu ərazi artıq bağlıdır',
+                    { message: 'Seçilmiş firma üçün bu əraziyə yalnız bir bağlantı verilə bilər.' }
+                );
+                return;
+            }
+        }
 
         // Backend-də int sahələrə null göndərmək xətaya səbəb olur, null-ları çıxarırıq
         const payload: any = { ...raw };

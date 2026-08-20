@@ -1,0 +1,234 @@
+<!-- Page Header -->
+<div class="report-page-header">
+    <div class="header-content">
+        <div class="header-text">
+            <h1 class="page-title">
+                <span class="material-symbols-outlined title-icon">assignment_turned_in</span>
+                Yoxlama Planı İş Statusu
+            </h1>
+            <p class="page-subtitle">Mağaza və istifadəçi üzrə plan işlərinin işlənmə vəziyyəti</p>
+        </div>
+        <div class="header-actions">
+            <button class="export-btn" [matMenuTriggerFor]="downloadMenu"
+                [disabled]="!hasSubmittedSearch || !allCount || isExporting">
+                <span class="material-symbols-outlined">{{ isExporting ? 'progress_activity' : 'download' }}</span>
+                {{ isExporting ? 'Hazırlanır...' : 'Yüklə' }}
+                <span class="material-symbols-outlined arrow-icon">expand_more</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<mat-menu #downloadMenu="matMenu" class="modern-menu">
+    <button mat-menu-item (click)="exportExcel()" [disabled]="isExporting">
+        <span class="material-symbols-outlined menu-icon excel-icon">table_chart</span>
+        <span>Excel (.xlsx)</span>
+    </button>
+    <button mat-menu-item (click)="exportPdf()" [disabled]="isExporting">
+        <span class="material-symbols-outlined menu-icon pdf-icon">picture_as_pdf</span>
+        <span>PDF (.pdf)</span>
+    </button>
+</mat-menu>
+
+<!-- Filter toolbar -->
+<div class="filter-card">
+    <div class="filter-card-accent" aria-hidden="true"></div>
+    <div class="filter-card-body">
+        <div class="filter-card-header">
+            <span class="material-symbols-outlined filter-header-icon">tune</span>
+            <div class="filter-header-text">
+                <span class="filter-header-title">Filtrlər</span>
+                <span class="filter-header-hint">Firma seçin, digər filtrlərlə axtarın</span>
+            </div>
+        </div>
+        <form [formGroup]="filtersForm" (ngSubmit)="onSearch()" class="filter-form">
+            <div class="filter-toolbar">
+                <div class="filter-field filter-field-firm">
+                    <span class="field-label">
+                        <span class="material-symbols-outlined label-icon">business</span>
+                        Firma <span class="required-mark">*</span>
+                    </span>
+                    <mat-form-field appearance="outline" class="modern-field" subscriptSizing="dynamic">
+                        <mat-select formControlName="firmId" placeholder="Firma seçin">
+                            @for (firm of firms; track firm.id) {
+                                <mat-option [value]="firm.id">{{ firm.name }}</mat-option>
+                            }
+                        </mat-select>
+                    </mat-form-field>
+                </div>
+                <div class="filter-field">
+                    <span class="field-label">
+                        <span class="material-symbols-outlined label-icon">person</span>
+                        İstifadəçi adı
+                    </span>
+                    <mat-form-field appearance="outline" class="modern-field" subscriptSizing="dynamic">
+                        <input matInput formControlName="userName" placeholder="Ad və ya soyad..." />
+                    </mat-form-field>
+                </div>
+                <div class="filter-field">
+                    <span class="field-label">
+                        <span class="material-symbols-outlined label-icon">store</span>
+                        Mağaza kodu
+                    </span>
+                    <mat-form-field appearance="outline" class="modern-field" subscriptSizing="dynamic">
+                        <input matInput formControlName="locationCode" placeholder="Məs: 3373" />
+                    </mat-form-field>
+                </div>
+                <div class="filter-field filter-field-date">
+                    <span class="field-label">
+                        <span class="material-symbols-outlined label-icon">date_range</span>
+                        Tarix aralığı (plan tarixi)
+                    </span>
+                    <mat-form-field appearance="outline" class="modern-field" subscriptSizing="dynamic" formGroupName="dateRange">
+                        <mat-date-range-input [rangePicker]="picker">
+                            <input matStartDate formControlName="start" placeholder="Başlanğıc">
+                            <input matEndDate formControlName="end" placeholder="Son">
+                        </mat-date-range-input>
+                        <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+                        <mat-date-range-picker #picker></mat-date-range-picker>
+                    </mat-form-field>
+                </div>
+                <div class="filter-toolbar-actions">
+                    <button type="button" class="clear-all-btn" (click)="clearAllFilters()">
+                        <span class="material-symbols-outlined">filter_alt_off</span>
+                        Təmizlə
+                    </button>
+                    <button type="submit" class="search-btn" [disabled]="!filtersForm.get('firmId')?.value">
+                        <span class="material-symbols-outlined">search</span>
+                        Axtar
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- KPI Summary -->
+@if (hasSubmittedSearch) {
+    <div class="kpi-row">
+        <div class="kpi-card">
+            <div class="kpi-icon total-icon">
+                <span class="material-symbols-outlined">list_alt</span>
+            </div>
+            <div class="kpi-body">
+                <div class="kpi-value">{{ allCount }}</div>
+                <div class="kpi-label">Cəmi qeyd (ümumi)</div>
+            </div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-icon processed-icon">
+                <span class="material-symbols-outlined">task_alt</span>
+            </div>
+            <div class="kpi-body">
+                <div class="kpi-value">{{ status34Count }}</div>
+                <div class="kpi-label">İşlənilib (ümumi)</div>
+            </div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-icon pending-icon">
+                <span class="material-symbols-outlined">pending_actions</span>
+            </div>
+            <div class="kpi-body">
+                <div class="kpi-value">{{ status2Count }}</div>
+                <div class="kpi-label">İşlənilməyib (ümumi)</div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Table Card -->
+<div class="table-card audit-table-loading-shell" [attr.aria-busy]="isLoading">
+    <div [class.audit-table-muted]="isLoading">
+        <div class="table-card-header">
+            <div class="table-info">
+                <span class="material-symbols-outlined table-info-icon">table_view</span>
+                <span class="table-title">Nəticələr</span>
+                <span class="result-badge">{{ allCount }} qeyd</span>
+            </div>
+            @if (hasActiveColumnFilters) {
+                <button class="clear-filter-btn" (click)="clearColumnFilters()">
+                    <span class="material-symbols-outlined">filter_alt_off</span>
+                    Sütun filtrlərini sil
+                </button>
+            }
+        </div>
+        <div class="table-responsive-wrapper">
+            <table mat-table [dataSource]="dataSource" class="modern-table">
+                @for (col of columns; track col.key) {
+                    <ng-container [matColumnDef]="col.key">
+                        <th mat-header-cell *matHeaderCellDef class="data-header-cell">{{ col.label }}</th>
+                        <td mat-cell *matCellDef="let row">
+                            @switch (col.key) {
+                                @case ('row') {
+                                    <span class="row-number">{{ row.row }}</span>
+                                }
+                                @case ('magaza_kodu') {
+                                    <span class="code-badge">{{ row.magaza_kodu }}</span>
+                                }
+                                @case ('istifadeci') {
+                                    <span class="user-name">{{ row.istifadeci }}</span>
+                                }
+                                @case ('is_baslama') {
+                                    <span class="date-text">
+                                        {{ row.is_baslama ? (row.is_baslama | date:'yyyy-MM-dd HH:mm':'+0400') : '—' }}
+                                    </span>
+                                }
+                                @case ('is_bitme') {
+                                    <span class="date-text">
+                                        {{ row.is_bitme ? (row.is_bitme | date:'yyyy-MM-dd HH:mm':'+0400') : '—' }}
+                                    </span>
+                                }
+                                @case ('status') {
+                                    <span class="status-badge" [class]="row.statusClass">
+                                        <span class="status-dot" aria-hidden="true"></span>
+                                        {{ row.statusLabel }}
+                                    </span>
+                                }
+                            }
+                        </td>
+                    </ng-container>
+
+                    <ng-container [matColumnDef]="col.key + '__filter'">
+                        <th mat-header-cell *matHeaderCellDef class="filter-header-cell">
+                            @if (col.key === 'magaza_kodu' || col.key === 'istifadeci') {
+                                <div class="filter-input-wrap">
+                                    <span class="material-symbols-outlined filter-input-icon">search</span>
+                                    <input class="filter-input column-filter-input"
+                                        (input)="applyColumnFilter($event, col.key)"
+                                        [placeholder]="col.label + '...'" />
+                                </div>
+                            }
+                            @if (col.key === 'status') {
+                                <mat-form-field appearance="outline" class="status-filter-field" subscriptSizing="dynamic">
+                                    <mat-select placeholder="Status"
+                                        (selectionChange)="applyStatusColumnFilter($event.value)">
+                                        @for (opt of statusOptions; track opt.value) {
+                                            <mat-option [value]="opt.value">{{ opt.label }}</mat-option>
+                                        }
+                                    </mat-select>
+                                </mat-form-field>
+                            }
+                        </th>
+                    </ng-container>
+                }
+
+                <tr mat-header-row *matHeaderRowDef="displayedColumns" class="data-header-row"></tr>
+                <tr mat-header-row *matHeaderRowDef="filterColumns" class="filter-row"></tr>
+                <tr mat-row *matRowDef="let row; columns: displayedColumns" class="data-row"></tr>
+            </table>
+            @if (!isLoading && dataSource.data.length === 0) {
+                <div class="empty-state">
+                    <span class="material-symbols-outlined empty-icon">inbox</span>
+                    <p>{{ hasSubmittedSearch ? 'Nəticə tapılmadı.' : 'Əvvəlcə firma seçib "Axtar" düyməsini basın' }}</p>
+                </div>
+            }
+        </div>
+        <mat-paginator [length]="allCount" [pageSize]="10" [pageSizeOptions]="[10, 25, 50]"
+            showFirstLastButtons class="modern-paginator" (page)="onPage($event)"></mat-paginator>
+    </div>
+    @if (isLoading) {
+        <app-audit-loading-overlay
+            title="Hesabat hazırlanır"
+            hint="Yoxlama planı iş statusu yüklənir…"></app-audit-loading-overlay>
+    }
+</div>

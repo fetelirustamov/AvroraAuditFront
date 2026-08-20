@@ -570,7 +570,6 @@ export class UserAddComponent implements OnInit {
                     permissionGroup: formValue.selectedPermissionGroup
                 } : null
             };
-            console.log('Saxlanılacaq məlumatlar:', userData);
             this.showMessage('İstifadəçi uğurla əlavə edildi!', 'success');
             setTimeout(() => {
                 this.router.navigate(['/admin/permissions/user-permission']);

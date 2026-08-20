@@ -17,6 +17,7 @@ import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dia
 import { CategoryService } from '../../../services/category.service';
 import { QuestionService } from '../../../services/question.service';
 import { CategoryDto } from '../../../models/category.model';
+import { QuestionAnswerInsertDto, QuestionInsertDto } from '../../../models/question.model';
 
 @Component({
     selector: 'app-question-add',
@@ -44,7 +45,8 @@ export class QuestionAddComponent implements OnInit {
     @ViewChild(CdkTextareaAutosize) private questionTextareaAutosize?: CdkTextareaAutosize;
 
     categories: CategoryDto[] = [];
-    types: string[] = ['Bəli/Xeyr', 'RadioButton', 'FreeText', 'ComboBox', 'CheckBox'];
+    /** Sıra backend QuestionTypeID ilə eynidir: 1..5 */
+    types: string[] = ['Bəli/Xeyr', 'RadioButton', 'CheckBox', 'FreeText', 'ComboBox'];
 
     /** API: { data } / { Data } / birbaşa obyekt; bəzi cavablarda bir səviyyə daha wrap ola bilər */
     private unwrapQuestionPayload(raw: any): any {
@@ -87,19 +89,64 @@ export class QuestionAddComponent implements OnInit {
         if (typeof strType === 'string' && this.types.includes(strType)) {
             return strType;
         }
-        if (typeof strType === 'string' && /^\d+$/.test(strType.trim())) {
-            const idx = +strType - 1;
-            if (idx >= 0 && idx < this.types.length) return this.types[idx];
-        }
         const numId =
             q.questionTypeID ??
             q.QuestionTypeID ??
-            (typeof strType === 'number' ? strType : null);
+            (typeof strType === 'number' ? strType : null) ??
+            (typeof strType === 'string' && /^\d+$/.test(strType.trim()) ? +strType : null);
         if (numId != null && numId !== '') {
-            const n = Number(numId);
-            if (!Number.isNaN(n)) return this.types[n - 1] ?? null;
+            const idx = Number(numId) - 1;
+            if (idx >= 0 && idx < this.types.length) return this.types[idx];
         }
         return null;
+    }
+
+    private toBackendTypeId(type: string | null | undefined): number {
+        if (!type) return 0;
+        const idx = this.types.indexOf(type);
+        return idx >= 0 ? idx + 1 : 0;
+    }
+
+    /** Form dəyərlərini backend QuestionInsertDto + QuestionAnswer modelinə map edir */
+    private buildApiPayload(raw: any, questionId?: number): QuestionInsertDto {
+        const selectedType = raw.type ?? this.form.get('type')?.value;
+        const questionTypeId = this.toBackendTypeId(selectedType);
+
+        const payload: QuestionInsertDto = {
+            status: 1,
+            categoryId: raw.categoryId,
+            questionType: questionTypeId,
+            questionLine: raw.order != null && raw.order !== '' ? Number(raw.order) : 0,
+            normativeScore: raw.valueNorm != null && raw.valueNorm !== '' ? Number(raw.valueNorm) : 0,
+            questionText: raw.question,
+            isNormative: raw.normative ? 1 : 0
+        };
+
+        if (questionId != null) {
+            payload.id = questionId;
+        }
+
+        if (this.typesWithAnswers.has(selectedType) && Array.isArray(raw.answers)) {
+            payload.questionAnswers = raw.answers.map(
+                (a: { id?: number | null; text: string; score: number | string; status?: number }, index: number) => {
+                    const answer: QuestionAnswerInsertDto = {
+                        answer: a.text,
+                        score: Number(a.score),
+                        line: index + 1,
+                        status: a.status ?? 1
+                    };
+                    if (a.id != null) {
+                        answer.id = Number(a.id);
+                    }
+                    if (questionId != null) {
+                        answer.questionId = questionId;
+                    }
+                    return answer;
+                }
+            );
+        }
+
+        return payload;
     }
     typesWithAnswers = new Set(['RadioButton', 'ComboBox', 'CheckBox']);
 
@@ -169,10 +216,14 @@ export class QuestionAddComponent implements OnInit {
                                 a.answerText ??
                                 '';
                             const score = a.score ?? a.Score ?? 0;
+                            const answerId = a.id ?? a.Id ?? null;
+                            const status = a.status ?? a.Status ?? 1;
                             this.answers.push(
                                 this.fb.group({
+                                    id: [answerId],
                                     text: [text, Validators.required],
-                                    score: [score, [Validators.required, Validators.pattern(/^[0-9]+(\.[0-9]+)?$/)]]
+                                    score: [score, [Validators.required, Validators.pattern(/^[0-9]+(\.[0-9]+)?$/)]],
+                                    status: [status]
                                 })
                             );
                         });
@@ -229,8 +280,10 @@ export class QuestionAddComponent implements OnInit {
         if (!this.isAnswerType() || this.viewMode) return;
         this.answers.push(
             this.fb.group({
+                id: [null],
                 text: ['', Validators.required],
-                score: [0, [Validators.required, Validators.pattern(/^[0-9]+(\.[0-9]+)?$/)]]
+                score: [0, [Validators.required, Validators.pattern(/^[0-9]+(\.[0-9]+)?$/)]],
+                status: [1]
             })
         );
     }
@@ -263,31 +316,21 @@ export class QuestionAddComponent implements OnInit {
             return;
         }
         const raw = this.form.getRawValue();
-
-        // Backend modelində property adı QuestionText-dir, formda isə question istifadə edirik
-        const payload: any = {
-            categoryId: raw.categoryId,
-            questionType: raw.type,
-            order: raw.order,
-            valueNorm: raw.valueNorm,
-            questionText: raw.question,
-            normative: raw.normative
-        };
-
-        // Cavab tipli suallar üçün cavabları backend-in gözlədiyi formata salaq (əgər lazımdırsa)
-        if (this.isAnswerType() && Array.isArray(raw.answers)) {
-            payload.answers = raw.answers.map((a: any) => ({
-                answer: a.text,
-                score: a.score
-            }));
+        const questionTypeId = this.toBackendTypeId(raw.type ?? this.form.get('type')?.value);
+        if (!questionTypeId) {
+            this.notify.warning('Sual tipi seçilməyib', { message: 'Zəhmət olmasa sual tipini seçin.' });
+            return;
         }
 
         if (this.editMode && this.id) {
-            this.questionService.update({ ...payload, id: +this.id }).subscribe(() => {
+            const questionId = +this.id;
+            const payload = this.buildApiPayload(raw, questionId);
+            this.questionService.update({ ...payload, id: questionId }).subscribe(() => {
                 this.notify.success('Sual uğurla redaktə edildi');
                 this.router.navigate(['/admin/questions']);
             });
         } else {
+            const payload = this.buildApiPayload(raw);
             this.questionService.create(payload).subscribe(() => {
                 this.notify.success('Sual uğurla əlavə edildi');
                 this.router.navigate(['/admin/questions']);

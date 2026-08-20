@@ -5,3 +5,9 @@ export interface StructureDto {
     userCode?: number;
     level?: number;
 }
+
+export interface StructureUserDto {
+    userCode: number;
+    userName: string;
+    level: number;
+}

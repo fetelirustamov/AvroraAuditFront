@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { QuestionDto } from '../models/question.model';
+import { QuestionDto, QuestionInsertDto } from '../models/question.model';
 import { RequestResponse } from '../../models/table-state.model';
 
 
@@ -20,12 +20,12 @@ export class QuestionService {
         return this.http.get<QuestionDto>(`${this.baseUrl}/${id}`);
     }
 
-    create(payload: Partial<QuestionDto>): Observable<QuestionDto> {
+    create(payload: QuestionInsertDto): Observable<QuestionDto> {
         return this.http.post<QuestionDto>(this.baseUrl, payload);
     }
 
     /** PUT baza URL-ə gedir; sualın təkili gövdədə `id` sahəsi ilə göndərilir */
-    update(payload: Partial<QuestionDto> & { id: number }): Observable<QuestionDto> {
+    update(payload: QuestionInsertDto & { id: number }): Observable<QuestionDto> {
         return this.http.put<QuestionDto>(this.baseUrl, payload);
     }
 

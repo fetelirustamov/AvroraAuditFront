@@ -2,7 +2,7 @@ import { Injectable } from "@angular/core";
 import { HttpClient } from "@angular/common/http";
 import { Observable } from "rxjs";
 import { environment } from "../../../environments/environment";
-import { StructureDto } from "../models/structure.model";
+import { StructureDto, StructureUserDto } from "../models/structure.model";
 import { RequestResponse } from "../../models/table-state.model";
 
 @Injectable({ providedIn: 'root' })
@@ -24,6 +24,11 @@ export class StructureService {
     // [GET] /api/Structures/location/{locationCode} - locationCode-a görə strukturlar
     getByLocationCode(locationCode: number): Observable<RequestResponse<StructureDto>> {
         return this.http.get<RequestResponse<StructureDto>>(`${this.baseUrl}/location/${locationCode}`);
+    }
+
+    // [GET] /api/Structures/users - struktur istifadəçiləri (level ilə)
+    getUsers(): Observable<RequestResponse<StructureUserDto>> {
+        return this.http.get<RequestResponse<StructureUserDto>>(`${this.baseUrl}/users`);
     }
 
     // [POST] /api/Structures - yeni struktur yaratmaq

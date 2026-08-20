@@ -91,6 +91,54 @@ export class LocationsComponent implements OnInit, AfterViewInit {
     private locationService: LocationService,
   ) {
     this.dataSource = new MatTableDataSource<LocationRow>([]);
+    this.setupFilterPredicate();
+  }
+
+  private setupFilterPredicate(): void {
+    this.dataSource.filterPredicate = (data: LocationRow, filter: string) => {
+      if (!filter) {
+        return true;
+      }
+
+      let criteria: {
+        firmId?: number | null;
+        regionId?: number | null;
+        locationCode?: string | number | null;
+        locationName?: string | null;
+      };
+
+      try {
+        criteria = JSON.parse(filter);
+      } catch {
+        return true;
+      }
+
+      const { firmId, regionId, locationCode, locationName } = criteria;
+
+      if (firmId != null && data.firmId !== firmId) {
+        return false;
+      }
+
+      if (regionId != null && data.regionId !== regionId) {
+        return false;
+      }
+
+      if (locationCode != null && String(locationCode).trim() !== '') {
+        const code = String(data.locationCode ?? '').toLowerCase();
+        if (!code.includes(String(locationCode).trim().toLowerCase())) {
+          return false;
+        }
+      }
+
+      if (locationName != null && String(locationName).trim() !== '') {
+        const name = (data.locationName ?? '').toLowerCase();
+        if (!name.includes(String(locationName).trim().toLowerCase())) {
+          return false;
+        }
+      }
+
+      return true;
+    };
   }
 
   ngOnInit(): void {
@@ -108,7 +156,6 @@ export class LocationsComponent implements OnInit, AfterViewInit {
     this.isLoading = true;
     this.firmService.getAllFirms().subscribe({
       next: (response: any) => {
-        console.log('Firmalar cavabı (locations):', response);
 
         let firms: FirmDto[] = [];
 
@@ -191,13 +238,11 @@ export class LocationsComponent implements OnInit, AfterViewInit {
   }
 
   onSearchSubmit(): void {
-    const { firmId, regionId, locationCode, locationName, date } = this.searchForm.getRawValue();
-    const term = [firmId, regionId, locationCode, locationName]
-      .filter(Boolean)
-      .join(' ')
-      .toString()
-      .toLowerCase();
-    this.dataSource.filter = term;
+    const criteria = this.searchForm.getRawValue();
+    const hasCriteria = Object.values(criteria).some(
+      (value) => value != null && String(value).trim() !== ''
+    );
+    this.dataSource.filter = hasCriteria ? JSON.stringify(criteria) : '';
     if (this.dataSource.paginator) this.dataSource.paginator.firstPage();
     this.closeModal();
   }
