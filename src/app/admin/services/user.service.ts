@@ -49,8 +49,9 @@ export class UserService {
     }
 
     // İstifadəçini sil
-    deleteUser(id: number): Observable<RequestResponseOne<null>> {
-        return this.http.delete<RequestResponseOne<null>>(`${this.baseUrl}/${id}`);
+    /** İstifadəçini passiv edir (UserCode ilə - passiv istifadəçi də tapılır) */
+    deleteUser(userCode: number): Observable<RequestResponseOne<null>> {
+        return this.http.delete<RequestResponseOne<null>>(`${this.baseUrl}/user-code/${userCode}`);
     }
 
     /** İstifadəçinin statusunu, müəssisələrini və rolunu yenilə */

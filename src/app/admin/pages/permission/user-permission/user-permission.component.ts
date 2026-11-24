@@ -2,7 +2,7 @@ import { Component, OnInit, ViewChild, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { forkJoin, of } from 'rxjs';
+import { of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -20,19 +20,13 @@ import { AuditLoadingOverlayComponent } from '../../../../ui/components/audit-lo
 import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dialog.service';
 import { NotificationService } from '../../../../shared/services/notification.service';
 import { UserService } from '../../../services/user.service';
-import { UserDetail, UserDto } from '../../../models/user.model';
+import { UserDetail } from '../../../models/user.model';
 import { AdminBreadcrumbComponent } from '../../../shared/breadcrumb/admin-breadcrumb.component';
 import { UserCreateComponent } from '../user-create/user-create.component';
 
 interface UserPermission {
+  /** UserCode (sicil nömrəsi) - redaktə və silmə bununla işləyir */
   id: number;
-  /**
-   * Users cədvəlinin real ID sütunu (DELETE /users/{id} bu dəyəri gözləyir).
-   * GET /users/userdetails cavabında bu sahə qayıtmır (yalnız UserCode qayıdır),
-   * ona görə GET /users siyahısından UserCode -> Id uyğunluğu ayrıca qurulur.
-   * Uyğunluq tapılmasa null olur və silmə əməliyyatı bloklanır.
-   */
-  dbId: number | null;
   userName: string;
   /** E-poçt həm də giriş ünvanıdır — adın altında ikinci sətir kimi göstərilir */
   email: string;
@@ -101,15 +95,8 @@ export class UserPermissionComponent implements OnInit, AfterViewInit {
   private loadUsers() {
     this.isLoading = true;
 
-    // GET /users/userdetails: UserCode, ad, rol, firma məlumatlarını verir, amma
-    // Users cədvəlinin real ID sütununu qaytarmır.
-    // GET /users: real ID + UserCode cütlüklərini verir.
-    // Silmə (DELETE /users/{id}) real ID gözlədiyi üçün ikisini birləşdirib
-    // UserCode -> ID uyğunluğunu burada qururuq.
-    forkJoin({
-      details: this.userService.getUserDetails().pipe(catchError(() => of(null))),
-      all: this.userService.getAllUsers().pipe(catchError(() => of(null)))
-    }).subscribe(({ details, all }) => {
+    // Passiv istifadəçilər və firması/rolu olmayanlar da siyahıdadır (admin onları tapıb düzəldə bilsin)
+    this.userService.getUserDetails().pipe(catchError(() => of(null))).subscribe(details => {
       if (!details) {
         this.userDetails = [];
         this.users = [];
@@ -129,22 +116,14 @@ export class UserPermissionComponent implements OnInit, AfterViewInit {
         items = response;
       }
 
-      const idByUserCode = new Map<number, number>();
-      const allItems: UserDto[] = Array.isArray((all as any)?.data) ? (all as any).data : [];
-      for (const u of allItems) {
-        if (u.userCode != null && u.id != null) {
-          idByUserCode.set(u.userCode, u.id);
-        }
-      }
-
       this.userDetails = items;
-      this.users = items.map((u, index) => this.mapToPermission(u, index + 1, idByUserCode));
+      this.users = items.map((u, index) => this.mapToPermission(u, index + 1));
       this.dataSource.data = this.users;
       this.isLoading = false;
     });
   }
 
-  private mapToPermission(dto: UserDetail, index: number, idByUserCode: Map<number, number>): UserPermission {
+  private mapToPermission(dto: UserDetail, index: number): UserPermission {
     const nameParts = [dto.name, dto.surName, dto.fatherName].filter(Boolean);
     const fullName = nameParts.length > 0 ? nameParts.join(' ') : `ID: ${dto.userCode ?? dto.id}`;
 
@@ -152,13 +131,8 @@ export class UserPermissionComponent implements OnInit, AfterViewInit {
     const groups = dto.roleName ? [dto.roleName] : [];
     const institutions = dto.firms?.map(f => f.firmName) ?? [];
 
-    // API 'id' field-i qaytarmır, 'userCode' istifadə edirik (siyahıda göstərmək üçün)
-    const displayId = dto.userCode ?? dto.id ?? index;
-    const dbId = dto.userCode != null ? (idByUserCode.get(dto.userCode) ?? null) : null;
-
     return {
-      id: displayId,
-      dbId,
+      id: dto.userCode ?? dto.id ?? index,
       userName: fullName,
       email: dto.email ?? '',
       institutions,
@@ -221,21 +195,14 @@ export class UserPermissionComponent implements OnInit, AfterViewInit {
   }
 
   deleteUser(user: UserPermission) {
-    if (user.dbId == null) {
-      this.notify.error('İstifadəçi silinə bilmədi', {
-        message: 'Bu istifadəçi üçün sistem ID-si tapılmadı (backend GET /users siyahısında uyğun qeyd yoxdur). Zəhmət olmasa backend komandası ilə əlaqə saxlayın.'
-      });
-      return;
-    }
-
     this.confirmDialog.confirm({
       title: 'İstifadəçi silinsin?',
-      message: `"${user.userName}" istifadəçisini silmək istədiyinizə əminsiniz?`,
+      message: `"${user.userName}" istifadəçisi passiv ediləcək: sistemə daxil ola bilməyəcək, tarixçəsi qalacaq.`,
       confirmText: 'Bəli, sil',
       cancelText: 'Ləğv et'
     }).subscribe(confirmed => {
       if (!confirmed) return;
-      this.userService.deleteUser(user.dbId as number).subscribe({
+      this.userService.deleteUser(user.id).subscribe({
         next: () => {
           this.notify.success('İstifadəçi silindi');
           this.loadUsers();
