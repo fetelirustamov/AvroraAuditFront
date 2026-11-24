@@ -206,9 +206,9 @@ export class DisruptionListComponent implements OnInit, AfterViewInit {
     this._tableService.fill(this._tableState).pipe(
       finalize(() => this.isLoading = false)
     ).subscribe((response) => {
-      this._tableState.paginator.total = response.data != null ? response.data.total : 0;
-      this.dataSource = response.data.items;
-      this.allDataCount = response.data.total;
+      this._tableState.paginator.total = response.data?.total || 0;
+      this.dataSource = response.data?.items || [];
+      this.allDataCount = response.data?.total || 0;
     });
 
   }
@@ -231,7 +231,7 @@ export class DisruptionListComponent implements OnInit, AfterViewInit {
   onDetails(row: InspectionPlan) {
     this.disruptionListCache.save(this.buildSnapshot());
     row.disruptionStatus = 2; // Burada disruptionStatus-u 2 olaraq təyin edirik
-    this.router.navigate(['disruptions/details'], { state: { data: row, action: true, status: this.disruptionStatus } });
+    this.router.navigate(['disruptions/details'], { state: { data: row, status: this.disruptionStatus } });
 
   }
 

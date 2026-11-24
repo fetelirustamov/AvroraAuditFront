@@ -88,6 +88,9 @@ export class AnswerApproveDetailsComponent {
     this._tableState.filter['disruptionStatus'] = "2";
     this._tableState.filter['disruptionAnswerStatus'] = "1";
     this._tableState.filter['isCurrent'] = "1"; // Cari olanlar
+    // Yalnız mağazanın cavabladığı (level > 1) sətirlər — Admin süzgəcsiz hamısını görür və
+    // level 1 sətri burada təsdiqlənsə mağaza cavabı ötürülüb zəncir cavabsız irəliləyir
+    this._tableState.filter['isAnswered'] = "true";
 
     this._tableState.paginator.page = 0;
     this._tableState.sorting.direction = "desc";

@@ -59,15 +59,15 @@
                 <ng-container matColumnDef="media">
                     <th mat-header-cell *matHeaderCellDef>Media</th>
                     <td mat-cell *matCellDef="let element">
-                        <!-- Şərtli image icon -->
-                        <app-media #mediaCompImg [id]="element.id" [type]="MediaType.Image" [module]="Module.DisAnswer">
-                            <span *ngIf="element.images > 0" class="material-symbols-outlined primary"
+                        <!-- Uyğunsuzluğun faylları; mağazanın cavab faylları "Detallar" modalındadır -->
+                        <app-media #mediaCompImg [id]="element.disruptionId" [type]="MediaType.Image" [module]="Module.Disruption">
+                            <span *ngIf="element.image > 0" class="material-symbols-outlined primary"
                                 (click)="mediaCompImg.open()" style="cursor:pointer;" media-trigger>
                                 image
                             </span>
                         </app-media>
-                        <app-media #mediaCompVid [id]="element.id" [type]="MediaType.Video" [module]="Module.DisAnswer">
-                            <span *ngIf="element.videos > 0" class="material-symbols-outlined primary"
+                        <app-media #mediaCompVid [id]="element.disruptionId" [type]="MediaType.Video" [module]="Module.Disruption">
+                            <span *ngIf="element.video > 0" class="material-symbols-outlined primary"
                                 (click)="mediaCompVid.open()" style="cursor:pointer;" media-trigger>
                                 video
                             </span>
@@ -87,7 +87,7 @@
 
                 <ng-container matColumnDef="details">
                     <th mat-header-cell *matHeaderCellDef class="text-center">
-                        Details
+                        Detallar
                     </th>
                     <td mat-cell *matCellDef="let element" class="text-center">
                         <button mat-flat-button
@@ -102,7 +102,7 @@
                 <!-- Action Column -->
                 <ng-container matColumnDef="actions">
                     <th mat-header-cell *matHeaderCellDef>
-                        Action
+                        Əməliyyatlar
                     </th>
                     <td mat-cell *matCellDef="let element">
                         <div class="d-flex gap-2">
@@ -126,7 +126,8 @@
 
             </table>
         </div>
-        <mat-paginator [pageSizeOptions]="[6]" showFirstLastButtons></mat-paginator>
+        <mat-paginator [length]="allDataCount" [pageSize]="pageSize" [pageSizeOptions]="pageSizeOptions"
+            showFirstLastButtons></mat-paginator>
 
     </mat-card-content>
 </mat-card>

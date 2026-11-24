@@ -1,0 +1,185 @@
+<div class="mv">
+    <header class="mv-bar">
+        <div class="mv-meta">
+            <span class="mv-kind">{{ kindLabel }}</span>
+            @if (isMulti()) {
+                <span class="mv-count" aria-live="polite">{{ index() + 1 }} / {{ items().length }}</span>
+            } @else if (type === MediaType.Document && items().length) {
+                <span class="mv-count">{{ items().length }} fayl</span>
+            }
+            @if (type !== MediaType.Document && current(); as url) {
+                <span class="mv-name" [title]="fileName(url)">{{ fileName(url) }}</span>
+            }
+        </div>
+
+        <div class="mv-tools">
+            @if (type === MediaType.Image && current()) {
+                <div class="mv-group">
+                    <button type="button" class="mv-btn" (click)="rotate(-90)" [disabled]="!canTransform()"
+                        matTooltip="Sola döndər" aria-label="Sola döndər">
+                        <span class="material-symbols-outlined">rotate_90_degrees_ccw</span>
+                    </button>
+                    <button type="button" class="mv-btn" (click)="rotate(90)" [disabled]="!canTransform()"
+                        matTooltip="Sağa döndər (R)" aria-label="Sağa döndər">
+                        <span class="material-symbols-outlined">rotate_90_degrees_cw</span>
+                    </button>
+                </div>
+                <div class="mv-group mv-zoom">
+                    <button type="button" class="mv-btn" (click)="zoomOut()" [disabled]="!canTransform() || fitted()"
+                        matTooltip="Kiçilt (−)" aria-label="Kiçilt">
+                        <span class="material-symbols-outlined">zoom_out</span>
+                    </button>
+                    <button type="button" class="mv-btn" (click)="fit()" [disabled]="!canTransform() || fitted()"
+                        matTooltip="Ekrana sığdır (0)" aria-label="Ekrana sığdır">
+                        <span class="material-symbols-outlined">fit_screen</span>
+                    </button>
+                    <button type="button" class="mv-btn" (click)="zoomIn()" [disabled]="!canTransform() || atMax()"
+                        matTooltip="Böyüt (+)" aria-label="Böyüt">
+                        <span class="material-symbols-outlined">zoom_in</span>
+                    </button>
+                </div>
+            }
+            @if (type !== MediaType.Document && current(); as url) {
+                <div class="mv-group">
+                    <button type="button" class="mv-btn" (click)="download(url)" [disabled]="downloading() === url"
+                        matTooltip="Yüklə" aria-label="Yüklə">
+                        @if (downloading() === url) {
+                            <mat-spinner class="mv-spinner" diameter="18" strokeWidth="2" />
+                        } @else {
+                            <span class="material-symbols-outlined">download</span>
+                        }
+                    </button>
+                    <a class="mv-btn" [href]="url" target="_blank" rel="noopener"
+                        matTooltip="Yeni tabda aç" aria-label="Yeni tabda aç">
+                        <span class="material-symbols-outlined">open_in_new</span>
+                    </a>
+                </div>
+            }
+            <button type="button" class="mv-btn mv-close" (click)="close()" matTooltip="Bağla (Esc)" aria-label="Bağla">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+    </header>
+
+    <div class="mv-stage" #stage>
+        @if (loading()) {
+            <div class="mv-state">
+                <mat-spinner class="mv-spinner" diameter="36" strokeWidth="3" />
+            </div>
+        } @else if (loadError()) {
+            <div class="mv-state">
+                <span class="material-symbols-outlined">cloud_off</span>
+                <span>Fayllar yüklənmədi</span>
+            </div>
+        } @else if (!items().length) {
+            <div class="mv-state">
+                <span class="material-symbols-outlined">image_not_supported</span>
+                <span>Fayl tapılmadı</span>
+            </div>
+        } @else {
+            @switch (type) {
+                @case (MediaType.Image) {
+                    @for (url of currentList(); track url) {
+                        @if (failed().has(url)) {
+                            <div class="mv-state">
+                                <span class="material-symbols-outlined">broken_image</span>
+                                <span>Şəkil açılmadı</span>
+                            </div>
+                        } @else {
+                            <div class="mv-canvas"
+                                [class.is-zoomed]="!fitted()"
+                                [class.is-interacting]="interacting()"
+                                (wheel)="onWheel($event)"
+                                (dblclick)="onDoubleClick($event)"
+                                (pointerdown)="onPointerDown($event)"
+                                (pointermove)="onPointerMove($event)"
+                                (pointerup)="onPointerUp($event)"
+                                (pointercancel)="onPointerUp($event)">
+                                <img #img class="mv-image" [class.is-loaded]="natural()" [src]="url" [style]="imageStyle()"
+                                    [alt]="fileName(url)" draggable="false"
+                                    (load)="onImageLoad(img)" (error)="markFailed(url)" />
+                                @if (!natural()) {
+                                    <div class="mv-state">
+                                        <mat-spinner class="mv-spinner" diameter="36" strokeWidth="3" />
+                                    </div>
+                                }
+                            </div>
+                        }
+                    }
+                }
+                @case (MediaType.Video) {
+                    @for (url of currentList(); track url) {
+                        @if (failed().has(url)) {
+                            <div class="mv-state">
+                                <span class="material-symbols-outlined">videocam_off</span>
+                                <span>Video açılmadı</span>
+                            </div>
+                        } @else {
+                            <div class="mv-center">
+                                <video class="mv-video" [src]="url" controls autoplay playsinline
+                                    (error)="markFailed(url)"></video>
+                            </div>
+                        }
+                    }
+                }
+                @case (MediaType.Document) {
+                    <div class="mv-center">
+                        <ul class="mv-docs">
+                            @for (url of items(); track url) {
+                                <li class="mv-doc">
+                                    <span class="material-symbols-outlined mv-doc-icon">{{ fileIcon(url) }}</span>
+                                    <span class="mv-doc-name" [title]="fileName(url)">{{ fileName(url) }}</span>
+                                    @if (fileExtension(url); as ext) {
+                                        <span class="mv-doc-ext">{{ ext }}</span>
+                                    }
+                                    <a class="mv-btn" [href]="url" target="_blank" rel="noopener"
+                                        matTooltip="Aç" aria-label="Aç">
+                                        <span class="material-symbols-outlined">open_in_new</span>
+                                    </a>
+                                    <button type="button" class="mv-btn" (click)="download(url)"
+                                        [disabled]="downloading() === url" matTooltip="Yüklə" aria-label="Yüklə">
+                                        @if (downloading() === url) {
+                                            <mat-spinner class="mv-spinner" diameter="18" strokeWidth="2" />
+                                        } @else {
+                                            <span class="material-symbols-outlined">download</span>
+                                        }
+                                    </button>
+                                </li>
+                            }
+                        </ul>
+                    </div>
+                }
+            }
+
+            @if (isMulti()) {
+                <button type="button" class="mv-nav is-prev" (click)="prev()" aria-label="Əvvəlki">
+                    <span class="material-symbols-outlined">chevron_left</span>
+                </button>
+                <button type="button" class="mv-nav is-next" (click)="next()" aria-label="Növbəti">
+                    <span class="material-symbols-outlined">chevron_right</span>
+                </button>
+            }
+        }
+    </div>
+
+    @if (isMulti()) {
+        <nav class="mv-strip" #strip aria-label="Fayllar">
+            <div class="mv-strip-track">
+                @for (url of items(); track url; let i = $index) {
+                    <button type="button" class="mv-thumb" [class.is-active]="i === index()"
+                        [attr.aria-current]="i === index() || null"
+                        [attr.aria-label]="kindLabel + ' ' + (i + 1)" (click)="select(i)">
+                        @if (type === MediaType.Image && !failed().has(url)) {
+                            <img [src]="url" alt="" loading="lazy" decoding="async" (error)="markFailed(url)" />
+                        } @else {
+                            <span class="material-symbols-outlined">
+                                {{ type === MediaType.Image ? 'broken_image' : 'videocam' }}
+                            </span>
+                            <span class="mv-thumb-no">{{ i + 1 }}</span>
+                        }
+                    </button>
+                }
+            </div>
+        </nav>
+    }
+</div>

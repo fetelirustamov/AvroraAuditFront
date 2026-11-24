@@ -3,6 +3,14 @@
     color: white !important;
 }
 
+.truncate-cell {
+    max-width: 220px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    cursor: default;
+}
+
 .primary {
     color: white !important;
     background-color: #6178fa !important;
@@ -137,12 +145,6 @@ button span.text-center {
         margin-bottom: 8px;
         /* Düymələr arasında şaquli boşluq */
     }
-}
-
-.page-select {
-    padding: 5px 10px;
-    border-radius: 5px;
-    margin: 5px;
 }
 
 .edit-dialog {

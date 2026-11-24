@@ -77,7 +77,7 @@
                     <!-- Agent Name Column -->
                     <ng-container matColumnDef="inspectorName">
                         <th mat-header-cell *matHeaderCellDef class="text-center">
-                            Auditor
+                            Müfəttiş
                         </th>
                         <td mat-cell *matCellDef="let element" class="text-center">
 
@@ -118,7 +118,7 @@
                     <!-- Action Column -->
                     <ng-container matColumnDef="details">
                         <th mat-header-cell *matHeaderCellDef class="text-center">
-                            Details
+                            Detallar
                         </th>
                         <td mat-cell *matCellDef="let element" class="text-center">
                             <div class="d-flex justify-content-center">
@@ -140,7 +140,8 @@
 
                 </table>
             </div>
-            <mat-paginator [pageSizeOptions]="[6]" showFirstLastButtons [disabled]="isLoading"></mat-paginator>
+            <mat-paginator [length]="allDataCount" [pageSize]="pageSize" [pageSizeOptions]="[10]"
+                showFirstLastButtons [disabled]="isLoading"></mat-paginator>
 
             <app-audit-loading-overlay *ngIf="isLoading"
                 ariaLabel="Məlumatlar yüklənir, zəhmət olmasa gözləyin."></app-audit-loading-overlay>

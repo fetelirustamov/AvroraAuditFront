@@ -76,13 +76,11 @@ export class DisruptionMiddleDetailsComponent implements AfterViewInit {
   public data: any;
   public action: boolean = false;
   public isheadInspector = false;
-  /** Redaktə yalnız Inspector rolu üçün */
+  /** Redaktə Inspector və Admin üçün */
   public isInspector = false;
-  public disruptionStatus: number = 0;
-  public disruptionApproveStatus: number = 1;
+  public isAdmin = false;
   private _tableState: TableState = new TableState();
   private disruptionApproveList: DisruptionApproveDto[] = [];
-  private disruptionApprove: DisruptionApproveDto = new DisruptionApproveDto();
   MediaType = MediaType;
   Module = Module;
   editForm!: FormGroup;
@@ -101,13 +99,16 @@ export class DisruptionMiddleDetailsComponent implements AfterViewInit {
     private authService: AuthService,
     private attachmentService: AttachmentService, 
   ) {
-    if (this.authService.getUserInfo().Role.split(",").includes("HeadInspector")) {
-      this.disruptionStatus = 1;
-      this.disruptionApproveStatus = 2;
-      this.isheadInspector = true;
+    // Admin/HeadInspector müfəttiş onayını gözləyən (0) və onaylanmış (1) uyğunsuzluqları görür.
+    // HeadInspector birbaşa son onay (2) verir, Admin isə hər iki onayı addım-addım verir (approveStatus)
+    this.isheadInspector = this.authService.hasAnyRole(['HeadInspector', 'Admin']);
+    this.isAdmin = this.authService.hasRole('Admin');
+    if (this.isheadInspector) {
+      this.displayedColumns.splice(this.displayedColumns.indexOf('media'), 0, 'status');
+      this.displayedColumnsWithActions.splice(this.displayedColumnsWithActions.indexOf('media'), 0, 'status');
     }
 
-    this.isInspector = this.authService.hasRole('Inspector');
+    this.isInspector = this.authService.hasAnyRole(['Inspector', 'Admin']);
 
     this._tableService.api_url = 'disruptions/getDetails';
     this._tableState.paginator.page = 0;
@@ -115,39 +116,31 @@ export class DisruptionMiddleDetailsComponent implements AfterViewInit {
     this._tableState.paginator.size = this.pageSize;
 
     this._tableState.filter['inspectionPlanStatus'] = "4";
-    this._tableState.filter['disruptionStatus'] = this.disruptionStatus.toString();
+    this._tableState.filter['disruptionStatus'] = this.isheadInspector ? "0,1" : "0";
 
 
     const navigation = this.router.getCurrentNavigation();
-    if (navigation?.extras?.state) {
-      const state = navigation.extras.state;
-      this.data = state["data"];
-      this.action = state["action"];
-      sessionStorage.setItem('disruption_middle_details_data', JSON.stringify(this.data));
-      sessionStorage.setItem('disruption_middle_details_action', JSON.stringify(this.action));
-      sessionStorage.removeItem('redirectedFromMissingState');
-    } else {
-      const savedData = sessionStorage.getItem('disruption_middle_details_data');
-      const savedAction = sessionStorage.getItem('disruption_middle_details_action');
-      if (savedData && savedAction !== null) {
-        this.data = JSON.parse(savedData);
-        this.action = JSON.parse(savedAction);
-      } else {
-        const alreadyRedirected = sessionStorage.getItem('redirectedFromMissingState');
-        if (!alreadyRedirected && window.history.length > 1) {
-          sessionStorage.setItem('redirectedFromMissingState', 'true');
-        } else {
-          console.warn('Əvvəlki səhifəyə yönləndirildi və geri qayıdıldı, amma data yoxdur.');
-        }
-      }
+    let state: any = navigation?.extras?.state;
+
+    if (!state) {
+      // Səhifə yenilənəndə router state itir — sessionStorage-dan bərpa edirik
+      const saved = sessionStorage.getItem('disruption_middle_details_state');
+      state = saved ? JSON.parse(saved) : null;
     }
 
-    if (this.data) {
-      if (this.action == false) {
-        this._tableState.filter['inspectionPlanId'] = this.data.id.toString();
-      } else {
-        this._tableState.filter['inspectionPlanId'] = this.data.inspectionPlanId.toString();
-      }
+    if (!state) {
+      this.location.back();
+      return;
+    }
+
+    sessionStorage.setItem('disruption_middle_details_state', JSON.stringify(state));
+
+    this.data = state["data"];
+    this.action = state["action"];
+    if (this.action == false) {
+      this._tableState.filter['inspectionPlanId'] = this.data.id.toString();
+    } else {
+      this._tableState.filter['inspectionPlanId'] = this.data.inspectionPlanId.toString();
     }
   }
 
@@ -237,33 +230,31 @@ export class DisruptionMiddleDetailsComponent implements AfterViewInit {
     });
   }
 
+  // Admin hər iki onayı verir: müfəttiş onayı (0→1), sonra son onay (1→2)
+  approveStatus(row: DisruptionDto): number {
+    if (this.isAdmin) return row.status == 0 ? 1 : 2;
+    return this.isheadInspector ? 2 : 1;
+  }
+
   changeDisruptionStatus(row: DisruptionDto, status: number) {
-    this.disruptionApproveList = [];
-    this.disruptionApprove = new DisruptionApproveDto();
-    this.disruptionApprove.disruptionId.push(row.disruptionId);
-    this.disruptionApprove.status = status;
-    this.disruptionApproveList.push(this.disruptionApprove);
-
-    if (this.disruptionApproveList.length == 0) {
-      this.notify.warning('Heç bir uyğunsuzluq seçilməyib');
-      return;
-    }
-
-    this.disruptionService.aprovePlan(this.disruptionApproveList).subscribe((data) => {
-      if (data.success) {
-        this.notify.success('Əməliyyat uğurla tamamlandı');
-      }
-      this.fill();
-    });
+    this.submitStatuses([row], () => status, 'Əməliyyat uğurla tamamlandı');
   }
 
   changeSelectedDisruptionStatus(status: number) {
-    this.disruptionApproveList = [];
-    this.selection.selected.forEach((row) => {
-      this.disruptionApprove = new DisruptionApproveDto();
-      this.disruptionApprove.disruptionId.push(row.disruptionId);
-      this.disruptionApprove.status = status;
-      this.disruptionApproveList.push(this.disruptionApprove);
+    this.submitStatuses(this.selection.selected, () => status, 'Əməliyyat uğurla tamamlandı');
+  }
+
+  // Seçilmiş sətirlərin statusu qarışıq ola bilər — hər sətir öz növbəti onay statusunu alır
+  approveSelected() {
+    this.submitStatuses(this.selection.selected, row => this.approveStatus(row), 'Uyğunsuzluq təstiqləndi');
+  }
+
+  private submitStatuses(rows: DisruptionDto[], statusOf: (row: DisruptionDto) => number, successMessage: string) {
+    this.disruptionApproveList = rows.map(row => {
+      const approve = new DisruptionApproveDto();
+      approve.disruptionId.push(row.disruptionId);
+      approve.status = statusOf(row);
+      return approve;
     });
     if (this.disruptionApproveList.length == 0) {
       this.notify.warning('Heç bir uyğunsuzluq seçilməyib');
@@ -272,8 +263,9 @@ export class DisruptionMiddleDetailsComponent implements AfterViewInit {
 
     this.disruptionService.aprovePlan(this.disruptionApproveList).subscribe((data) => {
       if (data.success) {
-        this.notify.success('Uyğunsuzluq təstiqləndi');
+        this.notify.success(successMessage);
       }
+      this.selection.clear();
       this.fill();
     });
   }
@@ -335,7 +327,7 @@ export class DisruptionMiddleDetailsComponent implements AfterViewInit {
         createdDate: this.selectedDisruption.createdDate,
         description: this.editForm.value.description,
         deadline: this.editForm.value.deadline ?? null,
-        questionResultDetailsId: 0,
+        questionId: null,
         localId: ''
       };
 

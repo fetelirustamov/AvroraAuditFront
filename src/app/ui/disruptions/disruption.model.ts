@@ -1,5 +1,4 @@
 export class DisruptionApproveDto {
-    inspectionPlanId: number = 0;
     status!: number;
     disruptionId: number[] = [];
 }
@@ -22,6 +21,8 @@ export class DisruptionDto {
     deadline!: number;
     createdDate!: Date;
     status!: number;
+    image!: number;
+    video!: number;
 }
 
 export class Disruption {
@@ -34,6 +35,6 @@ export class Disruption {
     createdDate: Date = new Date();
     description: string = '';
     deadline: number | null = null;
-    questionResultDetailsId: number = 0;
+    questionId: number | null = null;
     localId: string = '';
 }
