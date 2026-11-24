@@ -1,0 +1,378 @@
+// ============================================================================
+//  Paylaşılan dizayn qatı
+// ============================================================================
+//  Səbəb: səhifələr eyni nümunələri (səhifə başlığı, KPI kartı, cədvəl kartı,
+//  boş vəziyyət, status nişanı) hər dəfə sıfırdan yazırdı — `page-title` 9,
+//  `empty-icon` 10, `report-page-header` 8 fayl. Üstəlik `#605DFF` kimi rənglər
+//  35 yerdə sərt kodlanmışdı, halbuki `--primaryColor` artıq mövcuddur.
+//
+//  Necə işləyir: Angular komponent stillərinə atribut selektoru əlavə edir
+//  (`.kpi-card[_ngcontent-x]`), ona görə komponentin öz stili bu qlobal
+//  qatdan güclüdür. Yəni bu fayl mövcud səhifələrin görünüşünü DƏYİŞMİR.
+//  Səhifə öz təkrarlanan blokunu sildikcə avtomatik bu qata düşür.
+//
+//  Səhifəyə xas vurğu rəngi üçün yalnız iki dəyişən təyin etmək kifayətdir:
+//      .report-page-header { --page-accent-from: #F97A2A; --page-accent-to: #FFB547; }
+// ============================================================================
+
+// ── Remixicon şrifti ────────────────────────────────────────────────────────
+// Sidebar akkordeon oxları və profil dropdown karetləri bu şrifti birbaşa glif
+// kodu ilə işlədir (`font-family: remixicon` + `\ea4e`, `\ea6e`, …) — heç bir
+// `.ri-*` sinfi işlənmir. Ona görə paketin tam CSS-i (146 KB, ~3000 sinif)
+// əvəzinə yalnız bu @font-face yüklənir; şrift faylı `angular.json`-da asset
+// kimi `fonts/` altına köçürülür.
+@font-face {
+    font-family: "remixicon";
+    src: url("/fonts/remixicon.woff2") format("woff2");
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
+:root {
+    // ── Boz şkala ───────────────────────────────────────────────────────────
+    // Əvvəl səhifələrdə 6 fərqli təsadüfi boz ton işlənirdi
+    // (#9ca3af, #6c757d, #6b7280, #94a3b8, #374151, #64748b).
+    --gray-50: #F8FAFC;
+    --gray-100: #F1F5F9;
+    --gray-200: #E2E8F0;
+    --gray-300: #CBD5E1;
+    --gray-400: #94A3B8;
+    --gray-500: #64748B;
+    --gray-600: #475569;
+    --gray-700: #334155;
+    --gray-800: #1E293B;
+    --gray-900: #0F172A;
+
+    // ── Səthlər ─────────────────────────────────────────────────────────────
+    --surface: #FFFFFF;
+    --surface-muted: #F6F7F9;
+    --surface-subtle: #F1F5F9;
+
+    // ── Mətn ────────────────────────────────────────────────────────────────
+    --text-strong: #1E2533;
+    --text-muted: #9AA5B4;
+
+    // ── Status: əsas + yumşaq fon cütlükləri ────────────────────────────────
+    --primaryDark: #4B48CC;
+    --primarySoft: #EEF0FF;
+    --successSoft: #E8F9E3;
+    --dangerSoft: #FFECE9;
+    --infoSoft: #E8F4FD;
+    --warningStrong: #FF8C00;
+    --warningSoft: #FFF4E5;
+
+    // Yumşaq fonlar üzərində oxunaqlı mətn rəngləri. Bu dəyərlər artıq
+    // bir neçə komponentdə sərt kodlanmışdı (#1C8A02, #E12F14, #C46A00) —
+    // burada tokenləşdirilir, dəyərlər dəyişmir, vizual təsir yoxdur.
+    --successStrong: #1C8A02;
+    --dangerStrong: #E12F14;
+    --warningText: #C46A00;
+    // Yaşıl "məlumat" cütlüyü (mərtəbə 2 / nəfər sayı nişanları)
+    --successTint: #E6F7F1;
+    --successTintText: #0E9F6E;
+
+    // ── Radius ──────────────────────────────────────────────────────────────
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+
+    // ── Kölgə ───────────────────────────────────────────────────────────────
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, .06), 0 1px 2px rgba(0, 0, 0, .04);
+    --shadow-md: 0 4px 16px rgba(96, 93, 255, .10), 0 1px 4px rgba(0, 0, 0, .06);
+
+    // ── Səhifə başlığının standart vurğusu ──────────────────────────────────
+    --page-accent-from: var(--primaryColor);
+    --page-accent-to: #8B89FF;
+}
+
+// ── Səhifə başlığı ──────────────────────────────────────────────────────────
+.report-page-header {
+    position: relative;
+    overflow: hidden;
+    padding: 24px 28px;
+    margin-bottom: 20px;
+    border-radius: var(--radius-lg);
+    background: linear-gradient(135deg, var(--page-accent-from) 0%, var(--page-accent-to) 100%);
+
+    // Dekorativ dairələr
+    &::before,
+    &::after {
+        content: '';
+        position: absolute;
+        border-radius: 50%;
+        pointer-events: none;
+    }
+    &::before {
+        top: -40px;
+        right: -40px;
+        width: 180px;
+        height: 180px;
+        background: rgba(255, 255, 255, .08);
+    }
+    &::after {
+        bottom: -60px;
+        right: 80px;
+        width: 130px;
+        height: 130px;
+        background: rgba(255, 255, 255, .05);
+    }
+
+    .header-content {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+    }
+
+    .page-title {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin: 0 0 4px;
+        font-size: 22px;
+        font-weight: 700;
+        color: var(--whiteColor);
+
+        .title-icon {
+            font-size: 26px;
+            opacity: .9;
+        }
+    }
+
+    .page-subtitle {
+        margin: 0;
+        font-size: 13px;
+        color: rgba(255, 255, 255, .75);
+    }
+}
+
+// Başlıq üzərindəki şəffaf düymə (ixrac, əməliyyat)
+.export-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 9px 18px;
+    border: 1px solid rgba(255, 255, 255, .3);
+    border-radius: var(--radius-sm);
+    background: rgba(255, 255, 255, .18);
+    color: var(--whiteColor);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    backdrop-filter: blur(4px);
+    transition: background .2s, transform .15s;
+
+    &:hover {
+        background: rgba(255, 255, 255, .28);
+        transform: translateY(-1px);
+    }
+    .arrow-icon {
+        font-size: 18px;
+        opacity: .8;
+    }
+}
+
+// ── KPI sətri ───────────────────────────────────────────────────────────────
+.kpi-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.kpi-card {
+    flex: 1;
+    min-width: 160px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px;
+    border: 1px solid var(--borderColor);
+    border-radius: var(--radius-md);
+    background: var(--surface-muted);
+    transition: box-shadow .2s;
+
+    &:hover {
+        box-shadow: var(--shadow-md);
+    }
+}
+
+.kpi-icon {
+    flex-shrink: 0;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-sm);
+    background: var(--primarySoft);
+    color: var(--primaryColor);
+
+    .material-symbols-outlined {
+        font-size: 22px;
+    }
+}
+
+.kpi-value {
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--text-strong);
+}
+
+.kpi-label {
+    margin-top: 4px;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--bodyColor);
+}
+
+// ── Cədvəl kartı ────────────────────────────────────────────────────────────
+.table-card {
+    overflow: hidden;
+    border: 1px solid var(--borderColor);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    box-shadow: var(--shadow-sm);
+}
+
+.table-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--borderColor);
+
+    .table-info {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .table-info-icon {
+        font-size: 20px;
+        color: var(--primaryColor);
+    }
+    .table-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text-strong);
+    }
+    .result-badge {
+        padding: 2px 10px;
+        border-radius: 20px;
+        background: var(--primarySoft);
+        color: var(--primaryColor);
+        font-size: 11px;
+        font-weight: 700;
+    }
+}
+
+// Geniş cədvəllər səhifəni yan-yana sürüşdürməməlidir
+.table-responsive-wrapper {
+    overflow-x: auto;
+}
+
+.modern-table {
+    width: 100%;
+
+    th,
+    td {
+        white-space: nowrap;
+    }
+}
+
+.row-number {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--primarySoft);
+    color: var(--primaryColor);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+// ── Status nişanları ────────────────────────────────────────────────────────
+.status-chip {
+    display: inline-block;
+    min-width: 50px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 700;
+
+    &.is-success {
+        background: var(--successSoft);
+        color: #1C8A02;
+    }
+    &.is-warning {
+        background: var(--warningSoft);
+        color: #C46A00;
+    }
+    &.is-danger {
+        background: var(--dangerSoft);
+        color: #E12F14;
+    }
+    &.is-info {
+        background: var(--infoSoft);
+        color: #1565C0;
+    }
+    &.is-neutral {
+        background: var(--surface-muted);
+        color: var(--bodyColor);
+    }
+}
+
+// ── Boş vəziyyət ────────────────────────────────────────────────────────────
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 24px;
+    text-align: center;
+    color: var(--text-muted);
+
+    .empty-icon {
+        margin-bottom: 12px;
+        font-size: 52px;
+        opacity: .5;
+    }
+    p {
+        margin: 0;
+        font-size: 14px;
+    }
+    .empty-action {
+        margin-top: 16px;
+    }
+}
+
+// ── Mobil ───────────────────────────────────────────────────────────────────
+@media only screen and (max-width: 767px) {
+    .report-page-header {
+        padding: 18px 20px;
+
+        .header-content {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        .page-title {
+            font-size: 18px;
+
+            .title-icon {
+                font-size: 22px;
+            }
+        }
+    }
+
+    .kpi-card {
+        min-width: 100%;
+    }
+}
