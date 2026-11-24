@@ -1,12 +1,11 @@
 import { Injectable } from '@angular/core';
 import { environment } from '../../../environments/environment';
-import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { User } from './user.model';
 import { InspectionPlan } from '../inspections/InpectionPlan.model';
-import { RequestResponse, RequestResponseOne } from '../../models/table-state.model';
+import { RequestResponse } from '../../models/table-state.model';
 import { PlanApprove } from './plan.model';
-import { DailyDistanceReportRow, RoutePlanDto } from './route-plan.model';
 
 @Injectable({
   providedIn: 'root'
@@ -43,23 +42,6 @@ export class PlanService {
 
     return this.http.post<any>(url, planApproveList, config);
 
-  }
-
-  getRoute(inspectorId: number, date: string): Observable<RequestResponseOne<RoutePlanDto>> {
-    const params = new HttpParams()
-      .set('date', date)
-      .set('inspectorId', inspectorId.toString());
-
-    return this.http.get<RequestResponseOne<RoutePlanDto>>(`${this.API_URL}/inspectionPlans/route`, { params });
-  }
-
-  getDailyDistanceReport(firmId: number, startDate: string, endDate: string): Observable<RequestResponseOne<DailyDistanceReportRow[]>> {
-    const params = new HttpParams()
-      .set('firmId', firmId.toString())
-      .set('startDate', startDate)
-      .set('endDate', endDate);
-
-    return this.http.get<RequestResponseOne<DailyDistanceReportRow[]>>(`${this.API_URL}/inspectionPlans/dailyDistanceReport`, { params });
   }
 
 }

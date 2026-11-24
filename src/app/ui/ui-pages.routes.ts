@@ -136,19 +136,6 @@ export const uiPageRoutes: Routes = [
                     }
                 }
             },
-            {
-                path: 'route',
-                loadComponent: () => import('./plans/plan-route/plan-route.component').then(m => m.PlanRouteComponent),
-                canActivate: [RoleGuard],
-                data: {
-                    roles: ['Admin', 'HeadInspector'],
-                    menu: {
-                        area: 'app', section: 'İş axını', order: 13,
-                        group: 'Planlama', groupIcon: 'edit_calendar', groupOrder: 10,
-                        title: 'Marşrut', pageKey: 'plan-route'
-                    }
-                },
-            },
         ],
     },
 
