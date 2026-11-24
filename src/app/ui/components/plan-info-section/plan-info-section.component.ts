@@ -4,6 +4,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatTabsModule } from '@angular/material/tabs';
 import { ComponentService } from '../component.service';
 import { PlanInfo } from '../models/plan-info.model';
+import { planStatusLabel } from '../../../shared/utils/plan-status';
 
 @Component({
   selector: 'app-plan-info-section',
@@ -18,7 +19,7 @@ export class PlanInfoSectionComponent implements OnChanges {
   @Input() planId: number | string | null = null; // inspection-details-dən gələn planId
 
   public planInfo: PlanInfo | null = null; // Plan məlumatlarını saxlamaq üçün dəyişən
-  public planStatus = 2;
+  readonly statusLabel = planStatusLabel;
   userImage = 'images/users/user49.jpg';
 
   checklistScore: string = '';
@@ -54,7 +55,6 @@ export class PlanInfoSectionComponent implements OnChanges {
     this.componentService.GetPlanInfoByPlanId(Number(this.planId)).subscribe(response => {
       if (response.success) {
         this.planInfo = response.data;
-        console.log('Plan məlumatları alındı:', this.planInfo);
       }
     });
   }
