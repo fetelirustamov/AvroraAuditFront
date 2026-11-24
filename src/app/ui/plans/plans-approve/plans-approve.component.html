@@ -35,11 +35,13 @@
                     <span class="material-symbols-outlined">search</span>
                     Axtar
                 </button>
-                <button type="button" class="g-approve-btn" (click)="changeSelectedPlanStatus(2)">
+                <button type="button" class="g-approve-btn" (click)="changeSelectedPlanStatus(2)"
+                    [disabled]="isSaving || !selection.hasValue()">
                     <span class="material-symbols-outlined">check_circle</span>
                     Təsdiq
                 </button>
-                <button type="button" class="g-reject-btn" (click)="changeSelectedPlanStatus(-1)">
+                <button type="button" class="g-reject-btn" (click)="changeSelectedPlanStatus(-1)"
+                    [disabled]="isSaving || !selection.hasValue()">
                     <span class="material-symbols-outlined">cancel</span>
                     Rədd
                 </button>

@@ -1,6 +1,5 @@
 import { Component, ViewChild, AfterViewInit, ElementRef } from '@angular/core';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { finalize } from 'rxjs/internal/operators/finalize';
 import { InspectionPlan } from '../../inspections/InpectionPlan.model';
 import { PlanApprove } from '../../plans/plan.model';
 import { TableState } from '../../../models/table-state.model';
@@ -31,6 +30,9 @@ import { NotificationService } from '../../../shared/services/notification.servi
 import { MediaComponent } from '../../components/media/media.component';
 import { MediaType, Module } from '../../components/media/media-type.enum';
 import { AttachmentService } from '../../../admin/services/attachment.service';
+import { apiErrorMessage } from '../../../shared/utils/api-error';
+import { ACCEPTED_IMAGE_TYPES } from '../../../shared/utils/upload-types';
+import { catchError, EMPTY, finalize, of, switchMap } from 'rxjs';
 
 @Component({
   selector: 'app-answer-details',
@@ -59,6 +61,8 @@ export class AnswerDetailsComponent {
   public pageSize: number = 10;
   public pageSizeOptions: number[] = [5, 10, 20]; // Səhifə ölçüsü seçimləri
   public isLoading: boolean = false;
+  public isSaving = false;
+  readonly acceptedImageTypes = ACCEPTED_IMAGE_TYPES;
   public rows$: Observable<any[]> = new Observable<any[]>();
   public data: any;
   public action: boolean = false;
@@ -221,27 +225,32 @@ export class AnswerDetailsComponent {
         note: this.editForm.value.note,
       };
 
-      this.disruptionAnswerService.AddDisruptionAnswer(updatedDisruption).subscribe({
-        next: (response: { success: boolean }) => {
-          if (response.success) {
-            if (files.length > 0) {
-              this.attachmentService.uploadAttachment(
-                Module.DisAnswer,
-                MediaType.Image,
-                this.editForm.get('id')?.value,
-                files
-              ).subscribe({
-                next: () => this.notify.success('Şəkil uğurla yükləndi'),
-                error: () => this.notify.error('Şəkil yüklənmədi')
-              });
-            }
-            this.notify.success('Uyğunsuzluq yeniləndi');
-            this.closeEditDialog();
-            this.fill();
-          }
-        },
-        error: () => {
-          this.notify.error('Xəta baş verdi');
+      if (this.isSaving) return;
+      this.isSaving = true;
+
+      // Əvvəl şəkil, sonra cavab: cavab zənciri növbəti səviyyəyə ötürür. Şəkil rədd edilsə
+      // (format, ölçü) cavab da getməsin, istifadəçi düzəldib yenidən göndərsin.
+      const upload$ = files.length > 0
+        ? this.attachmentService.uploadAttachment(Module.DisAnswer, MediaType.Image, updatedDisruption.id, files)
+        : of(null);
+
+      upload$.pipe(
+        catchError((error) => {
+          this.notify.error(apiErrorMessage(error, 'Şəkil yüklənmədi, cavab göndərilmədi'));
+          return EMPTY;
+        }),
+        switchMap(() => this.disruptionAnswerService.AddDisruptionAnswer(updatedDisruption).pipe(
+          catchError((error) => {
+            this.notify.error(apiErrorMessage(error, 'Cavab göndərilmədi'));
+            return EMPTY;
+          })
+        )),
+        finalize(() => (this.isSaving = false))
+      ).subscribe((response: { success: boolean }) => {
+        if (response.success) {
+          this.notify.success('Uyğunsuzluq yeniləndi');
+          this.closeEditDialog();
+          this.fill();
         }
       });
     }

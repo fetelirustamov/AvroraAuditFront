@@ -25,6 +25,7 @@ import { DisruptionAnswerService } from './disruption-answer.service';
 
 import { Location } from '../inspections/location.model';
 import { AuditLoadingOverlayComponent } from '../components/audit-loading-overlay/audit-loading-overlay.component';
+import { setFilter } from '../../shared/utils/table-filter';
 
 @Component({
   selector: 'app-answers',
@@ -129,21 +130,16 @@ export class AnswersComponent {
       const locationCode = formData.locationCode;
       const startDate = this.datePipe.transform(formData.dateRange?.start, 'yyyy-MM-dd');
       const endDate = this.datePipe.transform(formData.dateRange?.end, 'yyyy-MM-dd');
-      if (startDate != null) {
-        this._tableState.filter['startDate'] = startDate;
-      }
+      setFilter(this._tableState.filter, 'startDate', startDate);
 
-      if (endDate != null) {
-        this._tableState.filter['endDate'] = endDate;
-      }
+      setFilter(this._tableState.filter, 'endDate', endDate);
 
-      if (locationCode != null) {
-        this._tableState.filter['locationCode'] = locationCode.toString();
-      }
+      setFilter(this._tableState.filter, 'locationCode', locationCode);
 
-      if (firmId != null) {
-        this._tableState.filter['firmId'] = firmId.toString();
-      }
+      setFilter(this._tableState.filter, 'firmId', firmId);
+      // Yeni axtarış ilk səhifədən başlasın
+      this._tableState.paginator.page = 0;
+      if (this.paginator) this.paginator.pageIndex = 0;
 
       // Backend çağırışı
       this.fill();

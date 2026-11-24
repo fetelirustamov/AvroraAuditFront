@@ -23,6 +23,7 @@ import { InspectionPlan } from '../InpectionPlan.model';
 import { Router } from '@angular/router';
 import { MatSort, MatSortModule } from '@angular/material/sort';
 import { InspectionsListCacheService, InspectionsListSnapshot } from '../inspections-list-cache.service';
+import { setFilter } from '../../../shared/utils/table-filter';
 
 @Component({
   selector: 'app-inspections-list',
@@ -199,21 +200,16 @@ export class InspectionsListComponent implements AfterViewInit {
       const locationCode = formData.locationCode;
       const startDate = this.datePipe.transform(formData.dateRange?.start, 'yyyy-MM-dd');
       const endDate = this.datePipe.transform(formData.dateRange?.end, 'yyyy-MM-dd');
-      if (startDate != null) {
-        this._tableState.filter['startDate'] = startDate;
-      }
+      setFilter(this._tableState.filter, 'startDate', startDate);
 
-      if (endDate != null) {
-        this._tableState.filter['endDate'] = endDate;
-      }
+      setFilter(this._tableState.filter, 'endDate', endDate);
 
-      if (locationCode != null) {
-        this._tableState.filter['locationCode'] = locationCode.toString();
-      }
+      setFilter(this._tableState.filter, 'locationCode', locationCode);
 
-      if (firmId != null) {
-        this._tableState.filter['firmId'] = firmId.toString();
-      }
+      setFilter(this._tableState.filter, 'firmId', firmId);
+      // Yeni axtarış ilk səhifədən başlasın
+      this._tableState.paginator.page = 0;
+      if (this.paginator) this.paginator.pageIndex = 0;
 
       // Backend çağırışı
       this.fill();

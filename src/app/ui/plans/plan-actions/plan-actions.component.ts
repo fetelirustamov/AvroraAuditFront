@@ -19,11 +19,13 @@ import { Firm } from '../../inspections/firm.model';
 import { TableState } from '../../../models/table-state.model';
 import { PlanApprove } from '../plan.model';
 import { TableService } from '../../services/table.service';
+import { apiErrorMessage } from '../../../shared/utils/api-error';
 import { InspectionsService } from '../../inspections/inspections.service';
 import { PlanService } from '../plan.service';
 import { NotificationService } from '../../../shared/services/notification.service';
 import { finalize } from 'rxjs';
 import { AuditLoadingOverlayComponent } from '../../components/audit-loading-overlay/audit-loading-overlay.component';
+import { setFilter } from '../../../shared/utils/table-filter';
 
 @Component({
   selector: 'app-plan-actions',
@@ -49,6 +51,7 @@ export class PlanActionsComponent {
   public firms: Firm[] = [];
   planForm!: FormGroup;
   public isLoading = false;
+  public isSaving = false;
   public searchTerm: string = '';
   public pageSize: number = 10;
   public status: number = 1;
@@ -146,20 +149,15 @@ export class PlanActionsComponent {
       const startDate = this.datePipe.transform(formData.dateRange?.start, 'yyyy-MM-dd');
       const endDate = this.datePipe.transform(formData.dateRange?.end, 'yyyy-MM-dd');
 
-      if (startDate != null) {
-        this._tableState.filter['startDate'] = startDate;
-      }
-      if (this.status != null) {
-        this._tableState.filter['status'] = this.status.toString();
-      }
+      setFilter(this._tableState.filter, 'startDate', startDate);
+      setFilter(this._tableState.filter, 'status', this.status);
 
-      if (endDate != null) {
-        this._tableState.filter['endDate'] = endDate;
-      }
+      setFilter(this._tableState.filter, 'endDate', endDate);
 
-      if (firmId != null) {
-        this._tableState.filter['firmId'] = firmId.toString();
-      }
+      setFilter(this._tableState.filter, 'firmId', firmId);
+      // Yeni axtarış ilk səhifədən başlasın
+      this._tableState.paginator.page = 0;
+      if (this.paginator) this.paginator.pageIndex = 0;
 
       // Backend çağırışı
       this.fill();
@@ -183,7 +181,9 @@ export class PlanActionsComponent {
     ).subscribe((response) => {
       this._tableState.paginator.total = response.data?.total || 0;
       this.dataSource = response.data?.items || [];
-      this.allDataCount = response.data?.total || 0;// artıq MatTableDataSource yoxdur
+      // Toplu əməliyyat yalnız ekranda görünən sətirlərə tətbiq olunsun
+      this.selection.clear();
+      this.allDataCount = response.data?.total || 0;
     });
   }
 
@@ -198,48 +198,41 @@ export class PlanActionsComponent {
   // }
 
   changePlanStatus(row: any, status: number) {
-    this.planApproveList = [];
-    this.planApprove = new PlanApprove();
-    this.planApprove.planId = row.id;
-    this.planApprove.status = status;
-    this.planApproveList.push(this.planApprove);
-
-    if (this.planApproveList.length == 0) {
-      this.notify.warning('Heç bir plan seçilməyib');
-      return;
-    }
-
-    // Burada row.id və ya row-un başqa istədiyin property-lərini işlədə bilərsə
-    this.planService.aprovePlan(this.planApproveList).subscribe((data) => {
-      if (data.success) {
-        this.notify.success('Əməliyyat uğurla tamamlandı');
-      }
-      this.fill();
-    });
+    const item = new PlanApprove();
+    item.planId = row.id;
+    item.status = status;
+    this.submitStatuses([item], 'Əməliyyat uğurla tamamlandı');
   }
 
   changeSelectedPlanStatus(status: number) {
-    this.planApproveList = [];
-
-    this.selection.selected.forEach((row) => {
-      this.planApprove = new PlanApprove();
-      this.planApprove.planId = row.id;
-      this.planApprove.status = status;
-      this.planApproveList.push(this.planApprove);
-    })
-
-    if (this.planApproveList.length == 0) {
+    const items = this.selection.selected.map((row) => {
+      const item = new PlanApprove();
+      item.planId = row.id;
+      item.status = status;
+      return item;
+    });
+    if (items.length === 0) {
       this.notify.warning('Heç bir plan seçilməyib');
       return;
     }
+    this.submitStatuses(items, status === 2 ? 'Planlar təsdiqləndi' : 'Planlar ləğv edildi');
+  }
 
-    this.planService.aprovePlan(this.planApproveList).subscribe((data) => {
-      console.log(data);
-      if (data.success) {
-        this.notify.success('Plan təstiqləndi');
-      }
-      this.fill();
-    });
+  private submitStatuses(items: PlanApprove[], successMessage: string): void {
+    if (this.isSaving) return;
+    this.isSaving = true;
+    this.planService.aprovePlan(items)
+      .pipe(finalize(() => (this.isSaving = false)))
+      .subscribe({
+        next: (data) => {
+          if (data.success) {
+            this.notify.success(successMessage);
+          }
+          this.selection.clear();
+          this.fill();
+        },
+        error: (error) => this.notify.error(apiErrorMessage(error, 'Status dəyişmədi'))
+      });
   }
 
 }

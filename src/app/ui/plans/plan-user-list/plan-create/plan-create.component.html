@@ -83,7 +83,9 @@
             <button type="button" mat-flat-button (click)="addPanel()">Əlavə Et</button>
         </div>
         <div class="col-md-6 text-end">
-            <button type="submit" mat-flat-button color="primary">Yadda Saxla</button>
+            <button type="submit" mat-flat-button color="primary" [disabled]="isLoading">
+                {{ isLoading ? 'Saxlanılır…' : 'Yadda Saxla' }}
+            </button>
         </div>
     </div>
 </form>

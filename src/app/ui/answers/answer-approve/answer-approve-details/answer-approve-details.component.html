@@ -96,7 +96,7 @@
                     </th>
                     <td mat-cell *matCellDef="let element">
                         <div class="d-flex gap-2">
-                            <button mat-icon-button matTooltip="Təsdiq"
+                            <button mat-icon-button matTooltip="Təsdiq" [disabled]="isSaving"
                                 (click)="changeDisruptionAnswerStatus(element, 1)">
                                 <span class="material-symbols-outlined approve-icon">check_circle</span>
                             </button>
@@ -155,7 +155,7 @@
                 </div>
                 <div class="reject-actions">
                     <button mat-stroked-button type="button" (click)="closeRejectDialog()">Ləğv et</button>
-                    <button mat-flat-button color="warn" type="button" (click)="confirmReject()">Rədd et</button>
+                    <button mat-flat-button color="warn" type="button" (click)="confirmReject()" [disabled]="isSaving">Rədd et</button>
                 </div>
             </mat-card-content>
         </mat-card>

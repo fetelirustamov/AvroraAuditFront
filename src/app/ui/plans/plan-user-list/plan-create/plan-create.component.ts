@@ -16,6 +16,8 @@ import { PlanService } from '../../plan.service';
 import { InspectionPlan } from '../../../inspections/InpectionPlan.model';
 import { Location } from '../../../inspections/location.model';
 import { NotificationService } from '../../../../shared/services/notification.service';
+import { apiErrorMessage } from '../../../../shared/utils/api-error';
+import { catchError, finalize, forkJoin, map, of } from 'rxjs';
 
 @Component({
   selector: 'app-plan-create',
@@ -118,6 +120,7 @@ export class PlanCreateComponent {
   }
 
   createPlan(): void {
+    if (this.isLoading) return;
     if (this.planForm.invalid) {
       this.planForm.markAllAsTouched();
       this.notify.warning('Forma tamamlanmayıb', {
@@ -126,44 +129,61 @@ export class PlanCreateComponent {
       return;
     }
 
-    const formValues = this.planForm.value;
-    const now = new Date();
+    const panels: any[] = this.planForm.value.panels;
+    const plans = panels.map((formValue) => ({
+      start: this.combineDateAndTimeToUTC(formValue.date, formValue.startTime),
+      end: this.combineDateAndTimeToUTC(formValue.date, formValue.endTime),
+      location: formValue.location
+    }));
 
-    formValues.panels.forEach((formValue: any) => {
-      const plan = new InspectionPlan(
-        0,
-        formValue.location,
-        this.combineDateAndTimeToUTC(formValue.date, formValue.startTime).toISOString(),
-        this.combineDateAndTimeToUTC(formValue.date, formValue.endTime).toISOString(),
-        1,
-        this.data.selected,
-        "0",
-        "0",
-        this.data.organization,
-        0,
-        now.toISOString()
-      );
-
-      this.planService.addPlan(plan).subscribe({
-        next: (data) => {
-          if (data.success) {
-            this.notify.success('Plan uğurla əlavə olundu!', {
-              message: 'Yeni plan sistemə qeydə alındı.',
-            });
-            this.router.navigate(['plans/add']);
-          } else {
-            this.notify.error('Əməliyyat uğursuz oldu', {
-              message: 'Plan əlavə edilərkən xəta baş verdi.',
-            });
-          }
-        },
-        error: () => {
-          this.notify.error('Server xətası', {
-            message: 'Serverə qoşulmaq mümkün olmadı. Yenidən cəhd edin.',
-          });
-        },
+    const invalidIndex = plans.findIndex(p => p.end <= p.start);
+    if (invalidIndex >= 0) {
+      this.notify.warning('Vaxt düzgün deyil', {
+        message: `${invalidIndex + 1}-ci planda bitmə vaxtı başlama vaxtından sonra olmalıdır.`,
       });
-    });
+      return;
+    }
+
+    // Bütün panellər birlikdə göndərilir; hər birinin nəticəsi ayrıca toplanır ki, biri
+    // uğursuz olanda uğurlu olanlar formadan çıxsın və təkrar cəhd dublikat yaratmasın.
+    const requests = plans.map(p => this.planService.addPlan(new InspectionPlan(
+      0,
+      p.location,
+      p.start.toISOString(),
+      p.end.toISOString(),
+      1,
+      this.data.selected,
+      "0",
+      "0",
+      this.data.organization,
+      0,
+      new Date().toISOString()
+    )).pipe(
+      map(() => null as string | null),
+      catchError((error) => of(apiErrorMessage(error, 'Plan əlavə edilmədi.')))
+    ));
+
+    this.isLoading = true;
+    forkJoin(requests)
+      .pipe(finalize(() => (this.isLoading = false)))
+      .subscribe((errors) => {
+        const failed = errors.map((message, index) => ({ message, index })).filter(e => e.message !== null);
+        if (failed.length === 0) {
+          this.notify.success(plans.length > 1 ? 'Planlar əlavə olundu' : 'Plan uğurla əlavə olundu!', {
+            message: 'Yeni plan sistemə qeydə alındı.',
+          });
+          this.router.navigate(['plans/add']);
+          return;
+        }
+
+        // Uğurlu panelləri formadan çıxar (sondan əvvələ - indekslər sürüşməsin)
+        for (let i = plans.length - 1; i >= 0; i--) {
+          if (errors[i] === null) this.panels.removeAt(i);
+        }
+        this.notify.error(`${failed.length} plan əlavə edilmədi`, {
+          message: failed.map(f => f.message).join(' '),
+        });
+      });
   }
 
   combineDateAndTimeToUTC(date: Date, time: string): Date {

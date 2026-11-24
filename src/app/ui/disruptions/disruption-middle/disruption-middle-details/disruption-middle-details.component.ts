@@ -5,6 +5,7 @@ import { FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, 
 import { TableState } from '../../../../models/table-state.model';
 import { CommonModule, DatePipe, Location } from '@angular/common';
 import { NotificationService } from '../../../../shared/services/notification.service';
+import { apiErrorMessage } from '../../../../shared/utils/api-error';
 import { DisruptionService } from '../../disruption.service';
 import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
 import { SelectionModel } from '@angular/cdk/collections';
@@ -70,6 +71,7 @@ export class DisruptionMiddleDetailsComponent implements AfterViewInit {
   @ViewChild(MatPaginator) paginator!: MatPaginator;
 
   public isLoading = false;
+  public isSaving = false;
   public searchTerm: string = '';
   public pageSize: number = 10;
   public pageSizeOptions: number[] = [5, 10, 20]; // Səhifə ölçüsü seçimləri
@@ -261,13 +263,20 @@ export class DisruptionMiddleDetailsComponent implements AfterViewInit {
       return;
     }
 
-    this.disruptionService.aprovePlan(this.disruptionApproveList).subscribe((data) => {
-      if (data.success) {
-        this.notify.success(successMessage);
-      }
-      this.selection.clear();
-      this.fill();
-    });
+    if (this.isSaving) return;
+    this.isSaving = true;
+    this.disruptionService.aprovePlan(this.disruptionApproveList)
+      .pipe(finalize(() => (this.isSaving = false)))
+      .subscribe({
+        next: (data) => {
+          if (data.success) {
+            this.notify.success(successMessage);
+          }
+          this.selection.clear();
+          this.fill();
+        },
+        error: (error) => this.notify.error(apiErrorMessage(error, 'Status dəyişmədi'))
+      });
   }
 
   openEditDialog(disruption: DisruptionDto) {

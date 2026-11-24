@@ -46,11 +46,15 @@
                     <span class="material-symbols-outlined">search</span>
                     Axtar
                 </button>
-                <button type="button" class="g-approve-btn" (click)="changeSelectedPlanStatus(2)">
+                <!-- Toplu düymələr sətir düymələri ilə eyni qaydada: təsdiq yalnız gözləyənlərdə,
+                     ləğv yalnız gözləyən və təsdiqlənmiş planlarda (rədd olunmuşu təsdiqləmək olmur). -->
+                <button *ngIf="status == 1" type="button" class="g-approve-btn" (click)="changeSelectedPlanStatus(2)"
+                    [disabled]="isSaving || !selection.hasValue()">
                     <span class="material-symbols-outlined">check_circle</span>
                     Təsdiq
                 </button>
-                <button type="button" class="g-reject-btn" (click)="changeSelectedPlanStatus(-1)">
+                <button *ngIf="status == 1 || status == 2" type="button" class="g-reject-btn" (click)="changeSelectedPlanStatus(-1)"
+                    [disabled]="isSaving || !selection.hasValue()">
                     <span class="material-symbols-outlined">cancel</span>
                     Rədd
                 </button>
@@ -147,8 +151,8 @@
                                     <span class="material-symbols-outlined">check_circle</span>
                                 </button>
 
-                                <button type="button" class="action-btn reject-btn"
-                                    (click)="changePlanStatus(element,-1)"
+                                <button *ngIf="status == 1 || status == 2" type="button" class="action-btn reject-btn"
+                                    (click)="changePlanStatus(element,-1)" [disabled]="isSaving"
                                     matTooltip="Planı ləğv et" matTooltipPosition="above">
                                     <span class="material-symbols-outlined">cancel</span>
                                 </button>

@@ -7,6 +7,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { NotificationService } from '../../../../shared/services/notification.service';
+import { apiErrorMessage } from '../../../../shared/utils/api-error';
 import { Router } from '@angular/router';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MapPickerComponent } from '../map-picker/map-picker.component';
@@ -97,7 +98,8 @@ export class LocationAddComponent implements OnInit {
             firmId: [null, Validators.required],
             // Region məcburi deyil - region təyin olunmamış mağazalar da yaradıla bilər
             regionId: [null],
-            locationCode: [null],
+            // Kod sistemin açarıdır (planlar, zəncir, şöbələr): məcburi, unikal, redaktədə dəyişmir
+            locationCode: [null, [Validators.required, Validators.min(1)]],
             locationName: ['', Validators.required],
             locationAddress: [''],
             locationType: [null],
@@ -116,6 +118,7 @@ export class LocationAddComponent implements OnInit {
                 regionId: this.toNullableNumber(data.item.regionId ?? data.item.RegionId ?? data.item.regionID ?? null),
                 radius: this.toNullableNumber(data.item.radius)
             } as LocationDto);
+            this.form.get('locationCode')?.disable();
 
             const lat = parseFloat(data.item.latitude as string);
             const lng = parseFloat(data.item.longitude as string);
@@ -330,7 +333,8 @@ export class LocationAddComponent implements OnInit {
                             this.finishEdit(res);
                         }
                     });
-                }
+                },
+                error: (error) => this.notify.error(apiErrorMessage(error, 'Mağaza yenilənmədi'))
             });
             return;
         }
@@ -365,7 +369,9 @@ export class LocationAddComponent implements OnInit {
                         this.finishCreate(res);
                     }
                 });
-            }
+            },
+            // 409: kod artıq istifadə olunub (silinmiş mağaza daxil)
+            error: (error) => this.notify.error(apiErrorMessage(error, 'Mağaza yaradılmadı'))
         });
     }
 

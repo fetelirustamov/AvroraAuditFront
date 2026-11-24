@@ -1,8 +1,7 @@
 
 import { Component, ViewChild } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { finalize } from 'rxjs/internal/operators/finalize';
-import { Observable } from 'rxjs';
+import { finalize, Observable } from 'rxjs';
 import { SelectionModel } from '@angular/cdk/collections';
 import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
 import { CommonModule, DatePipe, NgFor, Location } from '@angular/common';
@@ -19,6 +18,7 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { FileUploadModule } from '@iplab/ngx-file-upload';
 import { NgxMaterialTimepickerModule } from 'ngx-material-timepicker';
 import { NotificationService } from '../../../../shared/services/notification.service';
+import { apiErrorMessage } from '../../../../shared/utils/api-error';
 import { DisruptionAnswerApproveDto, DisruptionAnswerDTO } from '../../disruption-answer.model';
 import { TableState } from '../../../../models/table-state.model';
 import { DisruptionAnswerService } from '../../disruption-answer.service';
@@ -58,6 +58,7 @@ export class AnswerApproveDetailsComponent {
   public pageSize: number = 10;
   public pageSizeOptions: number[] = [5, 10, 20]; // Səhifə ölçüsü seçimləri
   public isLoading: boolean = false;
+  public isSaving = false;
   public rows$: Observable<any[]> = new Observable<any[]>();
   public data: any;
   public action: boolean = false;
@@ -218,14 +219,25 @@ export class AnswerApproveDetailsComponent {
     this.disruptionAnswerApprove.Note = row.note ?? '';
     this.disruptionAnswerApprove.answerStatus = row.approveStatus!;
 
+    this.submitAnswer(this.disruptionAnswerApprove);
+  }
 
-
-    this.disruptionAnswerService.AddDisruptionAnswer(this.disruptionAnswerApprove).subscribe((data) => {
-      if (data.success) {
-        this.notify.success('Əməliyyat uğurla tamamlandı');
-      }
-      this.fill();
-    });
+  /** Təsdiq və geri qaytarma: ikiqat klik ikinci addım yaratmasın, server mesajı göstərilsin. */
+  private submitAnswer(dto: DisruptionAnswerApproveDto, onSuccess?: () => void): void {
+    if (this.isSaving) return;
+    this.isSaving = true;
+    this.disruptionAnswerService.AddDisruptionAnswer(dto)
+      .pipe(finalize(() => (this.isSaving = false)))
+      .subscribe({
+        next: (data) => {
+          if (data.success) {
+            this.notify.success('Əməliyyat uğurla tamamlandı');
+          }
+          onSuccess?.();
+          this.fill();
+        },
+        error: (error) => this.notify.error(apiErrorMessage(error, 'Əməliyyat alınmadı'))
+      });
   }
 
   closeDetailsDialog() {
@@ -260,13 +272,7 @@ export class AnswerApproveDetailsComponent {
     this.disruptionAnswerApprove.answerStatus = this.selectedRowForReject.approveStatus!;
     this.disruptionAnswerApprove.returnReason = this.rejectNote;
 
-    this.disruptionAnswerService.AddDisruptionAnswer(this.disruptionAnswerApprove).subscribe((data) => {
-      if (data.success) {
-        this.notify.success('Əməliyyat uğurla tamamlandı');
-      }
-      this.closeRejectDialog();
-      this.fill();
-    });
+    this.submitAnswer(this.disruptionAnswerApprove, () => this.closeRejectDialog());
   }
 
 
