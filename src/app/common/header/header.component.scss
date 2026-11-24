@@ -221,33 +221,6 @@
         &.sticky {
             box-shadow: rgba(149, 157, 165, 0.12) 0px 8px 24px;
         }
-        &.dark-header {
-            --borderColor: #172036;
-            color: var(--bodyColor);
-            --bodyColor: #8695AA;
-
-            a {
-                color: var(--whiteColor);
-        
-                &:hover {
-                    color: var(--primaryColor);
-                }
-            }
-            .text-black {
-                color: var(--whiteColor) !important;
-            }
-            &.bg-white, .bg-white {
-                background-color: #0C1427 !important;
-            }
-            .bg-black {
-                background-color: var(--whiteColor) !important;
-            }
-            input {
-                background-color: #15203c;
-                color: var(--whiteColor);
-                border-color: #15203c;
-            }
-        }
         &.card-borderd {
             border: {
                 left: 1px solid var(--borderColor) !important;
@@ -260,96 +233,6 @@
         }
         &.card-with-box-shadow {
             box-shadow: rgba(149, 157, 165, 0.2) 0px 8px 24px !important;
-        }
-        &.component-rtl-enabled {
-            left: 25px;
-            right: 285px;
-    
-            .header-left-side {
-                .burger-menu {
-                    margin: {
-                        right: 0;
-                        left: 23px;
-                    };
-                }
-                .search-box {
-                    button {
-                        right: auto;
-                        left: 15px;
-                    }
-                }
-                .connected-apps-menu {
-                    margin: {
-                        left: 0;
-                        right: 25px;
-                    };
-                }
-            }
-            .header-right-side {
-                li {
-                    .mat-mdc-button {
-                        &.language-menu-btn {
-                            padding: {
-                                left: 12px;
-                                right: 0;
-                            };
-                            &::after {
-                                left: -3px;
-                                right: auto;
-                            }
-                        }
-                        &.notifications-menu-btn {
-                            .dot {
-                                right: auto;
-                                left: 4px;
-                            }
-                        }
-                        &.profile-menu-btn {
-                            padding: {
-                                left: 14px;
-                                right: 0;
-                            };
-                            .mdc-button__label {
-                                img {
-                                    margin: {
-                                        right: 0;
-                                        left: 8px;
-                                    };
-                                }
-                            }
-                            &::after {
-                                right: auto;
-                                left: -3px;
-                            }
-                        }
-                    }
-                    &:first-child {
-                        margin: {
-                            left: 12px;
-                            right: 0;
-                        };
-                    }
-                    &:last-child {
-                        margin: {
-                            right: 12px;
-                            left: 0;
-                        };
-                    }
-                }
-            }
-            &.active, &.hide-sidebar {
-                left: 25px;
-                right: 125px;
-            }
-            &.right-sidebar {
-                left: 285px;
-                right: 25px;
-    
-                &.active, &.hide-sidebar {
-                    right: 25px;
-                    left: 125px;
-                }
-            }
         }
     }
     .mat-mdc-menu-panel {
@@ -586,7 +469,8 @@
                 }
                 .list {
                     li {
-                        a {
+                        // "Çıxış" artıq <button>-dur (href-siz <a> deyil)
+                        a, button {
                             padding: 7.5px 20px 7.5px 50px;
 
                             i {
@@ -610,104 +494,6 @@
                             &:hover {
                                 &::before {
                                     transform: scaleY(1);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-    .dark-theme {
-        .mat-mdc-menu-panel {
-            &.apps-menu-dropdown {
-                background: #0A0E19;
-            }
-            &.language-menu-dropdown {
-                background: #0A0E19;
-    
-                .mat-mdc-menu-content {
-                    .menu-body {
-                        li {
-                            .mdc-button {
-                                color: var(--whiteColor);
-                            }
-                        }
-                    }
-                }
-            }
-            &.notifications-menu-dropdown {
-                background: #0A0E19;
-            }
-            &.profile-menu-dropdown {
-                background: #0A0E19;
-            }
-        }
-    }
-    .rtl-enabled {
-        .mat-mdc-menu-panel {
-            &.language-menu-dropdown {
-                .mat-mdc-menu-content {
-                    .menu-body {
-                        li {
-                            .mdc-button {
-                                .mdc-button__label {
-                                    img {
-                                        margin: {
-                                            right: 0;
-                                            left: 10px;
-                                        };
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            &.notifications-menu-dropdown {
-                .mat-mdc-menu-content {
-                    .menu-body {
-                        li {
-                            padding: {
-                                left: 20px;
-                                right: 75px;
-                            };
-                            .icon {
-                                left: auto;
-                                right: 20px;
-                            }
-                            .unread {
-                                right: auto;
-                                left: 20px;
-                            }
-                        }
-                    }
-                }
-            }
-            &.profile-menu-dropdown {
-                .mat-mdc-menu-content {
-                    .admin {
-                        img {
-                            margin: {
-                                right: 0;
-                                left: 9px;
-                            };
-                        }
-                    }
-                    .list {
-                        li {
-                            a {
-                                padding: {
-                                    left: 20px;
-                                    right: 50px;
-                                };
-                                i {
-                                    left: auto;
-                                    right: 20px;
-                                }
-                                &::before {
-                                    left: auto;
-                                    right: 0;
                                 }
                             }
                         }
@@ -745,24 +531,6 @@
     
                 &.active, &.hide-sidebar {
                     right: 25px;
-                }
-            }
-            &.component-rtl-enabled {
-                left: 25px;
-                right: 25px;
-        
-                &.active, &.hide-sidebar {
-                    left: 25px;
-                    right: 25px;
-                }
-                &.right-sidebar {
-                    left: 25px;
-                    right: 25px;
-        
-                    &.active, &.hide-sidebar {
-                        right: 25px;
-                        left: 25px;
-                    }
                 }
             }
             &.sticky {
@@ -895,58 +663,6 @@
     
                 &.active, &.hide-sidebar {
                     right: 15px;
-                }
-            }
-            &.component-rtl-enabled {
-                right: 15px;
-                left: 15px;
-                
-                .header-left-side {
-                    .burger-menu {
-                        margin: {
-                            right: 0;
-                            left: 13px;
-                        };
-                    }
-                    .search-box {
-                        button {
-                            right: auto;
-                            left: 13px;
-                        }
-                    }
-                    .connected-apps-menu {
-                        margin: {
-                            left: 0;
-                            right: 13px;
-                        };
-                    }
-                }
-                .header-right-side {
-                    li {
-                        &:first-child {
-                            margin: {
-                                left: 8px;
-                            };
-                        }
-                        &:last-child {
-                            margin: {
-                                right: 8px;
-                            };
-                        }
-                    }
-                }
-                &.active, &.hide-sidebar {
-                    left: 15px;
-                    right: 15px;
-                }
-                &.right-sidebar {
-                    left: 15px;
-                    right: 15px;
-        
-                    &.active, &.hide-sidebar {
-                        right: 15px;
-                        left: 15px;
-                    }
                 }
             }
         }
@@ -1084,48 +800,6 @@
                 }
             }
         }
-        .rtl-enabled {
-            .mat-mdc-menu-panel {
-                &.notifications-menu-dropdown {
-                    .mat-mdc-menu-content {
-                        .menu-body {
-                            li {
-                                padding: {
-                                    left: 18px;
-                                    right: 75px;
-                                };
-                                .icon {
-                                    left: auto;
-                                    right: 18px;
-                                }
-                                .unread {
-                                    right: auto;
-                                    left: 15px;
-                                }
-                            }
-                        }
-                    }
-                }
-                &.profile-menu-dropdown {
-                    .mat-mdc-menu-content {
-                        .list {
-                            li {
-                                a {
-                                    padding: {
-                                        left: 18px;
-                                        right: 46px;
-                                    };
-                                    i {
-                                        left: auto;
-                                        right: 18px;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
     }
 
 }
@@ -1191,59 +865,6 @@
                     right: 25px;
                 }
             }
-            &.component-rtl-enabled {
-                right: 25px;
-        
-                .header-left-side {
-                    .burger-menu {
-                        margin: {
-                            right: 0;
-                            left: 18px;
-                        };
-                    }
-                    .connected-apps-menu {
-                        margin: {
-                            left: 0;
-                            right: 18px;
-                        };
-                    }
-                }
-                .header-right-side {
-                    li {
-                        .mat-mdc-button {
-                            &.profile-menu-btn {
-                                padding: {
-                                    right: 0;
-                                    left: 12px;
-                                };
-                            }
-                        }
-                        &:first-child {
-                            margin: {
-                                left: 10px;
-                            };
-                        }
-                        &:last-child {
-                            margin: {
-                                right: 10px;
-                            };
-                        }
-                    }
-                }
-                &.active, &.hide-sidebar {
-                    left: 25px;
-                    right: 25px;
-                }
-                &.right-sidebar {
-                    right: 25px;
-                    left: 25px;
-        
-                    &.active, &.hide-sidebar {
-                        right: 25px;
-                        left: 25px;
-                    }
-                }
-            }
         }
     }
 
@@ -1273,23 +894,6 @@
                     right: 25px;
                 }
             }
-            &.component-rtl-enabled {
-                right: 25px;
-            
-                &.active, &.hide-sidebar {
-                    right: 25px;
-                    left: 25px;
-                }
-                &.right-sidebar {
-                    right: 25px;
-                    left: 25px;
-        
-                    &.active, &.hide-sidebar {
-                        right: 25px;
-                        left: 25px;
-                    }
-                }
-            }
         }
     }
 
@@ -1313,23 +917,6 @@
                     right: 125px;
                 }
             }
-            &.component-rtl-enabled {
-                right: 265px;
-            
-                &.active, &.hide-sidebar {
-                    left: 25px;
-                    right: 125px;
-                }
-                &.right-sidebar {
-                    left: 265px;
-                    right: 25px;
-        
-                    &.active, &.hide-sidebar {
-                        right: 25px;
-                        left: 125px;
-                    }
-                }
-            }
         }
     }
 
@@ -1337,3 +924,19 @@
 
 /* Min width 1600px */
 @media only screen and (min-width: 1600px) {}
+
+/*
+ * Burger menyu və "Çıxış" əvvəl <div>/href-siz <a> idi — klaviatura ilə
+ * seçilə bilmirdilər. Artıq <button>-dur; brauzerin standart düymə görünüşü
+ * sıfırlanır, qalan stilləri mövcud .burger-menu / .list qaydaları verir.
+ */
+::ng-deep {
+    .header-area .burger-menu,
+    .profile-menu-dropdown .list li button {
+        background: transparent;
+        border: none;
+        font: inherit;
+        color: inherit;
+        cursor: pointer;
+    }
+}

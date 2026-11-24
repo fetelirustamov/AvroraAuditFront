@@ -19,14 +19,21 @@
             
             a {
                 transition: unset;
-                
+
                 img {
                     left: 0;
+                    height: 34px;
+                    width: auto;
                 }
                 span {
-                    margin-left: 8px;
-                    font-size: 24px;
+                    margin-left: 10px;
                     top: 1px;
+
+                    .logo-text-img {
+                        height: 15px;
+                        width: auto;
+                        display: block;
+                    }
                 }
             }
         }
@@ -467,282 +474,6 @@
             left: auto;
             right: 0;
         }
-        &.component-dark-theme {
-            .sidebar-inner {
-                .sidebar-menu {
-                    .mat-accordion {
-                        .mat-expansion-panel {
-                            color: var(--whiteColor);
-                            
-                            .mat-expansion-panel-header {
-                                color: var(--whiteColor);
-                                
-                                .mat-content {
-                                    .mat-expansion-panel-header-title, .mat-expansion-panel-header-description {
-                                        color: var(--whiteColor);
-                                    }
-                                }
-                                .trezo-badge {
-                                    background: rgba(255, 255, 255, 0.08);
-                                    
-                                    &.style-two {
-                                        background: rgba(255, 255, 255, 0.08);
-                                    }
-                                    &.style-three {
-                                        background: rgba(255, 255, 255, 0.08);
-                                    }
-                                }
-                                &.mat-expanded {
-                                    color: var(--whiteColor);
-                                    background-color: #15203c;
-    
-                                    i {
-                                        color: var(--whiteColor);
-                                    }
-                                    .mat-content {
-                                        .mat-expansion-panel-header-title, .mat-expansion-panel-header-description {
-                                            color: var(--whiteColor);
-                                        }
-                                    }
-                                }
-                                &:hover {
-                                    color: var(--whiteColor);
-                                    background-color: #15203c;
-    
-                                    i {
-                                        color: var(--whiteColor);
-                                    }
-                                    .mat-content {
-                                        .mat-expansion-panel-header-title, .mat-expansion-panel-header-description {
-                                            color: var(--whiteColor);
-                                        }
-                                    }
-                                    .mat-expansion-indicator {
-                                        &::before {
-                                            color: var(--whiteColor);
-                                        }
-                                    }
-                                }
-                            }
-                            .mat-expansion-panel-body {
-                                .mat-expansion-panel-header {
-                                    .mat-expansion-indicator {
-                                        &::before {
-                                            color: var(--whiteColor) !important;
-                                        }
-                                    }
-                                    &.mat-expanded {
-                                        background-color: #15203c !important;
-                                    }
-                                    &:hover {
-                                        background-color: #15203c !important;
-                                    }
-                                }
-                                .sidebar-sub-menu {
-                                    .sidemenu-item {
-                                        .sidemenu-link {
-                                            .trezo-badge {
-                                                background: rgba(255, 255, 255, 0.08);
-                                                
-                                                &::before {
-                                                    background: rgba(255, 255, 255, 0.08);
-                                                }
-                                                &.style-two {
-                                                    background: rgba(255, 255, 255, 0.08);
-    
-                                                    &::before {
-                                                        background: rgba(255, 255, 255, 0.08);
-                                                    }
-                                                }
-                                            }
-                                            &:hover, &.active {
-                                                background-color: #15203c;
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                            &:has(> .mat-expansion-panel-content-wrapper > .mat-expansion-panel-content > .mat-expansion-panel-body > .sidebar-sub-menu > .sidemenu-item > .sidemenu-link.active) {
-                                .mat-expansion-panel-header {
-                                    color: var(--whiteColor);
-                                    background-color: #15203c;
-    
-                                    i {
-                                        color: var(--whiteColor);
-                                    }
-                                    .mat-content {
-                                        .mat-expansion-panel-header-title, .mat-expansion-panel-header-description {
-                                            color: var(--whiteColor);
-                                        }
-                                    }
-                                    .mat-expansion-indicator {
-                                        &::before {
-                                            color: var(--whiteColor);
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        .sidebar-menu-link {
-                            color: var(--whiteColor);
-                            
-                            &:hover, &.active {
-                                color: var(--primaryColor);
-                                background-color: #15203c;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        &.dark-sidebar {
-            --borderColor: #172036;
-            color: var(--bodyColor);
-            --bodyColor: #8695AA;
-
-            a {
-                color: var(--whiteColor);
-        
-                &:hover {
-                    color: var(--primaryColor);
-                }
-            }
-            .text-black {
-                color: var(--whiteColor) !important;
-            }
-            &.bg-white, .bg-white {
-                background-color: #0C1427 !important;
-            }
-            .bg-black {
-                background-color: var(--whiteColor) !important;
-            }
-            .sidebar-inner {
-                .sidebar-menu {
-                    .mat-accordion {
-                        .mat-expansion-panel {
-                            color: var(--whiteColor);
-                            
-                            .mat-expansion-panel-header {
-                                color: var(--whiteColor);
-                                
-                                .mat-content {
-                                    .mat-expansion-panel-header-title, .mat-expansion-panel-header-description {
-                                        color: var(--whiteColor);
-                                    }
-                                }
-                                .trezo-badge {
-                                    background: rgba(255, 255, 255, 0.08);
-                                    
-                                    &.style-two {
-                                        background: rgba(255, 255, 255, 0.08);
-                                    }
-                                    &.style-three {
-                                        background: rgba(255, 255, 255, 0.08);
-                                    }
-                                }
-                                &.mat-expanded {
-                                    color: var(--whiteColor);
-                                    background-color: #15203c;
-    
-                                    i {
-                                        color: var(--whiteColor);
-                                    }
-                                    .mat-content {
-                                        .mat-expansion-panel-header-title, .mat-expansion-panel-header-description {
-                                            color: var(--whiteColor);
-                                        }
-                                    }
-                                }
-                                &:hover {
-                                    color: var(--whiteColor);
-                                    background-color: #15203c;
-    
-                                    i {
-                                        color: var(--whiteColor);
-                                    }
-                                    .mat-content {
-                                        .mat-expansion-panel-header-title, .mat-expansion-panel-header-description {
-                                            color: var(--whiteColor);
-                                        }
-                                    }
-                                    .mat-expansion-indicator {
-                                        &::before {
-                                            color: var(--whiteColor);
-                                        }
-                                    }
-                                }
-                            }
-                            .mat-expansion-panel-body {
-                                .mat-expansion-panel-header {
-                                    .mat-expansion-indicator {
-                                        &::before {
-                                            color: var(--whiteColor) !important;
-                                        }
-                                    }
-                                    &.mat-expanded {
-                                        background-color: #15203c !important;
-                                    }
-                                    &:hover {
-                                        background-color: #15203c !important;
-                                    }
-                                }
-                                .sidebar-sub-menu {
-                                    .sidemenu-item {
-                                        .sidemenu-link {
-                                            .trezo-badge {
-                                                background: rgba(255, 255, 255, 0.08);
-                                                
-                                                &::before {
-                                                    background: rgba(255, 255, 255, 0.08);
-                                                }
-                                                &.style-two {
-                                                    background: rgba(255, 255, 255, 0.08);
-    
-                                                    &::before {
-                                                        background: rgba(255, 255, 255, 0.08);
-                                                    }
-                                                }
-                                            }
-                                            &:hover, &.active {
-                                                background-color: #15203c;
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                            &:has(> .mat-expansion-panel-content-wrapper > .mat-expansion-panel-content > .mat-expansion-panel-body > .sidebar-sub-menu > .sidemenu-item > .sidemenu-link.active) {
-                                .mat-expansion-panel-header {
-                                    color: var(--whiteColor);
-                                    background-color: #15203c;
-    
-                                    i {
-                                        color: var(--whiteColor);
-                                    }
-                                    .mat-content {
-                                        .mat-expansion-panel-header-title, .mat-expansion-panel-header-description {
-                                            color: var(--whiteColor);
-                                        }
-                                    }
-                                    .mat-expansion-indicator {
-                                        &::before {
-                                            color: var(--whiteColor);
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        .sidebar-menu-link {
-                            color: var(--whiteColor);
-                            
-                            &:hover, &.active {
-                                color: var(--primaryColor);
-                                background-color: #15203c;
-                            }
-                        }
-                    }
-                }
-            }
-        }
         &.card-borderd {
             border: {
                 right: 1px solid var(--borderColor) !important;
@@ -750,158 +481,6 @@
         }
         &.card-with-box-shadow {
             box-shadow: rgba(149, 157, 165, 0.2) 0px 8px 24px !important;
-        }
-        &.component-rtl-enabled {
-            text-align: start;
-            direction: rtl;
-            left: auto;
-            right: 0;
-
-            .logo {
-                a {
-                    img {
-                        left: auto;
-                        right: 0;
-                    }
-                    span {
-                        margin: {
-                            left: 0;
-                            right: 8px;
-                        };
-                    }
-                }
-            }
-            .burger-menu {
-                right: auto;
-                left: 25px;
-            }
-            .ng-scrollbar {
-                width: 100% !important;
-                height: 100vh;
-    
-                .ng-scroll-content {
-                    padding: 0;
-                    width: 100% !important;
-                    
-                    .ng-scrollbar-sticky {
-                        right: auto;
-                        left: 0;
-                    }
-                }
-            }
-            .sidebar-inner {
-                text-align: start;
-                direction: rtl;
-                
-                .sidebar-menu {
-                    .mat-accordion {
-                        .mat-expansion-panel {
-                            .mat-expansion-panel-header {
-                                padding: {
-                                    right: 14px;
-                                    left: 30px;
-                                };
-                                i {
-                                    margin: {
-                                        right: 0;
-                                        left: 7px;
-                                    };
-                                }
-                                .mat-expansion-indicator {
-                                    right: auto;
-                                    left: 8px;
-
-                                    &::before {
-                                        content: "\ea64";
-                                    }
-                                }
-                                .mat-content {
-                                    .mat-expansion-panel-header-title, .mat-expansion-panel-header-description {
-                                        margin-left: 0;
-                                    }
-                                }
-                                .trezo-badge {
-                                    margin: {
-                                        left: 4px;
-                                        right: auto;
-                                    };
-                                }
-                            }
-                            &.mat-expanded {
-                                .mat-expansion-indicator {
-                                    &::before {
-                                        content: "\ea4e";
-                                    }
-                                }
-                            }
-                            .mat-expansion-panel-body {
-                                .mat-expansion-panel-header {
-                                    padding: {
-                                        right: 38px;
-                                        left: 10px;
-                                    };
-                                    &::after {
-                                        left: auto;
-                                        right: 18px;
-                                    }
-                                    .mat-expansion-indicator {
-                                        right: auto;
-                                        left: 10px;
-                                    }
-                                }
-                                .mat-expansion-panel-body {
-                                    padding: {
-                                        right: 20px;
-                                        left: 0;
-                                    };
-                                }
-                                .sidebar-sub-menu {
-                                    padding-right: 0;
-                                    
-                                    .sidemenu-item {
-                                        .sidemenu-link {
-                                            padding: {
-                                                right: 38px;
-                                                left: 10px;
-                                            };
-                                            &::after {
-                                                left: auto;
-                                                right: 18px;
-                                            }
-                                            .trezo-badge {
-                                                margin: {
-                                                    left: 0;
-                                                    right: 5px;
-                                                };
-                                                &::before {
-                                                    left: auto;
-                                                    right: -3px;
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        .sidebar-menu-link {
-                            padding: {
-                                right: 14px;
-                                left: 30px;
-                            };
-                            i {
-                                margin: {
-                                    right: 0;
-                                    left: 6px;
-                                };
-                            }
-                        }
-                    }
-                }
-            }
-            &.right-sidebar {
-                left: 0;
-                right: auto;
-            }
         }
     }
 }
@@ -915,7 +494,9 @@
             left: -100%;
             
             .logo {
-                padding: 18px;
+                // Sağda `.burger-menu` üçün yer saxlanır, əks halda loqo mətni
+                // bağlama düyməsinin altında qalıb üst-üstə düşür.
+                padding: 18px 55px 18px 18px;
             }
             .burger-menu {
                 top: 20px;
@@ -1016,77 +597,6 @@
                     right: 0;
                 }
             }
-            &.component-rtl-enabled {
-                right: -100%;
-
-                .burger-menu {
-                    left: 18px;
-                    right: auto;
-                }
-                .sidebar-inner {
-                    .sidebar-menu {
-                        .mat-accordion {
-                            .mat-expansion-panel {
-                                .mat-expansion-panel-header {
-                                    padding: {
-                                        right: 14px;
-                                        left: 25px;
-                                    };
-                                    .mat-expansion-indicator {
-                                        right: auto;
-                                        left: 8px;
-                                    }
-                                }
-                                .mat-expansion-panel-body {
-                                    .mat-expansion-panel-header {
-                                        padding: {
-                                            right: 35px;
-                                            left: 10px;
-                                        };
-                                        &::after {
-                                            left: auto;
-                                            right: 16px;
-                                        }
-                                    }
-                                    .sidebar-sub-menu {
-                                        .sidemenu-item {
-                                            .sidemenu-link {
-                                                padding: {
-                                                    right: 35px;
-                                                    left: 10px;
-                                                };
-                                                &::after {
-                                                    right: 16px;
-                                                    left: auto;
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                            .sidebar-menu-link {
-                                padding: {
-                                    right: 14px;
-                                    left: 25px;
-                                };
-                            }
-                        }
-                    }
-                }
-                &.active {
-                    left: auto;
-                    right: 0;
-                }
-                &.right-sidebar {
-                    left: -100%;
-                    right: auto;
-    
-                    &.active {
-                        right: auto;
-                        left: 0;
-                    }
-                }
-            }
         }
     }
 
@@ -1113,23 +623,6 @@
                     right: 0;
                 }
             }
-            &.component-rtl-enabled {
-                right: -100%;
-
-                &.active {
-                    left: auto;
-                    right: 0;
-                }
-                &.right-sidebar {
-                    right: auto;
-                    left: -100%;
-    
-                    &.active {
-                        right: auto;
-                        left: 0;
-                    }
-                }
-            }
         }
     }
 
@@ -1151,23 +644,6 @@
 
                 &.active {
                     right: 0;
-                }
-            }
-            &.component-rtl-enabled {
-                right: -100%;
-
-                &.active {
-                    left: auto;
-                    right: 0;
-                }
-                &.right-sidebar {
-                    right: auto;
-                    left: -100%;
-    
-                    &.active {
-                        right: auto;
-                        left: 0;
-                    }
                 }
             }
         }
@@ -1314,68 +790,6 @@
                     display: none !important;
                 }
             }
-            &.component-rtl-enabled {
-                &.active, &.hide-sidebar {
-                    .logo {
-                        a {
-                            img {
-                                left: auto;
-                                right: 11px;
-                            }
-                        }
-                    }
-                    .sidebar-inner {
-                        .sidebar-menu {
-                            .mat-accordion {
-                                .mat-expansion-panel {
-                                    .mat-expansion-panel-header {
-                                        padding: {
-                                            left: 6px;
-                                            right: 14px;
-                                        };
-                                    }
-                                }
-                                .sidebar-menu-link {
-                                    padding: {
-                                        left: 6px;
-                                        right: 14px;
-                                    };
-                                }
-                            }
-                        }
-                    }
-                    &:hover {
-                        .logo {
-                            a {
-                                img {
-                                    left: auto;
-                                    right: 0;
-                                }
-                            }
-                        }
-                        .sidebar-inner {
-                            .sidebar-menu {
-                                .mat-accordion {
-                                    .mat-expansion-panel {
-                                        .mat-expansion-panel-header {
-                                            padding: {
-                                                right: 14px;
-                                                left: 30px;
-                                            };
-                                        }
-                                    }
-                                    .sidebar-menu-link {
-                                        padding: {
-                                            right: 14px;
-                                            left: 30px;
-                                        };
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
         }
     }
 
@@ -1402,3 +816,17 @@
 
 /* Min width 1600px */
 @media only screen and (min-width: 1600px) {}
+
+/*
+ * Çıxış elementi əvvəl semantik olmayan <a> idi (routerLink olmadan,
+ * routerLinkActive ilə). Artıq <button>-dur — brauzerin standart düymə
+ * görünüşü sıfırlanır, qalan stilləri .sidebar-menu-link verir.
+ */
+.sidebar-logout-btn {
+    width: 100%;
+    background: transparent;
+    border: none;
+    font-family: inherit;
+    text-align: left;
+    cursor: pointer;
+}
