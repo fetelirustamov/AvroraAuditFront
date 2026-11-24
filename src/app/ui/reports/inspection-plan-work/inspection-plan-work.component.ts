@@ -11,9 +11,7 @@ import { MatPaginator, MatPaginatorModule, PageEvent } from '@angular/material/p
 import { MatSelectModule } from '@angular/material/select';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { debounceTime, finalize, Subject } from 'rxjs';
-import * as XLSX from 'xlsx';
-import pdfMake from 'pdfmake/build/pdfmake';
-import pdfFonts from 'pdfmake/build/vfs_fonts';
+import { FileExportService, datedFileName } from '../../../shared/services/file-export.service';
 import { TableState } from '../../../models/table-state.model';
 import { NotificationService } from '../../../shared/services/notification.service';
 import { parseApiUtcDate } from '../../../shared/utils/date.util';
@@ -80,11 +78,11 @@ export class InspectionPlanWorkComponent {
     isLoading = false;
     isExporting = false;
 
+    /** Bazada real mövcud olan status dəyərləri: 2 və 4 (-1 soft-delete-dir, backend onu süzür). */
     readonly statusOptions = [
         { value: '', label: 'Hamısı' },
         { value: '2', label: 'İşlənilməyib' },
-        { value: '3', label: 'İşlənilib' },
-        { value: '4', label: 'İşlənilib (4)' },
+        { value: '4', label: 'İşlənilib' },
     ];
 
     get filterColumns(): string[] {
@@ -100,6 +98,7 @@ export class InspectionPlanWorkComponent {
         private inspectionsService: InspectionsService,
         private notify: NotificationService,
         private datePipe: DatePipe,
+        private fileExport: FileExportService,
     ) {
         this.tableState.paginator.page = 0;
         this.tableState.paginator.size = 10;
@@ -362,17 +361,14 @@ export class InspectionPlanWorkComponent {
                 : '—',
             'Status': r.statusLabel,
         }));
-        const ws = XLSX.utils.json_to_sheet(data);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, 'Plan iş statusu');
-        XLSX.writeFile(wb, `yoxlama-plani-is-statusu-${new Date().toISOString().slice(0, 10)}.xlsx`);
+        void this.fileExport.exportRowsToExcel(
+            data,
+            'Plan iş statusu',
+            datedFileName('yoxlama-plani-is-statusu', 'xlsx'),
+        );
     }
 
     private writePdf(rows: InspectionPlanWorkRow[]): void {
-        const vfs: Record<string, string> = (pdfFonts as { pdfMake?: { vfs: Record<string, string> }; vfs?: Record<string, string> }).pdfMake
-            ? (pdfFonts as { pdfMake: { vfs: Record<string, string> } }).pdfMake.vfs
-            : (pdfFonts as { vfs: Record<string, string> }).vfs;
-        (pdfMake as { vfs: Record<string, string> }).vfs = vfs;
         const headers = ['№', 'Mağaza kodu', 'İstifadəçi', 'Başlama', 'Bitmə', 'Status'];
         const bodyRows = rows.map(r => [
             r.row,
@@ -394,6 +390,6 @@ export class InspectionPlanWorkComponent {
             styles: { th: { bold: true, color: '#fff', fillColor: '#5B6CFF', fontSize: 9 } },
             defaultStyle: { fontSize: 9 },
         };
-        pdfMake.createPdf(docDef).download(`yoxlama-plani-is-statusu-${new Date().toISOString().slice(0, 10)}.pdf`);
+        void this.fileExport.exportPdf(docDef, datedFileName('yoxlama-plani-is-statusu', 'pdf'));
     }
 }

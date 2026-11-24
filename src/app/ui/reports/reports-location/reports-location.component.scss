@@ -1,130 +1,41 @@
-// ─── Variables ───────────────────────────────────────────────
-$primary: #605DFF;
-$primary-light: #EEF0FF;
-$primary-dark: #4B48CC;
-$secondary: #3584FC;
-$success: #25B003;
-$success-light: #E8F9E3;
-$warning: #FF8C00;
-$warning-light: #FFF4E5;
-$danger: #FF4023;
-$danger-light: #FFECE9;
-$surface: #ffffff;
-$surface-2: #F6F7F9;
-$border: #ECEEF2;
-$text-primary: #1E2533;
-$text-secondary: #64748B;
-$text-muted: #9AA5B4;
-$shadow-sm: 0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
-$shadow-md: 0 4px 16px rgba(96,93,255,.10), 0 1px 4px rgba(0,0,0,.06);
-$shadow-lg: 0 8px 32px rgba(96,93,255,.14), 0 2px 8px rgba(0,0,0,.06);
-$radius-sm: 8px;
-$radius-md: 12px;
-$radius-lg: 16px;
+// Aylıq hesabat (ərazi üzrə).
+//
+// Səhifə başlığı, `.export-btn`, `.table-card`, `.empty-state`, `.row-number`,
+// `.status-chip` rəng ailəsi `src/_design-system.scss`-dən gəlir.
+//
+// QEYD: bu hesabat filtr panelini öz `.filter-card` + `.filter-grid` qurğusu
+// ilə qurur — digər 6 hesabat ortaq `report-filter-toolbar` işlədir. Onları
+// birləşdirmək şablon (HTML) dəyişikliyi tələb edir, ona görə bu iterasiyada
+// toxunulmadı.
 
-// ─── Page Header ─────────────────────────────────────────────
 .report-page-header {
-    background: linear-gradient(135deg, $primary 0%, #4B83F5 100%);
-    border-radius: $radius-lg;
-    padding: 24px 28px;
-    margin-bottom: 20px;
-    position: relative;
-    overflow: hidden;
-
-    &::before {
-        content: '';
-        position: absolute;
-        top: -40px; right: -40px;
-        width: 180px; height: 180px;
-        border-radius: 50%;
-        background: rgba(255,255,255,.08);
-    }
-    &::after {
-        content: '';
-        position: absolute;
-        bottom: -60px; right: 80px;
-        width: 130px; height: 130px;
-        border-radius: 50%;
-        background: rgba(255,255,255,.05);
-    }
-
-    .header-content {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        position: relative;
-        z-index: 1;
-    }
-
-    .header-text {
-        .page-title {
-            margin: 0 0 4px;
-            font-size: 22px;
-            font-weight: 700;
-            color: #fff;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-
-            .title-icon {
-                font-size: 26px;
-                opacity: .9;
-            }
-        }
-        .page-subtitle {
-            margin: 0;
-            font-size: 13px;
-            color: rgba(255,255,255,.75);
-        }
-    }
+    --page-accent-from: var(--primaryColor);
+    --page-accent-to: #4B83F5;
 }
 
-.export-btn {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    background: rgba(255,255,255,.18);
-    color: #fff;
-    border: 1px solid rgba(255,255,255,.3);
-    border-radius: $radius-sm;
-    padding: 9px 18px;
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background .2s, transform .15s;
-    backdrop-filter: blur(4px);
-
-    &:hover {
-        background: rgba(255,255,255,.28);
-        transform: translateY(-1px);
-    }
-
-    .arrow-icon { font-size: 18px; opacity: .8; }
-}
-
-// ─── Filter Card ─────────────────────────────────────────────
+// ── Filtr kartı (bu səhifəyə xas) ───────────────────────────────────────────
 .filter-card {
-    background: $surface;
-    border-radius: $radius-md;
-    border: 1px solid $border;
-    box-shadow: $shadow-sm;
     padding: 20px 24px 4px;
     margin-bottom: 20px;
+    border: 1px solid var(--borderColor);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    box-shadow: var(--shadow-sm);
 
     .filter-card-header {
         display: flex;
         align-items: center;
         gap: 8px;
+        margin-bottom: 16px;
         font-size: 13px;
         font-weight: 600;
-        color: $text-secondary;
+        color: var(--bodyColor);
         text-transform: uppercase;
         letter-spacing: .6px;
-        margin-bottom: 16px;
 
         .filter-header-icon {
             font-size: 18px;
-            color: $primary;
+            color: var(--primaryColor);
         }
     }
 }
@@ -149,14 +60,17 @@ $radius-lg: 16px;
         display: flex;
         align-items: center;
         gap: 5px;
+        margin-bottom: 6px;
         font-size: 12px;
         font-weight: 600;
-        color: $text-secondary;
-        margin-bottom: 6px;
+        color: var(--bodyColor);
 
-        .label-icon { font-size: 14px; color: $primary; }
+        .label-icon {
+            font-size: 14px;
+            color: var(--primaryColor);
+        }
         .required-badge {
-            color: $danger;
+            color: var(--dangerColor);
             font-size: 14px;
             line-height: 1;
         }
@@ -173,118 +87,94 @@ $radius-lg: 16px;
     display: flex;
     align-items: center;
     gap: 8px;
-    background: linear-gradient(135deg, $primary, $primary-dark);
-    color: #fff;
-    border: none;
-    border-radius: $radius-sm;
     padding: 11px 24px;
+    border: none;
+    border-radius: var(--radius-sm);
+    background: linear-gradient(135deg, var(--primaryColor), var(--primaryDark));
+    color: var(--whiteColor);
     font-size: 13px;
     font-weight: 600;
     cursor: pointer;
     white-space: nowrap;
     transition: opacity .2s, transform .15s, box-shadow .2s;
-    box-shadow: 0 4px 12px rgba(96,93,255,.35);
+    box-shadow: 0 4px 12px rgba(96, 93, 255, .35);
 
     &:hover {
         opacity: .9;
         transform: translateY(-1px);
-        box-shadow: 0 6px 18px rgba(96,93,255,.45);
+        box-shadow: 0 6px 18px rgba(96, 93, 255, .45);
     }
-    &:active { transform: translateY(0); }
-
-    .material-symbols-outlined { font-size: 18px; }
+    &:active {
+        transform: translateY(0);
+    }
+    .material-symbols-outlined {
+        font-size: 18px;
+    }
 }
 
-// Override Material outline field to match design
+// Material outline sahəsini dizayna uyğunlaşdırır
 :host ::ng-deep .modern-field {
     width: 100%;
 
     .mat-mdc-text-field-wrapper {
-        border-radius: $radius-sm !important;
-        background: $surface-2 !important;
+        border-radius: var(--radius-sm) !important;
+        background: var(--surface-muted) !important;
     }
-
-    .mat-mdc-form-field-infix { padding: 8px 0 8px !important; min-height: 44px; }
-
-    .mdc-notched-outline__leading { border-radius: $radius-sm 0 0 $radius-sm !important; }
-    .mdc-notched-outline__trailing { border-radius: 0 $radius-sm $radius-sm 0 !important; }
-
+    .mat-mdc-form-field-infix {
+        padding: 8px 0 8px !important;
+        min-height: 44px;
+    }
+    .mdc-notched-outline__leading {
+        border-radius: var(--radius-sm) 0 0 var(--radius-sm) !important;
+    }
+    .mdc-notched-outline__trailing {
+        border-radius: 0 var(--radius-sm) var(--radius-sm) 0 !important;
+    }
     &.mat-focused .mdc-notched-outline__leading,
     &.mat-focused .mdc-notched-outline__notch,
     &.mat-focused .mdc-notched-outline__trailing {
-        border-color: $primary !important;
+        border-color: var(--primaryColor) !important;
         border-width: 2px !important;
     }
-
-    .mat-mdc-form-field-subscript-wrapper { display: none; }
+    .mat-mdc-form-field-subscript-wrapper {
+        display: none;
+    }
 }
 
-// ─── Loading Bar ──────────────────────────────────────────────
 .loading-bar-wrapper {
-    border-radius: $radius-sm;
+    border-radius: var(--radius-sm);
     overflow: hidden;
     margin-bottom: 16px;
 }
-
-:host ::ng-deep .modern-progress .mdc-linear-progress__bar-inner {
-    border-color: $primary;
-}
-:host ::ng-deep .modern-progress .mdc-linear-progress__buffer-bar {
-    background: $primary-light;
-}
-
-// ─── Table Card ───────────────────────────────────────────────
-.table-card {
-    background: $surface;
-    border-radius: $radius-md;
-    border: 1px solid $border;
-    box-shadow: $shadow-sm;
-    overflow: hidden;
-}
-
-.table-card-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 16px 20px;
-    border-bottom: 1px solid $border;
-    background: $surface;
-
-    .table-info {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-
-        .table-info-icon { font-size: 20px; color: $primary; }
-        .table-title { font-size: 14px; font-weight: 600; color: $text-primary; }
-        .result-badge {
-            background: $primary-light;
-            color: $primary;
-            font-size: 11px;
-            font-weight: 700;
-            padding: 2px 10px;
-            border-radius: 20px;
-        }
+:host ::ng-deep .modern-progress {
+    .mdc-linear-progress__bar-inner {
+        border-color: var(--primaryColor);
+    }
+    .mdc-linear-progress__buffer-bar {
+        background: var(--primarySoft);
     }
 }
 
-// ─── Table ────────────────────────────────────────────────────
-.table-responsive-wrapper {
-    overflow-x: auto;
+.table-card-header {
+    background: var(--surface);
 }
 
+// ── Cədvəl ──────────────────────────────────────────────────────────────────
 .modern-table {
     width: 100%;
     border-collapse: separate;
     border-spacing: 0;
 
-    th, td { white-space: nowrap; }
+    th,
+    td {
+        white-space: nowrap;
+    }
 }
 
-// Group header row
+// Qruplaşdırılmış başlıq sətri (bu hesabata xas)
 :host ::ng-deep .group-header-row th.group-header-cell {
-    background: linear-gradient(135deg, $primary 0%, $secondary 100%);
-    color: #fff;
+    background: linear-gradient(135deg, var(--primaryColor) 0%, var(--secondaryColor) 100%);
+    color: var(--whiteColor);
     font-size: 11px;
     font-weight: 700;
     letter-spacing: .8px;
@@ -294,166 +184,160 @@ $radius-lg: 16px;
     border-bottom: none;
 }
 
-// Column header row
 :host ::ng-deep .data-header-row th.data-header-cell {
     background: #F8F9FF;
-    color: $text-secondary;
+    color: var(--bodyColor);
     font-size: 11.5px;
     font-weight: 700;
     text-align: center;
     padding: 10px 12px;
-    border-bottom: 2px solid $border;
+    border-bottom: 2px solid var(--borderColor);
     letter-spacing: .3px;
 }
 
-// Filter row
 :host ::ng-deep .filter-row th.filter-header-cell {
-    background: $surface;
+    background: var(--surface);
     padding: 6px 8px;
-    border-bottom: 1px solid $border;
+    border-bottom: 1px solid var(--borderColor);
 }
 
 .filter-input-wrap {
     display: flex;
     align-items: center;
     gap: 4px;
-    background: $surface-2;
-    border: 1px solid $border;
-    border-radius: $radius-sm;
     padding: 4px 8px;
+    border: 1px solid var(--borderColor);
+    border-radius: var(--radius-sm);
+    background: var(--surface-muted);
     transition: border-color .2s;
 
     &:focus-within {
-        border-color: $primary;
-        box-shadow: 0 0 0 3px rgba(96,93,255,.1);
+        border-color: var(--primaryColor);
+        box-shadow: 0 0 0 3px rgba(96, 93, 255, .1);
     }
-
-    .filter-input-icon { font-size: 14px; color: $text-muted; }
+    .filter-input-icon {
+        font-size: 14px;
+        color: var(--text-muted);
+    }
     .filter-input {
+        width: 100%;
+        min-width: 60px;
         border: none;
         outline: none;
         background: transparent;
         font-size: 12px;
-        color: $text-primary;
-        width: 100%;
-        min-width: 60px;
-        &::placeholder { color: $text-muted; }
+        color: var(--text-strong);
+
+        &::placeholder {
+            color: var(--text-muted);
+        }
     }
 }
 
-// Data rows
 :host ::ng-deep .data-row {
     height: 46px;
     transition: background .15s;
 
-    td.mat-mdc-cell { padding: 8px 12px; border-bottom: 1px solid $border; }
-
-    &:hover td.mat-mdc-cell { background: #F8F9FF; }
-    &:last-child td.mat-mdc-cell { border-bottom: none; }
+    td.mat-mdc-cell {
+        padding: 8px 12px;
+        border-bottom: 1px solid var(--borderColor);
+    }
+    &:hover td.mat-mdc-cell {
+        background: #F8F9FF;
+    }
+    &:last-child td.mat-mdc-cell {
+        border-bottom: none;
+    }
+}
+:host ::ng-deep .data-row:nth-child(even) td.mat-mdc-cell {
+    background: var(--surface-muted);
+}
+:host ::ng-deep .data-row:nth-child(even):hover td.mat-mdc-cell {
+    background: #EEEFFE;
 }
 
-:host ::ng-deep .data-row:nth-child(even) td.mat-mdc-cell { background: $surface-2; }
-:host ::ng-deep .data-row:nth-child(even):hover td.mat-mdc-cell { background: #EEEFFE; }
-
-// ─── Cell Content Styling ─────────────────────────────────────
-.row-number {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 28px; height: 28px;
-    background: $primary-light;
-    color: $primary;
-    border-radius: 50%;
-    font-size: 12px;
-    font-weight: 700;
-}
-
+// ── Sütun məzmunu ───────────────────────────────────────────────────────────
 .branch-name {
     font-weight: 600;
-    color: $text-primary;
+    color: var(--text-strong);
 }
 
 .code-badge {
     display: inline-block;
+    padding: 3px 10px;
+    border-radius: 6px;
     background: #EEF2FF;
     color: #4B5DA8;
     font-size: 11.5px;
     font-weight: 700;
-    padding: 3px 10px;
-    border-radius: 6px;
     letter-spacing: .4px;
 }
 
-// Score chips
+// Bal və uyğunsuzluq nişanları — rənglər digər hesabatlarla eyni token
+// cütlüklərindən gəlir (əvvəl hər səhifə `darken()` ilə öz tonunu hesablayırdı)
 .score-chip {
     display: inline-block;
-    font-size: 12px;
-    font-weight: 700;
+    min-width: 50px;
     padding: 3px 10px;
     border-radius: 20px;
-    min-width: 50px;
     text-align: center;
+    font-size: 12px;
+    font-weight: 700;
 }
-.score-high { background: $success-light; color: darken($success, 8%); }
-.score-mid  { background: $warning-light; color: darken($warning, 10%); }
-.score-low  { background: $danger-light;  color: darken($danger, 5%); }
-
-// NC badges
 .nc-badge {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-width: 28px; height: 24px;
+    min-width: 28px;
+    height: 24px;
+    padding: 0 8px;
     border-radius: 20px;
     font-size: 12px;
     font-weight: 700;
-    padding: 0 8px;
 }
-.nc-zero { background: $success-light; color: darken($success, 8%); }
-.nc-low  { background: $warning-light; color: darken($warning, 10%); }
-.nc-high { background: $danger-light;  color: darken($danger, 5%); }
 
-// ─── Sticky Columns ───────────────────────────────────────────
+.score-high,
+.nc-zero {
+    background: var(--successSoft);
+    color: #1C8A02;
+}
+.score-mid,
+.nc-low {
+    background: var(--warningSoft);
+    color: #C46A00;
+}
+.score-low,
+.nc-high {
+    background: var(--dangerSoft);
+    color: #E12F14;
+}
+
+// ── Yapışqan sütunlar ───────────────────────────────────────────────────────
 :host ::ng-deep td.sticky-col,
 :host ::ng-deep th.data-header-cell:nth-child(-n+3),
 :host ::ng-deep th.group-header-cell:first-child {
     position: sticky;
     z-index: 2;
-    background: $surface;
+    background: var(--surface);
 }
 
 :host ::ng-deep th.sticky-1, td.sticky-1 { left: 0; }
 :host ::ng-deep th.sticky-2, td.sticky-2 { left: 180px; }
 :host ::ng-deep th.sticky-3, td.sticky-3 { left: 340px; }
 
-// ─── Empty State ─────────────────────────────────────────────
-.empty-state {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 60px 24px;
-    color: $text-muted;
-
-    .empty-icon { font-size: 52px; margin-bottom: 12px; opacity: .5; }
-    p { font-size: 14px; margin: 0; }
-}
-
-// ─── Paginator ────────────────────────────────────────────────
 .paginator-wrapper {
-    border-top: 1px solid $border;
+    border-top: 1px solid var(--borderColor);
 }
 
 :host ::ng-deep .modern-paginator {
-    background: $surface;
-    color: $text-secondary;
+    background: var(--surface);
+    color: var(--bodyColor);
     font-size: 13px;
 }
 
-// ─── Menu ─────────────────────────────────────────────────────
 :host ::ng-deep .mat-mdc-menu-panel {
-    border-radius: $radius-sm !important;
-    box-shadow: $shadow-lg !important;
+    border-radius: var(--radius-sm) !important;
+    box-shadow: 0 8px 32px rgba(96, 93, 255, .14), 0 2px 8px rgba(0, 0, 0, .06) !important;
     overflow: hidden;
     min-width: 160px !important;
 }
@@ -464,68 +348,21 @@ $radius-lg: 16px;
     gap: 10px;
     font-size: 13px;
     font-weight: 500;
-    color: $text-primary;
+    color: var(--text-strong);
     transition: background .15s;
 
-    &:hover { background: $primary-light; color: $primary; }
+    &:hover {
+        background: var(--primarySoft);
+        color: var(--primaryColor);
+    }
 }
 
-.menu-icon { font-size: 18px; }
-.excel-icon { color: #1D6F42; }
-.pdf-icon   { color: $danger; }
-
-// ─── Dark Mode ────────────────────────────────────────────────
-:host-context(.dark-theme) {
-    .filter-card,
-    .table-card {
-        background: #0C1427;
-        border-color: rgba(255,255,255,.08);
-    }
-
-    .filter-card-header,
-    .table-card-header {
-        background: #0C1427;
-        border-color: rgba(255,255,255,.08);
-        color: rgba(255,255,255,.7);
-    }
-
-    .result-badge {
-        background: rgba(96,93,255,.2);
-        color: lighten($primary, 20%);
-    }
-
-    .table-title { color: rgba(255,255,255,.9); }
-    .table-info-icon { color: lighten($primary, 15%); }
-
-    :host ::ng-deep .data-header-row th.data-header-cell {
-        background: #15203c;
-        color: rgba(255,255,255,.7);
-        border-color: rgba(255,255,255,.08);
-    }
-
-    :host ::ng-deep .filter-row th.filter-header-cell {
-        background: #0C1427;
-        border-color: rgba(255,255,255,.08);
-    }
-
-    .filter-input-wrap {
-        background: #15203c;
-        border-color: rgba(255,255,255,.1);
-        .filter-input { color: rgba(255,255,255,.9); }
-    }
-
-    :host ::ng-deep .data-row td.mat-mdc-cell {
-        background: #0C1427;
-        color: rgba(255,255,255,.85);
-        border-color: rgba(255,255,255,.06);
-    }
-    :host ::ng-deep .data-row:nth-child(even) td.mat-mdc-cell { background: #111c35; }
-    :host ::ng-deep .data-row:hover td.mat-mdc-cell { background: #1a2a4a; }
-
-    .modern-field :host ::ng-deep .mat-mdc-text-field-wrapper { background: #15203c !important; }
-
-    :host ::ng-deep .modern-paginator {
-        background: #0C1427;
-        color: rgba(255,255,255,.7);
-    }
+.menu-icon {
+    font-size: 18px;
+}
+.excel-icon {
+    color: #1D6F42;
+}
+.pdf-icon {
+    color: var(--dangerColor);
 }

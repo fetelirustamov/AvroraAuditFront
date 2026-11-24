@@ -8,9 +8,7 @@ import { MatTableModule, MatTableDataSource } from '@angular/material/table';
 import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatMenuModule } from '@angular/material/menu';
-import * as XLSX from 'xlsx';
-import pdfMake from 'pdfmake/build/pdfmake';
-import pdfFonts from 'pdfmake/build/vfs_fonts';
+import { FileExportService, datedFileName } from '../../../shared/services/file-export.service';
 import { Subject, Subscription, forkJoin } from 'rxjs';
 import { debounceTime, finalize, takeUntil } from 'rxjs/operators';
 import { TableState } from '../../../models/table-state.model';
@@ -118,6 +116,7 @@ export class YoxlamaStatistikasiComponent implements AfterViewInit, OnDestroy {
         private reportsService: ReportsService,
         private inspectionsService: InspectionsService,
         private notify: NotificationService,
+        private fileExport: FileExportService,
     ) {
         this.inspectionsService.getFirms().subscribe({
             next: res => { this.firms = res.data ?? []; },
@@ -386,15 +385,14 @@ export class YoxlamaStatistikasiComponent implements AfterViewInit, OnDestroy {
                 '№': r.row, 'İstifadəçi kodu': r.user_kodu, 'Əməkdaş adı': r.emekdas_adi,
                 'Planlı yoxlama sayı': r.planli_say, 'Plandankənar yoxlama sayı': r.plandankanar_say,
             }));
-        const ws = XLSX.utils.json_to_sheet(data);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, tab === 'store' ? 'Ərazi bazında' : 'Əməkdaş bazında');
-        XLSX.writeFile(wb, `yoxlama-statistikasi-${tab}-${new Date().toISOString().slice(0, 10)}.xlsx`);
+        void this.fileExport.exportRowsToExcel(
+            data,
+            tab === 'store' ? 'Ərazi bazında' : 'Əməkdaş bazında',
+            datedFileName(`yoxlama-statistikasi-${tab}`, 'xlsx'),
+        );
     }
 
     exportPdf(tab: 'store' | 'employee'): void {
-        const vfs: any = (pdfFonts as any).pdfMake ? (pdfFonts as any).pdfMake.vfs : (pdfFonts as any).vfs;
-        (pdfMake as any).vfs = vfs;
         const isStore = tab === 'store';
         const headers = isStore
             ? ['№', 'Ərazi kodu', 'Ərazi adı', 'Bölgə', 'Planlı yoxlama sayı', 'Plandankənar yoxlama sayı']
@@ -407,6 +405,6 @@ export class YoxlamaStatistikasiComponent implements AfterViewInit, OnDestroy {
             styles: { th: { bold: true, color: '#fff', fillColor: '#605DFF', fontSize: 9 } },
             defaultStyle: { fontSize: 9 }
         };
-        pdfMake.createPdf(docDef).download(`yoxlama-statistikasi-${tab}-${new Date().toISOString().slice(0, 10)}.pdf`);
+        void this.fileExport.exportPdf(docDef, datedFileName(`yoxlama-statistikasi-${tab}`, 'pdf'));
     }
 }
