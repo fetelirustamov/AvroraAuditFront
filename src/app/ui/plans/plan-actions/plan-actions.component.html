@@ -46,9 +46,9 @@
                     <span class="material-symbols-outlined">search</span>
                     Axtar
                 </button>
-                <!-- Toplu düymələr sətir düymələri ilə eyni qaydada: təsdiq yalnız gözləyənlərdə,
-                     ləğv yalnız gözləyən və təsdiqlənmiş planlarda (rədd olunmuşu təsdiqləmək olmur). -->
-                <button *ngIf="status == 1" type="button" class="g-approve-btn" (click)="changeSelectedPlanStatus(2)"
+                <!-- Təsdiq: gözləyən planlar və səhv rədd edilmiş planın bərpası (Rədd olunmuşlar);
+                     ləğv yalnız gözləyən və təsdiqlənmiş planlarda. -->
+                <button *ngIf="status == 1 || status == -1" type="button" class="g-approve-btn" (click)="changeSelectedPlanStatus(2)"
                     [disabled]="isSaving || !selection.hasValue()">
                     <span class="material-symbols-outlined">check_circle</span>
                     Təsdiq
