@@ -37,8 +37,8 @@
     </div>
 </div>
 
-<!-- ─── Two-Column Body ─── -->
-<div class="cal-body">
+<!-- ─── Body: filtrlər · təqvim · (seçilmiş gün) ─── -->
+<div class="cal-body" [class.has-daypanel]="selectedDay">
 
     <!-- Sidebar -->
     <aside class="cal-sidebar">
@@ -51,29 +51,31 @@
             </div>
             <form [formGroup]="calendarForm" (ngSubmit)="onSearch()" class="cal-form">
                 <div class="cal-field">
-                    <label class="cal-label">Müəssisə</label>
-                    <mat-form-field appearance="outline" class="cal-mf">
-                        <mat-select formControlName="firmId" placeholder="Seçin">
-                            <mat-option *ngFor="let firm of firms" [value]="firm.id">
-                                {{ firm.name }}
-                            </mat-option>
-                        </mat-select>
-                    </mat-form-field>
-                </div>
-                <div class="cal-field">
                     <label class="cal-label">Status</label>
                     <mat-form-field appearance="outline" class="cal-mf">
-                        <mat-select formControlName="status" placeholder="Seçin">
-                            <mat-option *ngFor="let s of statusOptions" [value]="s.value">
+                        <mat-select formControlName="status" placeholder="Hamısı">
+                            <mat-option [value]="null">Hamısı</mat-option>
+                            <mat-option *ngFor="let s of planStatuses" [value]="s.value">
                                 {{ s.label }}
                             </mat-option>
                         </mat-select>
                     </mat-form-field>
                 </div>
-                <button type="submit" class="cal-submit-btn">
-                    <span class="material-symbols-outlined">search</span>
-                    Axtar
-                </button>
+                <div class="cal-field">
+                    <label class="cal-label">Mağaza</label>
+                    <input type="text" class="cal-input" formControlName="locationName"
+                        placeholder="Ad və ya kod" autocomplete="off">
+                </div>
+                <div class="cal-form-actions">
+                    <button type="submit" class="cal-submit-btn">
+                        <span class="material-symbols-outlined">search</span>
+                        Axtar
+                    </button>
+                    <button type="button" class="cal-clear-btn" (click)="clearFilters()">
+                        <span class="material-symbols-outlined">restart_alt</span>
+                        Təmizlə
+                    </button>
+                </div>
             </form>
         </div>
 
@@ -88,7 +90,15 @@
                     <span class="cal-stat-value">{{ totalEvents }}</span>
                     <span class="cal-stat-label">Yüklənmiş plan</span>
                 </div>
+                <div class="cal-stat" *ngIf="totalMatching !== totalEvents">
+                    <span class="cal-stat-value">{{ totalMatching }}</span>
+                    <span class="cal-stat-label">Uyğun plan</span>
+                </div>
             </div>
+            <p class="cal-truncation-hint" *ngIf="truncated">
+                <span class="material-symbols-outlined">warning</span>
+                Bu aralıqda {{ totalMatching }} plan var, ilk {{ totalEvents }}-i göstərilir. Filtri daraldın.
+            </p>
         </div>
 
         <!-- Legend Card -->
@@ -98,25 +108,16 @@
                 Status Açıqlaması
             </div>
             <div class="cal-legend">
-                <div class="cal-legend-item" (click)="filterByStatus(1)" title="Bu statusu filtrle">
-                    <span class="cal-dot" style="background: #F59E0B;"></span>
+                <div class="cal-legend-item" *ngFor="let s of planStatuses"
+                    [class.active]="isStatusActive(s.value)"
+                    (click)="filterByStatus(s.value)"
+                    [title]="isStatusActive(s.value) ? 'Filtri götür' : 'Bu statusu filtrlə'">
+                    <span class="cal-dot" [style.background]="s.color"></span>
                     <div class="cal-legend-info">
-                        <span class="cal-legend-label">Gözləyir</span>
-                        <span class="cal-legend-hint">Klikləyin</span>
-                    </div>
-                </div>
-                <div class="cal-legend-item" (click)="filterByStatus(2)" title="Bu statusu filtrle">
-                    <span class="cal-dot" style="background: #10B981;"></span>
-                    <div class="cal-legend-info">
-                        <span class="cal-legend-label">Təsdiqlənmiş</span>
-                        <span class="cal-legend-hint">Klikləyin</span>
-                    </div>
-                </div>
-                <div class="cal-legend-item" (click)="filterByStatus(-1)" title="Bu statusu filtrle">
-                    <span class="cal-dot" style="background: #EF4444;"></span>
-                    <div class="cal-legend-info">
-                        <span class="cal-legend-label">Rədd edilmiş</span>
-                        <span class="cal-legend-hint">Klikləyin</span>
+                        <span class="cal-legend-label">{{ s.label }}</span>
+                        <span class="cal-legend-hint">
+                            {{ isStatusActive(s.value) ? 'Filtri götür' : 'Klikləyin' }}
+                        </span>
                     </div>
                 </div>
             </div>
@@ -130,9 +131,54 @@
             title="Təqvim yüklənir"
             hint="Planlar hazırlanır — bir neçə saniyə çəkə bilər"
             ariaLabel="Plan təqvimi yüklənir"></app-audit-loading-overlay>
-        <div class="cal-canvas" [class.audit-table-muted]="isLoading" [class.dark-theme]="themeService.isDark()">
+        <div class="cal-canvas" [class.audit-table-muted]="isLoading">
             <full-calendar #calendar [options]="calendarOptions"></full-calendar>
         </div>
     </main>
+
+    <!-- Day Detail Panel -->
+    <aside class="cal-daypanel" *ngIf="selectedDay">
+        <header class="cal-daypanel-head">
+            <div class="cal-daypanel-titles">
+                <span class="cal-daypanel-date">{{ selectedDayLabel }}</span>
+                <span class="cal-daypanel-count">
+                    {{ selectedDayPlans.length }} plan
+                </span>
+            </div>
+            <button type="button" class="cal-daypanel-close" (click)="closeDayPanel()" title="Bağla">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </header>
+
+        <div class="cal-daypanel-body">
+            <p class="cal-daypanel-empty" *ngIf="selectedDayPlans.length === 0">
+                <span class="material-symbols-outlined">event_busy</span>
+                Bu gündə plan yoxdur.
+            </p>
+
+            <article class="cal-plan-row" *ngFor="let plan of selectedDayPlans">
+                <span class="cal-plan-stripe" [style.background]="plan.statusColor"></span>
+                <div class="cal-plan-main">
+                    <div class="cal-plan-head">
+                        <span class="cal-plan-name" [title]="plan.locationName">{{ plan.locationName }}</span>
+                        <span class="cal-plan-code">{{ plan.locationCode }}</span>
+                    </div>
+                    <div class="cal-plan-meta">
+                        <span class="cal-plan-time">
+                            <span class="material-symbols-outlined">schedule</span>
+                            {{ plan.timeRange }}
+                        </span>
+                        <span class="cal-plan-status" [style.color]="plan.statusColor">
+                            {{ plan.statusLabel }}
+                        </span>
+                    </div>
+                    <div class="cal-plan-sub" [title]="plan.inspectorsName">
+                        <span class="material-symbols-outlined">person</span>
+                        {{ plan.inspectorsName }}
+                    </div>
+                </div>
+            </article>
+        </div>
+    </aside>
 
 </div>

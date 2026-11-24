@@ -6,7 +6,6 @@ import { CarouselModule, OwlOptions } from 'ngx-owl-carousel-o';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { CustomizerSettingsService } from '../../../../customizer-settings/customizer-settings.service';
 
 @Component({
     selector: 'app-working-schedule',
@@ -37,8 +36,6 @@ export class WorkingScheduleComponent {
         this.classApplied = !this.classApplied;
     }
 
-    constructor(
-        public themeService: CustomizerSettingsService
-    ) { }
+    constructor() { }
 
 }

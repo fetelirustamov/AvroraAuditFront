@@ -2,9 +2,8 @@ import { Component, Input } from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatButtonModule } from '@angular/material/button';
-import { CommonModule, DatePipe, Location, NgClass, NgIf } from '@angular/common';
+import { CommonModule, Location } from '@angular/common';
 import { PlanInfoSectionComponent } from '../../components/plan-info-section/plan-info-section.component';
-import { CustomizerSettingsService } from '../../../customizer-settings/customizer-settings.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { InspectionsService } from '../../inspections/inspections.service';
 import { InspectionSectionComponent } from '../../components/inspection-section/inspection-section.component';
@@ -13,8 +12,7 @@ import { Section } from '../section.model';
 @Component({
   selector: 'app-inspection-details',
   standalone: true,
-  imports: [MatCardModule, MatTabsModule, MatButtonModule, InspectionSectionComponent, DiruptionSectionComponent, PlanInfoSectionComponent, CommonModule, NgIf, NgClass],
-  providers: [DiruptionSectionComponent, InspectionSectionComponent, DatePipe],
+  imports: [MatCardModule, MatTabsModule, MatButtonModule, InspectionSectionComponent, DiruptionSectionComponent, PlanInfoSectionComponent, CommonModule],
   templateUrl: './inspection-details.component.html',
   styleUrl: './inspection-details.component.scss'
 })
@@ -29,7 +27,6 @@ export class InspectionDetailsComponent {
   public placeId: any;
   public returnUrl?: string;
   constructor(
-    public themeService: CustomizerSettingsService,
     private inspectionService: InspectionsService,
     private router: Router,
     private route: ActivatedRoute,
@@ -65,6 +62,8 @@ export class InspectionDetailsComponent {
 
   getSections() {
     this.inspectionService.getSections(this.stateDate.id).subscribe((x) => {
+      console.log('CHECKLIST getSections raw response:', x);
+      console.log('CHECKLIST sections data:', JSON.stringify(x.data));
       this.sections = x.data;
     })
   }

@@ -17,13 +17,9 @@ export class PlanService {
 
   constructor(private http: HttpClient) { }
 
-  getInspectors(firmId: number, roleId?: number): Observable<RequestResponse<User>> {
-    let params = new HttpParams();
-
-    if (roleId !== undefined && roleId !== null) {
-      params = params.set('roleId', roleId.toString());
-    }
-    return this.http.get<RequestResponse<User>>(`${this.API_URL}/firms/${firmId}/users`, { params });
+  /** Plana təyin edilə bilən istifadəçilər — rol süzgəci backend-dədir (Inspector, HeadInspector). */
+  getInspectors(firmId: number): Observable<RequestResponse<User>> {
+    return this.http.get<RequestResponse<User>>(`${this.API_URL}/firms/${firmId}/inspectors`);
   }
 
   addPlan(plan: InspectionPlan): Observable<any> {

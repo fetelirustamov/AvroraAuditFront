@@ -10,7 +10,7 @@ import { MatNativeDateModule } from '@angular/material/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import * as L from 'leaflet';
-import * as XLSX from 'xlsx';
+import { FileExportService } from '../../../shared/services/file-export.service';
 import { finalize } from 'rxjs';
 import { InspectionsService } from '../../inspections/inspections.service';
 import { PlanService } from '../plan.service';
@@ -64,7 +64,8 @@ export class PlanRouteComponent implements AfterViewInit {
         private fb: FormBuilder,
         private inspectionsService: InspectionsService,
         private planService: PlanService,
-        private notify: NotificationService
+        private notify: NotificationService,
+        private fileExport: FileExportService,
     ) {
         this.filterForm = this.fb.group({
             firmId: [null, Validators.required],
@@ -105,7 +106,7 @@ export class PlanRouteComponent implements AfterViewInit {
         this.inspectors = [];
         if (!firmId) return;
 
-        this.planService.getInspectors(firmId, 3).subscribe((response) => {
+        this.planService.getInspectors(firmId).subscribe((response) => {
             this.allInspectors = response.data;
             this.inspectors = response.data;
         });
@@ -191,10 +192,11 @@ export class PlanRouteComponent implements AfterViewInit {
             'Checklist nəticəsi (%)': r.checklistResult ?? ''
         }));
 
-        const ws = XLSX.utils.json_to_sheet(data);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, 'Gündəlik məsafə');
-        XLSX.writeFile(wb, `gundelik-mesafe-${startDate}_${endDate}.xlsx`);
+        void this.fileExport.exportRowsToExcel(
+            data,
+            'Gündəlik məsafə',
+            `gundelik-mesafe-${startDate}_${endDate}.xlsx`,
+        );
     }
 
     private renderRoute(route: RoutePlanDto): void {

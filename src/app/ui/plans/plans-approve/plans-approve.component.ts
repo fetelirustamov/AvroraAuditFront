@@ -12,7 +12,6 @@ import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { RouterLink } from '@angular/router';
-import { CustomizerSettingsService } from '../../../customizer-settings/customizer-settings.service';
 import { FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { InspectionsService } from '../../inspections/inspections.service';
@@ -25,7 +24,7 @@ import { PlanService } from '../plan.service';
 import { PlanApprove } from '../plan.model';
 import { NotificationService } from '../../../shared/services/notification.service';
 import { AuditLoadingOverlayComponent } from '../../components/audit-loading-overlay/audit-loading-overlay.component';
-import { TableService } from '../../../admin/services/table.service';
+import { TableService } from '../../services/table.service';
 
 
 @Component({
@@ -186,9 +185,9 @@ export class PlansApproveComponent {
     this._tableService.fill(this._tableState).pipe(
       finalize(() => this.isLoading = false)
     ).subscribe((response) => {
-      this._tableState.paginator.total = response.data != null ? response.data.total : 0;
-      this.dataSource = response.data.items;
-      this.allDataCount = response.data.total;// artıq MatTableDataSource yoxdur
+      this._tableState.paginator.total = response.data?.total || 0;
+      this.dataSource = response.data?.items || [];
+      this.allDataCount = response.data?.total || 0;// artıq MatTableDataSource yoxdur
     });
   }
 
