@@ -246,10 +246,10 @@ export class InspectionApproveComponent {
     }
 
     this.planService.aprovePlan(this.planApproveList).subscribe((data) => {
-      console.log(data);
       if (data.success) {
-        this.notify.success('Plan təstiqləndi');
+        this.notify.success('Əməliyyat uğurla tamamlandı');
       }
+      this.selection.clear();
       this.fill();
     });
   }

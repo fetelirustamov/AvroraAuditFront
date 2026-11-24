@@ -39,11 +39,12 @@
                     <span class="material-symbols-outlined">manage_search</span>
                     Ətraflı
                 </button>
-                <button type="button" class="g-approve-btn" (click)="changeSelectedPlanStatus(2)">
+                <!-- Sətir düymələri ilə eyni: Təsdiq yoxlamanı yekunlaşdırır (3→4), Rədd mobilə qaytarır (3→2) -->
+                <button type="button" class="g-approve-btn" (click)="changeSelectedPlanStatus(4)">
                     <span class="material-symbols-outlined">check_circle</span>
                     Təsdiq
                 </button>
-                <button type="button" class="g-reject-btn" (click)="changeSelectedPlanStatus(-1)">
+                <button type="button" class="g-reject-btn" (click)="changeSelectedPlanStatus(2)">
                     <span class="material-symbols-outlined">cancel</span>
                     Rədd
                 </button>
