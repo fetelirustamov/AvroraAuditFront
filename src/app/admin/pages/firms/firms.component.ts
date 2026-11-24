@@ -17,6 +17,7 @@ import { FirmDto } from '../../models/firm.model';
 import { AdminBreadcrumbComponent } from '../../shared/breadcrumb/admin-breadcrumb.component';
 import { AuditLoadingOverlayComponent } from '../../../ui/components/audit-loading-overlay/audit-loading-overlay.component';
 import { NotificationService } from '../../../shared/services/notification.service';
+import { ConfirmDialogService } from '../../shared/confirm-dialog/confirm-dialog.service';
 
 @Component({
   selector: 'app-firms',
@@ -45,10 +46,7 @@ export class FirmsComponent implements OnInit, AfterViewInit {
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
 
-  // QEYD: "Redaktə" və "Sil" sütunları qəsdən yoxdur — backend-də FirmRepository.UpdateAsync
-  // və DeleteAsync hazırda "throw new NotImplementedException()" ilə yazılıb, yəni bu əməliyyatlar
-  // server tərəfində mövcud deyil. Onlar UI-a əlavə olunanda bu sətir və "actions" sütunu geri qaytarılmalıdır.
-  displayedColumns: string[] = ['name', 'description', 'address', 'phone', 'email'];
+  displayedColumns: string[] = ['name', 'description', 'address', 'phone', 'email', 'actions'];
   dataSource: MatTableDataSource<FirmDto>;
   pageSize = 10;
 
@@ -58,7 +56,8 @@ export class FirmsComponent implements OnInit, AfterViewInit {
   constructor(
     private dialog: MatDialog,
     private firmService: FirmService,
-    private notify: NotificationService
+    private notify: NotificationService,
+    private confirmDialog: ConfirmDialogService
   ) {
     this.dataSource = new MatTableDataSource<FirmDto>(this.rows);
   }
@@ -113,5 +112,39 @@ export class FirmsComponent implements OnInit, AfterViewInit {
     dialogRef.afterClosed().subscribe((result: any) => {
       if (result?.created) this.load();
     });
+  }
+
+  edit(row: FirmDto) {
+    const dialogRef = this.dialog.open(FirmAddComponent, {
+      width: '900px',
+      maxWidth: '95vw',
+      disableClose: true,
+      panelClass: 'modal-like-dialog',
+      data: { mode: 'edit', item: row }
+    });
+    dialogRef.afterClosed().subscribe((result: any) => {
+      if (result?.updated) this.load();
+    });
+  }
+
+  remove(row: FirmDto) {
+    this.confirmDialog
+      .confirm({
+        title: 'Firma silinsin?',
+        message: `"${row.name}" firmasını silmək istədiyinizə əminsiniz? Planları və hesabatları qalır, firma siyahılardan çıxır.`,
+        confirmText: 'Bəli, sil',
+        cancelText: 'Ləğv et'
+      })
+      .subscribe(confirmed => {
+        if (!confirmed) return;
+        this.firmService.deleteFirm(row.id).subscribe({
+          next: () => {
+            this.notify.success('Firma silindi');
+            this.load();
+          },
+          // 409: firmaya bağlı aktiv mağaza, şöbə və ya istifadəçi var - səbəb serverin mesajındadır
+          error: (err) => this.notify.error('Firma silinmədi', { message: err?.error?.message || 'Serverlə əlaqədə xəta baş verdi.' })
+        });
+      });
   }
 }

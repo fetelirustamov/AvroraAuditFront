@@ -9,6 +9,7 @@ import { NotificationService } from '../../../../shared/services/notification.se
 import { Router } from '@angular/router';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { FirmService } from '../../../services/firm.service';
+import { FirmDto } from '../../../models/firm.model';
 
 @Component({
     selector: 'app-firm-add',
@@ -28,6 +29,7 @@ export class FirmAddComponent {
     form: FormGroup;
     pageTitle = 'Yeni Firma';
     isSaving = false;
+    private readonly editId: number | null;
 
     constructor(
         private fb: FormBuilder,
@@ -35,15 +37,19 @@ export class FirmAddComponent {
         private notify: NotificationService,
         private firmService: FirmService,
         @Optional() private dialogRef?: MatDialogRef<FirmAddComponent>,
-        @Optional() @Inject(MAT_DIALOG_DATA) public data?: any
+        @Optional() @Inject(MAT_DIALOG_DATA) public data?: { mode: 'edit'; item: FirmDto }
     ) {
+        const item = data?.mode === 'edit' ? data.item : null;
+        this.editId = item?.id ?? null;
+        if (item) this.pageTitle = 'Firmanı Redaktə Et';
+
         this.form = this.fb.group({
-            name: ['', Validators.required],
-            description: [''],
-            address: [''],
-            phone: [''],
-            email: ['', Validators.email],
-            website: ['']
+            name: [item?.name ?? '', Validators.required],
+            description: [item?.description ?? ''],
+            address: [item?.address ?? ''],
+            phone: [item?.phone ?? ''],
+            email: [item?.email ?? '', Validators.email],
+            website: [item?.website ?? '']
         });
     }
 
@@ -55,20 +61,26 @@ export class FirmAddComponent {
         }
         this.isSaving = true;
         const payload = this.form.getRawValue();
+        const isEdit = this.editId !== null;
+        const request = isEdit
+            ? this.firmService.updateFirm(this.editId!, payload)
+            : this.firmService.createFirm(payload);
 
-        this.firmService.createFirm(payload).subscribe({
+        request.subscribe({
             next: (res) => {
                 this.isSaving = false;
-                this.notify.success('Firma uğurla əlavə edildi');
+                this.notify.success(isEdit ? 'Firma yeniləndi' : 'Firma uğurla əlavə edildi');
                 if (this.dialogRef) {
-                    this.dialogRef.close({ created: true, data: res });
+                    this.dialogRef.close(isEdit ? { updated: true } : { created: true, data: res });
                 } else {
                     this.router.navigate(['/admin/firms']);
                 }
             },
-            error: () => {
+            error: (err) => {
                 this.isSaving = false;
-                this.notify.error('Firma əlavə edilmədi', { message: 'Serverlə əlaqədə xəta baş verdi. Zəhmət olmasa yenidən cəhd edin.' });
+                this.notify.error(isEdit ? 'Firma yenilənmədi' : 'Firma əlavə edilmədi', {
+                    message: err?.error?.message || 'Serverlə əlaqədə xəta baş verdi. Zəhmət olmasa yenidən cəhd edin.'
+                });
             }
         });
     }

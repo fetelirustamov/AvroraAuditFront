@@ -22,10 +22,6 @@
     </mat-card-header>
 
     <mat-card-content class="audit-table-loading-shell" [attr.aria-busy]="isLoading">
-        <p class="firms-note text-muted mb-15">
-            Qeyd: Redaktə və silmə əməliyyatları hazırda backend tərəfindən dəstəklənmir, ona görə bu siyahıda göstərilmir.
-        </p>
-
         <div class="table-responsive" [class.audit-table-muted]="isLoading">
             <table mat-table [dataSource]="dataSource" matSort>
                 <ng-container matColumnDef="name">
@@ -51,6 +47,22 @@
                 <ng-container matColumnDef="email">
                     <th mat-header-cell *matHeaderCellDef> E-POÇT </th>
                     <td mat-cell *matCellDef="let r"> {{r.email}} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="actions">
+                    <th mat-header-cell *matHeaderCellDef> ƏMƏLİYYATLAR </th>
+                    <td mat-cell *matCellDef="let r">
+                        <div class="action-buttons">
+                            <button type="button" class="action-btn edit-btn" (click)="edit(r)" matTooltip="Redaktə Et"
+                                matTooltipPosition="above">
+                                <span class="material-symbols-outlined">edit</span>
+                            </button>
+                            <button type="button" class="action-btn delete-btn" (click)="remove(r)" matTooltip="Sil"
+                                matTooltipPosition="above">
+                                <span class="material-symbols-outlined">delete</span>
+                            </button>
+                        </div>
+                    </td>
                 </ng-container>
 
                 <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
