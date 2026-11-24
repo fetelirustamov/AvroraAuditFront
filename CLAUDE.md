@@ -13,7 +13,7 @@ npx ng build --configuration production # dist/avrora-audit, bundle limiti 2.5 M
 ## Backend kontraktına bağlılıqlar
 
 - JWT claim adları qısadır: `Id`, `Name`, `Surname`, `Email`, `Role`. `Role` vergüllə birləşdirilmiş sətirdir. `auth.service.ts` məhz bu adları oxuyur.
-- API cavabları PascalCase gəlir. Model sahələrini buna uyğun yaz.
+- API cavabları camelCase gəlir (`success`, `message`, `data`, `items`, `total`). İstisna xəta cavabıdır, o PascalCase-dir: `{ StatusCode, Message, Details }`.
 - `Location.locationCode` API-dən **string** gəlir (model `number` desə də). `Structure.locationCode` isə int-dir. Müqayisədə həmişə `Number(...)` işlət, yoxsa `"4335" !== 4335` olur.
 
 ## Domen dəyərləri
