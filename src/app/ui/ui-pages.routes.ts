@@ -58,14 +58,6 @@ export const uiPageRoutes: Routes = [
         }
     },
     {
-        path: 'reports/nonconformity-analysis',
-        loadComponent: () => import('./reports/nonconformity-analysis/nonconformity-analysis.component').then(m => m.UygunsuzluqAnaliziComponent),
-    },
-    {
-        path: 'reports/checklist-analysis',
-        loadComponent: () => import('./reports/checklist-analysis/checklist-analysis.component').then(m => m.ChecklistAnalysisComponent),
-    },
-    {
         path: 'reports/nonconformity-category-report',
         loadComponent: () => import('./reports/nonconformity-category-report/nonconformity-category-report.component').then(m => m.UygunsuzluqTasnifatHesabatiComponent),
     },
