@@ -9,7 +9,6 @@ export interface InspectionsListSnapshot {
   searchTerm: string;
   pageSize: number;
   inspectionsFormValue: unknown;
-  searchFormValue: unknown;
 }
 
 @Injectable({ providedIn: 'root' })

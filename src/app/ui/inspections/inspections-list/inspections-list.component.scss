@@ -43,12 +43,6 @@ button .material-symbols-outlined {
 //     vertical-align: middle;
 // }
 
-.page-select {
-    padding: 5px 10px;
-    border-radius: 5px;
-    margin: 5px;
-}
-
 .filter-input {
     padding-left: 6px;
     font-size: 13px;
@@ -61,42 +55,6 @@ button .material-symbols-outlined {
 //     text-align: center;
 //     margin-left: 50%;
 // }
-
-.mat-mdc-dialog-container .mat-mdc-dialog-title {
-    font-weight: 700 !important;
-}
-
-
-.dialog-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    // padding: 0 8px !important;
-}
-
-.close-button {
-    cursor: pointer;
-    margin-right: 15px;
-    padding: 2px;
-    min-width: auto;
-}
-
-.close-button:hover {
-    background-color: rgb(237, 235, 235);
-    border-radius: 20px;
-}
-
-.main-label {
-    font-size: 15px;
-    font-weight: 500;
-    margin-bottom: 8px;
-}
-
-.form-group {
-    margin-bottom: 20px;
-}
-
-
 
 mat-form-field {
     display: grid;

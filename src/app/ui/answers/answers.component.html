@@ -52,16 +52,6 @@
     </form>
 </div>
 <mat-card class="answers-results-card mb-25 border-radius d-block bg-white border-0 shadow-none">
-    <div class="row align-items-center mb-25">
-        <div class="col-md-3">
-            <span>Page</span>
-            <select class="page-select" on required>
-                <option value="10">10</option>
-                <option value="20">20</option>
-                <option value="50">50</option>
-            </select>
-        </div>
-    </div>
     <mat-card-content class="answers-card-content">
         <div class="answers-card-inner audit-table-loading-shell" [attr.aria-busy]="isLoading">
             <div class="table-responsive" [class.audit-table-muted]="isLoading">

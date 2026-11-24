@@ -1,15 +1,6 @@
 <mat-card class="dt-recent-leads-card mb-25 border-radius d-block bg-white border-0 shadow-none">
     <div class="row align-items-center mb-25">
-        <div class="col-md-3">
-            <span>Page</span>
-            <select class="page-select" required>
-                <option value="10">10</option>
-                <option value="20">20</option>
-                <option value="50">50</option>
-            </select>
-        </div>
-
-        <div class="col-md-9" *ngIf="action==true">
+        <div class="col-12" *ngIf="action==true">
             <div class="button-group text-end d-flex justify-content-end gap-2">
                 <span class="badge custom-button"
                     [class.text-bg-primary]="selection.hasValue()"

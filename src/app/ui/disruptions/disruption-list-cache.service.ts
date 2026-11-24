@@ -10,7 +10,6 @@ export interface DisruptionListSnapshot {
   pageSize: number;
   disruptionStatus: number;
   inspectionsFormValue: unknown;
-  searchFormValue: unknown;
 }
 
 @Injectable({ providedIn: 'root' })

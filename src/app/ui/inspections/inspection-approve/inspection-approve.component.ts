@@ -1,6 +1,6 @@
 import { SelectionModel } from '@angular/cdk/collections';
 import { AsyncPipe, CommonModule, DatePipe, JsonPipe, NgFor, NgIf } from '@angular/common';
-import { Component, TemplateRef, ViewChild } from '@angular/core';
+import { Component, ViewChild } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -22,7 +22,6 @@ import { TableState } from '../../../models/table-state.model';
 import { TableService } from '../../services/table.service';
 import { InspectionPlan } from '../InpectionPlan.model';
 import { NotificationService } from '../../../shared/services/notification.service';
-import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { PlanApprove } from '../../plans/plan.model';
 import { PlanService } from '../../plans/plan.service';
 import { AuditLoadingOverlayComponent } from '../../components/audit-loading-overlay/audit-loading-overlay.component';
@@ -44,8 +43,6 @@ export class InspectionApproveComponent {
   selection = new SelectionModel<InspectionPlan>(true, []);  // Düzəldildi
   allDataCount: number = 0;
   @ViewChild(MatPaginator) paginator!: MatPaginator;
-  @ViewChild('modalContent') modalContent!: TemplateRef<any>;
-  private dialogRef!: MatDialogRef<any>; //
 
   public firms: Firm[] = [];
   planForm!: FormGroup;
@@ -64,8 +61,7 @@ export class InspectionApproveComponent {
     private fb: FormBuilder,
     private datePipe: DatePipe,
     private planService: PlanService,
-    private notify: NotificationService,
-    public dialog: MatDialog
+    private notify: NotificationService
   ) {
     this.getFirms();
 
@@ -139,16 +135,6 @@ export class InspectionApproveComponent {
       }),
     });
   }
-
-
-  public searchForm = new FormGroup({
-    inspectorName: new FormControl<string>(''),
-    locationCode: new FormControl<string>(''),
-    locationName: new FormControl<string>(''),
-    date: new FormControl<Date | null>(null),
-  });
-
-
 
 
   onSearch() {
@@ -252,48 +238,6 @@ export class InspectionApproveComponent {
       this.selection.clear();
       this.fill();
     });
-  }
-
-  openModal(): void {
-    this.dialogRef = this.dialog.open(this.modalContent, {
-      width: '400px',
-      height: '100vh',
-      position: { right: '0' },
-      panelClass: 'right-panel'
-    });
-
-    this.dialogRef.afterClosed().subscribe(result => {
-      console.log('Modal bağlandı:', result);
-    });
-  }
-
-  closeModal(): void {
-    if (this.dialogRef) {
-      this.dialogRef.close();
-    }
-  }
-
-  onSearchSubmit() {
-    if (this.searchForm.valid) {
-      const formValue = this.searchForm.value as Record<string, any>;
-      Object.keys(formValue).forEach(key => {
-        const value = formValue[key];
-        if (value) {
-          if (key === 'date') {
-            this._tableState.filter[key] = this.datePipe.transform(value, 'yyyy-MM-dd')?.toString() ?? '';
-          } else {
-            this._tableState.filter[key] = String(value);
-          }
-        } else {
-          delete this._tableState.filter[key];
-        }
-      });
-      this.fill();
-    }
-  }
-
-  resetForm() {
-    this.searchForm.reset();
   }
 
 }

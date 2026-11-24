@@ -86,12 +86,6 @@ h6 {
     color: black !important;
 }
 
-.page-select {
-    padding: 5px 10px;
-    border-radius: 5px;
-    margin: 5px;
-}
-
 .filter-input {
     // padding: 2px;
     padding-left: 6px;
@@ -107,104 +101,10 @@ h6 {
 //     margin-left: 50%;
 // }
 
-.modal-content {
-
-    padding: 10px !important;
-}
-
-.dialog-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 16px 24px 0 24px;
-}
-
-.mat-mdc-dialog-container .mat-mdc-dialog-title {
-
-    font-weight: 700 !important;
-}
-
-.close-button {
-    cursor: pointer;
-    margin-right: 15px;
-    padding: 2px;
-    min-width: auto;
-}
-
-.close-button:hover {
-    background-color: rgb(237, 235, 235);
-    border-radius: 20px;
-}
-
-.main-label {
-    font-size: 15px;
-    font-weight: 500;
-    margin-bottom: 8px;
-}
-
-.form-group {
-    margin-bottom: 20px;
-}
-
-.searchButtons {
-    display: flex;
-    gap: 16px;
-    margin-top: 24px;
-}
-
-.search-btn,
-.clear-btn {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    flex: 1 1 0;
-    min-width: 120px;
-    padding: 12px 0;
-    font-size: 16px;
-    border-radius: 8px;
-    border: none;
-    cursor: pointer;
-    line-height: 1;
-}
-
-.search-btn {
-    background: #3d4fff;
-    color: #fff;
-}
-
-.clear-btn {
-    background: #f5f6fa;
-    color: #3d4fff;
-    border: 1px solid #e0e0e0;
-}
-
-.icon,
-.btn-text {
-    display: flex;
-    align-items: center;
-    line-height: 1;
-}
-
 button .material-symbols-outlined {
     font-size: 20px;
     line-height: 1;
     vertical-align: middle;
     display: flex;
     align-items: center;
-}
-
-.dialog-padding {
-    padding: 16px;
-}
-
-.search-btn .mat-button-wrapper,
-.clear-btn .mat-button-wrapper {
-    display: flex !important;
-    flex-direction: row !important;
-    align-items: center !important;
-    justify-content: center;
-    gap: 8px;
-    width: 100%;
 }

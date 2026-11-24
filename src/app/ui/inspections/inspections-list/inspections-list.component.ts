@@ -1,5 +1,5 @@
 import { AsyncPipe, CommonModule, DatePipe, JsonPipe, NgFor, NgIf } from '@angular/common';
-import { AfterViewInit, Component, Input, SimpleChanges, TemplateRef, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, Input, SimpleChanges, ViewChild } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatMenuModule } from '@angular/material/menu';
@@ -22,7 +22,6 @@ import { Page, Sort, TableState } from '../../../models/table-state.model';
 import { InspectionPlan } from '../InpectionPlan.model';
 import { Router } from '@angular/router';
 import { MatSort, MatSortModule } from '@angular/material/sort';
-import { MatDialog, MatDialogModule, MatDialogRef, MatDialogTitle, MatDialogContent } from '@angular/material/dialog';
 import { InspectionsListCacheService, InspectionsListSnapshot } from '../inspections-list-cache.service';
 
 @Component({
@@ -45,9 +44,6 @@ import { InspectionsListCacheService, InspectionsListSnapshot } from '../inspect
     ReactiveFormsModule,
     NgxMaterialTimepickerModule,
     NgFor,
-    MatDialogModule,
-    MatDialogTitle,
-    MatDialogContent,
     NgIf,
     MatSortModule
   ],
@@ -61,9 +57,7 @@ export class InspectionsListComponent implements AfterViewInit {
 
 
   @ViewChild(MatPaginator) paginator!: MatPaginator;
-  @ViewChild('modalContent') modalContent!: TemplateRef<any>;
   @Input() data: any; // Yeni data üçün input
-  private dialogRef!: MatDialogRef<any>; //
   public dataSource: InspectionPlan[] = [];
   public isProfilePage: boolean = false;
   filterSubject = new Subject<{ key: string, value: string }>();
@@ -86,7 +80,6 @@ export class InspectionsListComponent implements AfterViewInit {
     private _tableService: TableService,
     private datePipe: DatePipe,
     private router: Router,
-    public dialog: MatDialog,
     private inspectionsListCache: InspectionsListCacheService) {
     this.getFirms();
 
@@ -258,13 +251,6 @@ export class InspectionsListComponent implements AfterViewInit {
     }),
   });
 
-  public searchForm = new FormGroup({
-    inspectorName: new FormControl<string>(''),
-    locationCode: new FormControl<string>(''),
-    locationName: new FormControl<string>(''),
-    date: new FormControl<Date | null>(null),
-  });
-
   getRowNumber(index: number): number {
     return this.paginator ? index + 1 + (this.paginator.pageIndex * this.paginator.pageSize) : index + 1;
   }
@@ -288,48 +274,6 @@ export class InspectionsListComponent implements AfterViewInit {
     this.filterSubject.next({ key, value: inputValue });
   }
 
-  openModal(): void {
-    this.dialogRef = this.dialog.open(this.modalContent, {
-      width: '400px',
-      height: '100vh',
-      position: { right: '0' },
-      panelClass: 'right-panel'
-    });
-
-    this.dialogRef.afterClosed().subscribe(result => {
-      console.log('Modal bağlandı:', result);
-    });
-  }
-
-  closeModal(): void {
-    if (this.dialogRef) {
-      this.dialogRef.close();
-    }
-  }
-
-  onSearchSubmit() {
-    if (this.searchForm.valid) {
-      const formValue = this.searchForm.value as Record<string, any>;
-      Object.keys(formValue).forEach(key => {
-        const value = formValue[key];
-        if (value) {
-          if (key === 'date') {
-            this._tableState.filter[key] = this.datePipe.transform(value, 'yyyy-MM-dd')?.toString() ?? '';
-          } else {
-            this._tableState.filter[key] = String(value);
-          }
-        } else {
-          delete this._tableState.filter[key];
-        }
-      });
-      this.fill();
-    }
-  }
-
-  resetForm() {
-    this.searchForm.reset();
-  }
-
   private buildSnapshot(): InspectionsListSnapshot {
     return {
       tableState: JSON.parse(JSON.stringify(this._tableState)) as TableState,
@@ -338,7 +282,6 @@ export class InspectionsListComponent implements AfterViewInit {
       searchTerm: this.searchTerm,
       pageSize: Number(this.pageSize),
       inspectionsFormValue: this.inspectionsForm.getRawValue(),
-      searchFormValue: this.searchForm.getRawValue(),
     };
   }
 
@@ -361,7 +304,6 @@ export class InspectionsListComponent implements AfterViewInit {
     this.pageSize = snap.pageSize;
 
     this.inspectionsForm.patchValue(snap.inspectionsFormValue as any);
-    this.searchForm.patchValue(snap.searchFormValue as any);
 
     const firmId = (snap.inspectionsFormValue as { firmId?: number } | null)?.firmId;
     if (firmId) {

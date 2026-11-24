@@ -65,26 +65,12 @@
                     <span class="material-symbols-outlined">search</span>
                     Axtar
                 </button>
-                <button type="button" class="g-secondary-btn" (click)="openModal()">
-                    <span class="material-symbols-outlined">manage_search</span>
-                    Ətraflı
-                </button>
             </div>
         </div>
     </form>
 </div>
 
 <mat-card class="inspections-list-card mb-25 border-radius d-block bg-white border-0 shadow-none">
-    <div class="row align-items-center mb-25">
-        <div class="col-md-3">
-            <span>Page</span>
-            <select class="page-select" on required>
-                <option value="10">10</option>
-                <option value="20">20</option>
-                <option value="50">50</option>
-            </select>
-        </div>
-    </div>
     <mat-card-content class="inspections-table-shell" [class.inspections-table-shell--loading]="isLoading">
         <div class="table-responsive" [class.audit-table-muted]="isLoading">
             <table mat-table [dataSource]="dataSource">
@@ -192,85 +178,3 @@
         </app-audit-loading-overlay>
     </mat-card-content>
 </mat-card>
-
-
-
-<ng-template #modalContent>
-    <div class="dialog-header">
-        <h2 mat-dialog-title>Axtarış</h2>
-        <!-- <button mat-icon-button class=""> -->
-        <!-- <mat-icon>close</mat-icon> -->
-        <span class="material-symbols-outlined close-button" (click)="closeModal()">close</span>
-        <!-- </button> -->
-    </div>
-    <mat-dialog-content [formGroup]="searchForm">
-        <div>
-            <div class="col-12">
-                <div class="form-group">
-                    <label class="main-label  ">
-                        Müfəttiş
-                    </label>
-                    <mat-form-field>
-                        <mat-label>
-                            Müfəttişin adı
-                        </mat-label>
-                        <input matInput formControlName="inspectorName">
-                    </mat-form-field>
-                </div>
-            </div>
-            <div class="col-12">
-                <div class="form-group">
-                    <label class="main-label d-block fw-medium ">
-                        Ərazi
-                    </label>
-                    <mat-form-field>
-                        <mat-label>
-                            Ərazi adı
-                        </mat-label>
-                        <input matInput formControlName="locationCode">
-                    </mat-form-field>
-                </div>
-            </div>
-            <div class="col-12">
-                <div class="form-group">
-                    <label class="main-label d-block fw-medium ">
-                        Kod
-                    </label>
-                    <mat-form-field>
-                        <mat-label>
-                            Ərazi Kodu
-                        </mat-label>
-                        <input matInput formControlName="locationCode">
-                    </mat-form-field>
-                </div>
-            </div>
-            <div class="col-12">
-                <div class="form-group">
-                    <label class="main-label d-block fw-medium ">
-                        Tarix
-                    </label>
-                    <mat-form-field>
-                        <mat-label>
-                            Tarix
-                        </mat-label>
-                        <input matInput [matDatepicker]="picker" formControlName="date">
-                        <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
-                        <mat-datepicker #picker></mat-datepicker>
-                    </mat-form-field>
-                </div>
-            </div>
-
-            <div class="col-12 searchButtons">
-                <button mat-flat-button color="primary" class="mr-20" (click)="onSearchSubmit()">
-                    <span class="material-symbols-outlined">search</span>
-                    Axtar
-                </button>
-                <button mat-stroked-button color="warn" (click)="resetForm()">
-                    <span class="material-symbols-outlined">clear_all</span>
-                    Formu Təmizlə
-                </button>
-            </div>
-
-        </div>
-    </mat-dialog-content>
-</ng-template>

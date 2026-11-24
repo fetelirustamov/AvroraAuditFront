@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnInit, TemplateRef, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, OnInit, ViewChild } from '@angular/core';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { InspectionPlan } from '../../inspections/InpectionPlan.model';
 import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
@@ -24,14 +24,13 @@ import { NgxMaterialTimepickerModule } from 'ngx-material-timepicker';
 import { PlanApprove } from '../../plans/plan.model';
 import { SelectionModel } from '@angular/cdk/collections';
 import { FileUploadModule } from '@iplab/ngx-file-upload';
-import { MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { AuditLoadingOverlayComponent } from '../../components/audit-loading-overlay/audit-loading-overlay.component';
 import { DisruptionListCacheService, DisruptionListSnapshot } from '../disruption-list-cache.service';
 
 
 @Component({
   selector: 'app-disruption-list',
-  imports: [MatCardModule, MatButtonModule, MatMenuModule, MatTableModule, CommonModule, MatPaginatorModule, MatInputModule, MatFormFieldModule, MatSelectModule, MatDatepickerModule, MatNativeDateModule, FormsModule, ReactiveFormsModule, NgxMaterialTimepickerModule, NgFor, FileUploadModule, MatDialogModule, AuditLoadingOverlayComponent],
+  imports: [MatCardModule, MatButtonModule, MatMenuModule, MatTableModule, CommonModule, MatPaginatorModule, MatInputModule, MatFormFieldModule, MatSelectModule, MatDatepickerModule, MatNativeDateModule, FormsModule, ReactiveFormsModule, NgxMaterialTimepickerModule, NgFor, FileUploadModule, AuditLoadingOverlayComponent],
   providers: [DatePipe],
   templateUrl: './disruption-list.component.html',
   styleUrl: './disruption-list.component.scss'
@@ -46,8 +45,6 @@ export class DisruptionListComponent implements OnInit, AfterViewInit {
     { label: 'Rədd olunmuşlar', value: -1 }
   ];
 
-  @ViewChild('modalContent') modalContent!: TemplateRef<any>;
-  private dialogRef!: MatDialogRef<any>; //
   @ViewChild(MatPaginator) paginator!: MatPaginator;
 
 
@@ -77,7 +74,6 @@ export class DisruptionListComponent implements OnInit, AfterViewInit {
   private skipPaginatorPageEventOnce = false;
 
   constructor(private inspectionsService: InspectionsService, private _tableService: TableService, private datePipe: DatePipe, private router: Router,
-    public dialog: MatDialog,
     private disruptionListCache: DisruptionListCacheService) {
 
     this.getFirms();
@@ -235,58 +231,6 @@ export class DisruptionListComponent implements OnInit, AfterViewInit {
 
   }
 
-  openModal(): void {
-    this.dialogRef = this.dialog.open(this.modalContent, {
-      width: '400px',
-      height: '100vh',
-      position: { right: '0' },
-      panelClass: 'right-panel'
-    });
-
-    this.dialogRef.afterClosed().subscribe(result => {
-      console.log('Modal bağlandı:', result);
-    });
-  }
-
-  closeModal(): void {
-    if (this.dialogRef) {
-      this.dialogRef.close();
-    }
-  }
-
-  public searchForm = new FormGroup({
-    inspectorName: new FormControl<string>(''),
-    locationCode: new FormControl<string>(''),
-    locationName: new FormControl<string>(''),
-    date: new FormControl<Date | null>(null),
-    firmId: new FormControl<number | null>(null, { validators: [Validators.required] }),
-  });
-
-
-  onSearchSubmit() {
-    if (this.searchForm.valid) {
-      this.isLoading = true;
-      const formValue = this.searchForm.value as Record<string, any>;
-      Object.keys(formValue).forEach(key => {
-        const value = formValue[key];
-        if (value) {
-          if (key === 'date') {
-            this._tableState.filter[key] = this.datePipe.transform(value, 'yyyy-MM-dd')?.toString() ?? '';
-          } else {
-            this._tableState.filter[key] = String(value);
-          }
-        } else {
-          delete this._tableState.filter[key];
-        }
-      });
-      this.fill();
-    }
-  }
-
-  resetForm() {
-    this.searchForm.reset();
-  }
-
   private buildSnapshot(): DisruptionListSnapshot {
     return {
       tableState: JSON.parse(JSON.stringify(this._tableState)) as TableState,
@@ -296,7 +240,6 @@ export class DisruptionListComponent implements OnInit, AfterViewInit {
       pageSize: Number(this.pageSize),
       disruptionStatus: this.disruptionStatus,
       inspectionsFormValue: this.inspectionsForm.getRawValue(),
-      searchFormValue: this.searchForm.getRawValue(),
     };
   }
 
@@ -320,11 +263,8 @@ export class DisruptionListComponent implements OnInit, AfterViewInit {
     this.disruptionStatus = snap.disruptionStatus;
 
     this.inspectionsForm.patchValue(snap.inspectionsFormValue as any);
-    this.searchForm.patchValue(snap.searchFormValue as any);
 
-    const mainFirm = (snap.inspectionsFormValue as { firmId?: number } | null)?.firmId;
-    const searchFirm = (snap.searchFormValue as { firmId?: number } | null)?.firmId;
-    const firmId = mainFirm ?? searchFirm;
+    const firmId = this.inspectionsForm.controls.firmId.value;
     if (firmId) {
       this.getLocations(firmId);
     }
