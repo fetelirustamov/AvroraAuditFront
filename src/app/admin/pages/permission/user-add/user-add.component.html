@@ -66,8 +66,117 @@
         </mat-card-content>
     </mat-card>
 
+    <!-- Şəxsi məlumatlar — yalnız redaktə rejimində dəyişdirilə bilir.
+         Təyinat rejimində istifadəçi sadəcə seçilir, kimliyi burada dəyişmir. -->
+    <mat-card class="user-details-card" *ngIf="selectedUser && isEditMode">
+        <mat-card-header>
+            <mat-card-title>
+                <span class="material-symbols-outlined me-2">badge</span>
+                Şəxsi Məlumatlar
+            </mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+            <form [formGroup]="userForm">
+                <div class="row g-4 align-items-center identity-strip">
+                    <div class="col-md-2">
+                        <div class="user-profile">
+                            <div class="profile-image">
+                                <img [src]="selectedUser.profileImage || 'assets/images/users/default-user.jpg'"
+                                    alt="Profile Image" class="rounded-circle" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-7">
+                        <div class="info-item">
+                            <span class="material-symbols-outlined">tag</span>
+                            <span class="label">İstifadəçi kodu:</span>
+                            <span class="value">{{selectedUser.id}}</span>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="info-item">
+                            <span class="label me-2">Status:</span>
+                            <mat-slide-toggle formControlName="userStatus">
+                                {{getFormControl('userStatus')?.value ? 'Aktiv' : 'Passiv'}}
+                            </mat-slide-toggle>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-3" formGroupName="profile">
+                    <div class="col-md-4">
+                        <mat-form-field class="w-100">
+                            <mat-label>Ad</mat-label>
+                            <input matInput formControlName="name" required placeholder="Adı daxil edin" />
+                            <span matPrefix class="material-symbols-outlined">person</span>
+                            <mat-error *ngIf="hasProfileError('name', 'required')">Ad məcburidir</mat-error>
+                            <mat-error *ngIf="hasProfileError('name', 'maxlength')">Ən çox 150 simvol</mat-error>
+                        </mat-form-field>
+                    </div>
+                    <div class="col-md-4">
+                        <mat-form-field class="w-100">
+                            <mat-label>Soyad</mat-label>
+                            <input matInput formControlName="surName" required placeholder="Soyadı daxil edin" />
+                            <mat-error *ngIf="hasProfileError('surName', 'required')">Soyad məcburidir</mat-error>
+                            <mat-error *ngIf="hasProfileError('surName', 'maxlength')">Ən çox 150 simvol</mat-error>
+                        </mat-form-field>
+                    </div>
+                    <div class="col-md-4">
+                        <mat-form-field class="w-100">
+                            <mat-label>Ata adı</mat-label>
+                            <input matInput formControlName="fatherName" placeholder="Ata adını daxil edin" />
+                            <mat-error *ngIf="hasProfileError('fatherName', 'maxlength')">Ən çox 150 simvol</mat-error>
+                        </mat-form-field>
+                    </div>
+                    <div class="col-md-6">
+                        <mat-form-field class="w-100">
+                            <mat-label>Vəzifə</mat-label>
+                            <input matInput formControlName="position" placeholder="Vəzifəni daxil edin" />
+                            <span matPrefix class="material-symbols-outlined">work</span>
+                            <mat-error *ngIf="hasProfileError('position', 'maxlength')">Ən çox 150 simvol</mat-error>
+                        </mat-form-field>
+                    </div>
+                    <div class="col-md-6">
+                        <mat-form-field class="w-100">
+                            <mat-label>E-poçt</mat-label>
+                            <input matInput type="email" formControlName="email" required
+                                placeholder="ad.soyad@azersun.com" />
+                            <span matPrefix class="material-symbols-outlined">email</span>
+                            <mat-hint>Bu e-poçt həm də giriş ünvanıdır.</mat-hint>
+                            <mat-error *ngIf="hasProfileError('email', 'required')">E-poçt məcburidir</mat-error>
+                            <mat-error *ngIf="hasProfileError('email', 'email')">E-poçt formatı düzgün deyil</mat-error>
+                            <mat-error *ngIf="hasProfileError('email', 'maxlength')">Ən çox 150 simvol</mat-error>
+                        </mat-form-field>
+                    </div>
+                </div>
+            </form>
+
+            <!-- Parol ayrıca əməliyyatdır: nə göstərilir, nə də "yadda saxla" ilə birlikdə yazılır -->
+            <div class="password-row">
+                <div class="password-info">
+                    <span class="material-symbols-outlined">key</span>
+                    <div>
+                        <div class="password-label">Parol</div>
+                        <div class="password-hint">
+                            Mövcud parol göstərilmir. Lazım olduqda yenisini təyin edə bilərsiniz.
+                        </div>
+                    </div>
+                </div>
+                <button mat-stroked-button color="primary" type="button" *ngIf="canResetPassword"
+                    (click)="openPasswordDialog()">
+                    <span class="material-symbols-outlined">lock_reset</span>
+                    Parolu sıfırla
+                </button>
+                <span class="external-auth-chip" *ngIf="!canResetPassword && authType">
+                    <span class="material-symbols-outlined">shield_lock</span>
+                    {{ externalAuthLabel }}
+                </span>
+            </div>
+        </mat-card-content>
+    </mat-card>
+
     <!-- User Details Section -->
-    <mat-card class="user-details-card" *ngIf="selectedUser">
+    <mat-card class="user-details-card" *ngIf="selectedUser && !isEditMode">
         <mat-card-header>
             <mat-card-title>
                 <span class="material-symbols-outlined me-2">person</span>

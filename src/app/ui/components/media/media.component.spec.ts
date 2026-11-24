@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { MediaComponent } from './media.component';
+import { appTestProviders } from '../../../../testing/test-providers';
 
 describe('MediaComponent', () => {
   let component: MediaComponent;
@@ -8,6 +9,7 @@ describe('MediaComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
+      providers: [appTestProviders],
       imports: [MediaComponent]
     })
     .compileComponents();

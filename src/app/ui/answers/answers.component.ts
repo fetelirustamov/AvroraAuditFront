@@ -167,9 +167,9 @@ export class AnswersComponent {
       finalize(() => this.isLoading = false)
     ).subscribe((response) => {
       // console.log(response);
-      this._tableState.paginator.total = response.data != null ? response.data.total : 0;
-      this.dataSource = response.data.items;
-      this.allDataCount = response.data.total;
+      this._tableState.paginator.total = response.data?.total || 0;
+      this.dataSource = response.data?.items || [];
+      this.allDataCount = response.data?.total || 0;
     });
   }
 

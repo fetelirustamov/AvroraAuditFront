@@ -5,12 +5,13 @@
                 <span class="material-symbols-outlined title-icon">inventory</span>
                 Uyğunsuzluq təsnifatı statistikası
             </h1>
-            <p class="page-subtitle">Bölgə, mağaza və şöbə üzrə uyğunsuzluq sayları (saxta məlumat)</p>
+            <p class="page-subtitle">Bölgə, mağaza və şöbə üzrə uyğunsuzluq sayları</p>
         </div>
         <div class="header-actions">
-            <button type="button" class="export-btn" [matMenuTriggerFor]="downloadMenu">
-                <span class="material-symbols-outlined">download</span>
-                Yüklə
+            <button type="button" class="export-btn" [matMenuTriggerFor]="downloadMenu"
+                [disabled]="!hasSubmittedSearch || !allCount || isExporting">
+                <span class="material-symbols-outlined">{{ isExporting ? 'progress_activity' : 'download' }}</span>
+                {{ isExporting ? 'Hazırlanır...' : 'Yüklə' }}
                 <span class="material-symbols-outlined arrow-icon">expand_more</span>
             </button>
         </div>
@@ -97,20 +98,21 @@
     <div class="kpi-card">
         <div class="kpi-icon score-icon"><span class="material-symbols-outlined">numbers</span></div>
         <div class="kpi-body">
-            <div class="kpi-value">{{ getTotalSaySobe() }}</div>
+            <div class="kpi-value">{{ totalSaySobe }}</div>
             <div class="kpi-label">Şöbə üzrə sayların cəmi</div>
         </div>
     </div>
     <div class="kpi-card">
         <div class="kpi-icon warn-icon"><span class="material-symbols-outlined">category</span></div>
         <div class="kpi-body">
-            <div class="kpi-value">{{ getTotalSayTasnifat() }}</div>
+            <div class="kpi-value">{{ totalSayTasnifat }}</div>
             <div class="kpi-label">Təsnifat üzrə sayların cəmi</div>
         </div>
     </div>
 </div>
 
-<div class="table-card">
+<div class="table-card audit-table-loading-shell" [attr.aria-busy]="isLoading">
+    <div [class.audit-table-muted]="isLoading">
     <div class="table-card-header">
         <div class="table-info">
             <span class="material-symbols-outlined table-info-icon">table_view</span>
@@ -170,4 +172,8 @@
     <mat-paginator *ngIf="hasSubmittedSearch && allCount > 0" [length]="allCount" [pageIndex]="pageIndex"
         [pageSize]="pageSize" [pageSizeOptions]="[10, 25, 50]" (page)="onPage($event)" showFirstLastButtons
         class="modern-paginator"></mat-paginator>
+    </div>
+
+    <app-audit-loading-overlay *ngIf="isLoading" title="Hesabat hazırlanır"
+        hint="Uyğunsuzluq təsnifatı yüklənir…"></app-audit-loading-overlay>
 </div>

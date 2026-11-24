@@ -1,103 +1,47 @@
-$primary: #605DFF;
-$primary-light: #EEF0FF;
-$primary-dark: #4B48CC;
-$success: #16A34A;
-$success-light: #DCFCE7;
-$warning: #D97706;
-$warning-light: #FEF3C7;
-$danger: #FF4023;
-$danger-light: #FFECE9;
-$indigo: #5B6CFF;
-$indigo-light: #E8EBFF;
-$surface: #ffffff;
-$surface-2: #F6F7F9;
-$border: #ECEEF2;
-$text-primary: #1E2533;
-$text-secondary: #64748B;
-$text-muted: #9AA5B4;
-$shadow-sm: 0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
-$shadow-md: 0 4px 16px rgba(96,93,255,.10), 0 1px 4px rgba(0,0,0,.06);
-$radius-sm: 8px;
-$radius-md: 12px;
-$radius-lg: 16px;
-
-.report-page-header {
-    background: linear-gradient(135deg, #5B6CFF 0%, #8B7CFF 55%, #A78BFA 100%);
-    border-radius: $radius-lg;
-    padding: 24px 28px;
-    margin-bottom: 20px;
-    position: relative;
-    overflow: hidden;
-
-    &::before {
-        content: '';
-        position: absolute;
-        top: -40px; right: -40px;
-        width: 180px; height: 180px;
-        border-radius: 50%;
-        background: rgba(255,255,255,.08);
-    }
-    &::after {
-        content: '';
-        position: absolute;
-        bottom: -60px; right: 80px;
-        width: 130px; height: 130px;
-        border-radius: 50%;
-        background: rgba(255,255,255,.05);
-    }
-
-    .header-content {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        position: relative;
-        z-index: 1;
-    }
-
-    .header-text {
-        .page-title {
-            margin: 0 0 4px;
-            font-size: 22px;
-            font-weight: 700;
-            color: #fff;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            .title-icon { font-size: 26px; opacity: .9; }
-        }
-        .page-subtitle { margin: 0; font-size: 13px; color: rgba(255,255,255,.75); }
-    }
-}
-
-.export-btn {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    background: rgba(255,255,255,.18);
-    color: #fff;
-    border: 1px solid rgba(255,255,255,.3);
-    border-radius: $radius-sm;
-    padding: 9px 18px;
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background .2s, transform .15s, opacity .2s;
-    backdrop-filter: blur(4px);
-
-    &:hover:not(:disabled) { background: rgba(255,255,255,.28); transform: translateY(-1px); }
-    &:disabled { opacity: .55; cursor: not-allowed; }
-    .arrow-icon { font-size: 18px; opacity: .8; }
-}
+// Yoxlama planı iş statusu hesabatı.
+//
+// Səhifə başlığı, `.kpi-*`, `.table-card`, `.empty-state`, `.row-number`
+// `src/_design-system.scss`-dən gəlir. Burada yalnız bu səhifəyə xas olanlar:
+// üç dayaqlı indiqo qradient, tarix filtri, status nişanları və cədvəl tonları.
 
 @import '../report-filter-toolbar';
 
+// Bu başlıq üç dayaqlı qradient işlədir, ona görə `background`-u özü təyin edir
+// (paylaşılan qat iki dayaq — `--page-accent-from/to` — dəstəkləyir).
+.report-page-header {
+    background: linear-gradient(135deg, #5B6CFF 0%, #8B7CFF 55%, #A78BFA 100%);
+}
+
+// İndiqo vurğu tonları
+$indigo: #5B6CFF;
+$indigo-soft: #E8EBFF;
+$accent-tint: #F5F6FF;
+$accent-tint-strong: #EEF0FF;
+
+// İxrac düyməsi burada deaktiv ola bilir
+.export-btn {
+    transition: background .2s, transform .15s, opacity .2s;
+
+    &:hover:not(:disabled) {
+        background: rgba(255, 255, 255, .28);
+        transform: translateY(-1px);
+    }
+    &:hover:disabled {
+        transform: none;
+    }
+    &:disabled {
+        opacity: .55;
+        cursor: not-allowed;
+    }
+}
+
 .required-mark {
-    color: $danger;
+    color: var(--dangerColor);
     font-weight: 700;
 }
 
 :host ::ng-deep .search-btn:disabled {
-    opacity: 0.5;
+    opacity: .5;
     cursor: not-allowed;
     box-shadow: none;
     filter: none;
@@ -125,92 +69,39 @@ $radius-lg: 16px;
     gap: 6px;
     min-height: 46px;
     padding: 0 18px;
-    background: $surface-2;
-    color: $text-secondary;
-    border: 1px solid $border;
+    border: 1px solid var(--borderColor);
     border-radius: 12px;
+    background: var(--surface-muted);
+    color: var(--bodyColor);
     font-size: 13px;
     font-weight: 600;
     cursor: pointer;
     transition: background .2s, color .2s;
 
     &:hover {
-        background: $danger-light;
-        color: $danger;
-        border-color: rgba($danger, .25);
+        background: var(--dangerSoft);
+        color: var(--dangerColor);
+        border-color: rgba(255, 64, 35, .25);
     }
 }
 
-.kpi-row {
-    display: flex;
-    gap: 16px;
-    margin-bottom: 20px;
-    flex-wrap: wrap;
-}
-
+// Bu səhifədə KPI kartları ağ fondadır (paylaşılan qatda boz)
 .kpi-card {
-    flex: 1;
-    min-width: 160px;
-    background: $surface;
-    border: 1px solid $border;
-    border-radius: $radius-md;
-    padding: 16px;
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    transition: box-shadow .2s;
-    &:hover { box-shadow: $shadow-md; }
+    background: var(--surface);
 }
 
 .kpi-icon {
-    width: 44px;
-    height: 44px;
-    border-radius: $radius-sm;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    .material-symbols-outlined { font-size: 22px; }
-
-    &.total-icon { background: $indigo-light; color: $indigo; }
-    &.processed-icon { background: $success-light; color: $success; }
-    &.pending-icon { background: $warning-light; color: $warning; }
-}
-
-.kpi-body {
-    .kpi-value { font-size: 22px; font-weight: 700; color: $text-primary; line-height: 1; }
-    .kpi-label { font-size: 11px; color: $text-secondary; margin-top: 4px; font-weight: 500; }
-}
-
-.table-card {
-    background: $surface;
-    border-radius: $radius-md;
-    border: 1px solid $border;
-    box-shadow: $shadow-sm;
-    overflow: hidden;
-}
-
-.table-card-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 16px 20px;
-    border-bottom: 1px solid $border;
-
-    .table-info {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        .table-info-icon { font-size: 20px; color: $primary; }
-        .table-title { font-size: 14px; font-weight: 600; color: $text-primary; }
-        .result-badge {
-            background: $primary-light;
-            color: $primary;
-            font-size: 11px;
-            font-weight: 700;
-            padding: 2px 10px;
-            border-radius: 20px;
-        }
+    &.total-icon {
+        background: $indigo-soft;
+        color: $indigo;
+    }
+    &.processed-icon {
+        background: #DCFCE7;
+        color: #16A34A;
+    }
+    &.pending-icon {
+        background: #FEF3C7;
+        color: #D97706;
     }
 }
 
@@ -218,116 +109,130 @@ $radius-lg: 16px;
     display: flex;
     align-items: center;
     gap: 6px;
-    background: $danger-light;
-    color: $danger;
-    border: 1px solid rgba($danger,.2);
-    border-radius: $radius-sm;
     padding: 6px 14px;
+    border: 1px solid rgba(255, 64, 35, .2);
+    border-radius: var(--radius-sm);
+    background: var(--dangerSoft);
+    color: var(--dangerColor);
     font-size: 12px;
     font-weight: 600;
     cursor: pointer;
     transition: background .2s;
-    .material-symbols-outlined { font-size: 16px; }
-    &:hover { background: $danger; color: #fff; }
+
+    .material-symbols-outlined {
+        font-size: 16px;
+    }
+    &:hover {
+        background: var(--dangerColor);
+        color: var(--whiteColor);
+    }
 }
 
 :host ::ng-deep .filter-row th.filter-header-cell {
-    background: $surface;
+    background: var(--surface);
     padding: 6px 8px;
-    border-bottom: 2px solid $border;
+    border-bottom: 2px solid var(--borderColor);
 }
 
 .filter-input-wrap {
     display: flex;
     align-items: center;
     gap: 4px;
-    background: $surface-2;
-    border: 1px solid $border;
-    border-radius: $radius-sm;
     padding: 4px 8px;
+    border: 1px solid var(--borderColor);
+    border-radius: var(--radius-sm);
+    background: var(--surface-muted);
     transition: border-color .2s;
+
     &:focus-within {
-        border-color: $primary;
-        box-shadow: 0 0 0 3px rgba(96,93,255,.1);
+        border-color: var(--primaryColor);
+        box-shadow: 0 0 0 3px rgba(96, 93, 255, .1);
     }
-    .filter-input-icon { font-size: 14px; color: $text-muted; }
+    .filter-input-icon {
+        font-size: 14px;
+        color: var(--text-muted);
+    }
     .filter-input {
+        width: 100%;
+        min-width: 60px;
         border: none;
         outline: none;
         background: transparent;
         font-size: 12px;
-        color: $text-primary;
-        width: 100%;
-        min-width: 60px;
-        &::placeholder { color: $text-muted; }
+        color: var(--text-strong);
+
+        &::placeholder {
+            color: var(--text-muted);
+        }
     }
 }
 
 :host ::ng-deep .status-filter-field {
     width: 100%;
-    .mat-mdc-text-field-wrapper { border-radius: 8px !important; }
-    .mat-mdc-form-field-infix { padding: 6px 0 !important; min-height: 36px; }
-    .mat-mdc-form-field-subscript-wrapper { display: none; }
+
+    .mat-mdc-text-field-wrapper {
+        border-radius: 8px !important;
+    }
+    .mat-mdc-form-field-infix {
+        padding: 6px 0 !important;
+        min-height: 36px;
+    }
+    .mat-mdc-form-field-subscript-wrapper {
+        display: none;
+    }
 }
 
-.table-responsive-wrapper { overflow-x: auto; }
-.modern-table { width: 100%; th, td { white-space: nowrap; } }
-
+// ── Cədvəl sətirləri ────────────────────────────────────────────────────────
 :host ::ng-deep .data-header-row th.data-header-cell {
-    background: $indigo-light;
-    color: $text-secondary;
+    background: $indigo-soft;
+    color: var(--bodyColor);
     font-size: 11px;
     font-weight: 700;
     text-align: center;
     padding: 10px 12px;
-    border-bottom: 2px solid $border;
+    border-bottom: 2px solid var(--borderColor);
 }
-
 :host ::ng-deep .data-row {
     height: 48px;
+
     td.mat-mdc-cell {
         padding: 8px 12px;
-        border-bottom: 1px solid $border;
+        border-bottom: 1px solid var(--borderColor);
         text-align: center;
     }
-    &:hover td.mat-mdc-cell { background: #F5F6FF; }
-    &:last-child td.mat-mdc-cell { border-bottom: none; }
+    &:hover td.mat-mdc-cell {
+        background: $accent-tint;
+    }
+    &:last-child td.mat-mdc-cell {
+        border-bottom: none;
+    }
+}
+:host ::ng-deep .data-row:nth-child(even) td.mat-mdc-cell {
+    background: var(--surface-muted);
+}
+:host ::ng-deep .data-row:nth-child(even):hover td.mat-mdc-cell {
+    background: $accent-tint-strong;
 }
 
-:host ::ng-deep .data-row:nth-child(even) td.mat-mdc-cell { background: $surface-2; }
-:host ::ng-deep .data-row:nth-child(even):hover td.mat-mdc-cell { background: #EEF0FF; }
-
-.row-number {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 28px;
-    height: 28px;
-    background: $primary-light;
-    color: $primary;
-    border-radius: 50%;
-    font-size: 12px;
-    font-weight: 700;
-}
-
+// ── Sütun məzmunu ───────────────────────────────────────────────────────────
 .code-badge {
     display: inline-block;
+    padding: 4px 10px;
+    border-radius: 6px;
     background: #EEF2FF;
     color: #4B5DA8;
     font-size: 11.5px;
     font-weight: 700;
-    padding: 4px 10px;
-    border-radius: 6px;
 }
 
 .user-name {
     font-weight: 600;
-    color: $text-primary;
+    color: var(--text-strong);
 }
 
 .date-text {
     font-size: 12.5px;
-    color: $text-secondary;
+    color: var(--bodyColor);
     font-variant-numeric: tabular-nums;
 }
 
@@ -335,17 +240,17 @@ $radius-lg: 16px;
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    font-size: 12px;
-    font-weight: 700;
     padding: 5px 12px;
     border-radius: 999px;
-    letter-spacing: 0.02em;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .02em;
 
     .status-dot {
+        flex-shrink: 0;
         width: 7px;
         height: 7px;
         border-radius: 50%;
-        flex-shrink: 0;
     }
 
     &.processed {
@@ -353,7 +258,11 @@ $radius-lg: 16px;
         color: #15803D;
         border: 1px solid rgba(22, 163, 74, .25);
         box-shadow: 0 2px 8px rgba(22, 163, 74, .12);
-        .status-dot { background: #16A34A; box-shadow: 0 0 0 3px rgba(22, 163, 74, .2); }
+
+        .status-dot {
+            background: #16A34A;
+            box-shadow: 0 0 0 3px rgba(22, 163, 74, .2);
+        }
     }
 
     &.not-processed {
@@ -361,45 +270,61 @@ $radius-lg: 16px;
         color: #B45309;
         border: 1px solid rgba(217, 119, 6, .25);
         box-shadow: 0 2px 8px rgba(217, 119, 6, .12);
-        .status-dot { background: #D97706; box-shadow: 0 0 0 3px rgba(217, 119, 6, .2); }
+
+        .status-dot {
+            background: #D97706;
+            box-shadow: 0 0 0 3px rgba(217, 119, 6, .2);
+        }
     }
 
     &.unknown {
-        background: $surface-2;
-        color: $text-muted;
-        border: 1px solid $border;
-        .status-dot { background: $text-muted; }
+        background: var(--surface-muted);
+        color: var(--text-muted);
+        border: 1px solid var(--borderColor);
+
+        .status-dot {
+            background: var(--text-muted);
+        }
     }
 }
 
-.empty-state {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 60px 24px;
-    color: $text-muted;
-    .empty-icon { font-size: 52px; margin-bottom: 12px; opacity: .5; }
-    p { font-size: 14px; margin: 0; }
-}
-
 :host ::ng-deep .modern-paginator {
-    background: $surface;
-    color: $text-secondary;
+    background: var(--surface);
+    color: var(--bodyColor);
     font-size: 13px;
 }
+:host ::ng-deep .mat-mdc-menu-panel {
+    border-radius: var(--radius-sm) !important;
+    min-width: 160px !important;
+}
+:host ::ng-deep .mat-mdc-menu-item {
+    font-size: 13px;
 
-:host ::ng-deep .mat-mdc-menu-panel { border-radius: $radius-sm !important; min-width: 160px !important; }
-:host ::ng-deep .mat-mdc-menu-item { font-size: 13px; &:hover { background: $primary-light; color: $primary; } }
-.menu-icon { font-size: 18px; }
-.excel-icon { color: #1D6F42; }
-.pdf-icon { color: $danger; }
+    &:hover {
+        background: var(--primarySoft);
+        color: var(--primaryColor);
+    }
+}
+.menu-icon {
+    font-size: 18px;
+}
+.excel-icon {
+    color: #1D6F42;
+}
+.pdf-icon {
+    color: var(--dangerColor);
+}
 
 @media (max-width: 720px) {
     .filter-toolbar-actions {
         flex-direction: column;
         width: 100%;
         margin-left: 0;
-        .clear-all-btn, .search-btn { width: 100%; justify-content: center; }
+
+        .clear-all-btn,
+        .search-btn {
+            width: 100%;
+            justify-content: center;
+        }
     }
 }

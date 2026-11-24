@@ -7,3 +7,45 @@
 .tab-content {
     padding-top: 16px;
 }
+
+.firm-context-card {
+    .mat-mdc-card-content {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding-top: 16px;
+    }
+}
+
+.firm-context-select {
+    width: 320px;
+    max-width: 100%;
+    margin-bottom: -1.25em;
+}
+
+.firm-context-hint {
+    margin: 0;
+    color: var(--bodyColor, #64748b);
+    font-size: 13px;
+}
+
+.no-firm-selected {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    color: var(--bodyColor, #64748b);
+    text-align: center;
+
+    .material-symbols-outlined {
+        font-size: 40px;
+        margin-bottom: 12px;
+        opacity: 0.6;
+    }
+
+    p {
+        margin: 0;
+        font-size: 14px;
+    }
+}

@@ -38,11 +38,6 @@ export class ComponentService {
         return this.http.get<string[]>(url);
     }
 
-    GetDocuments(refId: number, module: number): Observable<string[]> {
-        const url = `${this.baseUrl}/attachments/documents/${refId}/${module}`;
-        return this.http.get<string[]>(url);
-    }
-
     GetPlanInfoByPlanId(planId: number): Observable<RequestResponseOne<PlanInfo>> {
         return this.http.get<RequestResponseOne<PlanInfo>>(`${this.baseUrl}/inspectionPlans/info/${planId}`);
     }

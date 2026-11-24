@@ -21,12 +21,8 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { NgxMaterialTimepickerModule } from 'ngx-material-timepicker';
-import { PlanApprove } from '../../plans/plan.model';
 import { SelectionModel } from '@angular/cdk/collections';
 import { FileUploadModule } from '@iplab/ngx-file-upload';
-import { NotificationService } from '../../../shared/services/notification.service';
-import { DisruptionService } from '../disruption.service';
-import { DisruptionApproveDto } from '../disruption.model';
 import { AuthService } from '../../../auth/auth.service';
 import { AuditLoadingOverlayComponent } from '../../components/audit-loading-overlay/audit-loading-overlay.component';
 
@@ -52,8 +48,6 @@ export class DisruptionMiddleComponent {
   selection = new SelectionModel<InspectionPlan>(true, []);
   allDataCount: number = 0;
 
-  private disruptionApproveList: DisruptionApproveDto[] = [];
-  private disruptionApprove: DisruptionApproveDto = new DisruptionApproveDto();
   public selectedFirmId: number = 0;
   public selectedLocationId: number = 0;
   public firms: Firm[] = [];
@@ -62,37 +56,26 @@ export class DisruptionMiddleComponent {
   public pageSize: Number = 10;
   public isLoading: boolean = false;
   public rows$: Observable<any[]> = new Observable<any[]>();
-  public disruptionStatus: number = 0;
-  public disruptionApproveStatus: number = 1;
   public isheadInspector: boolean = false;
   classApplied = false;
   private searchTerm: string = "";
 
   constructor(private inspectionsService: InspectionsService,
-    private disruptionService: DisruptionService,
-    private notify: NotificationService,
     private _tableService: TableService,
     private datePipe: DatePipe,
     private router: Router,
     private authService: AuthService) {
 
     const userInfo = this.authService.getUserInfo();
-    if (userInfo?.Role?.split(",").includes("HeadInspector") || userInfo?.Role?.split(",").includes("Admin")) {
-      this.disruptionStatus = 1;
-      this.disruptionApproveStatus = 2;
-      this.isheadInspector = true;
-    } else if (userInfo?.Role?.split(",").includes("Inspector")) {
-      this.disruptionStatus = 0;
-      this.disruptionApproveStatus = 1;
-      this.isheadInspector = false;
-    }
+    // Admin/HeadInspector bütün müfəttişlərin həm müfəttiş onayı gözləyən (0), həm də onaylanmış (1) uyğunsuzluqlarını görür
+    this.isheadInspector = this.authService.hasAnyRole(['HeadInspector', 'Admin']);
 
     this.getFirms();
 
     this._tableState = new TableState();
     this._tableService.api_url = "disruptions/plans";
     this._tableState.filter['inspectionPlanStatus'] = "4";
-    this._tableState.filter['disruptionStatus'] = this.disruptionStatus.toString();
+    this._tableState.filter['disruptionStatus'] = this.isheadInspector ? "0,1" : "0";
 
     if (!this.isheadInspector && userInfo?.Id) {
       this._tableState.filter['inspector'] = userInfo.Id.toString();
@@ -186,9 +169,9 @@ export class DisruptionMiddleComponent {
     this._tableService.fill(this._tableState).pipe(
       finalize(() => this.isLoading = false)
     ).subscribe((response) => {
-      this._tableState.paginator.total = response.data != null ? response.data.total : 0;
-      this.dataSource = response.data.items;
-      this.allDataCount = response.data.total;
+      this._tableState.paginator.total = response.data?.total || 0;
+      this.dataSource = response.data?.items || [];
+      this.allDataCount = response.data?.total || 0;
     });
   }
 
@@ -212,29 +195,6 @@ export class DisruptionMiddleComponent {
     this.router.navigate(['disruptions/middle-details'], { state: { data: row, action: true, status: 0 } });
 
   }
-
-  changePlanStatus(row: any, status: number) {
-    console.log(status);
-    this.disruptionApproveList = [];
-    this.disruptionApprove = new DisruptionApproveDto();
-    this.disruptionApprove.inspectionPlanId = row.inspectionPlanId;
-    this.disruptionApprove.status = status;
-    this.disruptionApproveList.push(this.disruptionApprove);
-
-    if (this.disruptionApproveList.length == 0) {
-      this.notify.warning('Heç bir plan seçilməyib');
-      return;
-    }
-
-    // Burada row.id və ya row-un başqa istədiyin property-lərini işlədə bilərsə
-    this.disruptionService.aprovePlan(this.disruptionApproveList).subscribe((data) => {
-      if (data.success) {
-        this.notify.success('Əməliyyat uğurla tamamlandı');
-      }
-      this.fill();
-    });
-  }
-
 
 
 }

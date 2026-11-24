@@ -1,10 +1,5 @@
-<div [class.card-without-border-radius]="themeService.isCardWithoutBorderRadius()"
-    [class.card-with-box-shadow]="themeService.isCardWithBoxShadow()"
-    class="header-area bg-white border-bottom-radius transition"
-    [ngClass]="{'active': isSidebarToggled, 'sticky': isSticky}"
-    [class.component-rtl-enabled]="themeService.isRTLEnabled()" [class.right-sidebar]="themeService.isRightSidebar()"
-    [class.hide-sidebar]="themeService.isHideSidebar()" [class.card-borderd]="themeService.isCardBordered()"
-    [class.dark-header]="themeService.isHeaderDark()">
+<div class="header-area bg-white border-bottom-radius transition"
+    [ngClass]="{'active': isSidebarToggled, 'sticky': isSticky}">
     <div class="d-md-flex align-items-center justify-content-between">
         <div class="header-left-side d-flex align-items-center">
             <div class="burger-menu transition position-relative lh-1" [ngClass]="{'active': isSidebarToggled}"
@@ -13,13 +8,25 @@
                     menu
                 </i>
             </div>
-            <form class="search-box position-relative">
-                <input type="text" class="input-search" placeholder="Search here.....">
+            <form class="search-box position-relative" (ngSubmit)="onSearchSubmit($event)" autocomplete="off">
+                <input type="text" class="input-search" placeholder="Admin menyusunda axtar..."
+                    [value]="searchQuery"
+                    (input)="onSearchInput($event)"
+                    (focus)="onSearchFocus($event)"
+                    (blur)="closeSearchResults()">
                 <button type="submit" class="bg-transparent p-0 border-none transition">
                     <i class="material-symbols-outlined">
                         search
                     </i>
                 </button>
+                <ul class="admin-search-results" *ngIf="showResults && searchResults.length">
+                    <li *ngFor="let item of searchResults">
+                        <a (mousedown)="goToResult(item)">{{ item.label }}</a>
+                    </li>
+                </ul>
+                <div class="admin-search-empty" *ngIf="showResults && searchQuery && !searchResults.length">
+                    Nəticə tapılmadı
+                </div>
             </form>
 
         </div>
@@ -27,14 +34,14 @@
 
             <li>
                 <button mat-button [matMenuTriggerFor]="profileMenu" class="profile-menu-btn">
-                    <img src="images/male-avatar.svg" class="rounded-circle" alt="male-avatar">
+                    <img [src]="profileAvatarDataUrl" class="rounded-circle" alt="profil şəkli">
                     <span class="fw-semibold text-black">
                         {{ profileTriggerLabel }}
                     </span>
                 </button>
                 <mat-menu class="profile-menu-dropdown" #profileMenu="matMenu" xPosition="before">
                     <div class="admin d-flex align-items-center">
-                        <img src="images/male-avatar.svg" class="rounded-circle" alt="male-avatar">
+                        <img [src]="profileAvatarDataUrl" class="rounded-circle" alt="profil şəkli">
                         <div>
                             <span class="d-block text-black fw-medium">
                                 {{ profileFullName }}

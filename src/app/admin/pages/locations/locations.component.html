@@ -77,7 +77,13 @@
                 <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
 
                 <tr class="mat-row" *matNoDataRow>
-                    <td class="mat-cell text-center" colspan="7">Məlumat tapılmadı</td>
+                    <td class="mat-cell text-center" colspan="7">
+                        <div class="no-data-message">
+                            <span class="material-symbols-outlined">search_off</span>
+                            <p>Mağaza tapılmadı</p>
+                            <small>Yeni mağaza əlavə etmək üçün yuxarıdakı düymədən istifadə edin</small>
+                        </div>
+                    </td>
                 </tr>
             </table>
         </div>
@@ -101,7 +107,7 @@
     <mat-dialog-content [formGroup]="searchForm">
 
         <div class="col-12">
-            <div class="form-group">
+            <div class="form-group" *ngIf="firmId == null">
                 <label class="main-label">Müəsisələr</label>
                 <mat-form-field>
                     <mat-label>Müəsisə</mat-label>

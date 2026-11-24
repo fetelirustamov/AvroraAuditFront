@@ -1,13 +1,67 @@
-import { Component, OnDestroy, OnInit, Inject, PLATFORM_ID } from '@angular/core';
-import { CommonModule, isPlatformBrowser } from '@angular/common';
-import { DashboardChartsService } from '../../admin/pages/dashboard/dashboard-charts.service';
-import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { CommonModule } from '@angular/common';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
+import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
-import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatButtonModule } from '@angular/material/button';
+import { Subject, finalize, takeUntil } from 'rxjs';
+
+import { LocationService } from '../../admin/services/location.service';
+import { NotificationService } from '../../shared/services/notification.service';
 import { AuditLoadingOverlayComponent } from '../components/audit-loading-overlay/audit-loading-overlay.component';
+import { Firm } from '../inspections/firm.model';
+import { InspectionsService } from '../inspections/inspections.service';
+import { DashboardVisualsService } from './dashboard-visuals.service';
+import {
+    DashboardLocation,
+    DashboardOverview,
+    MONTH_SHORT_LABELS,
+    PLAN_STATUS_LABELS
+} from './dashboard.model';
+import { DashboardService } from './dashboard.service';
+
+/** `/locations/regions/{firmId}` cavabındakı bölgə */
+interface RegionOption {
+    id: number;
+    regionName: string;
+}
+
+/** `/firms/{firmId}/locations` cavabından filtr üçün lazım olan hissə */
+interface LocationOption {
+    code: number;
+    name: string;
+    regionId: number;
+}
+
+interface KpiCard {
+    key: string;
+    label: string;
+    hint: string;
+    icon: string;
+    tone: 'primary' | 'success' | 'warning' | 'danger';
+    value: string;
+    /** Əvvəlki dövrdə müqayisə bazası yoxdursa `null` */
+    delta: number | null;
+    /** Faiz göstəricilərində fərq faiz bəndidir, saylarda nisbi faizdir */
+    deltaUnit: '%' | 'b.';
+    /** Aşağı düşmək yaxşıdırsa (açıq uyğunsuzluq) yaşıl/qırmızı tərsinə oxunur */
+    lowerIsBetter: boolean;
+    sparkColor: string;
+    sparkData: number[];
+}
+
+/** Risk matrisindəki zonalar — bubble seriyalarına və cədvəl nişanlarına eyni məntiq */
+const RISK_ZONES = [
+    { key: 'low', name: 'Aşağı risk (≥85%)', color: '#25B003', min: 85 },
+    { key: 'medium', name: 'Orta risk (70–85%)', color: '#F59E0B', min: 70 },
+    { key: 'high', name: 'Yüksək risk (<70%)', color: '#F43F5E', min: 0 }
+];
+
+/** Radar və istilik xəritəsi oxunaqlı qalsın deyə şöbə sayı məhdudlaşdırılır */
+const MAX_SECTIONS = 8;
+
+/** Bundan az oxda radar şaquli xəttə çevrilir — əvəzinə müqayisə sütunları çəkilir */
+const MIN_RADAR_AXES = 3;
 
 @Component({
     selector: 'app-ui-dashboard',
@@ -17,216 +71,441 @@ import { AuditLoadingOverlayComponent } from '../components/audit-loading-overla
         ReactiveFormsModule,
         MatFormFieldModule,
         MatSelectModule,
-        MatIconModule,
         MatTooltipModule,
-        MatButtonModule,
         AuditLoadingOverlayComponent
     ],
+    providers: [DashboardVisualsService],
     templateUrl: './ui-dashboard.component.html',
     styleUrls: ['./ui-dashboard.component.scss']
 })
 export class UiDashboardComponent implements OnInit, OnDestroy {
-    filtersForm!: FormGroup;
+    // ── Filtrlər ─────────────────────────────────────────────────────────────
+    readonly filtersForm = new FormGroup({
+        year: new FormControl<number | null>(new Date().getFullYear()),
+        month: new FormControl<number | null>(null),
+        firmId: new FormControl<number | null>(null),
+        regionId: new FormControl<number | null>(null),
+        locationCode: new FormControl<number | null>(null)
+    });
+
+    readonly years = Array.from({ length: 6 }, (_, i) => new Date().getFullYear() - i);
+    readonly months = [
+        { value: 1, label: 'Yanvar' }, { value: 2, label: 'Fevral' },
+        { value: 3, label: 'Mart' }, { value: 4, label: 'Aprel' },
+        { value: 5, label: 'May' }, { value: 6, label: 'İyun' },
+        { value: 7, label: 'İyul' }, { value: 8, label: 'Avqust' },
+        { value: 9, label: 'Sentyabr' }, { value: 10, label: 'Oktyabr' },
+        { value: 11, label: 'Noyabr' }, { value: 12, label: 'Dekabr' }
+    ];
+
+    firms: Firm[] = [];
+    regions: RegionOption[] = [];
+    private allLocations: LocationOption[] = [];
+    locations: LocationOption[] = [];
+
+    // ── Məzmun ───────────────────────────────────────────────────────────────
     isLoading = false;
-    private mutationObserver?: MutationObserver;
+    hasLoaded = false;
+    overview: DashboardOverview | null = null;
 
-    // ── Filter dropdown data ──────────────────────────────────────────────────
-    firms = [
-        {
-            id: 1, name: 'Direktorluq A', regions: [
-                { id: 11, name: 'Bölgə 1', stores: [{ id: 111, name: 'Ərazi A' }, { id: 112, name: 'Ərazi B' }] },
-                { id: 12, name: 'Bölgə 2', stores: [{ id: 121, name: 'Ərazi C' }, { id: 122, name: 'Ərazi D' }] }
-            ]
-        },
-        {
-            id: 2, name: 'Direktorluq B', regions: [
-                { id: 21, name: 'Bölgə 3', stores: [{ id: 211, name: 'Ərazi E' }, { id: 212, name: 'Ərazi F' }] }
-            ]
-        }
-    ];
+    kpis: KpiCard[] = [];
+    ranking: DashboardLocation[] = [];
+    /** Cədvəl «ən yaxşı» yoxsa «ən riskli» əraziləri göstərir */
+    rankingMode: 'best' | 'risk' = 'risk';
 
-    regions: { id: number; name: string; stores: any[] }[] = [];
-    stores: { id: number; name: string }[] = [];
+    readonly riskZones = RISK_ZONES;
 
-    dateRanges = [
-        { id: 'week',    name: 'Bu həftə' },
-        { id: 'month',   name: 'Bu ay' },
-        { id: 'quarter', name: 'Son 3 ay' },
-        { id: 'year',    name: 'Bu il' }
-    ];
-
-    riskLevels = [
-        { id: 'high',   name: 'Yüksək Risk' },
-        { id: 'medium', name: 'Orta Risk' },
-        { id: 'low',    name: 'Aşağı Risk' }
-    ];
-
-    auditTypes = [
-        { id: 'planned',   name: 'Planlı Audit' },
-        { id: 'unplanned', name: 'Plansız Audit' },
-        { id: 'followup',  name: 'Yoxlama Auditi' }
-    ];
-
-    // ── Right-panel insight data ──────────────────────────────────────────────
-    insights = {
-        topStore:   { name: 'Ərazi A', score: 94, change: '+4%' },
-        riskStore:  { name: 'Ərazi C', score: 52, change: '-8%' },
-        riskDown:   '12%',
-        openIssues: { count: 14, change: '5.5%' }
-    };
-
-    sideStats: { label: string; store: string | null; value: string; trend: 'up' | 'down' }[] = [
-        { label: 'Ort. Ərazi Balı', store: 'Ərazi A', value: '4.2',  trend: 'up' },
-        { label: 'Risk Ərazisi',    store: 'Ərazi C', value: '32',   trend: 'up' },
-        { label: 'Açıq Tapıntılar',  store: 'Ərazi D', value: '56',   trend: 'up' },
-        { label: 'Ümumi Trend',      store: null,        value: '+5.2%', trend: 'up' }
-    ];
+    private readonly destroy$ = new Subject<void>();
 
     constructor(
-        private charts: DashboardChartsService,
-        private fb: FormBuilder,
-        @Inject(PLATFORM_ID) private platformId: any
+        private readonly dashboardService: DashboardService,
+        private readonly visuals: DashboardVisualsService,
+        private readonly inspectionsService: InspectionsService,
+        private readonly locationService: LocationService,
+        private readonly notify: NotificationService,
+        private readonly cdr: ChangeDetectorRef
     ) { }
 
+    // ── Həyat dövrü ──────────────────────────────────────────────────────────
+
     ngOnInit(): void {
-        this.filtersForm = this.fb.group({
-            dateRange: [null],
-            firmId:    [null],
-            riskLevel: [null],
-            regionId:  [null],
-            storeId:   [null],
-            auditType: [null]
-        });
+        this.loadFirms();
 
-        // Cascade: firm → regions
-        this.filtersForm.get('firmId')?.valueChanges.subscribe((firmId: number | null) => {
-            const firm = this.firms.find(f => f.id === firmId) || null;
-            this.regions = firm ? firm.regions : [];
-            this.stores  = [];
-            this.filtersForm.patchValue({ regionId: null, storeId: null }, { emitEvent: false });
-            this.loadCharts();
-        });
+        this.filtersForm.get('firmId')!.valueChanges
+            .pipe(takeUntil(this.destroy$))
+            .subscribe(firmId => this.onFirmChange(firmId));
 
-        // Cascade: region → stores
-        this.filtersForm.get('regionId')?.valueChanges.subscribe((regionId: number | null) => {
-            const region = this.regions.find(r => r.id === regionId) || null;
-            this.stores = region ? region.stores : [];
-            this.filtersForm.patchValue({ storeId: null }, { emitEvent: false });
-            this.loadCharts();
-        });
+        this.filtersForm.get('regionId')!.valueChanges
+            .pipe(takeUntil(this.destroy$))
+            .subscribe(regionId => this.onRegionChange(regionId));
 
-        this.filtersForm.get('storeId')?.valueChanges.subscribe(() => this.loadCharts());
-        this.filtersForm.get('dateRange')?.valueChanges.subscribe(() => this.loadCharts());
-        this.filtersForm.get('riskLevel')?.valueChanges.subscribe(() => this.loadCharts());
-        this.filtersForm.get('auditType')?.valueChanges.subscribe(() => this.loadCharts());
-
-        this.loadCharts();
-
-        if (isPlatformBrowser(this.platformId)) {
-            this.mutationObserver = new MutationObserver(() => {
-                clearTimeout((this as any).themeUpdateTimeout);
-                (this as any).themeUpdateTimeout = setTimeout(() => this.updateCharts(), 200);
-            });
-            this.mutationObserver.observe(document.body, { attributes: true, attributeFilter: ['class'] });
-        }
+        this.loadOverview();
     }
 
     ngOnDestroy(): void {
-        this.mutationObserver?.disconnect();
-        clearTimeout((this as any).themeUpdateTimeout);
-        this.charts.destroyAll();
+        this.destroy$.next();
+        this.destroy$.complete();
+        this.visuals.destroyAll();
     }
 
-    resetFilters(): void {
-        this.filtersForm.patchValue({
-            dateRange: null, firmId: null, riskLevel: null,
-            regionId: null, storeId: null, auditType: null
-        });
+    // ── Filtr məlumatları ────────────────────────────────────────────────────
+
+    private loadFirms(): void {
+        this.inspectionsService.getFirms()
+            .pipe(takeUntil(this.destroy$))
+            .subscribe({
+                next: res => { this.firms = res?.data ?? []; },
+                error: () => {
+                    this.firms = [];
+                    this.notify.error('Direktorluq siyahısı yüklənmədi');
+                }
+            });
+    }
+
+    private onFirmChange(firmId: number | null): void {
         this.regions = [];
-        this.stores  = [];
-        this.loadCharts();
+        this.allLocations = [];
+        this.locations = [];
+        this.filtersForm.patchValue({ regionId: null, locationCode: null }, { emitEvent: false });
+
+        if (!firmId) { return; }
+
+        this.locationService.getRegionsByFirmId(firmId)
+            .pipe(takeUntil(this.destroy$))
+            .subscribe({
+                next: (res: any) => { this.regions = this.readList<RegionOption>(res); },
+                error: () => {
+                    this.regions = [];
+                    this.notify.error('Bölgə siyahısı yüklənmədi');
+                }
+            });
+
+        this.inspectionsService.getLocationByFirmId(firmId)
+            .pipe(takeUntil(this.destroy$))
+            .subscribe({
+                next: (res: any) => {
+                    this.allLocations = this.readList<any>(res).map(l => ({
+                        code: Number(l.locationCode),
+                        name: l.locationName ?? '',
+                        regionId: Number(l.regionID ?? l.regionId ?? 0)
+                    }));
+                    this.locations = this.allLocations;
+                },
+                error: () => {
+                    this.allLocations = [];
+                    this.locations = [];
+                    this.notify.error('Ərazi siyahısı yüklənmədi');
+                }
+            });
     }
 
-    hasActiveFilters(): boolean {
-        const v = this.filtersForm.value;
-        return !!(v.dateRange || v.firmId || v.riskLevel || v.regionId || v.storeId || v.auditType);
+    private onRegionChange(regionId: number | null): void {
+        this.filtersForm.patchValue({ locationCode: null }, { emitEvent: false });
+        this.locations = regionId
+            ? this.allLocations.filter(l => l.regionId === regionId)
+            : this.allLocations;
     }
 
-    hasNoData(): boolean { return false; }
-
-    onFilterSubmit(): void {
-        if (this.filtersForm.valid) this.loadCharts();
+    /** API cavabları `{ data: [...] }` və ya birbaşa massiv qaytara bilir */
+    private readList<T>(res: any): T[] {
+        if (Array.isArray(res?.data)) { return res.data as T[]; }
+        if (Array.isArray(res)) { return res as T[]; }
+        return [];
     }
 
-    private loadCharts(): void {
+    // ── Filtr əməliyyatları ──────────────────────────────────────────────────
+
+    get hasActiveFilters(): boolean {
+        const { month, firmId, regionId, locationCode } = this.filtersForm.value;
+        return month != null || firmId != null || regionId != null || locationCode != null;
+    }
+
+    onSearch(): void {
+        this.loadOverview();
+    }
+
+    clearFilters(): void {
+        this.filtersForm.reset({
+            year: new Date().getFullYear(),
+            month: null,
+            firmId: null,
+            regionId: null,
+            locationCode: null
+        });
+        this.loadOverview();
+    }
+
+    setRankingMode(mode: 'best' | 'risk'): void {
+        this.rankingMode = mode;
+        this.ranking = this.buildRanking();
+    }
+
+    // ── Məlumatın yüklənməsi ─────────────────────────────────────────────────
+
+    private loadOverview(): void {
+        const { year, month, firmId, regionId, locationCode } = this.filtersForm.value;
+
         this.isLoading = true;
-        setTimeout(() => {
-            this.updateCharts();
-            this.isLoading = false;
-        }, 300);
+        this.visuals.destroyAll();
+
+        this.dashboardService.getOverview({
+            year: year ?? new Date().getFullYear(),
+            month: month ?? null,
+            firmId: firmId ?? null,
+            regionId: regionId ?? null,
+            locationCode: locationCode ?? null
+        })
+            .pipe(takeUntil(this.destroy$), finalize(() => { this.isLoading = false; }))
+            .subscribe({
+                next: res => {
+                    this.overview = res?.data ?? null;
+                    this.hasLoaded = true;
+                    this.applyOverview();
+                },
+                error: () => {
+                    this.overview = null;
+                    this.hasLoaded = true;
+                    this.kpis = [];
+                    this.ranking = [];
+                    this.notify.error('Dashboard məlumatları yüklənmədi');
+                }
+            });
     }
 
-    private updateCharts(): void {
-        const firmId   = this.filtersForm.get('firmId')?.value as number | null;
-        const regionId = this.filtersForm.get('regionId')?.value as number | null;
-        const storeId  = this.filtersForm.get('storeId')?.value as number | null;
+    private applyOverview(): void {
+        if (!this.overview) { return; }
 
-        const selectedStores: string[] = (() => {
-            if (storeId) {
-                const s = [...this.regions.flatMap(r => r.stores)].find(s => s.id === storeId);
-                return s ? [s.name] : [];
+        this.kpis = this.buildKpis();
+        this.ranking = this.buildRanking();
+
+        // Qrafiklər DOM-a bağlanır, ona görə əvvəlcə şablon yenilənməlidir
+        this.cdr.detectChanges();
+
+        if (this.isEmpty) { return; }
+        void this.renderVisuals();
+    }
+
+    get isEmpty(): boolean {
+        return !this.overview || this.overview.kpi.totalInspections === 0;
+    }
+
+    // ── KPI kartları ─────────────────────────────────────────────────────────
+
+    private buildKpis(): KpiCard[] {
+        const kpi = this.overview!.kpi;
+        const trend = this.overview!.monthlyTrend;
+
+        return [
+            {
+                key: 'inspections',
+                label: 'Ümumi yoxlama',
+                hint: `${kpi.plannedInspections} planlı · ${kpi.unplannedInspections} plansız`,
+                icon: 'fact_check',
+                tone: 'primary',
+                value: String(kpi.totalInspections),
+                delta: kpi.totalInspectionsDelta,
+                deltaUnit: '%',
+                lowerIsBetter: false,
+                sparkColor: '#605DFF',
+                sparkData: trend.map(m => m.inspections)
+            },
+            {
+                key: 'completion',
+                label: 'Tamamlanma',
+                hint: `${kpi.completedInspections} yekunlaşmış yoxlama`,
+                icon: 'task_alt',
+                tone: 'success',
+                value: `${kpi.completionRate}%`,
+                delta: kpi.completionRateDelta,
+                deltaUnit: 'b.',
+                lowerIsBetter: false,
+                sparkColor: '#25B003',
+                sparkData: trend.map(m => m.completed)
+            },
+            {
+                key: 'findings',
+                label: 'Uyğunsuzluq',
+                hint: `${kpi.totalFindings} ümumi · ${kpi.openFindings} açıq`,
+                icon: 'report_problem',
+                tone: 'danger',
+                value: String(kpi.openFindings),
+                delta: kpi.openFindingsDelta,
+                deltaUnit: '%',
+                lowerIsBetter: true,
+                sparkColor: '#F43F5E',
+                sparkData: trend.map(m => m.findings)
+            },
+            {
+                key: 'compliance',
+                label: 'Orta uyğunluq',
+                hint: 'Toplanan balın normativə nisbəti',
+                icon: 'trending_up',
+                tone: 'warning',
+                value: `${kpi.averageCompliance}%`,
+                delta: kpi.averageComplianceDelta,
+                deltaUnit: 'b.',
+                lowerIsBetter: false,
+                sparkColor: '#F59E0B',
+                sparkData: trend.map(m => m.compliance)
             }
-            if (regionId) return (this.regions.find(r => r.id === regionId)?.stores || []).map(s => s.name);
-            if (firmId)   return (this.firms.find(f => f.id === firmId)?.regions || []).flatMap(r => r.stores.map(s => s.name));
-            return ['Ərazi A', 'Ərazi B', 'Ərazi C', 'Ərazi D'];
-        })();
-
-        const rnd  = (len: number, lo = 5,  hi = 80)  => Array.from({ length: len }, () => Math.floor(lo + Math.random() * (hi - lo)));
-        const rndS = (len: number) => Array.from({ length: len }, () => Math.floor(60 + Math.random() * 35));
-
-        this.charts.destroyAll();
-
-        // Bar: 4 series (Ümumi, Uyğun, Uyğunsuz, Yoxlanır)
-        this.charts.loadPlansByStore(
-            [
-                { name: 'Ümumi',     data: rnd(selectedStores.length, 60, 150) },
-                { name: 'Uyğun',     data: rndS(selectedStores.length) },
-                { name: 'Uyğunsuz', data: rnd(selectedStores.length, 5, 30) },
-                { name: 'Yoxlanır', data: rnd(selectedStores.length, 3, 20) }
-            ],
-            selectedStores
-        );
-
-        const months = ['Yan', 'Fev', 'Mar', 'Apr', 'May', 'İyn', 'İyl', 'Avq', 'Sen', 'Okt', 'Noy', 'Dek'];
-        this.charts.loadPlanTrend(
-            [
-                { name: 'Tapıntılar', data: rnd(months.length, 50, 180) },
-                { name: 'Yekun Bal',  data: rndS(months.length) }
-            ],
-            months
-        );
-
-        this.charts.loadPlanStatus(
-            [45, 28, 15, 8, 4],
-            ['Tamamlanan', 'Yoxlanır', 'Gecikmiş', 'Uyğunsuz', 'Ləğv olunmuş']
-        );
-
-        const depts = ['Kassa', 'SAT', 'Anbar', 'Təmizlik'];
-        this.charts.loadDeptNoncompliance(
-            [
-                { name: 'Uyğun',    data: [12, 14, 11, 15] },
-                { name: 'Riskli',   data: [2, 1, 3, 1] },
-                { name: 'Uyğunsuz', data: [6, 3, 4, 2] }
-            ],
-            depts
-        );
-
-        this.charts.loadStoreDeptHeatmap([
-            { name: 'Ərazi A', data: depts.map((d, i) => ({ x: d, y: [2, 9, 5, 11][i] })) },
-            { name: 'Ərazi B', data: depts.map((d, i) => ({ x: d, y: [4, 11, 7, 0][i] })) },
-            { name: 'Ərazi C', data: depts.map((d, i) => ({ x: d, y: [12, 7, 2, 9][i] })) },
-            { name: 'Ərazi D', data: depts.map((d, i) => ({ x: d, y: [1, 4, 9, 2][i] })) },
-            { name: 'Ərazi E', data: depts.map((d, i) => ({ x: d, y: [9, 1, 5, 10][i] })) }
-        ]);
+        ];
     }
+
+    // ── Ərazi reytinqi ───────────────────────────────────────────────────────
+
+    private buildRanking(): DashboardLocation[] {
+        const locations = this.overview?.locations ?? [];
+        const sorted = [...locations].sort((a, b) =>
+            this.rankingMode === 'best' ? b.compliance - a.compliance : a.compliance - b.compliance);
+        return sorted.slice(0, 10);
+    }
+
+    riskZoneOf(compliance: number): { key: string; name: string; color: string } {
+        return RISK_ZONES.find(z => compliance >= z.min) ?? RISK_ZONES[RISK_ZONES.length - 1];
+    }
+
+    scoreTone(compliance: number): 'is-success' | 'is-warning' | 'is-danger' {
+        if (compliance >= 85) { return 'is-success'; }
+        if (compliance >= 70) { return 'is-warning'; }
+        return 'is-danger';
+    }
+
+    // ── Qrafiklər ────────────────────────────────────────────────────────────
+
+    private async renderVisuals(): Promise<void> {
+        const data = this.overview!;
+
+        await this.visuals.renderComplianceGauge('dash_gauge', data.kpi.averageCompliance);
+
+        for (const kpi of this.kpis) {
+            await this.visuals.renderSparkline(`dash_spark_${kpi.key}`, kpi.sparkData, kpi.sparkColor);
+        }
+
+        await this.visuals.renderTrend(
+            'dash_trend',
+            data.monthlyTrend.map(m => m.inspections),
+            data.monthlyTrend.map(m => m.findings),
+            data.monthlyTrend.map(m => m.compliance)
+        );
+
+        const sections = this.topSections();
+        if (sections.length) {
+            const names = sections.map(s => s.sectionName);
+            const current = sections.map(s => s.compliance);
+            const previous = sections.map(s => s.previousCompliance);
+
+            // Radar 3 oxdan az olanda şaquli xəttə çevrilir — o halda sütunlar
+            if (sections.length >= MIN_RADAR_AXES) {
+                await this.visuals.renderSectionRadar('dash_radar', names, current, previous);
+            } else {
+                await this.visuals.renderSectionBars('dash_radar', names, current, previous);
+            }
+        }
+
+        if (data.categoryShare.length) {
+            await this.visuals.renderCategoryTreemap(
+                'dash_treemap',
+                data.categoryShare.map(c => ({ name: c.categoryName, value: c.findings }))
+            );
+        }
+
+        const heatSeries = this.buildHeatSeries();
+        if (heatSeries.length) {
+            await this.visuals.renderSectionHeatmap('dash_heatmap', heatSeries);
+        }
+
+        const riskSeries = this.buildRiskSeries();
+        if (riskSeries.length) {
+            await this.visuals.renderRiskMatrix('dash_risk', riskSeries);
+        }
+
+        const funnel = this.buildFunnel();
+        if (funnel.labels.length) {
+            await this.visuals.renderStatusFunnel('dash_funnel', funnel.labels, funnel.values);
+        }
+    }
+
+    /** Radar üçün ən çox uyğunsuzluğu olan şöbələr — çox ox oxunaqlılığı pozur */
+    private topSections() {
+        return [...(this.overview?.sectionCompliance ?? [])]
+            .sort((a, b) => b.findings - a.findings)
+            .slice(0, MAX_SECTIONS);
+    }
+
+    /** İstilik xəritəsi: şöbə sətirləri × 12 ay sütunu */
+    private buildHeatSeries(): { name: string; data: { x: string; y: number }[] }[] {
+        const cells = this.overview?.sectionMonthHeat ?? [];
+        if (!cells.length) { return []; }
+
+        const totals = new Map<string, number>();
+        cells.forEach(c => totals.set(c.sectionName, (totals.get(c.sectionName) ?? 0) + c.findings));
+
+        const sections = [...totals.entries()]
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, MAX_SECTIONS)
+            .map(([name]) => name);
+
+        return sections.map(name => ({
+            name,
+            data: MONTH_SHORT_LABELS.map((label, index) => ({
+                x: label,
+                y: cells.find(c => c.sectionName === name && c.month === index + 1)?.findings ?? 0
+            }))
+        }));
+    }
+
+    /** Risk matrisi: hər ərazi bir kürə, zonaya görə rənglənir */
+    private buildRiskSeries() {
+        const locations = this.overview?.locations ?? [];
+        if (!locations.length) { return []; }
+
+        return RISK_ZONES
+            .map(zone => ({
+                name: zone.name,
+                color: zone.color,
+                data: locations
+                    .filter(l => this.riskZoneOf(l.compliance).key === zone.key)
+                    .map(l => ({
+                        x: l.inspections,
+                        y: l.compliance,
+                        // Kürə ölçüsü sıfır olmasın deyə minimum 1
+                        z: Math.max(1, l.openFindings),
+                        label: `${l.locationCode} — ${l.locationName}`
+                    }))
+            }))
+            .filter(series => series.data.length > 0);
+    }
+
+    /** Plan həyat dövrü: status → say, böyükdən kiçiyə (huni görünüşü) */
+    private buildFunnel(): { labels: string[]; values: number[] } {
+        const steps = [...(this.overview?.statusFunnel ?? [])].sort((a, b) => b.count - a.count);
+        return {
+            labels: steps.map(s => PLAN_STATUS_LABELS[s.status] ?? `Status ${s.status}`),
+            values: steps.map(s => s.count)
+        };
+    }
+
+    // ── Şablon köməkçiləri ───────────────────────────────────────────────────
+
+    get periodLabel(): string {
+        const period = this.overview?.period;
+        if (!period) { return ''; }
+        return period.month
+            ? `${this.months.find(m => m.value === period.month)?.label} ${period.year}`
+            : `${period.year}-cı il`;
+    }
+
+    /** Müsbət dəyişmə həmişə yaxşı deyil — açıq uyğunsuzluqda əksinədir */
+    isGoodDelta(kpi: KpiCard): boolean {
+        if (kpi.delta === null || kpi.delta === 0) { return false; }
+        return kpi.lowerIsBetter ? kpi.delta < 0 : kpi.delta > 0;
+    }
+
+    isBadDelta(kpi: KpiCard): boolean {
+        if (kpi.delta === null || kpi.delta === 0) { return false; }
+        return !this.isGoodDelta(kpi);
+    }
+
+    trackByKpi(_: number, kpi: KpiCard): string { return kpi.key; }
+    trackByLocation(_: number, row: DashboardLocation): number { return row.locationCode; }
 }

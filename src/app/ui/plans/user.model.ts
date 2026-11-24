@@ -6,6 +6,11 @@ export class User {
     email: string;
     phone: string;
     roleId: number;
+    /** Müfəttiş üzrə plan sayları — backend `inspectors` cavabında qaytarılır (yoxdursa 0). */
+    planned?: number;
+    confirmed?: number;
+    expired?: number;
+    finished?: number;
 
     constructor(
         userCode: number,

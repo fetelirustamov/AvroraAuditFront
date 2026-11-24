@@ -27,6 +27,10 @@ import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { AuditLoadingOverlayComponent } from '../../components/audit-loading-overlay/audit-loading-overlay.component';
 import { TableService } from '../../services/table.service';
 
+/** InspectionPlans.Status: 4 = yekunlaşmış yoxlama, rədd edilən plan 2-yə (təsdiqlənmiş) qayıdır */
+const CompletedPlanStatus = 4;
+const RejectedPlanStatus = 2;
+
 
 @Component({
   selector: 'app-plan-checked',
@@ -103,7 +107,7 @@ export class PlanCheckedComponent {
     this._tableState = new TableState();
     this._tableService.api_url = "inspectionPlans/getDetails";
     //this._authenticationService.currentUser.subscribe(x => (this.currentUser = x));
-    this._tableState.filter['status'] = "3";
+    this._tableState.filter['status'] = String(CompletedPlanStatus);
     this._tableState.paginator.page = 0;
     this._tableState.sorting.direction = "desc";
     this._tableState.paginator.size = Number(this.pageSize);
@@ -193,9 +197,9 @@ export class PlanCheckedComponent {
     this._tableService.fill(this._tableState).pipe(
       finalize(() => this.isLoading = false)
     ).subscribe((response) => {
-      this._tableState.paginator.total = response.data != null ? response.data.total : 0;
-      this.dataSource = response.data.items;
-      this.allDataCount = response.data.total;// artıq MatTableDataSource yoxdur
+      this._tableState.paginator.total = response.data?.total || 0;
+      this.dataSource = response.data?.items || [];
+      this.allDataCount = response.data?.total || 0;// artıq MatTableDataSource yoxdur
     });
   }
 
@@ -209,22 +213,22 @@ export class PlanCheckedComponent {
 
   // }
 
-  changePlanStatus(row: any, status: number) {
+  rejectPlan(row: any) {
     const planId = this.resolvePlanId(row);
     if (!planId) {
       this.notify.warning('Plan tapılmadı');
       return;
     }
 
-    this.submitPlanStatus([{ planId, status } as PlanApprove], status);
+    this.submitReject([{ planId, status: RejectedPlanStatus } as PlanApprove]);
   }
 
-  changeSelectedPlanStatus(status: number) {
+  rejectSelectedPlans() {
     this.planApproveList = this.selection.selected
       .map((row) => {
         const planApprove = new PlanApprove();
         planApprove.planId = this.resolvePlanId(row);
-        planApprove.status = status;
+        planApprove.status = RejectedPlanStatus;
         return planApprove;
       })
       .filter((item) => item.planId > 0);
@@ -234,19 +238,19 @@ export class PlanCheckedComponent {
       return;
     }
 
-    this.submitPlanStatus(this.planApproveList, status);
+    this.submitReject(this.planApproveList);
   }
 
   private resolvePlanId(row: any): number {
     return Number(row?.id ?? row?.Id ?? row?.planId ?? 0);
   }
 
-  private submitPlanStatus(items: PlanApprove[], status: number): void {
+  private submitReject(items: PlanApprove[]): void {
     this.planService.aprovePlan(items).subscribe({
       next: (data) => {
         const updatedCount = Number(data?.data ?? 0);
         if (data?.success && updatedCount > 0) {
-          this.notify.success(status === 4 ? 'Yoxlama təsdiqləndi' : 'Yoxlama rədd edildi');
+          this.notify.success('Yoxlama rədd edildi');
           this.selection.clear();
           this.fill();
           return;

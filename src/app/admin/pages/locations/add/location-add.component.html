@@ -34,30 +34,27 @@
 
                 <div class="col-md-4 col-sm-6 col-12">
                     <div class="form-group">
-                        <label class="main-label">
-                            Region
-                            <span class="text-danger">*</span>
-                        </label>
+                        <label class="main-label">Region</label>
                         <mat-form-field class="w-100">
-                            <mat-select formControlName="regionId" required placeholder="Region" [disabled]="!regions.length" [compareWith]="compareNumericIds">
-                                <mat-option *ngIf="form.get('firmId')?.value && regions.length === 0" disabled>Regionlar yüklənir...</mat-option>
+                            <mat-select formControlName="regionId" placeholder="Region (istəyə bağlı)" [disabled]="!regions.length" [compareWith]="compareNumericIds">
+                                <mat-option [value]="null">Region seçilməyib</mat-option>
+                                <mat-option *ngIf="form.get('firmId')?.value && regions.length === 0" disabled>{{ regionEmptyMessage }}</mat-option>
                                 <mat-option *ngFor="let r of regions" [value]="r.id">{{ r.regionName || r.name }}</mat-option>
                             </mat-select>
-                            <mat-error *ngIf="form.get('regionId')?.hasError('required') && form.get('regionId')?.touched">
-                                Region tələb olunur
-                            </mat-error>
+                            <mat-hint *ngIf="form.get('firmId')?.value && regions.length === 0">{{ regionEmptyMessage }}</mat-hint>
                         </mat-form-field>
                     </div>
                 </div>
 
-                <div class="col-md-4 col-sm-6 col-12" *ngIf="!isEditMode">
+                <div class="col-md-4 col-sm-6 col-12">
                     <div class="form-group">
                         <label class="main-label">Şöbələr</label>
                         <mat-form-field class="w-100">
                             <mat-select [(ngModel)]="selectedSectionIds" [ngModelOptions]="{standalone: true}" multiple placeholder="Şöbə seçin" [disabled]="!sections.length">
-                                <mat-option *ngIf="form.get('firmId')?.value && sections.length === 0" disabled>Şöbələr yüklənir...</mat-option>
+                                <mat-option *ngIf="form.get('firmId')?.value && sections.length === 0" disabled>{{ sectionEmptyMessage }}</mat-option>
                                 <mat-option *ngFor="let s of sections" [value]="s.id">{{ s.sectionName }}</mat-option>
                             </mat-select>
+                            <mat-hint *ngIf="form.get('firmId')?.value && sections.length === 0">{{ sectionEmptyMessage }}</mat-hint>
                         </mat-form-field>
                     </div>
                 </div>
@@ -84,7 +81,8 @@
                             Məkan Kodu
                         </label>
                         <mat-form-field class="w-100">
-                            <input matInput formControlName="locationCode" placeholder="Kod" />
+                            <input matInput formControlName="locationCode" placeholder="Kod" [readonly]="isEditMode" />
+                            <mat-hint *ngIf="isEditMode">Kod audit planları və şöbə təyinatları ilə bağlıdır, dəyişdirilmir</mat-hint>
                         </mat-form-field>
                     </div>
                 </div>
@@ -115,7 +113,7 @@
                     <app-map-picker [lat]="initialLat" [lng]="initialLng" (pick)="onPickCoord($event)"></app-map-picker>
                 </div>
 
-                <div class="col-md-6 col-sm-6 col-12 after-map">
+                <div class="col-md-4 col-sm-6 col-12 after-map">
                     <div class="form-group">
                         <label class="main-label">
                             Latitude
@@ -126,13 +124,24 @@
                     </div>
                 </div>
 
-                <div class="col-md-6 col-sm-6 col-12 after-map">
+                <div class="col-md-4 col-sm-6 col-12 after-map">
                     <div class="form-group">
                         <label class="main-label">
                             Longitude
                         </label>
                         <mat-form-field class="w-100">
                             <input matInput formControlName="longitude" placeholder="Uzunluq (auto)" />
+                        </mat-form-field>
+                    </div>
+                </div>
+
+                <div class="col-md-4 col-sm-6 col-12 after-map">
+                    <div class="form-group">
+                        <label class="main-label">
+                            Radius (metr)
+                        </label>
+                        <mat-form-field class="w-100">
+                            <input matInput type="number" formControlName="radius" placeholder="Məsələn: 100" />
                         </mat-form-field>
                     </div>
                 </div>

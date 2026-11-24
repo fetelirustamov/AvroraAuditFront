@@ -9,9 +9,7 @@ import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatMenuModule } from '@angular/material/menu';
 import { AuditLoadingOverlayComponent } from '../../components/audit-loading-overlay/audit-loading-overlay.component';
-import * as XLSX from 'xlsx';
-import pdfMake from 'pdfmake/build/pdfmake';
-import pdfFonts from 'pdfmake/build/vfs_fonts';
+import { FileExportService, datedFileName } from '../../../shared/services/file-export.service';
 import { InspectionsService } from '../../inspections/inspections.service';
 import { Firm } from '../../inspections/firm.model';
 import { NotificationService } from '../../../shared/services/notification.service';
@@ -105,6 +103,7 @@ export class ChecklistAnalysisComponent implements AfterViewInit {
     constructor(
         private inspectionsService: InspectionsService,
         private notify: NotificationService,
+        private fileExport: FileExportService,
     ) {
         this.inspectionsService.getFirms().subscribe({
             next: res => { this.firms = res.data ?? []; },
@@ -226,16 +225,15 @@ export class ChecklistAnalysisComponent implements AfterViewInit {
                 '№': r.row, 'Çeklist sualı': r.sual, 'Ərazi kodu': r.magaza_kodu, 'Ərazi adı': r.magaza_adi,
                 'Bölgə': r.bolge, 'Çəki balı': r.agirlig_bal, 'Faktiki bal': r.faktiki_bal, 'Faiz nisbəti (%)': r.faiz_nisbeti,
             }));
-        const ws = XLSX.utils.json_to_sheet(data);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, tab === 'tasnifat' ? 'Kateqoriya üzrə' : 'Sual üzrə');
         const suffix = tab === 'tasnifat' ? 'kateqoriya' : 'sual';
-        XLSX.writeFile(wb, `ceklist-tehlili-${suffix}-${new Date().toISOString().slice(0, 10)}.xlsx`);
+        void this.fileExport.exportRowsToExcel(
+            data,
+            tab === 'tasnifat' ? 'Kateqoriya üzrə' : 'Sual üzrə',
+            datedFileName(`ceklist-tehlili-${suffix}`, 'xlsx'),
+        );
     }
 
     exportPdf(tab: 'tasnifat' | 'suallar'): void {
-        const vfs: any = (pdfFonts as any).pdfMake ? (pdfFonts as any).pdfMake.vfs : (pdfFonts as any).vfs;
-        (pdfMake as any).vfs = vfs;
         const isTasnifat = tab === 'tasnifat';
         const headers = isTasnifat
             ? ['№', 'Bölgə', 'Ərazi kodu', 'Ərazi adı', 'Şöbə', 'Çeklist kateqoriyası', 'Tapıntılar (şöbə üzrə)', 'Tapıntılar (kateqoriya üzrə)']
@@ -250,6 +248,6 @@ export class ChecklistAnalysisComponent implements AfterViewInit {
             defaultStyle: { fontSize: 8 }
         };
         const pdfSuffix = tab === 'tasnifat' ? 'kateqoriya' : 'sual';
-        pdfMake.createPdf(docDef).download(`ceklist-tehlili-${pdfSuffix}-${new Date().toISOString().slice(0, 10)}.pdf`);
+        void this.fileExport.exportPdf(docDef, datedFileName(`ceklist-tehlili-${pdfSuffix}`, 'pdf'));
     }
 }

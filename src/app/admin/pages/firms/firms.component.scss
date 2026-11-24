@@ -1,0 +1,17 @@
+/* Styles scoped to firms list */
+.firms-card {
+    .add-btn {
+        i {
+            vertical-align: middle;
+            margin-right: 6px;
+        }
+    }
+}
+
+.firms-note {
+    font-size: 13px;
+}
+
+.table-responsive {
+    overflow-x: auto;
+}

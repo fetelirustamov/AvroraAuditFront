@@ -8,11 +8,8 @@
 // UI Kit CSS
 @use "./ui-kit";
 
-// Dark Mode CSS
-@use "./dark";
-
-// RTL CSS
-@use "./rtl";
+// Paylaşılan dizayn qatı (səhifə başlığı, boş vəziyyət, status nişanları, cədvəl)
+@use "./design-system";
 
 :root {
     --fontFamily: "Inter", sans-serif;
@@ -138,77 +135,6 @@ button {
     padding-bottom: 120px;
 }
 
-// Section Title
-.section-title {
-    max-width: 785px;
-    margin-bottom: 90px;
-
-    .sub-title {
-        margin: {
-            bottom: 20px;
-            top: 10px;
-        }
-
-        ;
-
-        span {
-            border: 1px solid var(--purpleColor);
-            transform: rotate(-6.536deg);
-            padding: 7.5px 17.2px;
-
-            &::before {
-                width: 5px;
-                height: 5px;
-                content: '';
-                left: -3.5px;
-                bottom: -2.5px;
-                position: absolute;
-                transform: rotate(-6.536deg);
-                background: var(--purpleColor);
-            }
-
-            &::after {
-                width: 5px;
-                height: 5px;
-                content: '';
-                right: -3.5px;
-                bottom: -2.5px;
-                position: absolute;
-                transform: rotate(-6.536deg);
-                background: var(--purpleColor);
-            }
-        }
-
-        &::before {
-            top: 4.5px;
-            width: 5px;
-            height: 5px;
-            content: '';
-            left: -3.6px;
-            position: absolute;
-            transform: rotate(-6.536deg);
-            background: var(--purpleColor);
-        }
-
-        &::after {
-            right: 0;
-            width: 5px;
-            height: 5px;
-            content: '';
-            top: -9.5px;
-            position: absolute;
-            transform: rotate(-6.536deg);
-            background: var(--purpleColor);
-        }
-    }
-
-    h2 {
-        font-size: 36px;
-        letter-spacing: -1px;
-    }
-}
-
-
 // Card Bordered CSS
 .card-borderd {
     .mat-mdc-card {
@@ -278,16 +204,6 @@ button {
         padding-bottom: 30px;
     }
 
-    // Section Title
-    .section-title {
-        max-width: 100%;
-        margin-bottom: 35px;
-
-        h2 {
-            font-size: 24px;
-            letter-spacing: -.5px;
-        }
-    }
 
 }
 
@@ -327,16 +243,6 @@ button {
         padding-bottom: 50px;
     }
 
-    // Section Title
-    .section-title {
-        max-width: 650px;
-        margin-bottom: 50px;
-
-        h2 {
-            font-size: 28px;
-            letter-spacing: -.6px;
-        }
-    }
 
 }
 
@@ -373,16 +279,6 @@ button {
         padding-bottom: 70px;
     }
 
-    // Section Title
-    .section-title {
-        max-width: 810px;
-        margin-bottom: 65px;
-
-        h2 {
-            font-size: 34px;
-            letter-spacing: -.8px;
-        }
-    }
 
 }
 
@@ -1214,7 +1110,21 @@ $gf-radius-md:     12px;
     }
 }
 
-.media-viewer-dialog {
-    border-radius: 12px;
+// Səhifə daxili popup və panellər (detal popup-ları, izləmə paneli) z-index 1000/1001 işlədir —
+// CDK-nin standart 1000-i ilə onların içindən açılan dialoq, select, tooltip popup-un altında qalırdı
+.cdk-overlay-container {
+    z-index: 1100;
+}
+
+// Tam ekran media baxışı (app-media-viewer) — səth şəffafdır, tünd fon backdrop-dan gəlir
+.media-viewer-panel .mat-mdc-dialog-surface {
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
     overflow: hidden;
+}
+
+.media-viewer-backdrop {
+    background: color-mix(in srgb, var(--gray-900) 94%, transparent);
+    backdrop-filter: blur(4px);
 }

@@ -14,6 +14,11 @@ export interface UserDetail {
     status?: number;       // 1 = aktiv, 0 = passiv
     roleId?: number;
     roleName?: string;
+    /**
+     * AuthSettings.Name — "LocalDB" olanda parol bu sistemdə saxlanılır.
+     * LDAP/OAuth/ExternalDB üçün parol kənar sistemdədir və buradan dəyişdirilmir.
+     */
+    authType?: string;
     firms?: { firmId: number; firmName: string }[];
 }
 
@@ -25,6 +30,7 @@ export interface UserDto {
     fatherName?: string;
     userCode?: number;
     status?: number;       // 1 = aktiv, 0 = passiv
+    position?: string;     // vəzifə, məs. "Mağaza müdürü" — natamam doldurulur
     // Alternativ field adları
     firstName?: string;
     lastName?: string;
@@ -39,21 +45,34 @@ export interface UserDto {
     phone?: string;
 }
 
+/** POST /api/Users — Users cədvəlinə yeni sətir */
 export interface UserCreateDto {
-    firstName: string;
-    lastName: string;
+    userCode: number;
+    name: string;
+    surName: string;
+    fatherName?: string;
+    position?: string;
     email: string;
     password: string;
-    roleId?: number;
+    /** AuthSettings.id — string olaraq saxlanılır (Users.AuthSettingId sütunu ilə uyğun) */
+    authSettingId: string;
 }
 
-export interface UserUpdateDto {
-    firstName?: string;
-    lastName?: string;
-    email?: string;
-    password?: string;
-    roleId?: number;
-    isActive?: boolean;
+/**
+ * PUT /api/Users/user-code/{userCode}/profile — yalnız kimlik məlumatları.
+ * Parol bura daxil deyil, onun üçün ayrıca endpoint var.
+ */
+export interface UserProfilePutDto {
+    name: string;
+    surName: string;
+    fatherName?: string;
+    position?: string;
+    email: string;
+}
+
+/** PUT /api/Users/user-code/{userCode}/password — admin tərəfindən parol sıfırlama */
+export interface UserPasswordPutDto {
+    newPassword: string;
 }
 
 /** PUT /api/Users/user-code/{userCode}/assignments — status 1 aktiv, 0 passiv */

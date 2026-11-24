@@ -8,9 +8,7 @@ import { MatTableModule, MatTableDataSource } from '@angular/material/table';
 import { MatPaginator, MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatMenuModule } from '@angular/material/menu';
 import { debounceTime, finalize, Subject } from 'rxjs';
-import * as XLSX from 'xlsx';
-import pdfMake from 'pdfmake/build/pdfmake';
-import pdfFonts from 'pdfmake/build/vfs_fonts';
+import { FileExportService, datedFileName } from '../../../shared/services/file-export.service';
 import { InspectionsService } from '../../inspections/inspections.service';
 import { Firm } from '../../inspections/firm.model';
 import { NotificationService } from '../../../shared/services/notification.service';
@@ -93,6 +91,7 @@ export class SobelerPuanlamasiComponent {
         private inspectionsService: InspectionsService,
         private reportsService: ReportsService,
         private notify: NotificationService,
+        private fileExport: FileExportService,
     ) {
         this.tableState.paginator.page = 0;
         this.tableState.paginator.size = 10;
@@ -230,15 +229,14 @@ export class SobelerPuanlamasiComponent {
             'Şöbə üzrə toplanan bal': r.toplanan_total_bal, 'Şöbə üzrə ümumi bal': r.umumi_total_bal,
             'Faiz nisbəti (%)': r.faiz_nisbeti,
         }));
-        const ws = XLSX.utils.json_to_sheet(data);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, 'Şöbələr Puanlaması');
-        XLSX.writeFile(wb, `sobeler-puanlamasi-${new Date().toISOString().slice(0, 10)}.xlsx`);
+        void this.fileExport.exportRowsToExcel(
+            data,
+            'Şöbələr Puanlaması',
+            datedFileName('sobeler-puanlamasi', 'xlsx'),
+        );
     }
 
     exportPdf(): void {
-        const vfs: any = (pdfFonts as any).pdfMake ? (pdfFonts as any).pdfMake.vfs : (pdfFonts as any).vfs;
-        (pdfMake as any).vfs = vfs;
         const headers = ['№', 'Bölgəsi', 'Ərazi kodu', 'Ərazi adı', 'Tasnifat', 'Şöbələr', 'Şöbə üzrə toplanan bal', 'Şöbə üzrə ümumi bal', 'Faiz(%)'];
         const rows = this.dataSource.data.map((r: any) => [r.row, r.bolge, r.magaza_kodu, r.magaza_adi, r.tasnifat, r.sobe, r.toplanan_total_bal, r.umumi_total_bal, r.faiz_nisbeti]);
         const docDef: any = {
@@ -247,6 +245,6 @@ export class SobelerPuanlamasiComponent {
             styles: { th: { bold: true, color: '#fff', fillColor: '#E65100', fontSize: 8 } },
             defaultStyle: { fontSize: 8 }
         };
-        pdfMake.createPdf(docDef).download(`sobeler-puanlamasi-${new Date().toISOString().slice(0, 10)}.pdf`);
+        void this.fileExport.exportPdf(docDef, datedFileName('sobeler-puanlamasi', 'pdf'));
     }
 }

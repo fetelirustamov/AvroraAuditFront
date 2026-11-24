@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, ViewChild, AfterViewInit } from '@angular/core';
+import { Component, Input, OnInit, OnChanges, SimpleChanges, ViewChild, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
@@ -20,6 +20,7 @@ import { FirmDto } from '../../models/firm.model';
 import { ConfirmDialogService } from '../../shared/confirm-dialog/confirm-dialog.service';
 import { AdminBreadcrumbComponent } from '../../shared/breadcrumb/admin-breadcrumb.component';
 import { AuditLoadingOverlayComponent } from '../../../ui/components/audit-loading-overlay/audit-loading-overlay.component';
+import { NotificationService } from '../../../shared/services/notification.service';
 
 type SectionRow = SectionDto;
 
@@ -46,12 +47,14 @@ type SectionRow = SectionDto;
   templateUrl: './sections.component.html',
   styleUrl: './sections.component.scss'
 })
-export class SectionsComponent implements OnInit, AfterViewInit {
+export class SectionsComponent implements OnInit, OnChanges, AfterViewInit {
   @Input() showBreadcrumb = true;
+  /** Verilsə, komponent bu firmaya kilidlenir ve oz firma secicisini gizledir (Audit Strukturu sehifesinden istifade ucun). */
+  @Input() firmId: number | null = null;
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
 
-  displayedColumns: string[] = ['sectionName', 'sectionDescription', 'actions'];
+  displayedColumns: string[] = ['sectionName', 'actions'];
   dataSource: MatTableDataSource<SectionRow>;
   pageSize = 10;
   rows: SectionRow[] = [];
@@ -65,14 +68,25 @@ export class SectionsComponent implements OnInit, AfterViewInit {
     private sectionService: SectionService,
     private firmService: FirmService,
     private confirmDialog: ConfirmDialogService,
-    private dialog: MatDialog
+    private dialog: MatDialog,
+    private notify: NotificationService
   ) {
     this.dataSource = new MatTableDataSource<SectionRow>(this.rows);
   }
 
   ngOnInit(): void {
+    if (this.firmId != null) {
+      this.selectedFirmId = this.firmId;
+    }
     this.loadFirms();
     this.load();
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['firmId'] && !changes['firmId'].firstChange) {
+      this.selectedFirmId = this.firmId;
+      this.applyFirmFilter();
+    }
   }
 
   ngAfterViewInit(): void {
@@ -99,6 +113,7 @@ export class SectionsComponent implements OnInit, AfterViewInit {
         this.rows = [];
         this.dataSource.data = [];
         this.isLoading = false;
+        this.notify.error('Şöbələr yüklənmədi', { message: 'Serverlə əlaqədə xəta baş verdi. Zəhmət olmasa yenidən cəhd edin.' });
       }
     });
   }
@@ -140,7 +155,8 @@ export class SectionsComponent implements OnInit, AfterViewInit {
       width: '900px',
       maxWidth: '95vw',
       disableClose: true,
-      panelClass: 'modal-like-dialog'
+      panelClass: 'modal-like-dialog',
+      data: this.firmId != null ? { firmId: this.firmId } : undefined
     });
     dialogRef.afterClosed().subscribe((result: any) => {
       if (result?.created) this.load();
@@ -170,10 +186,15 @@ export class SectionsComponent implements OnInit, AfterViewInit {
       })
       .subscribe(confirmed => {
         if (!confirmed) return;
-        this.sectionService.delete(row.id).subscribe(() => this.load());
+        this.sectionService.delete(row.id).subscribe({
+          next: () => {
+            this.notify.success('Şöbə silindi');
+            this.load();
+          },
+          error: () => {
+            this.notify.error('Şöbə silinmədi', { message: 'Bu şöbə istifadə olunur və ya serverlə əlaqədə xəta baş verdi.' });
+          }
+        });
       });
   }
-
-  view(row: SectionRow) { console.log('view', row); }
 }
-

@@ -66,15 +66,47 @@
                     <thead>
                         <tr>
                             <th>ŞƏHİFƏ</th>
-                            <th>OXUMA</th>
-                            <th>YARATMA</th>
-                            <th>DƏYİŞMƏ</th>
-                            <th>SİLMƏ</th>
+                            <th>
+                                <div class="col-header-with-select-all">
+                                    <span>OXUMA</span>
+                                    <mat-checkbox color="primary" [disabled]="isViewMode"
+                                        [checked]="isAllChecked('show')"
+                                        (change)="toggleAllColumn('show', $event.checked)"
+                                        matTooltip="Hamısını seç/ləğv et"></mat-checkbox>
+                                </div>
+                            </th>
+                            <th>
+                                <div class="col-header-with-select-all">
+                                    <span>YARATMA</span>
+                                    <mat-checkbox color="primary" [disabled]="isViewMode"
+                                        [checked]="isAllChecked('add')"
+                                        (change)="toggleAllColumn('add', $event.checked)"
+                                        matTooltip="Hamısını seç/ləğv et"></mat-checkbox>
+                                </div>
+                            </th>
+                            <th>
+                                <div class="col-header-with-select-all">
+                                    <span>DƏYİŞMƏ</span>
+                                    <mat-checkbox color="primary" [disabled]="isViewMode"
+                                        [checked]="isAllChecked('edit')"
+                                        (change)="toggleAllColumn('edit', $event.checked)"
+                                        matTooltip="Hamısını seç/ləğv et"></mat-checkbox>
+                                </div>
+                            </th>
+                            <th>
+                                <div class="col-header-with-select-all">
+                                    <span>SİLMƏ</span>
+                                    <mat-checkbox color="primary" [disabled]="isViewMode"
+                                        [checked]="isAllChecked('delete')"
+                                        (change)="toggleAllColumn('delete', $event.checked)"
+                                        matTooltip="Hamısını seç/ləğv et"></mat-checkbox>
+                                </div>
+                            </th>
                         </tr>
                     </thead>
                     <tbody formArrayName="rows">
                         <tr *ngFor="let row of rows.controls; let i = index" [formGroupName]="i">
-                            <td><input matInput formControlName="pageName" class="page-cell" /></td>
+                            <td><span class="page-cell-label">{{ row.get('pageName')?.value }}</span></td>
                             <td><mat-checkbox formControlName="show" color="primary"></mat-checkbox></td>
                             <td><mat-checkbox formControlName="add" color="primary"></mat-checkbox></td>
                             <td><mat-checkbox formControlName="edit" color="primary"></mat-checkbox></td>

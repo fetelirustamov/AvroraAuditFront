@@ -1,18 +1,8 @@
+// Material tab qrupunun görünüş override-ları.
+// Qeyd: `mat-card-header` və RTL selektorları silindi — şablonda kart başlığı
+// yoxdur, RTL rejimi isə ləğv edilib.
 ::ng-deep {
     .products-card {
-        .mat-mdc-card-header {
-            .mat-mdc-card-header-text {
-                .mat-mdc-card-title {
-                    line-height: initial;
-                    order: 2;
-                }
-
-                .mat-mdc-card-subtitle {
-                    order: 1;
-                }
-            }
-        }
-
         .mat-mdc-tab-group {
             --mat-stepper-header-selected-state-icon-background-color: var(--primaryColor);
             --mat-stepper-header-edit-state-icon-background-color: var(--primaryColor);
@@ -94,46 +84,12 @@
                 }
             }
 
-            .mat-mdc-tab-header-pagination-before,
-            .mat-mdc-tab-header-rtl .mat-mdc-tab-header-pagination-after {
+            .mat-mdc-tab-header-pagination-before {
                 padding-left: 0;
             }
 
-            .mat-mdc-tab-header-rtl .mat-mdc-tab-header-pagination-before,
             .mat-mdc-tab-header-pagination-after {
                 padding-right: 0;
-            }
-        }
-
-        &.component-dark-theme {
-            .mat-mdc-tab-group {
-                .mdc-tab {
-                    background-color: #15203c;
-
-                    .mdc-tab__text-label {
-                        color: var(--whiteColor);
-                    }
-
-                    &.mdc-tab--active {
-                        background-color: var(--primaryColor);
-
-                        .mdc-tab__text-label {
-                            color: var(--whiteColor);
-                        }
-
-                        &:focus {
-                            .mdc-tab__text-label {
-                                color: var(--whiteColor);
-                            }
-                        }
-
-                        &:hover {
-                            .mdc-tab__text-label {
-                                color: var(--whiteColor);
-                            }
-                        }
-                    }
-                }
             }
         }
     }
@@ -144,12 +100,6 @@
 
     ::ng-deep {
         .products-card {
-            .mat-mdc-card-header {
-                .mat-mdc-card-header-text {
-                    display: block;
-                }
-            }
-
             .mat-mdc-tab-group {
                 .mat-mdc-tab-header {
                     margin-bottom: 17px;

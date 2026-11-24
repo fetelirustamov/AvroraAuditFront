@@ -129,18 +129,6 @@
         }
     }
 
-    &.dark-mode {
-        background: #15203C;
-        border-color: #1E3461;
-
-        .store-body {
-            .store-name    { color: #F1F5F9; }
-            .store-email   { color: #94A3B8; }
-            .store-divider { background: #1E3461; }
-            .stat-label    { color: #94A3B8; }
-            .stat-value    { color: #E2E8F0; }
-        }
-    }
 }
 
 // ─── Analytics Chart Card ──────────────────────────────────────────────────────
@@ -231,26 +219,9 @@
         }
     }
 
-    &.dark-mode {
-        background: #15203C;
-        border-color: #1E3461;
-
-        .chart-card-header {
-            border-color: #1E3461;
-
-            .chart-title { color: #F1F5F9; }
-            .chart-score-sub { color: #94A3B8; }
-        }
-    }
 }
 
 // ─── RTL Support ───────────────────────────────────────────────────────────────
-.rtl-mode {
-    .store-hero .store-menu-btn {
-        right: auto;
-        left: 12px;
-    }
-}
 
 // ─── Responsive ───────────────────────────────────────────────────────────────
 @media only screen and (max-width: 767px) {

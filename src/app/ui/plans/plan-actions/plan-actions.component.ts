@@ -181,9 +181,9 @@ export class PlanActionsComponent {
     this._tableService.fill(this._tableState).pipe(
       finalize(() => this.isLoading = false)
     ).subscribe((response) => {
-      this._tableState.paginator.total = response.data != null ? response.data.total : 0;
-      this.dataSource = response.data.items;
-      this.allDataCount = response.data.total;// artıq MatTableDataSource yoxdur
+      this._tableState.paginator.total = response.data?.total || 0;
+      this.dataSource = response.data?.items || [];
+      this.allDataCount = response.data?.total || 0;// artıq MatTableDataSource yoxdur
     });
   }
 

@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, AfterViewInit, TemplateRef } from '@angular/core';
+import { Component, Input, OnInit, OnChanges, SimpleChanges, ViewChild, AfterViewInit, TemplateRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
@@ -36,6 +36,7 @@ interface LocationRow {
   responsiblePersonId?: number;
   latitude?: string;
   longitude?: string;
+  radius?: number;
 }
 
 @Component({
@@ -64,11 +65,17 @@ interface LocationRow {
   templateUrl: './locations.component.html',
   styleUrl: './locations.component.scss'
 })
-export class LocationsComponent implements OnInit, AfterViewInit {
+export class LocationsComponent implements OnInit, OnChanges, AfterViewInit {
+  /** Verilse, komponent bu firmaya kilidlenir ve oz firma secicisini gizledir (Audit Strukturu sehifesinden istifade ucun). */
+  @Input() firmId: number | null = null;
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
 
-  displayedColumns: string[] = ['firmName', 'locationCode', 'locationName', 'contactNumber', 'latitude', 'longitude', 'actions'];
+  get displayedColumns(): string[] {
+    return this.firmId != null
+      ? ['locationCode', 'locationName', 'contactNumber', 'latitude', 'longitude', 'actions']
+      : ['firmName', 'locationCode', 'locationName', 'contactNumber', 'latitude', 'longitude', 'actions'];
+  }
   dataSource: MatTableDataSource<LocationRow>;
   pageSize = 10;
   firms: FirmDto[] = [];
@@ -144,12 +151,23 @@ export class LocationsComponent implements OnInit, AfterViewInit {
   ngOnInit(): void {
     this.loadFirms();
     this.searchForm = this.fb.group({
-      firmId: [null],
+      firmId: [this.firmId],
       regionId: [null],
       locationCode: [null],
       locationName: [''],
       date: [null]
     });
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['firmId'] && !changes['firmId'].firstChange) {
+      this.applyFirmScope();
+    }
+  }
+
+  private applyFirmScope(): void {
+    if (this.dataSource.paginator) this.dataSource.paginator.firstPage();
+    this.dataSource.filter = this.firmId != null ? JSON.stringify({ firmId: this.firmId }) : '';
   }
 
   private loadFirms(): void {
@@ -203,10 +221,12 @@ export class LocationsComponent implements OnInit, AfterViewInit {
           contactNumber: loc.contactNumber,
           responsiblePersonId: loc.responsiblePersonId,
           latitude: loc.latitude,
-          longitude: loc.longitude
+          longitude: loc.longitude,
+          radius: loc.radius
         }));
 
         this.dataSource.data = this.rows;
+        this.applyFirmScope();
         this.isLoading = false;
       },
       error: (error) => {
@@ -250,7 +270,12 @@ export class LocationsComponent implements OnInit, AfterViewInit {
   resetForm(): void {
     this.searchForm.reset();
     this.regions = [];
-    this.dataSource.filter = '';
+    if (this.firmId != null) {
+      this.searchForm.patchValue({ firmId: this.firmId }, { emitEvent: false });
+      this.applyFirmScope();
+    } else {
+      this.dataSource.filter = '';
+    }
   }
 
   onFirmChange(firmId: number | null): void {
@@ -281,7 +306,8 @@ export class LocationsComponent implements OnInit, AfterViewInit {
       width: '980px',
       maxWidth: '95vw',
       disableClose: true,
-      panelClass: 'modal-like-dialog'
+      panelClass: 'modal-like-dialog',
+      data: this.firmId != null ? { firmId: this.firmId } : undefined
     });
     dialogRef.afterClosed().subscribe((result: any) => {
       if (result?.created) {

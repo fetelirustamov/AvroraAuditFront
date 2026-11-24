@@ -33,45 +33,6 @@
 
 // RTL
 ::ng-deep {
-    .rtl-enabled {
-        .main-content {
-            padding: {
-                left: 25px;
-                right: 285px;
-            }
-
-            ;
-
-            &.active,
-            &.hide-sidebar {
-                padding: {
-                    left: 25px;
-                    right: 125px;
-                }
-
-                ;
-            }
-
-            &.right-sidebar {
-                padding: {
-                    left: 285px;
-                    right: 25px;
-                }
-
-                ;
-
-                &.active,
-                &.hide-sidebar {
-                    padding: {
-                        left: 125px;
-                        right: 25px;
-                    }
-
-                    ;
-                }
-            }
-        }
-    }
 }
 
 /* Max width 767px */
@@ -109,45 +70,6 @@
 
     // RTL
     ::ng-deep {
-        .rtl-enabled {
-            .main-content {
-                padding: {
-                    left: 15px;
-                    right: 15px;
-                }
-
-                ;
-
-                &.active,
-                &.hide-sidebar {
-                    padding: {
-                        left: 15px;
-                        right: 15px;
-                    }
-
-                    ;
-                }
-
-                &.right-sidebar {
-                    padding: {
-                        left: 15px;
-                        right: 15px;
-                    }
-
-                    ;
-
-                    &.active,
-                    &.hide-sidebar {
-                        padding: {
-                            left: 15px;
-                            right: 15px;
-                        }
-
-                        ;
-                    }
-                }
-            }
-        }
     }
 
 }
@@ -184,40 +106,6 @@
 
     // RTL
     ::ng-deep {
-        .rtl-enabled {
-            .main-content {
-                padding-right: 25px;
-
-                &.active,
-                &.hide-sidebar {
-                    padding: {
-                        left: 25px;
-                        right: 25px;
-                    }
-
-                    ;
-                }
-
-                &.right-sidebar {
-                    padding: {
-                        left: 25px;
-                        right: 25px;
-                    }
-
-                    ;
-
-                    &.active,
-                    &.hide-sidebar {
-                        padding: {
-                            left: 25px;
-                            right: 25px;
-                        }
-
-                        ;
-                    }
-                }
-            }
-        }
     }
 
 }
@@ -251,40 +139,6 @@
 
     // RTL
     ::ng-deep {
-        .rtl-enabled {
-            .main-content {
-                padding-right: 25px;
-
-                &.active,
-                &.hide-sidebar {
-                    padding: {
-                        left: 25px;
-                        right: 25px;
-                    }
-
-                    ;
-                }
-
-                &.right-sidebar {
-                    padding: {
-                        left: 25px;
-                        right: 25px;
-                    }
-
-                    ;
-
-                    &.active,
-                    &.hide-sidebar {
-                        padding: {
-                            left: 25px;
-                            right: 25px;
-                        }
-
-                        ;
-                    }
-                }
-            }
-        }
     }
 
 }
@@ -318,40 +172,6 @@
 
     // RTL
     ::ng-deep {
-        .rtl-enabled {
-            .main-content {
-                padding-right: 265px;
-
-                &.active,
-                &.hide-sidebar {
-                    padding: {
-                        left: 25px;
-                        right: 125px;
-                    }
-
-                    ;
-                }
-
-                &.right-sidebar {
-                    padding: {
-                        left: 265px;
-                        right: 25px;
-                    }
-
-                    ;
-
-                    &.active,
-                    &.hide-sidebar {
-                        padding: {
-                            left: 125px;
-                            right: 25px;
-                        }
-
-                        ;
-                    }
-                }
-            }
-        }
     }
 
 }

@@ -3,7 +3,6 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatAccordion, MatExpansionModule } from '@angular/material/expansion';
 import { Router, RouterLink } from '@angular/router';
-import { CustomizerSettingsService } from '../../../customizer-settings/customizer-settings.service';
 import { CommonModule, DatePipe, Location } from '@angular/common';
 import { TableState } from '../../../models/table-state.model';
 import { TableService } from '../../services/table.service';
@@ -70,7 +69,6 @@ export class InspectionSectionComponent {
   public groupedQuestions: { categoryName: string, questions: QuestionWithDetails[] }[] = [];
 
   constructor(
-    public themeService: CustomizerSettingsService,
     private _componentService: ComponentService,
     private router: Router,
     private cdr: ChangeDetectorRef,

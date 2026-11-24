@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { AnswerApproveComponent } from './answer-approve.component';
+import { appTestProviders } from '../../../../testing/test-providers';
 
 describe('AnswerApproveComponent', () => {
   let component: AnswerApproveComponent;
@@ -8,6 +9,7 @@ describe('AnswerApproveComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
+      providers: [appTestProviders],
       imports: [AnswerApproveComponent]
     })
     .compileComponents();

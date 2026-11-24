@@ -123,7 +123,7 @@
             </ng-container>
 
             <!-- Pair columns -->
-            <ng-container *ngFor="let col of pairColumns" [matColumnDef]="col.key">
+            <ng-container *ngFor="let col of monthColumns" [matColumnDef]="col.key">
                 <th mat-header-cell *matHeaderCellDef class="data-header-cell">
                     <span class="header-label">{{ col.label }}</span>
                 </th>
@@ -151,14 +151,9 @@
                     </div>
                 </th>
             </ng-container>
-            <ng-container *ngFor="let col of pairColumns" [matColumnDef]="col.key + '__filter'">
-                <th mat-header-cell *matHeaderCellDef class="filter-header-cell">
-                    <div class="filter-input-wrap">
-                        <span class="material-symbols-outlined filter-input-icon">search</span>
-                        <input class="filter-input" (input)="applyColumnFilter($event, col.key)"
-                            [placeholder]="col.label + '...'" />
-                    </div>
-                </th>
+            <!-- Ay sütunları serverdə filtrlənmir; xana boş qalır -->
+            <ng-container *ngFor="let col of monthColumns" [matColumnDef]="col.key + '__filter'">
+                <th mat-header-cell *matHeaderCellDef class="filter-header-cell"></th>
             </ng-container>
 
             <tr mat-header-row *matHeaderRowDef="groupHeaderColumnKeys" class="group-header-row"></tr>

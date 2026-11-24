@@ -1,87 +1,81 @@
 import { Component, ViewChild } from '@angular/core';
-import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
-import { MatNativeDateModule } from '@angular/material/core';
-import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
-import { Router, RouterLink } from '@angular/router';
-import { CustomizerSettingsService } from '../../../customizer-settings/customizer-settings.service';
+import { Router } from '@angular/router';
 import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { SelectionModel } from '@angular/cdk/collections';
-import { AsyncPipe, NgFor, NgIf } from '@angular/common';
+import { NgFor, NgIf } from '@angular/common';
 import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatMenuModule } from '@angular/material/menu';
-import { Observable } from 'rxjs';
 import { Firm } from '../../inspections/firm.model';
 import { InspectionsService } from '../../inspections/inspections.service';
 import { PlanService } from '../plan.service';
-import { User } from '../user.model';
-import { TableService } from '../../services/table.service';
 import { NotificationService } from '../../../shared/services/notification.service';
 
-export interface PeriodicElement {
-  customer: any;
+/** Cədvəl sətri — müfəttiş + plan sayları. */
+interface InspectorRow {
+  userCode: number;
   email: string;
   planned: number;
   confirmed: number;
   expired: number;
   finished: number;
-  action: any;
+  customer: { name: string; userCode: number };
 }
-
-
 
 @Component({
   selector: 'app-plan-user-list',
   standalone: true,
-  imports: [MatCardModule, MatInputModule, MatFormFieldModule, MatSelectModule, MatNativeDateModule, MatButtonModule, MatPaginatorModule, MatTableModule, MatCheckboxModule, MatMenuModule, NgFor, FormsModule],
+  imports: [
+    MatCardModule,
+    MatInputModule,
+    MatFormFieldModule,
+    MatSelectModule,
+    MatButtonModule,
+    MatPaginatorModule,
+    MatTableModule,
+    MatCheckboxModule,
+    NgFor,
+    NgIf,
+    FormsModule,
+  ],
   templateUrl: './plan-user-list.component.html',
-  styleUrl: './plan-user-list.component.scss'
+  styleUrl: './plan-user-list.component.scss',
 })
-
-
-
 export class PlanUserListComponent {
-  displayedColumns: string[] = ['select', 'customer', 'email', 'planned', 'confirmed', 'expired', 'finished'];
-  dataSource = new MatTableDataSource<any>;
-  selection = new SelectionModel<PeriodicElement>(true, []);
+  displayedColumns: string[] = ['select', 'userCode', 'customer', 'email', 'planned', 'confirmed', 'expired', 'finished'];
+  dataSource = new MatTableDataSource<InspectorRow>();
+  selection = new SelectionModel<InspectorRow>(true, []);
 
   @ViewChild(MatPaginator)
   set matPaginator(paginator: MatPaginator) {
     this.dataSource.paginator = paginator;
   }
 
-  /** Whether the number of selected elements matches the total number of rows. */
-
-
-
-  public selectedFirmId: number = 0;
-  public selectedLocationId: number = 0;
+  public selectedFirmId = 0;
   public firms: Firm[] = [];
-  public users$: Observable<User[]> = new Observable<User[]>();
   public pageSize: number[] = [10, 25];
-  public searchTerm: string = '';
+  public searchTerm = '';
+  public isLoadingUsers = false;
 
   constructor(
     private inspectionsService: InspectionsService,
     private planService: PlanService,
-    public themeService: CustomizerSettingsService,
     private router: Router,
     private notify: NotificationService,
   ) {
     const nav = this.router.getCurrentNavigation();
-    const state = nav?.extras.state as { message: string };
-
+    const state = nav?.extras.state as { message: string } | undefined;
     if (state?.message) {
       this.notify.success(state.message);
     }
 
-    this.dataSource.filterPredicate = (data: any, filter: string) =>
-      `${data.customer?.name ?? ''} ${data.email ?? ''}`.toLowerCase().includes(filter);
+    this.dataSource.filterPredicate = (data, filter) =>
+      `${data.customer?.name ?? ''} ${data.email ?? ''} ${data.userCode ?? ''}`.toLowerCase().includes(filter);
 
     this.getFirms();
   }
@@ -90,57 +84,74 @@ export class PlanUserListComponent {
     this.dataSource.filter = this.searchTerm.trim().toLowerCase();
   }
 
-
-  isAllSelected() {
-    const numSelected = this.selection.selected.length;
-    const numRows = this.dataSource.data.length;
-    return numSelected === numRows;
+  onUserSearch(term: string): void {
+    this.searchTerm = term;
+    this.applyFilter();
   }
-  checkboxLabel(row?: PeriodicElement): string {
 
+  isAllSelected(): boolean {
+    return this.selection.selected.length === this.dataSource.data.length && this.dataSource.data.length > 0;
+  }
+
+  checkboxLabel(row?: InspectorRow): string {
     if (!row) {
       return `${this.isAllSelected() ? 'deselect' : 'select'} all`;
     }
-    return `${this.selection.isSelected(row) ? 'deselect' : 'select'} row ${row.customer + 1}`;
-
+    return `${this.selection.isSelected(row) ? 'deselect' : 'select'} ${row.customer.name}`;
   }
 
-
-  toggleAllRows() {
+  toggleAllRows(): void {
     if (this.isAllSelected()) {
       this.selection.clear();
       return;
     }
     this.selection.select(...this.dataSource.data);
-
-
   }
 
-
-  getFirms() {
-    this.inspectionsService.getFirms().subscribe((response) => {
-      this.firms = response.data;
+  getFirms(): void {
+    this.inspectionsService.getFirms().subscribe({
+      next: (response) => {
+        this.firms = response.data ?? [];
+      },
+      error: () => {
+        this.notify.error('Müəssisə siyahısı yüklənmədi');
+      },
     });
   }
 
-  getInspectors(firmId: number) {
-    this.planService.getInspectors(firmId, 3).subscribe((response) => {
-      const transformed = response.data.map(user => ({
-        ...user,
-        customer: {
-          name: `${user.name} ${user.surName}`.trim(),
-          userCode: user.userCode
-        }
-      }));
-
-      this.dataSource.data = transformed;
-
-
-    })
-
+  getInspectors(firmId: number): void {
+    this.isLoadingUsers = true;
+    this.selection.clear();
+    this.planService.getInspectors(firmId).subscribe({
+      next: (response) => {
+        this.dataSource.data = (response.data ?? []).map<InspectorRow>((user) => ({
+          userCode: user.userCode,
+          email: user.email,
+          planned: user.planned ?? 0,
+          confirmed: user.confirmed ?? 0,
+          expired: user.expired ?? 0,
+          finished: user.finished ?? 0,
+          customer: { name: `${user.name} ${user.surName}`.trim(), userCode: user.userCode },
+        }));
+        this.applyFilter();
+        this.isLoadingUsers = false;
+      },
+      error: () => {
+        this.dataSource.data = [];
+        this.isLoadingUsers = false;
+        this.notify.error('Müfəttiş siyahısı yüklənmədi');
+      },
+    });
   }
 
-  onPlanClick() {
+  onSelectFirm(selectedFirmId: number): void {
+    this.selectedFirmId = selectedFirmId;
+    this.searchTerm = '';
+    this.dataSource.filter = '';
+    this.getInspectors(selectedFirmId);
+  }
+
+  onPlanClick(): void {
     if (this.selection.selected.length === 0) {
       this.notify.warning('Heç bir istifadəçi seçilməyib!', {
         message: 'Zəhmət olmasa ən azı bir istifadəçi seçin.',
@@ -148,26 +159,13 @@ export class PlanUserListComponent {
       return;
     }
 
-    let data: any = {
-      selected: this.selection.selected.filter((item) => item.customer.userCode).map((item) => item.customer.userCode),
+    const data = {
+      selected: this.selection.selected
+        .filter((item) => item.customer.userCode)
+        .map((item) => item.customer.userCode),
       organization: this.selectedFirmId,
     };
 
-    this.router.navigate(["plans/create"], {
-      state: { data: data },
-    });
+    this.router.navigate(['plans/create'], { state: { data } });
   }
-
-  onSelectFirm(selectedFirmId: number) {
-    this.selectedFirmId = selectedFirmId;
-    this.searchTerm = '';
-    this.dataSource.filter = '';
-    this.getInspectors(selectedFirmId);
-  }
-
-
 }
-
-
-
-

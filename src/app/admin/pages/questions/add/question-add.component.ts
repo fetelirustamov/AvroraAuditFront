@@ -17,7 +17,14 @@ import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dia
 import { CategoryService } from '../../../services/category.service';
 import { QuestionService } from '../../../services/question.service';
 import { CategoryDto } from '../../../models/category.model';
-import { QuestionAnswerInsertDto, QuestionInsertDto } from '../../../models/question.model';
+import {
+    ANSWER_QUESTION_TYPE_IDS,
+    QUESTION_TYPES,
+    QuestionAnswerInsertDto,
+    QuestionInsertDto,
+    QuestionTypeId,
+    toQuestionTypeId
+} from '../../../models/question.model';
 
 @Component({
     selector: 'app-question-add',
@@ -45,8 +52,8 @@ export class QuestionAddComponent implements OnInit {
     @ViewChild(CdkTextareaAutosize) private questionTextareaAutosize?: CdkTextareaAutosize;
 
     categories: CategoryDto[] = [];
-    /** Sıra backend QuestionTypeID ilə eynidir: 1..5 */
-    types: string[] = ['Bəli/Xeyr', 'RadioButton', 'CheckBox', 'FreeText', 'ComboBox'];
+    /** `type` form control-u birbaşa backend QuestionTypeID saxlayır (1..5) */
+    questionTypes = QUESTION_TYPES;
 
     /** API: { data } / { Data } / birbaşa obyekt; bəzi cavablarda bir səviyyə daha wrap ola bilər */
     private unwrapQuestionPayload(raw: any): any {
@@ -84,34 +91,15 @@ export class QuestionAddComponent implements OnInit {
         return [];
     }
 
-    private resolveQuestionType(q: any): string | null {
-        const strType = q.questionType ?? q.QuestionType;
-        if (typeof strType === 'string' && this.types.includes(strType)) {
-            return strType;
-        }
-        const numId =
-            q.questionTypeID ??
-            q.QuestionTypeID ??
-            (typeof strType === 'number' ? strType : null) ??
-            (typeof strType === 'string' && /^\d+$/.test(strType.trim()) ? +strType : null);
-        if (numId != null && numId !== '') {
-            const idx = Number(numId) - 1;
-            if (idx >= 0 && idx < this.types.length) return this.types[idx];
-        }
-        return null;
-    }
-
-    private toBackendTypeId(type: string | null | undefined): number {
-        if (!type) return 0;
-        const idx = this.types.indexOf(type);
-        return idx >= 0 ? idx + 1 : 0;
+    /** API-dən gələn tipi 1..5 id-yə normalize edir; 0 / NULL / kənar dəyər üçün null */
+    private resolveQuestionType(q: any): QuestionTypeId | null {
+        return toQuestionTypeId(
+            q.questionTypeID ?? q.QuestionTypeID ?? q.questionType ?? q.QuestionType
+        );
     }
 
     /** Form dəyərlərini backend QuestionInsertDto + QuestionAnswer modelinə map edir */
-    private buildApiPayload(raw: any, questionId?: number): QuestionInsertDto {
-        const selectedType = raw.type ?? this.form.get('type')?.value;
-        const questionTypeId = this.toBackendTypeId(selectedType);
-
+    private buildApiPayload(raw: any, questionTypeId: QuestionTypeId, questionId?: number): QuestionInsertDto {
         const payload: QuestionInsertDto = {
             status: 1,
             categoryId: raw.categoryId,
@@ -126,7 +114,7 @@ export class QuestionAddComponent implements OnInit {
             payload.id = questionId;
         }
 
-        if (this.typesWithAnswers.has(selectedType) && Array.isArray(raw.answers)) {
+        if (ANSWER_QUESTION_TYPE_IDS.includes(questionTypeId) && Array.isArray(raw.answers)) {
             payload.questionAnswers = raw.answers.map(
                 (a: { id?: number | null; text: string; score: number | string; status?: number }, index: number) => {
                     const answer: QuestionAnswerInsertDto = {
@@ -148,7 +136,6 @@ export class QuestionAddComponent implements OnInit {
 
         return payload;
     }
-    typesWithAnswers = new Set(['RadioButton', 'ComboBox', 'CheckBox']);
 
     pageTitle = 'Yeni Sual Yaradın';
     editMode = false;
@@ -169,7 +156,7 @@ export class QuestionAddComponent implements OnInit {
     ngOnInit(): void {
         this.form = this.fb.group({
             categoryId: [null, Validators.required],
-            type: [null, Validators.required],
+            type: [null, [Validators.required, Validators.min(1), Validators.max(5)]],
             order: [null, [Validators.pattern(/^[0-9]+$/)]],
             valueNorm: [''],
             question: ['', Validators.required],
@@ -269,7 +256,8 @@ export class QuestionAddComponent implements OnInit {
     }
 
     isAnswerType(): boolean {
-        return this.typesWithAnswers.has(this.form.get('type')?.value);
+        const id = toQuestionTypeId(this.form.get('type')?.value);
+        return id !== null && ANSWER_QUESTION_TYPE_IDS.includes(id);
     }
 
     canShowAddAnswer(): boolean {
@@ -316,21 +304,21 @@ export class QuestionAddComponent implements OnInit {
             return;
         }
         const raw = this.form.getRawValue();
-        const questionTypeId = this.toBackendTypeId(raw.type ?? this.form.get('type')?.value);
-        if (!questionTypeId) {
-            this.notify.warning('Sual tipi seçilməyib', { message: 'Zəhmət olmasa sual tipini seçin.' });
+        const questionTypeId = toQuestionTypeId(raw.type);
+        if (questionTypeId === null) {
+            this.notify.warning('Sual tipi düzgün deyil', { message: 'Sual tipi 1..5 aralığından seçilməlidir.' });
             return;
         }
 
         if (this.editMode && this.id) {
             const questionId = +this.id;
-            const payload = this.buildApiPayload(raw, questionId);
+            const payload = this.buildApiPayload(raw, questionTypeId, questionId);
             this.questionService.update({ ...payload, id: questionId }).subscribe(() => {
                 this.notify.success('Sual uğurla redaktə edildi');
                 this.router.navigate(['/admin/questions']);
             });
         } else {
-            const payload = this.buildApiPayload(raw);
+            const payload = this.buildApiPayload(raw, questionTypeId);
             this.questionService.create(payload).subscribe(() => {
                 this.notify.success('Sual uğurla əlavə edildi');
                 this.router.navigate(['/admin/questions']);

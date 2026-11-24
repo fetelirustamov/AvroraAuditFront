@@ -1,5 +1,4 @@
-<mat-card class="inspection-section-card border-radius d-block bg-white border-0 shadow-none"
-    [class.component-rtl-enabled]="themeService.isRTLEnabled()" [class.component-dark-theme]="themeService.isDark()">
+<mat-card class="inspection-section-card border-radius d-block bg-white border-0 shadow-none">
 
     <mat-card-content>
         <mat-accordion multi="true">
@@ -9,7 +8,7 @@
                         <span class="section-icon">
                             <span class="material-symbols-outlined">checklist</span>
                         </span>
-                        <span class="section-name">{{ data.sectionName }}</span>
+                        <span class="section-name">{{ data?.sectionName }}</span>
                     </mat-panel-title>
                 </mat-expansion-panel-header>
 
@@ -30,7 +29,7 @@
                                         </span>
                                         <span class="category-header__name">{{ group.categoryName }}</span>
                                     </span>
-                                    <span class="category-header__count">{{ group.questions.length }} sual</span>
+                                    <span class="section-count">{{ group.questions.length }} sual</span>
                                 </div>
 
                                 <div class="category-body" role="region"
@@ -38,7 +37,7 @@
                                     [attr.id]="'accordion-body-' + i"
                                     [attr.aria-labelledby]="'accordion-header-' + i">
                                     <div class="table-responsive">
-                                        <table mat-table [dataSource]="group.questions" class="question-table">
+                                        <table mat-table [dataSource]="group.questions" class="section-table question-table">
 
                                             <!-- Sıra -->
                                             <ng-container matColumnDef="position">

@@ -203,3 +203,20 @@ mat-card-header {
 :host ::ng-deep .mat-mdc-form-field {
     --mdc-outlined-text-field-caret-color: var(--primaryColor);
 }
+.page-cell-label {
+    display: block;
+    width: 100%;
+    color: var(--blackColor);
+    font-weight: 500;
+}
+
+.col-header-with-select-all {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+
+    span {
+        white-space: nowrap;
+    }
+}

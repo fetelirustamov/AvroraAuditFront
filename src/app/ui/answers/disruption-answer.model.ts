@@ -44,4 +44,8 @@ export class DisruptionAnswerDTO extends DisruptionAnswer {
     isReturned!: boolean;
     returnReason!: string;
     internalStatus!: number;
+    /** Uyğunsuzluğun (müfəttişin) fayl sayları — getDetails doldurur */
+    image?: number;
+    video?: number;
+    document?: number;
 }

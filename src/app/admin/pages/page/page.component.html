@@ -1,6 +1,6 @@
 <app-admin-breadcrumb
     title="Səhifələr"
-    [crumbs]="[{label: 'Səlahiyyətlər'}, {label: 'Səhifələr'}]">
+    [crumbs]="[{label: 'Sistem Parametrləri'}, {label: 'Səhifələr'}]">
 </app-admin-breadcrumb>
 
 <!-- Add / Edit Form Card -->
@@ -40,7 +40,7 @@
                     </label>
                     <mat-form-field appearance="outline" class="w-100">
                         <mat-icon matPrefix class="prefix-icon">key</mat-icon>
-                        <input matInput formControlName="key" placeholder="məs. Planning">
+                        <input matInput formControlName="key" placeholder="məs. planning">
                         @if (form.get('key')?.hasError('required') && form.get('key')?.touched) {
                             <mat-error>Uzantı tələb olunur</mat-error>
                         }

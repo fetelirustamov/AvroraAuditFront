@@ -8,9 +8,7 @@ import { MatTableModule, MatTableDataSource } from '@angular/material/table';
 import { MatPaginator, MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatMenuModule } from '@angular/material/menu';
 import { debounceTime, finalize, Subject } from 'rxjs';
-import * as XLSX from 'xlsx';
-import pdfMake from 'pdfmake/build/pdfmake';
-import pdfFonts from 'pdfmake/build/vfs_fonts';
+import { FileExportService, datedFileName } from '../../../shared/services/file-export.service';
 import { InspectionsService } from '../../inspections/inspections.service';
 import { Firm } from '../../inspections/firm.model';
 import { NotificationService } from '../../../shared/services/notification.service';
@@ -91,6 +89,7 @@ export class EsasTasnifatUygunluguComponent {
         private inspectionsService: InspectionsService,
         private reportsService: ReportsService,
         private notify: NotificationService,
+        private fileExport: FileExportService,
     ) {
         this.tableState.paginator.page = 0;
         this.tableState.paginator.size = 10;
@@ -226,15 +225,14 @@ export class EsasTasnifatUygunluguComponent {
             'Ağırlıq balın cəmi': r.agirlig_bal_cemi, 'Faktiki toplanan bal': r.faktiki_bal,
             'Faiz nisbəti (%)': r.faiz_nisbeti,
         }));
-        const ws = XLSX.utils.json_to_sheet(data);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, 'Əsas Tasnifat');
-        XLSX.writeFile(wb, `esas-tasnifat-uygunlugu-${new Date().toISOString().slice(0, 10)}.xlsx`);
+        void this.fileExport.exportRowsToExcel(
+            data,
+            'Əsas Tasnifat',
+            datedFileName('esas-tasnifat-uygunlugu', 'xlsx'),
+        );
     }
 
     exportPdf(): void {
-        const vfs: any = (pdfFonts as any).pdfMake ? (pdfFonts as any).pdfMake.vfs : (pdfFonts as any).vfs;
-        (pdfMake as any).vfs = vfs;
         const headers = ['№', 'Əsas tasnifat', 'Ərazi kodu', 'Ərazi adı', 'Bölgəsi', 'Ağırlıq balı', 'Faktiki bal', 'Faiz (%)'];
         const rows = this.dataSource.data.map((r: any) => [r.row, r.esas_tasnifat, r.magaza_kodu, r.magaza_adi, r.bolge, r.agirlig_bal_cemi, r.faktiki_bal, r.faiz_nisbeti]);
         const docDef: any = {
@@ -243,6 +241,6 @@ export class EsasTasnifatUygunluguComponent {
             styles: { th: { bold: true, color: '#fff', fillColor: '#605DFF', fontSize: 8 } },
             defaultStyle: { fontSize: 8 }
         };
-        pdfMake.createPdf(docDef).download(`esas-tasnifat-uygunlugu-${new Date().toISOString().slice(0, 10)}.pdf`);
+        void this.fileExport.exportPdf(docDef, datedFileName('esas-tasnifat-uygunlugu', 'pdf'));
     }
 }

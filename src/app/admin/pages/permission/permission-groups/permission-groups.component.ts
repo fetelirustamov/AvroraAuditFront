@@ -48,7 +48,7 @@ export class PermissionGroupsComponent implements OnInit, AfterViewInit {
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
 
-  displayedColumns: string[] = ['id', 'name', 'description', 'actions'];
+  displayedColumns: string[] = ['id', 'name', 'actions'];
   dataSource = new MatTableDataSource<RoleDto>();
   isLoading = false;
 

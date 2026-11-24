@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { PermissionGroupsComponent } from './permission-groups.component';
+import { appTestProviders } from '../../../../../testing/test-providers';
 
 describe('PermissionGroupsComponent', () => {
   let component: PermissionGroupsComponent;
@@ -8,6 +9,7 @@ describe('PermissionGroupsComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
+      providers: [appTestProviders],
       imports: [PermissionGroupsComponent]
     })
     .compileComponents();

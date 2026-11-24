@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { PlanCheckedComponent } from './plan-checked.component';
+import { appTestProviders } from '../../../../testing/test-providers';
 
 describe('PlanCheckedComponent', () => {
   let component: PlanCheckedComponent;
@@ -8,6 +9,7 @@ describe('PlanCheckedComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
+      providers: [appTestProviders],
       imports: [PlanCheckedComponent]
     })
       .compileComponents();

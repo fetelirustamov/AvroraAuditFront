@@ -401,6 +401,58 @@ export class DashboardChartsService {
         this.charts.push(chart);
     }
 
+    // ── Bar: Locations by Firm (admin dashboard) ──────────────────────────────
+    async loadLocationsByFirmChart(series: { name: string; data: number[] }[], categories: string[]): Promise<void> {
+        if (!this.isBrowser) return;
+        const el = document.querySelector('#adm_chart_activity');
+        if (!el) return;
+        const ApexCharts = (await import('apexcharts')).default;
+        const isMany = categories.length > 6;
+        const dynamicHeight = isMany ? Math.max(260, categories.length * 34) : 260;
+        const options: any = {
+            series,
+            chart: {
+                type: 'bar',
+                height: dynamicHeight,
+                toolbar: { show: false },
+                animations: { enabled: true, speed: 500 }
+            },
+            colors: ['#6366F1'],
+            plotOptions: {
+                bar: {
+                    columnWidth: '45%',
+                    borderRadius: 4,
+                    horizontal: isMany
+                }
+            },
+            dataLabels: { enabled: false },
+            stroke: { width: 0 },
+            grid: {
+                borderColor: this.getGridColor(),
+                strokeDashArray: 4,
+                xaxis: { lines: { show: false } }
+            },
+            xaxis: {
+                categories,
+                labels: {
+                    rotate: isMany ? 0 : -20,
+                    style: { colors: this.getLabelColor(), fontSize: '11px', fontWeight: 500 }
+                },
+                axisTicks: { show: false },
+                axisBorder: { show: false }
+            },
+            yaxis: {
+                labels: { style: { colors: this.getLabelColor(), fontSize: '11px' } },
+                allowDecimals: false
+            },
+            legend: { show: false },
+            tooltip: { theme: this.getTooltipTheme(), shared: true, intersect: false }
+        };
+        const chart = new ApexCharts(el, options);
+        chart.render();
+        this.charts.push(chart);
+    }
+
     // ── Area: System Activity ──────────────────────────────────────────────────
     async loadSystemActivityChart(series: { name: string; data: number[] }[], categories: string[]): Promise<void> {
         if (!this.isBrowser) return;

@@ -1,6 +1,5 @@
 import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { CustomizerSettingsService } from '../../../../customizer-settings/customizer-settings.service';
 import { LocationProfileView } from '../location-inspection-summary.model';
 
 @Component({
@@ -12,7 +11,7 @@ import { LocationProfileView } from '../location-inspection-summary.model';
 export class LocationOverviewComponent {
   @Input() profile: LocationProfileView | null = null;
 
-  constructor(public themeService: CustomizerSettingsService) {}
+  constructor() {}
 
   barPct(value: number, cap: number): number {
     if (!cap) {

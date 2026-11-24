@@ -147,6 +147,16 @@ export class GroupsAddComponent implements OnInit {
 
   get rows(): FormArray { return this.form.get('rows') as FormArray; }
 
+  /** Cədvəl başlığındakı "hamısını seç" checkbox-larının vəziyyəti */
+  isAllChecked(column: 'show' | 'add' | 'edit' | 'delete'): boolean {
+    return this.rows.length > 0 && this.rows.controls.every(r => r.get(column)?.value === true);
+  }
+
+  /** Bir sütun üzrə bütün sətirləri eyni anda işarələ/ləğv et */
+  toggleAllColumn(column: 'show' | 'add' | 'edit' | 'delete', checked: boolean): void {
+    this.rows.controls.forEach(r => r.get(column)?.setValue(checked));
+  }
+
   save(): void {
     if (this.form.invalid) {
       this.form.markAllAsTouched();

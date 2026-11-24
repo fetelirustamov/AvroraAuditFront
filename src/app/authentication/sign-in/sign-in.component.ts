@@ -4,7 +4,6 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
 import { RouterLink, Router, ActivatedRoute } from '@angular/router';
-import { CustomizerSettingsService } from '../../customizer-settings/customizer-settings.service';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../auth/auth.service';
@@ -25,7 +24,6 @@ export class SignInComponent implements OnInit {
     returnUrl: string = '/dashboard';
 
     constructor(
-        public themeService: CustomizerSettingsService,
         private fb: FormBuilder,
         private router: Router,
         private route: ActivatedRoute,
@@ -45,39 +43,55 @@ export class SignInComponent implements OnInit {
         });
     }
 
-    async login(): Promise<void> {
-        if (this.loginForm.valid) {
-            try {
-                this.isLoading = true;
-                this.errorMessage = '';
-
-                const email = this.loginForm.get('email')?.value;
-                const password = this.loginForm.get('password')?.value;
-
-                this.authService.login(email, password).subscribe({
-                    next: (response) => {
-                        if (response && response.token) {
-                            // Navigate to return url after successful login
-                            this.router.navigateByUrl(this.returnUrl || '/dashboard');
-                        } else {
-                            this.errorMessage = 'Invalid response from server';
-                        }
-                    },
-                    error: (error) => {
-                        this.errorMessage = 'Xətalı giriş.Şifrənizi və ya istifadəçi adınızı yoxlayın.';
-                        this.isLoading = false;
-                    },
-                    complete: () => {
-                        this.isLoading = false;
-                    }
-                });
-            } catch (error) {
-                this.errorMessage = 'Xətalı giriş.Şifrənizi və ya istifadəçi adınızı yoxlayın.';
-                this.isLoading = false;
-            }
-        } else {
+    login(): void {
+        if (!this.loginForm.valid) {
             this.loginForm.markAllAsTouched();
             this.errorMessage = 'İstifadəçi adı və şifrə boş ola bilməz və düzgün formatda olmalıdır.';
+            return;
         }
+
+        this.isLoading = true;
+        this.errorMessage = '';
+
+        const email = this.loginForm.get('email')?.value;
+        const password = this.loginForm.get('password')?.value;
+
+        this.authService.login(email, password).subscribe({
+            next: (response) => {
+                if (response && response.token) {
+                    // Navigate to return url after successful login
+                    this.router.navigateByUrl(this.returnUrl || '/dashboard');
+                } else {
+                    this.errorMessage = 'Serverdən gözlənilməz cavab gəldi.';
+                }
+            },
+            error: (error) => {
+                this.errorMessage = this.loginErrorMessage(error);
+                this.isLoading = false;
+            },
+            complete: () => {
+                this.isLoading = false;
+            }
+        });
+    }
+
+    // Şəbəkə xətası, server xətası və yanlış parol fərqli səbəblərdir —
+    // hamısına "şifrənizi yoxlayın" demək istifadəçini yanıldır.
+    private loginErrorMessage(error: any): string {
+        const status = error?.status;
+
+        if (status === 0) {
+            return 'Serverə qoşulmaq mümkün olmadı. İnternet bağlantınızı yoxlayın.';
+        }
+        if (status === 400 || status === 401) {
+            return 'Xətalı giriş. Şifrənizi və ya istifadəçi adınızı yoxlayın.';
+        }
+        if (status === 403) {
+            return 'Bu hesabın sistemə girişi bağlanıb.';
+        }
+        if (status >= 500) {
+            return 'Serverdə xəta baş verdi. Bir az sonra yenidən cəhd edin.';
+        }
+        return 'Giriş zamanı gözlənilməz xəta baş verdi. Yenidən cəhd edin.';
     }
 }

@@ -606,3 +606,84 @@
     align-items: center;
     justify-content: center;
 }
+// ── Şəxsi məlumatlar kartı (redaktə rejimi) ─────────────────────────────────
+.identity-strip {
+    margin-bottom: 8px;
+
+    .info-item {
+        display: flex;
+        align-items: center;
+        padding: 12px 16px;
+        background: var(--gray-50);
+        border: 1px solid var(--borderColor);
+        border-radius: var(--radius-md);
+
+        .material-symbols-outlined {
+            color: var(--primaryColor);
+            margin-right: 12px;
+            font-size: 22px;
+        }
+
+        .label {
+            font-weight: 700;
+            color: var(--blackColor);
+            margin-right: 12px;
+        }
+
+        .value {
+            color: var(--bodyColor);
+            font-weight: 600;
+        }
+    }
+}
+
+// Parol sətri: kimlik formasından vizual olaraq da ayrılır
+.password-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+    padding: 16px 20px;
+    border: 1px dashed var(--borderColor);
+    border-radius: var(--radius-md);
+    background: var(--gray-50);
+
+    .password-info {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+
+        .material-symbols-outlined {
+            color: var(--warningStrong);
+            font-size: 24px;
+        }
+    }
+
+    .password-label {
+        font-weight: 700;
+        color: var(--blackColor);
+    }
+
+    .password-hint {
+        font-size: 13px;
+        color: var(--gray-500);
+    }
+
+    .external-auth-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 12px;
+        border-radius: 999px;
+        background: var(--infoSoft);
+        color: var(--gray-700);
+        font-size: 13px;
+        font-weight: 600;
+
+        .material-symbols-outlined {
+            font-size: 18px;
+        }
+    }
+}

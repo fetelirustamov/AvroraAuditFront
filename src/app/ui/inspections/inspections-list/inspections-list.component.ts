@@ -160,7 +160,7 @@ export class InspectionsListComponent implements AfterViewInit {
     if (changes['data']) {
       this.isProfilePage = true;
       // Yeni gələn datanı dataSource-a əlavə et
-      if (changes['data'].currentValue.count > 0) {
+      if (changes['data'].currentValue?.count > 0) {
         this.receivedData = changes['data'].currentValue;
 
         // Yeni datanı filter-ə əlavə et
@@ -242,9 +242,9 @@ export class InspectionsListComponent implements AfterViewInit {
     this._tableService.fill(this._tableState).pipe(
       finalize(() => this.isLoading = false)
     ).subscribe((response) => {
-      this._tableState.paginator.total = response.data != null ? response.data.total : 0;
-      this.dataSource = response.data.items;
-      this.allDataCount = response.data.total;
+      this._tableState.paginator.total = response.data?.total || 0;
+      this.dataSource = response.data?.items || [];
+      this.allDataCount = response.data?.total || 0;
     });
   }
 
@@ -270,9 +270,8 @@ export class InspectionsListComponent implements AfterViewInit {
   }
 
   onDetails(row: InspectionPlan) {
-    console.log('Selected row:', row);
     this.inspectionsListCache.save(this.buildSnapshot());
-    this.router.navigate(['/apps/inspections/details'], {
+    this.router.navigate(['/inspections/details'], {
       queryParams: {
         id: row.id,
         // Hazırda planId ayrıca sahə deyil, planın özü id ilə eynidir

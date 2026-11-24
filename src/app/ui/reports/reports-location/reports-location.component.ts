@@ -14,16 +14,21 @@ import { debounceTime, Subject, finalize } from 'rxjs';
 import { TableService } from '../../services/table.service';
 import { TableState } from '../../../models/table-state.model';
 import { InspectionsService } from '../../inspections/inspections.service';
-import * as XLSX from 'xlsx';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
-import pdfMake from 'pdfmake/build/pdfmake';
-import pdfFonts from 'pdfmake/build/vfs_fonts';
+import { FileExportService, datedFileName } from '../../../shared/services/file-export.service';
 import { MatMenuModule } from '@angular/material/menu';
 import { Firm } from '../../inspections/firm.model';
 import { AuditLoadingOverlayComponent } from '../../components/audit-loading-overlay/audit-loading-overlay.component';
+import { NotificationService } from '../../../shared/services/notification.service';
 
 type MonthKey = 'jan' | 'feb' | 'mar' | 'apr' | 'may' | 'jun' | 'jul' | 'aug' | 'sep' | 'oct' | 'nov' | 'dec';
+
+/** POST /api/reports/monthly cavabındakı bir məkan sətri. */
+interface MonthlyLocationReportRow {
+    locationCode: number;
+    locationName: string;
+    regionName: string;
+    months: { month: number; score: number | null; ncCount: number }[];
+}
 
 @Component({
     selector: 'app-reports',
@@ -66,7 +71,8 @@ export class ReportsComponent {
         { value: 11, label: 'Noyabr', key: 'nov' },
         { value: 12, label: 'Dekabr', key: 'dec' }
     ];
-    public monthPairs: { key: string, label: string, left: MonthKey, right: MonthKey }[] = [];
+    /** Hər ay üçün iki sütun: checklist nəticəsi və uyğunsuzluq sayı. */
+    public monthColumns: { key: string, label: string }[] = [];
 
     public filtersForm = new FormGroup({
         firmId: new FormControl<number | null>(null, { nonNullable: false, validators: [Validators.required] }),
@@ -80,8 +86,6 @@ export class ReportsComponent {
     public allCount = 0;
     private tableState: TableState = new TableState();
     private filterSubject = new Subject<{ key: string, value: string }>();
-    private columnFilters: Record<string, string> = {};
-    private allRows: any[] = [];
     public submitted = false;
 
     // Column configuration (static keys to match backend)
@@ -90,8 +94,6 @@ export class ReportsComponent {
         { key: 'branchName', label: 'Məkanın Adı' },
         { key: 'branchCode', label: 'Məkan Kodu' }
     ];
-
-    public pairColumns: { key: string, label: string }[] = [];
 
     public displayedColumns: string[] = [];
     public headerColumns: string[] = this.displayedColumns;
@@ -102,6 +104,8 @@ export class ReportsComponent {
     constructor(
         private tableService: TableService,
         private inspectionsService: InspectionsService,
+        private notify: NotificationService,
+        private fileExport: FileExportService,
     ) {
         this.tableService.api_url = 'reports/monthly';
         this.tableState.paginator.page = 0;
@@ -121,29 +125,30 @@ export class ReportsComponent {
             this.fetch();
         });
 
-        // Build month pairs and columns (Jan-Feb, Mar-Apr, ...)
-        for (let i = 0; i < this.months.length; i += 2) {
-            const left = this.months[i];
-            const right = this.months[i + 1];
-            this.monthPairs.push({ key: `${left.key}_${right.key}`, label: `${left.label} ${right?.label ?? ''}`.trim(), left: left.key, right: (right?.key ?? left.key) });
-        }
-        this.pairColumns = this.monthPairs.flatMap(p => ([
-            { key: `${p.key}Score`, label: `Checklist Nəticəsi` },
-            { key: `${p.key}NcCount`, label: `Uyğunsuzluq Sayı` },
+        // Hər ay bir qrup başlığıdır; altında iki sütun durur
+        this.monthColumns = this.months.flatMap(m => ([
+            { key: `${m.key}Score`, label: 'Checklist Nəticəsi' },
+            { key: `${m.key}NcCount`, label: 'Uyğunsuzluq Sayı' },
         ]));
 
-        this.displayedColumns = [...this.baseColumns, ...this.pairColumns].map(c => c.key);
+        this.displayedColumns = [...this.baseColumns, ...this.monthColumns].map(c => c.key);
         this.headerColumns = this.displayedColumns;
         this.filterColumns = this.displayedColumns.map(k => `${k}__filter`);
 
-        // Build grouped header metadata (pair labels)
         this.groupColumns = [
-            { key: 'group-general', label: 'ÜMUMİ MƏLUMATLAR', colspan: this.baseColumns.length }
+            { key: 'group-general', label: 'ÜMUMİ MƏLUMATLAR', colspan: this.baseColumns.length },
+            ...this.months.map(m => ({ key: `group-${m.key}`, label: m.label.toUpperCase(), colspan: 2 }))
         ];
-        for (const p of this.monthPairs) {
-            this.groupColumns.push({ key: `group-${p.key}`, label: p.label.toUpperCase(), colspan: 2 });
-        }
         this.groupHeaderColumnKeys = this.groupColumns.map(g => g.key);
+    }
+
+    ngAfterViewInit(): void {
+        // Səhifələmə serverdədir: paginator hadisəsi tableState-i yeniləyib yenidən sorğu atır
+        this.paginator?.page.subscribe(() => {
+            this.tableState.paginator.page = this.paginator.pageIndex;
+            this.tableState.paginator.size = this.paginator.pageSize;
+            this.fetch();
+        });
     }
 
     private loadFirms() {
@@ -169,72 +174,47 @@ export class ReportsComponent {
     applyColumnFilter(event: Event, key: string) {
         const inputValue = (event.target as HTMLInputElement).value.trim();
         this.filterSubject.next({ key, value: inputValue });
-        // Keep local state for client-side filtering
-        if (inputValue) {
-            this.columnFilters[key] = inputValue.toLowerCase();
-        } else {
-            delete this.columnFilters[key];
-        }
     }
 
     private fetch() {
         this.isLoading = true;
-        // Show fake data with client-side per-column filters
-        if (this.tableService.api_url === 'reports/monthly') {
-            if (this.allRows.length === 0) {
-                this.allRows = this.generateFakeRows(25);
-            }
-            this.rows = this.applyLocalFilters(this.allRows);
-            this.allCount = this.rows.length;
-            this.dataSource.data = this.rows;
-            if (this.paginator) {
-                this.dataSource.paginator = this.paginator;
-            }
-            this.isLoading = false;
-            return;
-        }
-
         this.tableService.fill(this.tableState)
             .pipe(finalize(() => this.isLoading = false))
-            .subscribe(res => {
-                this.rows = res?.data?.items ?? [];
-                this.allCount = res?.data?.total ?? 0;
-                this.dataSource.data = this.rows;
-                if (this.paginator) {
-                    this.dataSource.paginator = this.paginator;
+            .subscribe({
+                next: (res: any) => {
+                    const items: MonthlyLocationReportRow[] = res?.data?.items ?? [];
+                    this.rows = items.map(item => this.toTableRow(item));
+                    this.allCount = res?.data?.total ?? 0;
+                    this.dataSource.data = this.rows;
+                },
+                error: () => {
+                    this.rows = [];
+                    this.allCount = 0;
+                    this.dataSource.data = [];
+                    this.notify.error('Hesabat yüklənmədi');
                 }
             });
     }
 
-    private generateFakeRows(count: number): any[] {
-        const list: any[] = [];
-        for (let i = 0; i < count; i++) {
-            const base: any = {
-                row: i + 1,
-                branchName: `Məkan ${i + 1}`,
-                branchCode: `C${(1000 + i).toString()}`,
-            };
-            for (const p of this.monthPairs) {
-                base[`${p.key}Score`] = (80 + Math.random() * 20).toFixed(2);
-                base[`${p.key}NcCount`] = Math.floor(Math.random() * 5);
-            }
-            list.push(base);
+    /** API sətrini (məkan + ay siyahısı) cədvəlin gözlədiyi düz obyektə çevirir. */
+    private toTableRow(item: MonthlyLocationReportRow): any {
+        const row: any = {
+            branchName: item.locationName,
+            branchCode: item.locationCode,
+            regionName: item.regionName
+        };
+        // Məlumatı olmayan aylar boş qalır
+        for (const m of this.months) {
+            row[`${m.key}Score`] = '';
+            row[`${m.key}NcCount`] = '';
         }
-        return list;
-    }
-
-    private applyLocalFilters(source: any[]): any[] {
-        const entries = Object.entries(this.columnFilters);
-        if (entries.length === 0) return [...source];
-        return source.filter(row => {
-            for (const [key, val] of entries) {
-                const cell = row[key];
-                if (cell == null) return false;
-                const text = String(cell).toLowerCase();
-                if (!text.includes(val)) return false;
-            }
-            return true;
-        });
+        for (const cell of item.months ?? []) {
+            const month = this.months.find(m => m.value === cell.month);
+            if (!month) continue;
+            row[`${month.key}Score`] = cell.score != null ? Number(cell.score).toFixed(2) : '';
+            row[`${month.key}NcCount`] = cell.ncCount ?? 0;
+        }
+        return row;
     }
 
     getRowNumber(index: number): number {
@@ -248,31 +228,30 @@ export class ReportsComponent {
                 'Məkanın Adı': row.branchName,
                 'Məkan Kodu': row.branchCode,
             };
-            for (const p of this.monthPairs) {
-                result[`${p.label} - Checklist`] = row[`${p.key}Score`];
-                result[`${p.label} - Uyğunsuzluq`] = row[`${p.key}NcCount`];
+            for (const m of this.months) {
+                result[`${m.label} - Checklist`] = row[`${m.key}Score`];
+                result[`${m.label} - Uyğunsuzluq`] = row[`${m.key}NcCount`];
             }
             return result;
         });
-        const worksheet = XLSX.utils.json_to_sheet(data);
-        const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, 'Aylıq');
-        XLSX.writeFile(workbook, `reports-monthly-${new Date().toISOString().slice(0, 10)}.xlsx`);
+        void this.fileExport.exportRowsToExcel(
+            data,
+            'Aylıq',
+            datedFileName('reports-monthly', 'xlsx'),
+        );
     }
 
     exportPdf(): void {
-        const vfs: any = (pdfFonts as any).pdfMake ? (pdfFonts as any).pdfMake.vfs : (pdfFonts as any).vfs;
-        (pdfMake as any).vfs = vfs;
         const baseHeaders = ['Sıra', 'Məkanın Adı', 'Məkan Kodu'];
         const headers = [
             ...baseHeaders,
-            ...this.monthPairs.flatMap(p => [`${p.label}`, `${p.label}`])
+            ...this.months.flatMap(m => [`${m.label}`, `${m.label}`])
         ];
         const subHeaders = [
             ...Array(baseHeaders.length).fill(''),
-            ...this.monthPairs.flatMap(() => ['Checklist', 'Uyğunsuzluq'])
+            ...this.months.flatMap(() => ['Checklist', 'Uyğunsuzluq'])
         ];
-        const widths = [30, '*', 70, ...this.monthPairs.flatMap(() => [70, 80])];
+        const widths = [30, '*', 70, ...this.months.flatMap(() => [70, 80])];
 
         const tableBody: any[] = [];
         tableBody.push(headers.map((h, idx) => ({ text: h, style: idx < baseHeaders.length ? 'tableHeader' : 'tableHeaderPair' })));
@@ -284,9 +263,9 @@ export class ReportsComponent {
                 String(row.branchName ?? ''),
                 String(row.branchCode ?? ''),
             ];
-            for (const p of this.monthPairs) {
-                rowArr.push(String(row[`${p.key}Score`] ?? ''));
-                rowArr.push(String(row[`${p.key}NcCount`] ?? ''));
+            for (const m of this.months) {
+                rowArr.push(String(row[`${m.key}Score`] ?? ''));
+                rowArr.push(String(row[`${m.key}NcCount`] ?? ''));
             }
             tableBody.push(rowArr);
         }
@@ -306,7 +285,7 @@ export class ReportsComponent {
             },
             defaultStyle: { fontSize: 8 }
         };
-        pdfMake.createPdf(docDefinition).download(`reports-monthly-${new Date().toISOString().slice(0, 10)}.pdf`);
+        void this.fileExport.exportPdf(docDefinition, datedFileName('reports-monthly', 'pdf'));
     }
 }
 

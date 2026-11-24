@@ -56,6 +56,10 @@ export class PlanCreateComponent {
     private planService: PlanService,
     private notify: NotificationService
   ) {
+    // Form həmişə qurulmalıdır: naviqasiya tamamlanana qədər template bir dəfə render olunur
+    // və [formGroup] undefined olarsa NG01052 ilə çökür.
+    this.initializeForm();
+
     const navigation = this.router.getCurrentNavigation();
     const state = navigation?.extras?.state as { data?: any };
 
@@ -65,7 +69,6 @@ export class PlanCreateComponent {
     }
 
     this.data = state.data;
-    this.initializeForm();
     this.loadLocations();
   }
 
