@@ -37,6 +37,17 @@ npx ng build --configuration production # dist/avrora-audit, bundle limiti 2.5 M
 - Menyunun vahid mənbəyi route-ların `data.menu` sahəsidir (`area, section, order, title, icon, pageKey, group…`). Bu sahəni `MenuService` `admin/admin-pages.routes.ts` və `ui/ui-pages.routes.ts`-dəki massivlərdən oxuyur. Yeni səhifə əlavə edəndə menyunu HTML-də yox, route-da qeyd et. Bu fayllar shell komponentini (`AdminComponent` / `UiComponent`) import etməməlidir: sidebar onları import edir və dövri import yaranır.
 - İcazələr `PermissionService` vasitəsilə `GET /api/me/permissions`-dan gəlir; Admin bütün yoxlamaları keçir. `pageKey` bazadakı `Pages.[Key]` ilə dəqiq uyğun olmalıdır. Açar dəyişsə, həm SQL seed, həm route dəyişməlidir. Yeni açar üçün front deploy-dan **əvvəl** baza seed-i və rol icazələri lazımdır.
 - `permissionGuard` və `*hasPermission` mövcuddur. Köhnə `RoleGuard` / `*hasRole` / `data.roles` hələ bir neçə yerdə qalır. Yeni kodda onları yox, icazə qatını işlət.
+- `ui.routes.ts` pageKey-i olan hər UI səhifəsinə `permissionGuard` qoşur, menyudan gizlənən səhifə URL ilə də açılmır. Əsas Səhifə (`dashboard`) istisnadır: girişdən sonra hamı ora yönləndirilir.
+- `AuthInterceptor` token-i yalnız `environment.apiUrl` origin-inə göndərir.
+
+## Server cavabları və formalar
+
+- Xəta mesajını `shared/utils/api-error.ts` (`apiErrorMessage`) ilə göstər. Server 400/403/409-da istifadəçi üçün mesaj qaytarır (məs. "plan geri qaytarıla bilməz", "bu kodlu mağaza artıq var"). `error` callback-i olmayan subscribe yazma.
+- Status dəyişdirən və ya saxlayan düymələr sorğu gedərkən bağlanır (`isSaving` + `finalize`): ikiqat klik iki əməliyyat yaratmasın.
+- Cədvəl filtrini `shared/utils/table-filter.ts` (`setFilter`) ilə yaz: boş dəyər açarı silir. Yeni axtarışda `paginator.page = 0`.
+- Uyğunsuzluq və cavab siyahıları serverdə səhifələnir. `total` serverdən gəlir, səhifə dəyişəndə yenidən sorğu göndər. İxrac üçün `page = -1`.
+- Şəkil yükləmə: `accept` üçün `shared/utils/upload-types.ts` (`ACCEPTED_IMAGE_TYPES`), serverin siyahısı ilə eynidir. Cavabda əvvəl şəkil, sonra cavab göndərilir.
+- Mağaza kodu redaktədə dəyişmir: server kodu yeniləmir.
 - Bu hesabatlar menyuya qəsdən salınmayıb, əlavə etmə:
   - `checklist-analysis`: data saxtadır;
   - `reports-location`: SQL-i real datada yoxlanmayıb;
