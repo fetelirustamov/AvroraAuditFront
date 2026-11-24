@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { DisruptionListComponent } from './disruption-list.component';
+import { appTestProviders } from '../../../../testing/test-providers';
 
 describe('DisruptionListComponent', () => {
   let component: DisruptionListComponent;
@@ -8,6 +9,7 @@ describe('DisruptionListComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
+      providers: [appTestProviders],
       imports: [DisruptionListComponent]
     })
     .compileComponents();
