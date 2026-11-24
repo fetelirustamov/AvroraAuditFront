@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { UserDto, UserCreateDto, UserUpdateDto, UserDetail, UserAssignmentsPutDto } from '../models/user.model';
+import { UserDto, UserCreateDto, UserDetail, UserAssignmentsPutDto, UserProfilePutDto, UserPasswordPutDto } from '../models/user.model';
 import { RequestResponse, RequestResponseOne } from '../../models/table-state.model';
 
 @Injectable({ providedIn: 'root' })
@@ -48,11 +48,6 @@ export class UserService {
         return this.http.post<RequestResponseOne<number>>(this.baseUrl, payload);
     }
 
-    // İstifadəçini yenilə
-    updateUser(id: number, payload: UserUpdateDto): Observable<RequestResponseOne<UserDto>> {
-        return this.http.put<RequestResponseOne<UserDto>>(`${this.baseUrl}/${id}`, payload);
-    }
-
     // İstifadəçini sil
     deleteUser(id: number): Observable<RequestResponseOne<null>> {
         return this.http.delete<RequestResponseOne<null>>(`${this.baseUrl}/${id}`);
@@ -61,6 +56,18 @@ export class UserService {
     /** İstifadəçinin statusunu, müəssisələrini və rolunu yenilə */
     updateUserAssignments(userCode: number, payload: UserAssignmentsPutDto): Observable<RequestResponseOne<unknown>> {
         const url = `${environment.apiUrl}/Users/user-code/${userCode}/assignments`;
+        return this.http.put<RequestResponseOne<unknown>>(url, payload);
+    }
+
+    /** İstifadəçinin kimlik məlumatlarını (ad, soyad, ata adı, vəzifə, e-poçt) yenilə */
+    updateUserProfile(userCode: number, payload: UserProfilePutDto): Observable<RequestResponseOne<unknown>> {
+        const url = `${environment.apiUrl}/Users/user-code/${userCode}/profile`;
+        return this.http.put<RequestResponseOne<unknown>>(url, payload);
+    }
+
+    /** Admin tərəfindən parol sıfırlama — köhnə parol tələb olunmur */
+    updateUserPassword(userCode: number, payload: UserPasswordPutDto): Observable<RequestResponseOne<unknown>> {
+        const url = `${environment.apiUrl}/Users/user-code/${userCode}/password`;
         return this.http.put<RequestResponseOne<unknown>>(url, payload);
     }
 }

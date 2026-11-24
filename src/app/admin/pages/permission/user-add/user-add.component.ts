@@ -9,17 +9,22 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { HttpErrorResponse } from '@angular/common/http';
 import { NotificationService } from '../../../../shared/services/notification.service';
+import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dialog.service';
 import { AuditLoadingOverlayComponent } from '../../../../ui/components/audit-loading-overlay/audit-loading-overlay.component';
 import { MatChipsModule } from '@angular/material/chips';
 import { UserService } from '../../../services/user.service';
 import { FirmService } from '../../../services/firm.service';
 import { RoleService } from '../../../services/role.service';
 import { firstValueFrom } from 'rxjs';
-import { UserDto, UserDetail, UserAssignmentsPutDto } from '../../../models/user.model';
+import { UserDto, UserDetail, UserAssignmentsPutDto, UserProfilePutDto } from '../../../models/user.model';
 import { FirmDto } from '../../../models/firm.model';
 import { RoleDto } from '../../../models/role.model';
 import { AdminBreadcrumbComponent } from '../../../shared/breadcrumb/admin-breadcrumb.component';
+import { UserPasswordDialogComponent } from '../user-password/user-password-dialog.component';
 
 interface User {
     id: string;
@@ -30,6 +35,9 @@ interface User {
     email?: string;
     phone?: string;
 }
+
+/** Parolun bu sistemdə saxlandığı yeganə autentifikasiya növü */
+const LOCAL_AUTH_TYPE = 'LocalDB';
 
 @Component({
     selector: 'app-user-add',
@@ -44,6 +52,8 @@ interface User {
         MatSelectModule,
         MatIconModule,
         MatSlideToggleModule,
+        MatDialogModule,
+        MatTooltipModule,
         AuditLoadingOverlayComponent,
         MatChipsModule,
         AdminBreadcrumbComponent
@@ -66,6 +76,12 @@ export class UserAddComponent implements OnInit {
     // Edit mode flags
     isEditMode: boolean = false;
     isPrefilling: boolean = false;
+
+    /**
+     * Redaktə olunan istifadəçinin AuthSettings.Name dəyəri.
+     * Parol sıfırlama düyməsi yalnız LocalDB üçün göstərilir.
+     */
+    authType: string = '';
 
     // User properties
     selectedUser: User | null = null;
@@ -108,8 +124,8 @@ export class UserAddComponent implements OnInit {
 
     get userAddCrumbs(): { label: string }[] {
         return [
-            { label: 'Səlahiyyətlər' },
-            { label: 'İstifadəçi səlahiyyətləri' },
+            { label: 'İstifadəçi İdarəetməsi' },
+            { label: 'Rol və Firma Təyinatı' },
             { label: this.isEditMode ? 'Redaktə' : 'Yeni' }
         ];
     }
@@ -118,21 +134,56 @@ export class UserAddComponent implements OnInit {
         return this.isSaving ? 'Saxlanılır...' : (this.isEditMode ? 'Yadda saxla' : 'Əlavə Et');
     }
 
+    /** Kimlik sahələrinin qrupu — yalnız redaktə rejimində aktivdir */
+    get profileGroup(): FormGroup {
+        return this.userForm.get('profile') as FormGroup;
+    }
+
+    /** Parol yalnız LocalDB istifadəçiləri üçün bu sistemdə saxlanılır */
+    get canResetPassword(): boolean {
+        return this.isEditMode && this.authType === LOCAL_AUTH_TYPE;
+    }
+
+    /** LDAP/OAuth istifadəçisində parol düyməsi əvəzinə izahedici nişan göstərilir */
+    get externalAuthLabel(): string {
+        return `Parol ${this.authType} tərəfindən idarə olunur`;
+    }
+
+    hasProfileError(controlName: string, errorType: string): boolean {
+        const control = this.profileGroup?.get(controlName);
+        return control ? control.hasError(errorType) && control.touched : false;
+    }
+
     constructor(
         private router: Router,
         private route: ActivatedRoute,
         private fb: FormBuilder,
         private notify: NotificationService,
+        private confirmDialog: ConfirmDialogService,
         private userService: UserService,
         private firmService: FirmService,
-        private roleService: RoleService
+        private roleService: RoleService,
+        private dialog: MatDialog
     ) {
         this.userForm = this.fb.group({
             selectedUser: ['', Validators.required],
             userStatus: [false],
             selectedMarket: [[], Validators.required],
-            selectedPermissionGroup: ['']
+            selectedPermissionGroup: [''],
+            // Kimlik sahələri yalnız redaktə rejimində dəyişdirilir. Yeni təyinat
+            // rejimində qrup disable olunur — Angular disable qrupu validasiyadan
+            // və getRawValue-dan kənar tutmur, ona görə ayrıca yoxlanılır.
+            profile: this.fb.group({
+                name: ['', [Validators.required, Validators.maxLength(150)]],
+                surName: ['', [Validators.required, Validators.maxLength(150)]],
+                fatherName: ['', Validators.maxLength(150)],
+                position: ['', Validators.maxLength(150)],
+                email: ['', [Validators.required, Validators.email, Validators.maxLength(150)]]
+            })
         });
+
+        // Başlanğıc vəziyyət təyinat rejimidir; redaktə query param-ı gələndə açılır.
+        this.profileGroup.disable({ emitEvent: false });
     }
 
     ngOnInit() {
@@ -160,8 +211,10 @@ export class UserAddComponent implements OnInit {
 
             if (this.isEditMode) {
                 selectedCtrl?.disable({ emitEvent: false });
+                this.profileGroup.enable({ emitEvent: false });
             } else {
                 selectedCtrl?.enable({ emitEvent: false });
+                this.profileGroup.disable({ emitEvent: false });
             }
 
             if (!this.isEditMode) {
@@ -232,6 +285,7 @@ export class UserAddComponent implements OnInit {
         const isActive = detail.status === 1;
         const markets = detail.firms?.map(f => f.firmName) ?? [];
         const firstGroup = detail.roleName ?? '';
+        this.authType = detail.authType ?? '';
 
         // Komponent property-lərini birbaşa set et
         this.selectedUser = user;
@@ -252,7 +306,14 @@ export class UserAddComponent implements OnInit {
             selectedUser: user,
             userStatus: isActive,
             selectedMarket: markets,
-            selectedPermissionGroup: firstGroup
+            selectedPermissionGroup: firstGroup,
+            profile: {
+                name: detail.name ?? '',
+                surName: detail.surName ?? '',
+                fatherName: detail.fatherName ?? '',
+                position: detail.position ?? '',
+                email: detail.email ?? ''
+            }
         }, { emitEvent: false });
     }
 
@@ -462,7 +523,7 @@ export class UserAddComponent implements OnInit {
 
     // Add market functionality (now handled directly by select)
     addMarket() {
-        console.log('Seçilmiş marketlər:', this.selectedMarket);
+        // Bazar seçimi birbaşa mat-select tərəfindən idarə olunur, əlavə əməliyyat tələb olunmur.
     }
 
     // Show message
@@ -497,6 +558,35 @@ export class UserAddComponent implements OnInit {
             firmIds,
             roleId
         };
+    }
+
+    private buildProfilePayload(): UserProfilePutDto {
+        const profile = this.profileGroup.getRawValue();
+        return {
+            name: (profile.name ?? '').trim(),
+            surName: (profile.surName ?? '').trim(),
+            fatherName: (profile.fatherName ?? '').trim() || undefined,
+            position: (profile.position ?? '').trim() || undefined,
+            email: (profile.email ?? '').trim()
+        };
+    }
+
+    /**
+     * Parol sıfırlama kimlik formasından ayrı dialoqda aparılır — ümumi "yadda saxla"
+     * ilə birləşsəydi, boş qalan sahə parolu təsadüfən sıfırlaya bilərdi.
+     */
+    openPasswordDialog() {
+        if (!this.selectedUser) return;
+
+        this.dialog.open(UserPasswordDialogComponent, {
+            width: '460px',
+            maxWidth: '95vw',
+            disableClose: true,
+            data: {
+                userCode: Number(this.selectedUser.id),
+                fullName: this.selectedUser.fullName
+            }
+        });
     }
 
     // Save user
@@ -545,37 +635,37 @@ export class UserAddComponent implements OnInit {
         if (this.isEditMode) {
             this.isSaving = true;
             try {
+                // Əvvəlcə kimlik: e-poçt təkrarı 409 qaytarsa təyinatlara heç keçmirik,
+                // beləliklə uğursuz yadda saxlama yarımçıq dəyişiklik qoymur.
+                await firstValueFrom(this.userService.updateUserProfile(userCode, this.buildProfilePayload()));
                 await firstValueFrom(this.userService.updateUserAssignments(userCode, payload));
-                this.showMessage('İstifadəçinin statusu, müəssisələri və rolu yeniləndi', 'success');
+                this.showMessage('İstifadəçinin məlumatları və səlahiyyətləri yeniləndi', 'success');
                 setTimeout(() => {
                     this.router.navigate(['/admin/permissions/user-permission']);
                 }, 800);
-            } catch {
-                this.showMessage('Yeniləmə mümkün olmadı. Zəhmət olmasa yenidən cəhd edin.', 'error');
+            } catch (err) {
+                if (err instanceof HttpErrorResponse && err.status === 409) {
+                    this.showMessage('Bu e-poçt ünvanı başqa istifadəçiyə aiddir', 'error');
+                } else {
+                    this.showMessage('Yeniləmə mümkün olmadı. Zəhmət olmasa yenidən cəhd edin.', 'error');
+                }
             } finally {
                 this.isSaving = false;
             }
             return;
         }
 
+        this.isSaving = true;
         try {
-            this.isSaving = true;
-            await new Promise(resolve => setTimeout(resolve, 1500));
-            const userData = {
-                user: selectedUserObj,
-                status: formValue.userStatus ? 'active' : 'passive',
-                selectedMarkets: formValue.selectedMarket,
-                permissions: formValue.userStatus ? {
-                    markets: formValue.selectedMarket,
-                    permissionGroup: formValue.selectedPermissionGroup
-                } : null
-            };
-            this.showMessage('İstifadəçi uğurla əlavə edildi!', 'success');
+            // Redaktə rejimi ilə eyni real API - istifadəçi burada axtarışla seçilir,
+            // sonra ona firma(lar) və rol təyin edilir.
+            await firstValueFrom(this.userService.updateUserAssignments(userCode, payload));
+            this.showMessage('İstifadəçiyə firma və rol uğurla təyin edildi', 'success');
             setTimeout(() => {
                 this.router.navigate(['/admin/permissions/user-permission']);
-            }, 1000);
+            }, 800);
         } catch {
-            this.showMessage('Xəta baş verdi. Zəhmət olmasa yenidən cəhd edin.', 'error');
+            this.showMessage('Təyinat mümkün olmadı. Zəhmət olmasa yenidən cəhd edin.', 'error');
         } finally {
             this.isSaving = false;
         }
@@ -584,9 +674,16 @@ export class UserAddComponent implements OnInit {
     // Cancel operation
     cancel() {
         if (this.userForm.dirty) {
-            if (confirm('Dəyişikliklər saxlanılmayacaq. Davam etmək istəyirsiniz?')) {
-                this.router.navigate(['/admin/permissions/user-permission']);
-            }
+            this.confirmDialog.confirm({
+                title: 'Dəyişikliklər saxlanılmayacaq',
+                message: 'Dəyişikliklər saxlanılmayacaq. Davam etmək istəyirsiniz?',
+                confirmText: 'Bəli, davam et',
+                cancelText: 'Ləğv et'
+            }).subscribe(confirmed => {
+                if (confirmed) {
+                    this.router.navigate(['/admin/permissions/user-permission']);
+                }
+            });
         } else {
             this.router.navigate(['/admin/permissions/user-permission']);
         }

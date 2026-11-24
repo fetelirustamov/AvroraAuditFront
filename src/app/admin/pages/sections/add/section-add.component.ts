@@ -43,7 +43,7 @@ export class SectionAddComponent implements OnInit {
         private sectionService: SectionService,
         private firmService: FirmService,
         @Optional() private dialogRef?: MatDialogRef<SectionAddComponent>,
-        @Optional() @Inject(MAT_DIALOG_DATA) public data?: SectionDto | { mode: 'edit', item: SectionDto }
+        @Optional() @Inject(MAT_DIALOG_DATA) public data?: SectionDto | { mode: 'edit', item: SectionDto } | { firmId: number }
     ) {
         this.form = this.fb.group({
             firmId: [null, Validators.required],
@@ -64,6 +64,9 @@ export class SectionAddComponent implements OnInit {
                 sectionName: dialogData.item.sectionName,
                 sectionDescription: dialogData.item.sectionDescription
             });
+        } else if (dialogData?.firmId) {
+            // "Audit Strukturu" səhifəsindən firma konteksti ilə açılıb - firma sahəsini əvvəlcədən doldur
+            this.form.patchValue({ firmId: dialogData.firmId });
         }
     }
 

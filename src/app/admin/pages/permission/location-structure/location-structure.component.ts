@@ -1,22 +1,18 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { MatCardModule } from '@angular/material/card';
+import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
-import { MatTableModule } from '@angular/material/table';
-import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatChipsModule } from '@angular/material/chips';
-import { MatDividerModule } from '@angular/material/divider';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { MatDialogModule } from '@angular/material/dialog';
+import { MatMenuModule } from '@angular/material/menu';
 import { AuditLoadingOverlayComponent } from '../../../../ui/components/audit-loading-overlay/audit-loading-overlay.component';
 import { NotificationService } from '../../../../shared/services/notification.service';
-import { SelectionModel } from '@angular/cdk/collections';
-import { forkJoin, Observable } from 'rxjs';
+import { forkJoin, Observable, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
+import { FileExportService, datedFileName } from '../../../../shared/services/file-export.service';
 import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dialog.service';
 import { FirmService } from '../../../services/firm.service';
 import { LocationService } from '../../../services/location.service';
@@ -25,21 +21,83 @@ import { StructureService } from '../../../services/structure.service';
 import { FirmDto } from '../../../models/firm.model';
 import { LocationDto } from '../../../models/location.model';
 import { UserDto } from '../../../models/user.model';
-import { StructureDto } from '../../../models/structure.model';
+import { StructureChainDto, StructureDto } from '../../../models/structure.model';
+import { levelRoleLabel } from '../../../../shared/utils/approval-level';
 
-interface ApprovalUser {
-  id: number;              // user-in ID-si
-  structureId?: number;    // API-dən qayıdan structure ID-si (update/delete üçün)
-  userCode?: number;       // API-yə göndərmək üçün rəqəmsal kod
-  locationCode?: number;   // PUT üçün tam model göndərmək lazım
-  structureStatus?: number; // PUT üçün tam model göndərmək lazım (default: 1)
+/**
+ * Sistem hesablarının e-poçt domeni. Bazada sistem/real hesabı ayırd edən sahə
+ * yoxdur (`status` və `authSettingId` hamıda eynidir), ona görə bu heuristika
+ * YALNIZ nişanlama və sıralama üçündür — heç kimi siyahıdan çıxarmır.
+ */
+const SYSTEM_ACCOUNT_EMAIL_DOMAIN = '@audit.com';
+
+/** Ziddiyyətli rəhbər namizədi (neçə mağazada bu şəxs rəhbər kimi çıxır). */
+interface SupervisorVote {
+  parentCode: number;
+  count: number;
+  name: string;
+}
+
+/** Şəxsin zəncirdə iştirak etdiyi mağaza (istənilən pillədə). */
+interface PersonChainStore {
+  code: number;
+  name: string;
+  regionName: string;
+  level: number;
+  roleLabel: string;
+}
+
+/** Zəncirə əlavə siyahısının bir sətri. */
+interface AddUserOption {
+  userCode: number;
   name: string;
   code: string;
   position: string;
-  order: number;           // = level (API-dəki level field-i)
-  limit: number;
-  budgetLimit: number;
+  isSystem: boolean;
 }
+
+/** İdarə etdiyi bir ərazi (mağaza). */
+interface StoreRef {
+  code: number;
+  name: string;
+  regionName: string;
+}
+
+/** İerarxiya ağacının bir düyünü — bir şəxs. */
+interface PersonNode {
+  userCode: number;
+  name: string;
+  code: string;           // sicil
+  level: number;          // onay mərtəbəsi (1 = mağaza müdiri)
+  roleLabel: string;
+  children: PersonNode[]; // tabeçiliyindəki şəxslər
+  territories: StoreRef[]; // birbaşa idarə etdiyi mağazalar (yalnız 1-ci mərtəbə)
+  parentCode?: number;
+}
+
+/** Sağ paneldə bir mağazanın redaktə olunan onay zənciri. */
+interface ChainMember {
+  structureId?: number;
+  userCode?: number;
+  level: number;
+  name: string;
+  code: string;
+  roleLabel: string;
+  status: number;
+}
+interface StoreEditModel {
+  code: number;
+  name: string;
+  regionName: string;
+  members: ChainMember[];
+  addUserCode: number | null;
+  saving: boolean;
+}
+
+/** Excel idxal (wide format). */
+interface ParsedImportRow { rowNumber: number; locationCode: number | null; userCodes: number[]; }
+interface ImportIssue { row: number; message: string; }
+interface ImportResult { successCount: number; warningCount: number; errorCount: number; issues: ImportIssue[]; }
 
 @Component({
   selector: 'app-location-structure',
@@ -47,19 +105,13 @@ interface ApprovalUser {
   imports: [
     CommonModule,
     FormsModule,
-    ReactiveFormsModule,
-    MatCardModule,
     MatButtonModule,
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
-    MatTableModule,
-    MatCheckboxModule,
-    MatChipsModule,
-    MatDividerModule,
     MatTooltipModule,
     MatProgressBarModule,
-    MatDialogModule,
+    MatMenuModule,
     AuditLoadingOverlayComponent
   ],
   templateUrl: './location-structure.component.html',
@@ -67,59 +119,61 @@ interface ApprovalUser {
 })
 export class LocationStructureComponent implements OnInit {
 
-  // Data sources
+  // ── Data ──────────────────────────────────────────────────────────────────
   marketNetworks: FirmDto[] = [];
-  allLocations: LocationDto[] = [];
-  filteredLocations: LocationDto[] = [];
-  allUsers: UserDto[] = [];
-
-  // Selected values
   selectedNetwork: FirmDto | null = null;
-  selectedStore: LocationDto | null = null;
-  approvalUsers: ApprovalUser[] = [];
+  allUsers: UserDto[] = [];
+  firmLocations: LocationDto[] = [];   // seçilmiş firmanın bütün mağazaları
+  private userByCode = new Map<number, UserDto>();
+  private locByCode = new Map<number, LocationDto>();
+  private networkStoreCodes = new Set<number>();
+  /** userCode → ziddiyyətli rəhbərlər (ağacda yalnız biri görünür). */
+  private parentConflicts = new Map<number, SupervisorVote[]>();
+  private rawStructures: StructureDto[] = [];  // şəbəkəyə aid bütün struktur sətirləri
 
-  // Table data
-  displayedColumns: string[] = ['select', 'id', 'code', 'name', 'position'];
-  dataSource: UserDto[] = [];
-  selection = new SelectionModel<UserDto>(true, []);
+  // ── Ağac ──────────────────────────────────────────────────────────────────
+  roots: PersonNode[] = [];
+  orphans: PersonNode[] = [];
+  private expanded = new Set<number>();
 
-  // Search filters
-  searchCode: string = '';
-  searchName: string = '';
+  // ── Seçim / detal ───────────────────────────────────────────────────────
+  selectedPerson: PersonNode | null = null;
+  selectedStore: StoreEditModel | null = null;
 
-  // Loading states
-  isLoadingFirms: boolean = false;
-  isLoadingLocations: boolean = false;
-  isLoadingUsers: boolean = false;
-  isLoadingStructures: boolean = false;
-  isSaving: boolean = false;
+  // ── Yeni bağlantı (zənciri olmayan mağazanı bağlamaq) ──────────────────
+  newBindingMode: boolean = false;
+  newStoreSearch: string = '';
+  /** Mağaza seçicisində "Hamısı / Boş / Bağlı" filtri. */
+  newStoreFilter: 'all' | 'free' | 'bound' = 'all';
+  /** Seçilən mağazanın onsuz da zənciri var idi (yeni qurulmur, redaktə olunur). */
+  editingExistingChain: boolean = false;
+  /** Zəncirə əlavə paneli üçün istifadəçi axtarışı. */
+  addUserSearch: string = '';
+  // Bir dəfə hesablanır (getter deyil) — böyük mağaza siyahısında dondurma olmasın.
+  private newStoreOptions: { code: number; name: string; bound: boolean }[] = [];
 
-  // Excel import properties
+  // ── UI ──────────────────────────────────────────────────────────────────
+  search: string = '';
+  showHelp: boolean = false;
+  showImport: boolean = false;
+
+  // ── Excel ─────────────────────────────────────────────────────────────────
   isDragOver: boolean = false;
-  uploadProgress: number = 0;
-  uploadResults: any = null;
+  isImporting: boolean = false;
+  uploadResults: ImportResult | null = null;
 
-  get workspaceBusy(): boolean {
-    return this.isLoadingFirms || this.isLoadingLocations || this.isLoadingUsers ||
-      this.isLoadingStructures || this.isSaving;
-  }
+  // ── Yüklənmə + diaqnostika ────────────────────────────────────────────────
+  isLoadingFirms = false;
+  isLoadingData = false;
+  totalStructuresLoaded = 0;   // serverdən gələn ümumi struktur sayı
+  scopeNote = '';              // hansı əhatə ilə süzüldü (diaqnostika)
 
+  get workspaceBusy(): boolean { return this.isLoadingFirms || this.isLoadingData; }
   get workspaceLoadingTitle(): string {
-    if (this.isSaving) return 'Əməliyyat aparılır';
-    if (this.isLoadingFirms) return 'Market şəbəkələri yüklənir';
-    if (this.isLoadingLocations) return 'Mağazalar yüklənir';
-    if (this.isLoadingUsers) return 'İstifadəçilər yüklənir';
-    if (this.isLoadingStructures) return 'Onay sxemi yüklənir';
-    return 'Yüklənir';
+    return this.isLoadingFirms ? 'Market şəbəkələri yüklənir' : 'Təşkilati struktur qurulur';
   }
-
   get workspaceLoadingHint(): string {
-    if (this.isSaving) return 'Dəyişikliklər saxlanılır…';
-    if (this.isLoadingFirms) return 'Şəbəkə siyahısı hazırlanır…';
-    if (this.isLoadingLocations) return 'Mağaza siyahısı yenilənir…';
-    if (this.isLoadingUsers) return 'İstifadəçi siyahısı yüklənir…';
-    if (this.isLoadingStructures) return 'Onay sxemi məlumatları gətirilir…';
-    return 'Zəhmət olmasa gözləyin…';
+    return this.isLoadingFirms ? 'Şəbəkə siyahısı hazırlanır…' : 'Mağazalar, istifadəçilər və bağlantılar birləşdirilir…';
   }
 
   constructor(
@@ -128,68 +182,215 @@ export class LocationStructureComponent implements OnInit {
     private locationService: LocationService,
     private userService: UserService,
     private structureService: StructureService,
-    private notify: NotificationService
+    private notify: NotificationService,
+    private fileExport: FileExportService,
   ) { }
 
-  ngOnInit() {
-    this.loadFirms();
-  }
+  ngOnInit() { this.loadFirms(); }
 
-  // ── Data loading ────────────────────────────────────────────────────────────
-
+  // ── Yüklənmə ──────────────────────────────────────────────────────────────
   private loadFirms(): void {
     this.isLoadingFirms = true;
     this.firmService.getAllFirms().subscribe({
-      next: (response: any) => {
-        this.marketNetworks = this.extractArray<FirmDto>(response);
-        this.isLoadingFirms = false;
+      next: (r: any) => { this.marketNetworks = this.extractArray<FirmDto>(r); this.isLoadingFirms = false; },
+      error: () => { this.marketNetworks = []; this.isLoadingFirms = false; }
+    });
+  }
+
+  onNetworkChange(network: FirmDto) {
+    this.selectedNetwork = network;
+    this.roots = [];
+    this.orphans = [];
+    this.expanded.clear();
+    this.selectedPerson = null;
+    this.selectedStore = null;
+    this.uploadResults = null;
+    this.loadHierarchy();
+  }
+
+  private loadHierarchy(): void {
+    if (!this.selectedNetwork) return;
+    const firmId = this.selectedNetwork.id;
+    this.isLoadingData = true;
+
+    // Hər çağırış müstəqil degrade olur — biri xəta versə belə qalanları göstərilir.
+    forkJoin({
+      locations: this.locationService.list().pipe(catchError(() => of(null))),
+      users: this.userService.getUsersByFirm(firmId).pipe(catchError(() => of(null))),
+      structures: this.structureService.list().pipe(catchError(() => of(null))),
+    }).subscribe({
+      next: (res: any) => {
+        const locations = this.extractArray<LocationDto>(res.locations).filter(l => l.firmId === firmId);
+        this.allUsers = this.extractArray<UserDto>(res.users);
+        const structures = this.extractArray<StructureDto>(res.structures);
+
+        this.userByCode.clear();
+        this.allUsers.forEach(u => { if (u.userCode != null) this.userByCode.set(u.userCode, u); });
+        // Diqqət: backend-də Location.LocationCode STRING, Structure.LocationCode INT-dir.
+        // Ona görə hər yerdə rəqəmə çeviririk ki, Set/Map açarları uyğun gəlsin.
+        this.firmLocations = locations;
+        this.locByCode.clear();
+        this.networkStoreCodes.clear();
+        locations.forEach(l => {
+          const code = Number(l.locationCode);
+          if (!Number.isFinite(code)) return;
+          this.locByCode.set(code, l);
+          this.networkStoreCodes.add(code);
+        });
+
+        // ── Əhatə süzgəci (dayanıqlı) ─────────────────────────────────────
+        // Əvvəl mağaza (firma lokasiyaları) üzrə süz. Boş çıxsa — firma
+        // istifadəçiləri üzrə, o da boşsa bütün strukturlar (locations siyahısı
+        // yarımçıq və ya firmId uyğunsuzluğu olan hallar üçün fallback).
+        this.totalStructuresLoaded = structures.length;
+        const firmUserCodes = new Set(this.allUsers.map(u => u.userCode).filter((c): c is number => c != null));
+
+        const byStore = structures.filter(s => s.locationCode != null && this.networkStoreCodes.has(s.locationCode));
+        const byUser = structures.filter(s => s.locationCode != null && s.userCode != null && firmUserCodes.has(s.userCode));
+
+        if (byStore.length > 0) {
+          this.rawStructures = byStore;
+          this.scopeNote = '';
+        } else if (byUser.length > 0) {
+          this.rawStructures = byUser;
+          this.scopeNote = 'Mağaza üzrə uyğunluq tapılmadı — firma istifadəçiləri üzrə göstərilir.';
+        } else {
+          this.rawStructures = structures.filter(s => s.locationCode != null);
+          this.scopeNote = structures.length > 0
+            ? 'Firma üzrə süzgəc nəticə vermədi — bütün strukturlar göstərilir.'
+            : '';
+        }
+
+        this.buildTree(true);
+        this.isLoadingData = false;
       },
-      error: () => {
-        this.marketNetworks = [];
-        this.isLoadingFirms = false;
+      error: (err) => {
+        console.error('Struktur yüklənərkən xəta:', err);
+        this.rawStructures = []; this.roots = []; this.orphans = [];
+        this.isLoadingData = false;
+        this.notify.error('Məlumat yüklənmədi');
       }
     });
   }
 
-  private loadLocations(): void {
-    this.isLoadingLocations = true;
-    this.locationService.list().subscribe({
-      next: (response: any) => {
-        const all = this.extractArray<LocationDto>(response);
-        this.allLocations = all;
-        this.filteredLocations = this.selectedNetwork
-          ? all.filter(l => l.firmId === this.selectedNetwork!.id)
-          : [];
-        this.isLoadingLocations = false;
-      },
-      error: () => {
-        this.allLocations = [];
-        this.filteredLocations = [];
-        this.isLoadingLocations = false;
+  // ── Ağacın qurulması (onay zəncirlərini şəxs ağacına çevirir) ───────────────
+  private buildTree(firstBuild: boolean): void {
+    this.parentConflicts.clear();   // hər yenidən qurulmada sıfırlanır
+    // locationCode → struktur sətirləri
+    const byLoc = new Map<number, StructureDto[]>();
+    for (const s of this.rawStructures) {
+      const list = byLoc.get(s.locationCode!) ?? [];
+      list.push(s);
+      byLoc.set(s.locationCode!, list);
+    }
+
+    const nodes = new Map<number, PersonNode>();
+    const parentVotes = new Map<number, Map<number, number>>();   // child → parent → say
+    const territories = new Map<number, Map<number, StoreRef>>(); // owner → storeCode → ref
+
+    const ensure = (userCode: number, pos: number): PersonNode => {
+      let n = nodes.get(userCode);
+      if (!n) {
+        const u = this.userByCode.get(userCode);
+        n = {
+          userCode,
+          name: u ? this.getUserFullName(u) : `İşçi (${userCode})`,
+          code: u ? this.getUserCode(u) : String(userCode),
+          level: pos,
+          roleLabel: this.roleLabel(pos),
+          children: [],
+          territories: [],
+        };
+        nodes.set(userCode, n);
       }
-    });
+      // Şəxsin rolu — çıxdığı ən yüksək mərtəbə
+      if (pos > n.level) { n.level = pos; n.roleLabel = this.roleLabel(pos); }
+      return n;
+    };
+
+    for (const [loc, arr] of byLoc) {
+      arr.sort((a, b) => (a.level ?? 0) - (b.level ?? 0));  // aşağıdan yuxarı
+      const codes = arr.map(s => s.userCode!).filter(c => c != null);
+      codes.forEach((c, i) => ensure(c, i + 1));
+
+      // uşaq (aşağı) → valideyn (yuxarı) səsləri
+      for (let i = 1; i < codes.length; i++) {
+        const child = codes[i - 1], parent = codes[i];
+        const votes = parentVotes.get(child) ?? new Map<number, number>();
+        votes.set(parent, (votes.get(parent) ?? 0) + 1);
+        parentVotes.set(child, votes);
+      }
+
+      // ərazi = 1-ci mərtəbə (mağazaya ən yaxın)
+      if (codes.length > 0) {
+        const owner = codes[0];
+        const map = territories.get(owner) ?? new Map<number, StoreRef>();
+        map.set(loc, { code: loc, name: this.storeName(loc), regionName: this.storeRegion(loc) });
+        territories.set(owner, map);
+      }
+    }
+
+    // valideynləri həll et + əraziləri bağla
+    for (const n of nodes.values()) {
+      const votes = parentVotes.get(n.userCode);
+      if (votes && votes.size > 0) {
+        n.parentCode = [...votes.entries()].sort((a, b) => b[1] - a[1])[0][0];
+        // Ağac hər şəxsi BİR dəfə göstərir, ona görə şəxsin fərqli mağazalarda
+        // fərqli rəhbəri varsa yalnız ən çox səs alan göstərilir, qalanları
+        // itir. Bunu gizlətmək əvəzinə qeyd edib istifadəçiyə bildiririk.
+        if (votes.size > 1) {
+          this.parentConflicts.set(n.userCode, [...votes.entries()]
+            .sort((a, b) => b[1] - a[1])
+            .map(([parentCode, count]) => ({
+              parentCode,
+              count,
+              name: this.userByCode.get(parentCode)
+                ? this.getUserFullName(this.userByCode.get(parentCode)!)
+                : `İşçi (${parentCode})`,
+            })));
+        }
+      }
+      const terr = territories.get(n.userCode);
+      n.territories = terr ? [...terr.values()].sort((a, b) => a.name.localeCompare(b.name, 'az')) : [];
+    }
+
+    // uşaqları bağla
+    for (const n of nodes.values()) {
+      if (n.parentCode != null) {
+        const p = nodes.get(n.parentCode);
+        if (p) p.children.push(n);
+      }
+    }
+    for (const n of nodes.values()) {
+      n.children.sort((a, b) => a.name.localeCompare(b.name, 'az'));
+    }
+
+    // köklər / kimsəsizlər
+    const allRoots = [...nodes.values()].filter(n => n.parentCode == null || !nodes.has(n.parentCode));
+    this.orphans = allRoots
+      .filter(n => n.children.length === 0 && n.territories.length > 0)
+      .sort((a, b) => a.name.localeCompare(b.name, 'az'));
+    this.roots = allRoots
+      .filter(n => n.children.length > 0)
+      .sort((a, b) => a.name.localeCompare(b.name, 'az'));
+
+    if (firstBuild) {
+      // Standart: bütün rəhbərləri (uşağı olanları) aç, yarpaqları yığ
+      this.expanded = new Set([...nodes.values()].filter(n => n.children.length > 0).map(n => n.userCode));
+    }
+
+    // Seçilmiş şəxsi/mağazanı yenilə
+    if (this.selectedPerson) this.selectedPerson = nodes.get(this.selectedPerson.userCode) ?? null;
+    if (this.selectedStore) this.selectedStore = this.buildStoreEdit(this.selectedStore.code);
   }
 
-  private loadUsersByFirm(firmId: number): void {
-    this.isLoadingUsers = true;
-    this.allUsers = [];
-    this.dataSource = [];
-    this.selection.clear();
-    this.userService.getUsersByFirm(firmId).subscribe({
-      next: (response: any) => {
-        this.allUsers = this.extractArray<UserDto>(response);
-        this.applyFilters();
-        this.isLoadingUsers = false;
-      },
-      error: () => {
-        this.allUsers = [];
-        this.dataSource = [];
-        this.isLoadingUsers = false;
-      }
-    });
+  private roleLabel(level: number): string { return levelRoleLabel(level); }
+  private storeName(code: number): string { return this.locByCode.get(code)?.locationName ?? `Mağaza ${code}`; }
+  private storeRegion(code: number): string {
+    const l = this.locByCode.get(code);
+    return (l?.RegionName || l?.locationAddress || '').trim() || 'Region təyin edilməyib';
   }
 
-  /** API response-dan array çıxarır (müxtəlif wrapper formatlarına uyğun) */
   private extractArray<T>(response: any): T[] {
     if (response && Array.isArray(response.data)) return response.data as T[];
     if (Array.isArray(response)) return response as T[];
@@ -197,8 +398,7 @@ export class LocationStructureComponent implements OnInit {
     return [];
   }
 
-  // ── Helpers ─────────────────────────────────────────────────────────────────
-
+  // ── İstifadəçi helper-ləri ───────────────────────────────────────────────────
   getUserFullName(user: UserDto): string {
     const realName = [user.name, user.surName].filter(Boolean).join(' ');
     if (realName.trim()) return realName;
@@ -206,407 +406,495 @@ export class LocationStructureComponent implements OnInit {
     if (altName.trim()) return altName;
     return user.email || '-';
   }
-
   getUserCode(user: UserDto): string {
     if (user.userCode) return String(user.userCode);
     return user.email || String(user.id);
   }
-
-  getUserPosition(user: UserDto): string {
-    return user.roleName || '-';
+  getInitials(name: string): string {
+    const parts = (name || '').trim().split(/\s+/).filter(Boolean);
+    if (parts.length === 0) return '—';
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
   }
 
-  isUserActive(user: UserDto): boolean {
-    if (user.status !== undefined) return user.status === 1;
-    return user.isActive === true;
+  // ── KPI ──────────────────────────────────────────────────────────────────────
+  private get allNodes(): PersonNode[] {
+    const acc: PersonNode[] = [];
+    const walk = (n: PersonNode) => { acc.push(n); n.children.forEach(walk); };
+    this.roots.forEach(walk);
+    this.orphans.forEach(n => acc.push(n));
+    return acc;
+  }
+  get hasNetwork(): boolean { return !!this.selectedNetwork; }
+  get countDirectors(): number { return this.allNodes.filter(n => n.level >= 3).length; }
+  get countManagers(): number { return this.allNodes.filter(n => n.level === 2).length; }
+  get countStoreManagers(): number { return this.allNodes.filter(n => n.level === 1).length; }
+  get countBoundStores(): number { return this.networkStoreCodes.size ? this.boundStoreCount() : 0; }
+  get countOrphans(): number { return this.orphans.length; }
+
+  private boundStoreCount(): number {
+    const s = new Set<number>();
+    this.rawStructures.forEach(x => { if (x.locationCode != null) s.add(x.locationCode); });
+    return s.size;
   }
 
-  // ── Selection controls ───────────────────────────────────────────────────────
+  // Ağac panelinin nişanı. Əvvəl şablonda "{{ roots.length }} direktor" sərt
+  // kodlanmışdı: kökdə Satış müdiri dayananda belə "2 direktor" yazırdı və
+  // eyni ekrandakı "0 Direktor" çipi ilə ziddiyyət yaradırdı.
+  get rootsBadge(): string {
+    const n = this.roots.length;
+    if (!n) return '0 kök';
+    const labels = new Set(this.roots.map(r => r.roleLabel).filter(Boolean));
+    return labels.size === 1 ? `${n} ${[...labels][0]}` : `${n} kök`;
+  }
 
-  onNetworkChange(network: FirmDto) {
-    this.selectedNetwork = network;
+  // Axtarış zamanı nəticə sayı — əvvəl nişan tamamilə gizlənirdi, yəni
+  // "neçə nəticə var?" məlumatı məhz lazım olan anda itirdi.
+  get searchResultBadge(): string {
+    const count = this.displayRoots.length + this.displayOrphans.length;
+    return `${count} nəticə`;
+  }
+
+  // ── Ağac görünüşü + axtarış ──────────────────────────────────────────────────
+  get searching(): boolean { return this.search.trim().length > 0; }
+
+  get displayRoots(): PersonNode[] {
+    if (!this.searching) return this.roots;
+    return this.roots.map(r => this.pruneNode(r)).filter((n): n is PersonNode => !!n);
+  }
+  get displayOrphans(): PersonNode[] {
+    if (!this.searching) return this.orphans;
+    return this.orphans.filter(n => this.matchPerson(n) || n.territories.some(t => this.matchStore(t)));
+  }
+
+  private pruneNode(n: PersonNode): PersonNode | null {
+    if (this.matchPerson(n)) return n;  // uyğun gələn şəxs bütün komandası ilə qalır
+    const kids = n.children.map(c => this.pruneNode(c)).filter((x): x is PersonNode => !!x);
+    const terrs = n.territories.filter(t => this.matchStore(t));
+    if (kids.length || terrs.length) return { ...n, children: kids, territories: terrs };
+    return null;
+  }
+  // Ekranda görünən hər şey axtarıla bilməlidir: ad, sicil, ROL və REGION.
+  // Əvvəl rol/region axtarılmırdı — istifadəçi sətirdə gördüyü "Satış müdiri"
+  // və ya "yasamal" sözünü yazanda "tapılmadı" alırdı.
+  private matchPerson(n: PersonNode): boolean {
+    const q = this.searchTerm;
+    if (!q) return true;
+    return n.name.toLowerCase().includes(q)
+      || this.matchCode(n.code, q)
+      || (n.roleLabel ?? '').toLowerCase().includes(q);
+  }
+  private matchStore(t: StoreRef): boolean {
+    const q = this.searchTerm;
+    if (!q) return true;
+    return t.name.toLowerCase().includes(q)
+      || this.matchCode(String(t.code), q)
+      || (t.regionName ?? '').toLowerCase().includes(q);
+  }
+
+  private get searchTerm(): string { return this.search.trim().toLowerCase(); }
+
+  // Kodlar üçün substring yox, PREFIKS uyğunluğu: "33" yazanda 4336/4339/4335-in
+  // hamısı gəlirdi və axtarış sınıq görünürdü.
+  private matchCode(code: string, q: string): boolean {
+    return code.toLowerCase().startsWith(q);
+  }
+
+  hasChildrenOrTerritories(n: PersonNode): boolean {
+    return n.children.length > 0 || n.territories.length > 0;
+  }
+  isExpanded(n: PersonNode): boolean {
+    return this.searching || this.expanded.has(n.userCode);
+  }
+  toggleNode(n: PersonNode, event: Event) {
+    event.stopPropagation();
+    if (this.expanded.has(n.userCode)) this.expanded.delete(n.userCode);
+    else this.expanded.add(n.userCode);
+  }
+  expandAll() { this.allNodes.forEach(n => { if (this.hasChildrenOrTerritories(n)) this.expanded.add(n.userCode); }); }
+  collapseAll() { this.expanded.clear(); }
+  clearSearch() { this.search = ''; }
+
+  trackByNode(_: number, n: PersonNode): number { return n.userCode; }
+  trackByStoreRef(_: number, t: StoreRef): number { return t.code; }
+  trackByMember(_: number, m: ChainMember): number { return m.structureId ?? m.userCode ?? m.level; }
+
+  // ── Seçim ──────────────────────────────────────────────────────────────────
+  selectPerson(n: PersonNode) {
     this.selectedStore = null;
-    this.approvalUsers = [];
-    this.selection.clear();
-    this.loadLocations();
-    this.loadUsersByFirm(network.id);
+    this.newBindingMode = false;
+    this.selectedPerson = n;
+  }
+  selectStore(ref: StoreRef) {
+    this.selectedPerson = null;
+    this.newBindingMode = false;
+    // Ağacdan gəlirsə onsuz da mövcud zəncirdir — nişan yalnız "Yeni bağlantı"
+    // axınında mənalıdır, ona görə burada sıfırlanır.
+    this.editingExistingChain = false;
+    this.addUserSearch = '';
+    this.selectedStore = this.buildStoreEdit(ref.code);
+  }
+  clearSelection() {
+    this.selectedPerson = null; this.selectedStore = null;
+    this.newBindingMode = false; this.editingExistingChain = false;
+    this.addUserSearch = '';
   }
 
-  onStoreChange(store: LocationDto) {
-    this.selectedStore = store;
-    this.approvalUsers = [];
-    this.selection.clear();
-    this.applyFilters();
-    if (store.locationCode) {
-      this.loadStructuresByLocation(store.locationCode);
-    }
+  // ── Yeni bağlantı ───────────────────────────────────────────────────────
+  startNewBinding() {
+    this.selectedPerson = null;
+    this.selectedStore = null;
+    this.newStoreSearch = '';
+    this.newStoreFilter = 'all';
+    this.editingExistingChain = false;
+    this.newBindingMode = true;
+
+    // Mağaza siyahısını BİR dəfə hesabla (bağlı olanlar sonda). Zəncirli
+    // mağaza kodları Set-ə yığılır ki, hər sətir üçün O(1) yoxlanılsın.
+    const boundCodes = new Set(this.rawStructures.map(s => s.locationCode).filter((c): c is number => c != null));
+    this.newStoreOptions = this.firmLocations
+      .map(l => {
+        const code = Number(l.locationCode);
+        return { code, name: l.locationName || `Mağaza ${code}`, bound: boundCodes.has(code) };
+      })
+      .filter(o => Number.isFinite(o.code))
+      .sort((a, b) => (a.bound === b.bound ? a.name.localeCompare(b.name, 'az') : a.bound ? 1 : -1));
   }
 
-  // ── Mağaza seçildikdə mövcud strukturları yüklə ──────────────────────────────
+  /** Axtarış + "Boş / Bağlı" filtrinə görə süzülmüş mağazalar (maks. 60 sətir). */
+  get filteredNewStoreOptions(): { code: number; name: string; bound: boolean }[] {
+    const q = this.newStoreSearch.trim().toLowerCase();
+    let src = this.newStoreOptions;
+    if (this.newStoreFilter === 'free') src = src.filter(o => !o.bound);
+    else if (this.newStoreFilter === 'bound') src = src.filter(o => o.bound);
+    if (q) src = src.filter(o => o.name.toLowerCase().includes(q) || String(o.code).startsWith(q));
+    return src.slice(0, 60);
+  }
+  get newStoreTotal(): number { return this.newStoreOptions.length; }
+  get freeStoreCount(): number { return this.newStoreOptions.filter(o => !o.bound).length; }
+  get boundStoreOptionCount(): number { return this.newStoreOptions.filter(o => o.bound).length; }
+  setNewStoreFilter(f: 'all' | 'free' | 'bound') { this.newStoreFilter = f; }
 
-  private loadStructuresByLocation(locationCode: number): void {
-    this.isLoadingStructures = true;
-    this.structureService.getByLocationCode(locationCode).subscribe({
-      next: (response: any) => {
-        const structures = this.extractArray<StructureDto>(response);
-
-        // Level-ə görə sırala
-        structures.sort((a, b) => (a.level ?? 0) - (b.level ?? 0));
-
-        // Hər strukturu ApprovalUser-ə çevir
-        this.approvalUsers = structures.map(s => {
-          const user = this.allUsers.find(u => u.userCode === s.userCode);
-          return {
-            id: user?.id ?? 0,
-            structureId: s.id,
-            userCode: s.userCode,
-            locationCode: s.locationCode,
-            structureStatus: s.status ?? 1,
-            name: user ? this.getUserFullName(user) : `İstifadəçi (${s.userCode})`,
-            code: user ? this.getUserCode(user) : String(s.userCode ?? ''),
-            position: user ? this.getUserPosition(user) : '-',
-            order: s.level ?? 1,
-            limit: 1000,
-            budgetLimit: 500
-          };
-        });
-
-        this.isLoadingStructures = false;
-      },
-      error: (err) => {
-        console.error('Strukturlar yüklənərkən xəta:', err);
-        this.approvalUsers = [];
-        this.isLoadingStructures = false;
-      }
-    });
+  chooseNewStore(code: number) {
+    this.newBindingMode = false;
+    // Seçilən mağazanın ARTIQ zənciri varmı — panel başlığı və ipucu buna görə
+    // dəyişir. Əvvəl bağlı mağaza seçiləndə də "zənciri quracaqsınız" yazılırdı.
+    this.editingExistingChain = this.newStoreOptions.find(o => o.code === code)?.bound ?? false;
+    this.addUserSearch = '';
+    this.selectedStore = this.buildStoreEdit(code);
   }
 
-  getFilteredStores(): LocationDto[] {
-    return this.filteredLocations;
+  trackByStoreCode(_: number, o: { code: number }): number { return o.code; }
+  trackByUserCode(_: number, o: AddUserOption): number { return o.userCode; }
+
+  private buildStoreEdit(code: number): StoreEditModel {
+    const members = this.rawStructures
+      .filter(s => s.locationCode === code)
+      .sort((a, b) => (a.level ?? 0) - (b.level ?? 0))
+      .map((s, i) => {
+        const u = s.userCode != null ? this.userByCode.get(s.userCode) : undefined;
+        return {
+          structureId: s.id,
+          userCode: s.userCode,
+          level: i + 1,
+          name: u ? this.getUserFullName(u) : `İşçi (${s.userCode})`,
+          code: u ? this.getUserCode(u) : String(s.userCode ?? ''),
+          roleLabel: this.roleLabel(i + 1),
+          status: s.status ?? 1,
+        } as ChainMember;
+      });
+    return { code, name: this.storeName(code), regionName: this.storeRegion(code), members, addUserCode: null, saving: false };
   }
 
-  onSearchChange() { this.applyFilters(); }
-
-  clearFilters() {
-    this.searchCode = '';
-    this.searchName = '';
-    this.applyFilters();
+  // ── Mağaza zəncirinin redaktəsi (sağ panel) ───────────────────────────────
+  // ── Şəxs → mağaza zəncirləri ────────────────────────────────────────────────
+  /**
+   * Şəxsin iştirak etdiyi BÜTÜN mağaza zəncirləri (istənilən pillədə).
+   * `territories` yalnız 1-ci pillədəki (Mağaza müdiri) mağazaları verir, ona görə
+   * Satış müdiri/Direktor üçün panel boş görünürdü və onların zəncirinə çatmaq
+   * üçün tabeçilikdən keçmək lazım gəlirdi.
+   */
+  chainStoresFor(node: PersonNode): PersonChainStore[] {
+    return this.rawStructures
+      .filter(s => s.userCode === node.userCode
+        && s.locationCode != null
+        && this.networkStoreCodes.has(s.locationCode))
+      .map(s => {
+        const code = s.locationCode as number;
+        const level = s.level ?? 0;
+        return {
+          code,
+          name: this.storeName(code),
+          regionName: this.storeRegion(code),
+          level,
+          roleLabel: this.roleLabel(level),
+        };
+      })
+      .sort((a, b) => a.name.localeCompare(b.name, 'az'));
   }
 
-  applyFilters() {
-    let filtered = [...this.allUsers];
-
-    if (this.searchCode.trim()) {
-      const q = this.searchCode.toLowerCase().trim();
-      filtered = filtered.filter(u => this.getUserCode(u).toLowerCase().includes(q));
-    }
-
-    if (this.searchName.trim()) {
-      const q = this.searchName.toLowerCase().trim();
-      filtered = filtered.filter(u => this.getUserFullName(u).toLowerCase().includes(q));
-    }
-
-    this.dataSource = filtered;
+  /** Bu şəxsin rəhbəri mağazadan-mağazaya fərqlidirsə — siyahı, yoxsa null. */
+  supervisorConflict(node: PersonNode): SupervisorVote[] | null {
+    return this.parentConflicts.get(node.userCode) ?? null;
   }
 
-  // ── Approval siyahısına əlavə et (POST) ─────────────────────────────────────
+  /** Səhifə səviyyəsində ümumi ziddiyyət sayı. */
+  get conflictCount(): number { return this.parentConflicts.size; }
 
-  addToApproval() {
-    if (!this.selectedStore) {
-      this.notify.warning('Zəhmət olmasa əvvəlcə mağaza seçin');
-      return;
-    }
-
-    const selectedUsers = this.selection.selected;
-    if (selectedUsers.length === 0) return;
-
-    // Artıq əlavə edilməmiş userləri filtrə et
-    const newUsers: ApprovalUser[] = [];
-    const createRequests: Observable<any>[] = [];
-
-    // Mövcud strukturların ən yüksək level-ini tap
-    const maxExistingLevel = this.approvalUsers.length > 0
-      ? Math.max(...this.approvalUsers.map(u => u.order))
-      : 0;
-
-    selectedUsers.forEach(user => {
-      if (this.approvalUsers.find(au => au.id === user.id)) return;
-
-      const level = maxExistingLevel + newUsers.length + 1;
-
-      const approvalUser: ApprovalUser = {
-        id: user.id,
-        userCode: user.userCode,
-        locationCode: this.selectedStore!.locationCode,
-        structureStatus: 1,
-        name: this.getUserFullName(user),
-        code: this.getUserCode(user),
-        position: this.getUserPosition(user),
-        order: level,
-        limit: 1000,
-        budgetLimit: 500
-      };
-      newUsers.push(approvalUser);
-
-      const payload: Partial<StructureDto> = {
-        locationCode: this.selectedStore!.locationCode,
-        userCode: user.userCode,
-        level: level,
-        status: 1
-      };
-      createRequests.push(this.structureService.create(payload));
-    });
-
-    if (newUsers.length === 0) {
-      this.selection.clear();
-      return;
-    }
-
-    // Optimistik UI yeniləmə
-    this.approvalUsers = [...this.approvalUsers, ...newUsers];
-    this.selection.clear();
-    this.isSaving = true;
-
-    forkJoin(createRequests).subscribe({
-      next: (responses: any[]) => {
-        // Hər user üçün API-dən qayıdan structureId-ni saxla
-        responses.forEach((res, i) => {
-          const created: StructureDto = res?.data?.[0] ?? res?.data ?? res;
-          if (created?.id) {
-            newUsers[i].structureId = created.id;
-            newUsers[i].locationCode = created.locationCode ?? newUsers[i].locationCode;
-            newUsers[i].structureStatus = created.status ?? newUsers[i].structureStatus ?? 1;
-          }
-        });
-        this.isSaving = false;
-        this.notify.success(`${newUsers.length} istifadəçi onay sxeminə əlavə edildi`);
-      },
-      error: (err) => {
-        console.error('Struktur yaradılarkən xəta:', err);
-        // Rollback
-        const ids = new Set(newUsers.map(u => u.id));
-        this.approvalUsers = this.approvalUsers.filter(au => !ids.has(au.id));
-        this.isSaving = false;
-        this.notify.error('Xəta baş verdi', { message: 'Əməliyyat ləğv edildi.' });
-      }
-    });
+  openChainStore(s: PersonChainStore) {
+    this.selectStore({ code: s.code, name: s.name, regionName: s.regionName } as StoreRef);
   }
+  trackByChainStore(_: number, s: PersonChainStore): number { return s.code; }
 
-  // ── Sıranı dəyişdir (yuxarı) → level update ─────────────────────────────────
-
-  moveUp(user: ApprovalUser) {
-    if (user.order <= 1) return;
-    const prev = this.approvalUsers.find(au => au.order === user.order - 1);
-    if (!prev) return;
-
-    [user.order, prev.order] = [prev.order, user.order];
-    this.approvalUsers.sort((a, b) => a.order - b.order);
-
-    this.swapLevels(user, prev);
-  }
-
-  // ── Sıranı dəyişdir (aşağı) → level update ──────────────────────────────────
-
-  moveDown(user: ApprovalUser) {
-    if (user.order >= this.approvalUsers.length) return;
-    const next = this.approvalUsers.find(au => au.order === user.order + 1);
-    if (!next) return;
-
-    [user.order, next.order] = [next.order, user.order];
-    this.approvalUsers.sort((a, b) => a.order - b.order);
-
-    this.swapLevels(user, next);
+  availableUsers(store: StoreEditModel): UserDto[] {
+    const used = new Set(store.members.map(m => m.userCode));
+    return this.allUsers.filter(u => u.userCode != null && !used.has(u.userCode));
   }
 
   /**
-   * Hər iki userin yeni levelini eyni anda API-yə göndər (forkJoin).
-   * Hər ikisinin structureId-si olmalıdır.
+   * Zəncirə əlavə üçün istifadəçi seçimi: axtarışla süzülür, vəzifə göstərilir,
+   * sistem hesabları nişanlanıb sona atılır (gizlədilmir).
    */
-  private buildUpdatePayload(u: ApprovalUser): StructureDto {
-    return {
-      id: u.structureId,
-      status: u.structureStatus ?? 1,
-      locationCode: u.locationCode,
-      userCode: u.userCode,
-      level: u.order
-    };
+  addUserOptions(store: StoreEditModel): AddUserOption[] {
+    const q = this.addUserSearch.trim().toLowerCase();
+    return this.availableUsers(store)
+      .map(u => {
+        const position = (u.position ?? '').trim();
+        return {
+          userCode: u.userCode as number,
+          name: this.getUserFullName(u),
+          code: this.getUserCode(u),
+          position,
+          isSystem: this.isSystemAccount(u),
+        };
+      })
+      .filter(o => !q
+        || o.name.toLowerCase().includes(q)
+        || o.code.toLowerCase().startsWith(q)
+        || o.position.toLowerCase().includes(q))
+      .sort((a, b) =>
+        a.isSystem !== b.isSystem ? (a.isSystem ? 1 : -1) : a.name.localeCompare(b.name, 'az'));
   }
 
-  private swapLevels(a: ApprovalUser, b: ApprovalUser): void {
-    const requests: { user: ApprovalUser; obs: Observable<any> }[] = [];
+  /**
+   * Sistem hesabı HEURİSTİKASIDIR — bazada etibarlı göstərici yoxdur:
+   * `status` və `authSettingId` bütün istifadəçilərdə eynidir (1 / "1").
+   * Ona görə yalnız NİŞANLAMA və SIRALAMA üçün işlədilir; heç kimi siyahıdan
+   * çıxarmır, yəni səhv müsbət nəticə heç kimi əlçatmaz etmir.
+   */
+  private isSystemAccount(u: UserDto): boolean {
+    const position = (u.position ?? '').trim().toLowerCase();
+    if (position === 'admin') return true;
+    const email = (u.email ?? '').trim().toLowerCase();
+    return email.endsWith(SYSTEM_ACCOUNT_EMAIL_DOMAIN);
+  }
 
-    [a, b].forEach(u => {
-      if (!u.structureId) {
-        console.warn(`${u.name} üçün structureId yoxdur — level update edilmir`);
-        return;
-      }
-      requests.push({
-        user: u,
-        obs: this.structureService.update(u.structureId, this.buildUpdatePayload(u))
-      });
-    });
+  /** Əlavə ediləcək şəxsin düşəcəyi pillə və onun rol adı. */
+  nextLevel(store: StoreEditModel): number { return store.members.length + 1; }
+  nextLevelLabel(store: StoreEditModel): string { return this.roleLabel(this.nextLevel(store)); }
 
-    if (requests.length === 0) return;
+  selectAddUser(store: StoreEditModel, code: number) {
+    store.addUserCode = store.addUserCode === code ? null : code;
+  }
+  clearAddUserSearch() { this.addUserSearch = ''; }
 
-    forkJoin(requests.map(r => r.obs)).subscribe({
-      next: () => {
-        this.notify.success('Level uğurla yeniləndi');
+  addMember(store: StoreEditModel) {
+    const code = store.addUserCode;
+    if (code == null) return;
+    const level = store.members.length + 1;
+    store.saving = true;
+    this.structureService.create({ locationCode: store.code, userCode: code, level, status: 1 }).subscribe({
+      next: (res: any) => {
+        const created: StructureDto = res?.data?.[0] ?? res?.data ?? res;
+        this.rawStructures.push({ id: created?.id, locationCode: store.code, userCode: code, level, status: 1 });
+        store.addUserCode = null;
+        store.saving = false;
+        this.buildTree(false);
+        this.notify.success('İstifadəçi zəncirə əlavə edildi');
       },
-      error: (err) => {
-        console.error('Level yenilənərkən xəta:', err);
-        this.notify.error('Level yenilənərkən xəta baş verdi');
-      }
+      error: (err) => { console.error(err); store.saving = false; this.notify.error('Əlavə edilmədi'); }
     });
   }
 
-  private updateStructureLevel(u: ApprovalUser): void {
-    if (!u.structureId) return;
-    this.structureService.update(u.structureId, this.buildUpdatePayload(u)).subscribe({
-      error: (err) => console.error(`${u.name} üçün level yenilənərkən xəta:`, err)
+  moveMember(store: StoreEditModel, member: ChainMember, dir: -1 | 1) {
+    const idx = store.members.indexOf(member);
+    const swapIdx = idx + dir;
+    if (swapIdx < 0 || swapIdx >= store.members.length) return;
+    const other = store.members[swapIdx];
+
+    // level dəyərlərini dəyiş
+    const raws = this.rawForStore(store.code);
+    const rawA = raws.find(r => r.id === member.structureId);
+    const rawB = raws.find(r => r.id === other.structureId);
+    if (rawA && rawB) { const t = rawA.level; rawA.level = rawB.level; rawB.level = t; }
+
+    store.saving = true;
+    const reqs: Observable<any>[] = [];
+    if (rawA?.id) reqs.push(this.structureService.update(rawA.id, this.rawPayload(rawA)));
+    if (rawB?.id) reqs.push(this.structureService.update(rawB.id, this.rawPayload(rawB)));
+    if (reqs.length === 0) { store.saving = false; this.buildTree(false); return; }
+
+    forkJoin(reqs).subscribe({
+      next: () => { store.saving = false; this.buildTree(false); },
+      error: (err) => { console.error(err); store.saving = false; this.notify.error('Sıra yenilənmədi'); this.buildTree(false); }
     });
   }
 
-  // ── İstifadəçi sil → DELETE ──────────────────────────────────────────────────
-
-  removeUser(user: ApprovalUser) {
+  removeMember(store: StoreEditModel, member: ChainMember) {
     this.confirmDialog.confirm({
       title: 'İstifadəçi silinsin?',
-      message: `"${user.name}" istifadəçisini onay sxemindən silmək istədiyinizə əminsiniz?`,
-      confirmText: 'Bəli, sil',
-      cancelText: 'Ləğv et'
+      message: `"${member.name}" istifadəçisini "${store.name}" mağazasının onay sxemindən silmək istədiyinizə əminsiniz?`,
+      confirmText: 'Bəli, sil', cancelText: 'Ləğv et'
     }).subscribe(confirmed => {
       if (!confirmed) return;
 
-      const doRemove = () => {
-        this.approvalUsers = this.approvalUsers.filter(au => au.id !== user.id);
-        this.approvalUsers.forEach((u, i) => { u.order = i + 1; });
-        // Qalan userlərin levelini API-də yenilə
-        this.approvalUsers.forEach(u => this.updateStructureLevel(u));
+      const finish = () => {
+        this.rawStructures = this.rawStructures.filter(r => r.id !== member.structureId);
+        // qalan sətirlərin level-lərini yenidən sırala
+        const raws = this.rawForStore(store.code).sort((a, b) => (a.level ?? 0) - (b.level ?? 0));
+        const changed: StructureDto[] = [];
+        raws.forEach((r, i) => { if (r.level !== i + 1) { r.level = i + 1; changed.push(r); } });
+        const reqs = changed.filter(r => r.id).map(r => this.structureService.update(r.id!, this.rawPayload(r)));
+        if (reqs.length) forkJoin(reqs).subscribe({ next: () => this.buildTree(false), error: () => this.buildTree(false) });
+        else this.buildTree(false);
+        this.notify.success('İstifadəçi silindi');
       };
 
-      if (user.structureId) {
-        this.structureService.delete(user.structureId).subscribe({
-          next: () => {
-            doRemove();
-            this.notify.success('İstifadəçi silindi');
-          },
-          error: (err) => {
-            console.error('Silinərkən xəta:', err);
-            this.notify.error('Xəta baş verdi');
-          }
+      if (member.structureId) {
+        store.saving = true;
+        this.structureService.delete(member.structureId).subscribe({
+          next: () => { store.saving = false; finish(); },
+          error: (err) => { console.error(err); store.saving = false; this.notify.error('Xəta baş verdi'); }
         });
-      } else {
-        doRemove();
+      } else finish();
+    });
+  }
+
+  private rawForStore(code: number): StructureDto[] {
+    return this.rawStructures.filter(r => r.locationCode === code);
+  }
+  private rawPayload(r: StructureDto): StructureDto {
+    return { id: r.id, status: r.status ?? 1, locationCode: r.locationCode, userCode: r.userCode, level: r.level };
+  }
+
+  // ── Excel idxal ──────────────────────────────────────────────────────────
+  toggleImport() { this.showImport = !this.showImport; }
+  toggleHelp() { this.showHelp = !this.showHelp; }
+
+  onDragOver(e: DragEvent) { e.preventDefault(); this.isDragOver = true; }
+  onDragLeave(e: DragEvent) { e.preventDefault(); this.isDragOver = false; }
+  onDrop(e: DragEvent) {
+    e.preventDefault(); this.isDragOver = false;
+    const files = e.dataTransfer?.files;
+    if (files && files.length > 0) this.processExcelFile(files[0]);
+  }
+  onFileSelected(e: any) { const f = e.target.files[0]; if (f) this.processExcelFile(f); }
+
+  async processExcelFile(file: File) {
+    if (!this.selectedNetwork) { this.notify.error('Əvvəlcə market şəbəkəsi seçin'); return; }
+    this.uploadResults = null;
+    let parsed: ParsedImportRow[];
+    try { parsed = await this.parseStructureWorkbook(file); }
+    catch (err) {
+      this.notify.error((err as Error)?.message || 'Excel faylı oxunmadı. Faylın .xlsx/.xls olduğunu yoxlayın.');
+      return;
+    }
+    if (parsed.length === 0) { this.notify.warning('Faylda məlumat sətri tapılmadı'); return; }
+    this.importChains(parsed);
+  }
+
+  private async parseStructureWorkbook(file: File): Promise<ParsedImportRow[]> {
+    const buffer = await file.arrayBuffer();
+    const grid = await this.fileExport.readSheetGrid(buffer);
+    if (grid.length < 2) return [];
+    const headers = (grid[0] ?? []).map(h => this.normalizeHeader(h));
+    const locationIdx = headers.findIndex(h => ['magazakodu', 'locationcode', 'magaza', 'kod'].includes(h));
+    if (locationIdx < 0) throw new Error('Faylda "Mağaza kodu" sütunu tapılmadı');
+    const userIdxs = headers.map((header, index) => ({ header, index }))
+      .filter(c => c.index !== locationIdx && c.header !== '').map(c => c.index);
+    if (userIdxs.length === 0) throw new Error('Faylda istifadəçi sütunu (User 1, User 2, …) tapılmadı');
+    return grid.slice(1).map((cells, i) => ({
+      rowNumber: i + 2,
+      locationCode: this.toNumber(cells[locationIdx]),
+      userCodes: userIdxs.map(idx => this.toNumber(cells[idx])).filter((c): c is number => c !== null)
+    })).filter(r => r.locationCode !== null || r.userCodes.length > 0);
+  }
+  private normalizeHeader(value: any): string {
+    return String(value ?? '').toLowerCase()
+      .replace(/ə/g, 'e').replace(/ı/g, 'i').replace(/ğ/g, 'g')
+      .replace(/ş/g, 's').replace(/ç/g, 'c').replace(/ö/g, 'o').replace(/ü/g, 'u')
+      .replace(/[^a-z0-9]/g, '');
+  }
+  private toNumber(value: any): number | null {
+    if (value === null || value === undefined || String(value).trim() === '') return null;
+    const n = Number(String(value).trim());
+    return Number.isFinite(n) ? n : null;
+  }
+
+  private importChains(rows: ParsedImportRow[]): void {
+    const knownUsers = new Set(this.allUsers.map(u => u.userCode).filter(c => c != null));
+    const issues: ImportIssue[] = [];
+    const chains: StructureChainDto[] = [];
+    const rowOfLocation = new Map<number, number>();
+    let warningCount = 0;
+
+    for (const row of rows) {
+      if (row.locationCode === null) { issues.push({ row: row.rowNumber, message: 'Mağaza kodu boşdur' }); continue; }
+      if (!this.networkStoreCodes.has(row.locationCode)) { issues.push({ row: row.rowNumber, message: `Mağaza kodu tapılmadı: ${row.locationCode}` }); continue; }
+      if (rowOfLocation.has(row.locationCode)) { warningCount++; issues.push({ row: row.rowNumber, message: `Bu mağaza faylda təkrarlanır (sətir ${rowOfLocation.get(row.locationCode)}), ötürüldü` }); continue; }
+      if (row.userCodes.length === 0) { issues.push({ row: row.rowNumber, message: 'Heç bir istifadəçi kodu göstərilməyib' }); continue; }
+      const unknown = row.userCodes.filter(c => !knownUsers.has(c));
+      if (unknown.length > 0) { issues.push({ row: row.rowNumber, message: `İstifadəçi kodu tapılmadı: ${unknown.join(', ')} — sətir ötürüldü` }); continue; }
+      const repeated = [...new Set(row.userCodes.filter((c, i) => row.userCodes.indexOf(c) !== i))];
+      if (repeated.length > 0) { issues.push({ row: row.rowNumber, message: `Eyni istifadəçi zəncirdə təkrarlanır: ${repeated.join(', ')}` }); continue; }
+      rowOfLocation.set(row.locationCode, row.rowNumber);
+      chains.push({ locationCode: row.locationCode, userCodes: row.userCodes });
+    }
+
+    if (chains.length === 0) {
+      this.uploadResults = { successCount: 0, warningCount, errorCount: issues.length - warningCount, issues };
+      this.notify.warning('İdxal ediləcək etibarlı sətir tapılmadı');
+      return;
+    }
+
+    this.isImporting = true;
+    this.structureService.replaceChains({ chains }).subscribe({
+      next: (response) => {
+        this.isImporting = false;
+        const result = response?.data;
+        for (const failure of result?.failures ?? []) issues.push({ row: rowOfLocation.get(failure.locationCode) ?? 0, message: failure.message });
+        const successCount = result?.successCount ?? 0;
+        const errorCount = issues.length - warningCount;
+        this.uploadResults = { successCount, warningCount, errorCount, issues };
+        if (successCount > 0) { this.notify.success(`${successCount} mağazanın onay sxemi yeniləndi`); this.loadHierarchy(); }
+        if (errorCount > 0) this.notify.error(`${errorCount} sətir idxal edilmədi`);
+      },
+      error: (err) => {
+        this.isImporting = false; console.error(err);
+        this.uploadResults = { successCount: 0, warningCount, errorCount: (issues.length - warningCount) + chains.length, issues };
+        this.notify.error('İdxal alınmadı', { message: err?.error?.message || 'Server xətası' });
       }
     });
   }
 
-  // ── Siyahıdan çıxar (sol panel seçimindən) ──────────────────────────────────
-
-  removeFromApproval() {
-    const selectedUsers = this.selection.selected;
-    if (selectedUsers.length === 0) return;
-
-    this.approvalUsers = this.approvalUsers.filter(au =>
-      !selectedUsers.find(su => su.id === au.id)
-    );
-    this.approvalUsers.forEach((u, i) => { u.order = i + 1; });
-    this.selection.clear();
-  }
-
-  // ── Ümumi saxla düyməsi ──────────────────────────────────────────────────────
-
-  saveChanges() {
-    if (!this.selectedNetwork) {
-      this.notify.warning('Zəhmət olmasa market şəbəkəsi seçin');
-      return;
-    }
-    if (!this.selectedStore) {
-      this.notify.warning('Zəhmət olmasa mağaza seçin');
-      return;
-    }
-    if (this.approvalUsers.length === 0) {
-      this.notify.warning('Onay sxeminə ən azı bir istifadəçi əlavə edin');
-      return;
-    }
-    this.notify.success('Onay konfiqurasiyası saxlanıldı');
-  }
-
-  // ── Excel ────────────────────────────────────────────────────────────────────
-
-  onDragOver(event: DragEvent) { event.preventDefault(); this.isDragOver = true; }
-  onDragLeave(event: DragEvent) { event.preventDefault(); this.isDragOver = false; }
-
-  onDrop(event: DragEvent) {
-    event.preventDefault();
-    this.isDragOver = false;
-    const files = event.dataTransfer?.files;
-    if (files && files.length > 0) this.processExcelFile(files[0]);
-  }
-
-  onFileSelected(event: any) {
-    const file = event.target.files[0];
-    if (file) this.processExcelFile(file);
-  }
-
-  processExcelFile(file: File) {
-    this.uploadProgress = 0;
-    this.uploadResults = null;
-    const interval = setInterval(() => {
-      this.uploadProgress += 10;
-      if (this.uploadProgress >= 100) {
-        clearInterval(interval);
-        this.uploadProgress = 100;
-        this.showUploadResults();
-      }
-    }, 100);
-  }
-
-  showUploadResults() {
-    this.uploadResults = {
-      successCount: Math.floor(Math.random() * 50) + 10,
-      warningCount: Math.floor(Math.random() * 5),
-      errorCount: Math.floor(Math.random() * 3)
-    };
-  }
-
   downloadTemplate() {
-    const templateData = [
-      ['ID', 'Ad', 'Kod', 'Vəzifə', 'Limit', 'Sıra'],
-      ['1', 'İstifadəçi Adı', 'istifadeci@email.com', 'Mağaza Müdiri', '1000', '1'],
-      ['2', 'İstifadəçi Adı 2', 'istifadeci2@email.com', 'Satış Məsləhətçisi', '500', '2']
-    ];
-    const csvContent = templateData.map(row => row.join(',')).join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    link.setAttribute('href', URL.createObjectURL(blob));
-    link.setAttribute('download', 'yetki_sablonu.csv');
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    const rows = [['Mağaza kodu', 'User 1', 'User 2', 'User 3'], [4336, 200456, 200458, ''], [4337, 200460, '', '']];
+    void this.fileExport.exportGridToExcel(rows, 'Yetkilər', 'yetki_sablonu.xlsx');
   }
 
-  // ── Table helpers ─────────────────────────────────────────────────────────────
-
-  trackByUserId(index: number, user: ApprovalUser): number {
-    return user.id;
-  }
-
-  isAllSelected() {
-    return this.selection.selected.length === this.dataSource.length && this.dataSource.length > 0;
-  }
-
-  toggleAllRows() {
-    if (this.isAllSelected()) {
-      this.selection.clear();
-    } else {
-      this.selection.select(...this.dataSource);
+  exportCurrentStructure() {
+    const byLoc = new Map<number, StructureDto[]>();
+    for (const s of this.rawStructures) {
+      if (s.locationCode == null) continue;
+      const list = byLoc.get(s.locationCode) ?? []; list.push(s); byLoc.set(s.locationCode, list);
     }
-  }
-
-  checkboxLabel(row?: UserDto): string {
-    if (!row) return `${this.isAllSelected() ? 'deselect' : 'select'} all`;
-    return `${this.selection.isSelected(row) ? 'deselect' : 'select'} row ${this.getUserFullName(row)}`;
+    if (byLoc.size === 0) { this.notify.warning('İxrac ediləcək bağlantı tapılmadı'); return; }
+    const chains = [...byLoc.entries()].map(([code, list]) => ({
+      locationCode: code, userCodes: list.sort((a, b) => (a.level ?? 0) - (b.level ?? 0)).map(s => s.userCode)
+    })).sort((a, b) => a.locationCode - b.locationCode);
+    const maxSteps = Math.max(...chains.map(c => c.userCodes.length));
+    const grid: unknown[][] = [['Mağaza kodu', ...Array.from({ length: maxSteps }, (_, i) => `User ${i + 1}`)]];
+    for (const chain of chains) grid.push([chain.locationCode, ...Array.from({ length: maxSteps }, (_, i) => chain.userCodes[i] ?? '')]);
+    void this.fileExport.exportGridToExcel(grid, 'Yetkilər', datedFileName('yetki-strukturu', 'xlsx'));
   }
 }

@@ -41,8 +41,15 @@ export class AdminLoginComponent {
         this.auth.login(email, password).subscribe({
             next: () => {
                 this.loading = false;
-                if (this.auth.hasRole('Admin')) this.router.navigateByUrl(this.returnUrl || '/admin');
-                else this.router.navigate(['/unauthorized']);
+                if (this.auth.hasRole('Admin')) {
+                    this.router.navigateByUrl(this.returnUrl || '/admin');
+                    return;
+                }
+
+                // Admin deyilsə token yaddaşda qalmamalıdır — əks halda istifadəçi
+                // /unauthorized səhifəsində qalsa da sistemə girmiş sayılır.
+                this.auth.clearSession();
+                this.router.navigate(['/unauthorized']);
             },
             error: () => {
                 this.loading = false;
@@ -50,4 +57,4 @@ export class AdminLoginComponent {
             }
         });
     }
-} 
+}

@@ -1,0 +1,97 @@
+/* Yeni istifadəçi forması — input dizaynı qlobal `.admin-input-design` sinfindən gəlir */
+.modal-like {
+    mat-card {
+        margin-bottom: 25px;
+        background-color: #ffffff !important;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    }
+
+    .header-container {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 20px 24px 0;
+        margin-bottom: 20px;
+        width: 100%;
+
+        .top-actions {
+            display: flex;
+            gap: 12px;
+
+            button {
+                border-radius: 8px;
+                font-weight: 500;
+                padding: 8px 20px;
+                height: 40px;
+            }
+        }
+    }
+
+    mat-card-content {
+        padding: 0 24px 24px;
+
+        .row {
+            margin: 0 -12px;
+
+            [class^="col-"] {
+                padding: 0 12px;
+                margin-bottom: 20px;
+            }
+        }
+    }
+
+    .field-hint {
+        display: block;
+        margin-top: 4px;
+        color: #FF4023;
+        font-size: 12px;
+    }
+
+    .form-note {
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+        margin: 0;
+        padding: 12px 16px;
+        border-radius: 8px;
+        background-color: #F4F4FF;
+        color: #4B5563;
+        font-size: 13px;
+        line-height: 1.5;
+
+        i {
+            font-size: 18px;
+            color: #605DFF;
+            flex-shrink: 0;
+        }
+
+        &.form-note-warn {
+            background-color: #FFF4E5;
+            color: #92400E;
+
+            i {
+                color: #F59E0B;
+            }
+        }
+    }
+}
+
+@media (max-width: 767px) {
+    .modal-like {
+        .header-container {
+            flex-direction: column;
+            gap: 16px;
+            align-items: flex-start;
+        }
+
+        .top-actions {
+            width: 100%;
+            justify-content: flex-end;
+        }
+
+        mat-card-content .row [class^="col-"] {
+            margin-bottom: 16px;
+        }
+    }
+}

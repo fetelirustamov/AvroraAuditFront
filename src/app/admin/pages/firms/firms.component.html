@@ -1,0 +1,76 @@
+<app-admin-breadcrumb *ngIf="showBreadcrumb" title="Firmalar" [crumbs]="[{label: 'Sistem Parametrləri'}, {label: 'Firmalar'}]">
+</app-admin-breadcrumb>
+
+<mat-card class="firms-card mb-25 border-radius d-block bg-white border-0 shadow-none">
+    <mat-card-header class="admin-card-header">
+        <mat-card-title>
+            <button class="add-btn" type="button" mat-flat-button color="primary" (click)="add()">
+                <i class="material-symbols-outlined">add</i>
+                Yeni Firma
+            </button>
+        </mat-card-title>
+        <mat-card-subtitle>
+            <div class="d-flex align-items-center justify-content-between w-100">
+                <form class="search-box position-relative">
+                    <label>
+                        <i class="material-symbols-outlined">search</i>
+                    </label>
+                    <input type="text" class="input-search" placeholder="Axtarış sözü..." (keyup)="applyFilter($event)">
+                </form>
+            </div>
+        </mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content class="audit-table-loading-shell" [attr.aria-busy]="isLoading">
+        <p class="firms-note text-muted mb-15">
+            Qeyd: Redaktə və silmə əməliyyatları hazırda backend tərəfindən dəstəklənmir, ona görə bu siyahıda göstərilmir.
+        </p>
+
+        <div class="table-responsive" [class.audit-table-muted]="isLoading">
+            <table mat-table [dataSource]="dataSource" matSort>
+                <ng-container matColumnDef="name">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> ADI </th>
+                    <td mat-cell *matCellDef="let r"> {{r.name}} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="description">
+                    <th mat-header-cell *matHeaderCellDef> AÇIQLAMA </th>
+                    <td mat-cell *matCellDef="let r"> {{r.description}} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="address">
+                    <th mat-header-cell *matHeaderCellDef> ÜNVAN </th>
+                    <td mat-cell *matCellDef="let r"> {{r.address}} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="phone">
+                    <th mat-header-cell *matHeaderCellDef> TELEFON </th>
+                    <td mat-cell *matCellDef="let r"> {{r.phone}} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="email">
+                    <th mat-header-cell *matHeaderCellDef> E-POÇT </th>
+                    <td mat-cell *matCellDef="let r"> {{r.email}} </td>
+                </ng-container>
+
+                <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+                <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+
+                <tr class="mat-row" *matNoDataRow>
+                    <td class="mat-cell text-center" [attr.colspan]="displayedColumns.length">
+                        <div class="no-data-message">
+                            <span class="material-symbols-outlined">search_off</span>
+                            <p>Firma tapılmadı</p>
+                            <small>Yeni firma əlavə etmək üçün yuxarıdakı düymədən istifadə edin</small>
+                        </div>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <mat-paginator [pageSizeOptions]="[10,25,50,100]" showFirstLastButtons [disabled]="isLoading"></mat-paginator>
+        <app-audit-loading-overlay *ngIf="isLoading"
+            title="Firmalar yüklənir"
+            hint="Firma siyahısı hazırlanır…"></app-audit-loading-overlay>
+    </mat-card-content>
+</mat-card>

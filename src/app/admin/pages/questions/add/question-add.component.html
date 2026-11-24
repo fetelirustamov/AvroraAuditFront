@@ -86,9 +86,9 @@
                         </label>
                         <mat-form-field class="w-100">
                             <mat-select formControlName="type" placeholder="Seçin...">
-                                <mat-option *ngFor="let t of types" [value]="t">{{ t }}</mat-option>
+                                <mat-option *ngFor="let t of questionTypes" [value]="t.id">{{ t.label }}</mat-option>
                             </mat-select>
-                            <mat-error>Tip seçilməlidir</mat-error>
+                            <mat-error>Tip 1..5 aralığından seçilməlidir</mat-error>
                         </mat-form-field>
                         <!-- ① Status hint: tip seçiləndə cavab bölməsi haqqında məlumat -->
                         <span class="qa-hint" *ngIf="isAnswerType()">

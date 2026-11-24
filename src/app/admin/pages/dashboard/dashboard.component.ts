@@ -2,9 +2,62 @@ import { Component, OnDestroy, OnInit, AfterViewInit, Inject, PLATFORM_ID } from
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
+import { forkJoin, of, Subscription } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { DashboardChartsService } from './dashboard-charts.service';
-import { CustomizerSettingsService } from '../../../customizer-settings/customizer-settings.service';
-import { Subscription } from 'rxjs';
+import { UserService } from '../../services/user.service';
+import { LocationService } from '../../services/location.service';
+import { QuestionService } from '../../services/question.service';
+import { CategoryService } from '../../services/category.service';
+import { SectionService } from '../../services/section.service';
+import { FirmService } from '../../services/firm.service';
+import { RoleService } from '../../services/role.service';
+import { PageService } from '../../services/page.service';
+import { UserDetail } from '../../models/user.model';
+import { LocationDto } from '../../models/location.model';
+import { FirmDto } from '../../models/firm.model';
+
+interface KpiCard {
+  label: string;
+  value: number;
+  icon: string;
+  color: string;
+  bgColor: string;
+  route: string;
+}
+
+interface QuickAction {
+  label: string;
+  desc: string;
+  icon: string;
+  color: string;
+  bgColor: string;
+  count: string;
+  route: string;
+}
+
+interface SystemElement {
+  label: string;
+  value: number;
+  icon: string;
+  color: string;
+  bgColor: string;
+}
+
+// Chrome-un ICU məlumatında Azərbaycan ay adları yoxdur (DatePipe 'az' locale-i ilə
+// ingiliscə ay adı verir), ona görə tarix bu cədvəldən formatlanır.
+const AZ_MONTHS = [
+  'Yanvar', 'Fevral', 'Mart', 'Aprel', 'May', 'İyun',
+  'İyul', 'Avqust', 'Sentyabr', 'Oktyabr', 'Noyabr', 'Dekabr',
+];
+
+/** API cavabları müxtəlif formada gələ bilir ({data:[...]}, {data:{items:[...]}}, birbaşa array) - hamısını unifikasiya edir */
+function extractArray<T>(response: any): T[] {
+  if (Array.isArray(response?.data)) return response.data as T[];
+  if (Array.isArray(response?.data?.items)) return response.data.items as T[];
+  if (Array.isArray(response)) return response as T[];
+  return [];
+}
 
 @Component({
   selector: 'app-dashboard',
@@ -16,141 +69,44 @@ import { Subscription } from 'rxjs';
 export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
   private themeSubscription?: Subscription;
   private mutationObserver?: MutationObserver;
+  private viewReady = false;
+  private dataReady = false;
 
   today = new Date();
+  isLoadingStats = true;
 
-  kpiCards = [
-    {
-      label: 'İstifadəçilər',
-      value: 47,
-      change: '+3 bu ay',
-      changePositive: true,
-      icon: 'group',
-      color: '#6366F1',
-      bgColor: 'rgba(99,102,241,0.1)',
-      sparkId: 'spark_users',
-      sparkData: [28, 32, 35, 38, 42, 44, 47],
-      route: '/admin/permissions/user-permission'
-    },
-    {
-      label: 'Lokasiyalar',
-      value: 24,
-      change: '+2 bu ay',
-      changePositive: true,
-      icon: 'store',
-      color: '#22C55E',
-      bgColor: 'rgba(34,197,94,0.1)',
-      sparkId: 'spark_locs',
-      sparkData: [18, 19, 20, 21, 22, 23, 24],
-      route: '/admin/permissions/structure'
-    },
-    {
-      label: 'Suallar Bankı',
-      value: 186,
-      change: '+12 bu həftə',
-      changePositive: true,
-      icon: 'quiz',
-      color: '#F59E0B',
-      bgColor: 'rgba(245,158,11,0.1)',
-      sparkId: 'spark_quest',
-      sparkData: [140, 152, 158, 165, 170, 178, 186],
-      route: '/admin/questions'
-    },
-    {
-      label: 'İzin Qrupları',
-      value: 8,
-      change: 'dəyişiklik yoxdur',
-      changePositive: true,
-      icon: 'shield',
-      color: '#A78BFA',
-      bgColor: 'rgba(167,139,250,0.1)',
-      sparkId: 'spark_groups',
-      sparkData: [6, 6, 7, 7, 7, 8, 8],
-      route: '/admin/permissions/permission-groups'
-    }
-  ];
+  get todayLabel(): string {
+    return `${this.today.getDate()} ${AZ_MONTHS[this.today.getMonth()]}, ${this.today.getFullYear()}`;
+  }
 
-  quickActions = [
-    {
-      label: 'Market Şəbəkəsi',
-      desc: 'Lokasiya strukturu idarəetməsi',
-      icon: 'store',
-      color: '#6366F1',
-      bgColor: 'rgba(99,102,241,0.1)',
-      count: '24 mağaza',
-      route: '/admin/permissions/structure'
-    },
-    {
-      label: 'İstifadəçi İcazələri',
-      desc: 'İstifadəçi hüquqları',
-      icon: 'manage_accounts',
-      color: '#22C55E',
-      bgColor: 'rgba(34,197,94,0.1)',
-      count: '47 istifadəçi',
-      route: '/admin/permissions/user-permission'
-    },
-    {
-      label: 'Onay Sxemi',
-      desc: 'Təsdiq axını konfiqurasiyası',
-      icon: 'verified_user',
-      color: '#A78BFA',
-      bgColor: 'rgba(167,139,250,0.1)',
-      count: '8 qrup',
-      route: '/admin/permissions/permission-groups'
-    },
-    {
-      label: 'Suallar Bankı',
-      desc: 'Yoxlama suallarının idarəsi',
-      icon: 'quiz',
-      color: '#F59E0B',
-      bgColor: 'rgba(245,158,11,0.1)',
-      count: '186 sual',
-      route: '/admin/questions'
-    },
-    {
-      label: 'Kateqoriyalar',
-      desc: 'Sual kateqoriyaları',
-      icon: 'category',
-      color: '#EF4444',
-      bgColor: 'rgba(239,68,68,0.1)',
-      count: '12 kateqoriya',
-      route: '/admin/categories'
-    }
-  ];
+  totalUsers = 0;
+  activeUsers = 0;
 
-  configItems = [
-    { label: 'Lokasiyalar',   current: 24,  total: 30,  color: '#6366F1' },
-    { label: 'Suallar Bankı', current: 186, total: 200, color: '#22C55E' },
-    { label: 'Kateqoriyalar', current: 12,  total: 15,  color: '#F59E0B' },
-    { label: 'Bölmələr',      current: 18,  total: 20,  color: '#A78BFA' },
-    { label: 'Səhifələr',     current: 8,   total: 10,  color: '#EF4444' }
-  ];
-
-  recentActivity = [
-    { user: 'Əli Həsənov',      action: 'yeni istifadəçi əlavə etdi',          icon: 'person_add',  color: '#22C55E', bgColor: 'rgba(34,197,94,0.1)',     time: '5 dəq əvvəl'  },
-    { user: 'Aynur Qasımova',   action: 'izin qrupunu yenilədi',               icon: 'shield',      color: '#6366F1', bgColor: 'rgba(99,102,241,0.1)',    time: '23 dəq əvvəl' },
-    { user: 'Rauf Əliyev',      action: 'suallar bankına 3 sual əlavə etdi',   icon: 'quiz',        color: '#F59E0B', bgColor: 'rgba(245,158,11,0.1)',    time: '1 saat əvvəl' },
-    { user: 'Nigar İsmayılova', action: 'lokasiya məlumatlarını yenilədi',     icon: 'store',       color: '#A78BFA', bgColor: 'rgba(167,139,250,0.1)',   time: '3 saat əvvəl' },
-    { user: 'Əli Həsənov',      action: '2 köhnə kateqoriya sildi',            icon: 'delete',      color: '#EF4444', bgColor: 'rgba(239,68,68,0.1)',     time: 'Dünən'        }
-  ];
+  kpiCards: KpiCard[] = [];
+  quickActions: QuickAction[] = [];
+  systemElements: SystemElement[] = [];
 
   private chartData = {
     userRoles: {
-      series: [28, 12, 5, 2],
-      labels: ['Auditor', 'Regional Menecer', 'Mağaza Meneceri', 'Admin']
+      series: [] as number[],
+      labels: [] as string[]
     },
-    systemActivity: {
-      series: [
-        { name: 'Sistem Girişi',  data: [45, 52, 60, 48, 70, 65, 80, 72, 90, 85, 95, 102] },
-        { name: 'Konfiqurasiya',  data: [12, 18, 22, 15, 28, 25, 32, 30, 38, 35, 42, 48] }
-      ],
-      categories: ['Yan', 'Fev', 'Mar', 'Apr', 'May', 'İyn', 'İyl', 'Avq', 'Sen', 'Okt', 'Noy', 'Dek']
+    locationsByFirm: {
+      series: [{ name: 'Mağazalar', data: [] as number[] }],
+      categories: [] as string[]
     }
   };
 
   constructor(
     private charts: DashboardChartsService,
-    private themeService: CustomizerSettingsService,
+    private userService: UserService,
+    private locationService: LocationService,
+    private questionService: QuestionService,
+    private categoryService: CategoryService,
+    private sectionService: SectionService,
+    private firmService: FirmService,
+    private roleService: RoleService,
+    private pageService: PageService,
     @Inject(PLATFORM_ID) private platformId: any
   ) { }
 
@@ -158,41 +114,193 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     if (isPlatformBrowser(this.platformId)) {
       this.mutationObserver = new MutationObserver(() => {
         clearTimeout((this as any)._themeTimeout);
-        (this as any)._themeTimeout = setTimeout(() => this.loadCharts(), 200);
+        (this as any)._themeTimeout = setTimeout(() => this.tryLoadCharts(), 200);
       });
       this.mutationObserver.observe(document.body, {
         attributes: true,
         attributeFilter: ['class']
       });
     }
+
+    this.loadStats();
   }
 
   ngAfterViewInit() {
-    setTimeout(() => this.loadCharts(), 50);
+    this.viewReady = true;
+    setTimeout(() => this.tryLoadCharts(), 50);
+  }
+
+  private loadStats(): void {
+    this.isLoadingStats = true;
+
+    forkJoin({
+      userDetails: this.userService.getUserDetails().pipe(catchError(() => of(null))),
+      locations: this.locationService.list().pipe(catchError(() => of(null))),
+      questions: this.questionService.list().pipe(catchError(() => of(null))),
+      categories: this.categoryService.getAllCategories().pipe(catchError(() => of(null))),
+      sections: this.sectionService.list().pipe(catchError(() => of(null))),
+      firms: this.firmService.getAllFirms().pipe(catchError(() => of(null))),
+      roles: this.roleService.getAllRoles().pipe(catchError(() => of(null))),
+      pages: this.pageService.list().pipe(catchError(() => of([])))
+    }).subscribe(({ userDetails, locations, questions, categories, sections, firms, roles, pages }) => {
+      const users = extractArray<UserDetail>(userDetails);
+      const locationRows = extractArray<LocationDto>(locations);
+      const questionRows = extractArray<any>(questions);
+      const categoryRows = extractArray<any>(categories);
+      const sectionRows = extractArray<any>(sections);
+      const firmRows = extractArray<FirmDto>(firms);
+      const roleRows = extractArray<any>(roles);
+      const pageRows = Array.isArray(pages) ? pages : [];
+
+      this.totalUsers = users.length;
+      this.activeUsers = users.filter(u => u.status === 1).length;
+
+      this.kpiCards = [
+        {
+          label: 'İstifadəçilər',
+          value: this.totalUsers,
+          icon: 'group',
+          color: '#6366F1',
+          bgColor: 'rgba(99,102,241,0.1)',
+          route: '/admin/permissions/user-permission'
+        },
+        {
+          label: 'Mağazalar',
+          value: locationRows.length,
+          icon: 'store',
+          color: '#22C55E',
+          bgColor: 'rgba(34,197,94,0.1)',
+          route: '/admin/master-data'
+        },
+        {
+          label: 'Suallar Bankı',
+          value: questionRows.length,
+          icon: 'quiz',
+          color: '#F59E0B',
+          bgColor: 'rgba(245,158,11,0.1)',
+          route: '/admin/questions'
+        },
+        {
+          label: 'İzin Qrupları',
+          value: roleRows.length,
+          icon: 'shield',
+          color: '#A78BFA',
+          bgColor: 'rgba(167,139,250,0.1)',
+          route: '/admin/permissions/permission-groups'
+        }
+      ];
+
+      this.quickActions = [
+        {
+          label: 'Audit Strukturu',
+          desc: 'Firma, mağaza, şöbə və kateqoriya idarəetməsi',
+          icon: 'store',
+          color: '#6366F1',
+          bgColor: 'rgba(99,102,241,0.1)',
+          count: `${locationRows.length} mağaza`,
+          route: '/admin/master-data'
+        },
+        {
+          label: 'İstifadəçilər',
+          desc: 'İstifadəçi hüquqları',
+          icon: 'manage_accounts',
+          color: '#22C55E',
+          bgColor: 'rgba(34,197,94,0.1)',
+          count: `${this.totalUsers} istifadəçi`,
+          route: '/admin/permissions/user-permission'
+        },
+        {
+          label: 'Səlahiyyət qrupları',
+          desc: 'Rol və icazə konfiqurasiyası',
+          icon: 'verified_user',
+          color: '#A78BFA',
+          bgColor: 'rgba(167,139,250,0.1)',
+          count: `${roleRows.length} qrup`,
+          route: '/admin/permissions/permission-groups'
+        },
+        {
+          label: 'Suallar Bankı',
+          desc: 'Yoxlama suallarının idarəsi',
+          icon: 'quiz',
+          color: '#F59E0B',
+          bgColor: 'rgba(245,158,11,0.1)',
+          count: `${questionRows.length} sual`,
+          route: '/admin/questions'
+        },
+        {
+          label: 'Firmalar',
+          desc: 'Firma qeydiyyatı',
+          icon: 'domain',
+          color: '#EF4444',
+          bgColor: 'rgba(239,68,68,0.1)',
+          count: `${firmRows.length} firma`,
+          route: '/admin/firms'
+        }
+      ];
+
+      this.systemElements = [
+        { label: 'Firmalar', value: firmRows.length, icon: 'domain', color: '#EF4444', bgColor: 'rgba(239,68,68,0.1)' },
+        { label: 'Mağazalar', value: locationRows.length, icon: 'store', color: '#6366F1', bgColor: 'rgba(99,102,241,0.1)' },
+        { label: 'Şöbələr', value: sectionRows.length, icon: 'apartment', color: '#A78BFA', bgColor: 'rgba(167,139,250,0.1)' },
+        { label: 'Kateqoriyalar', value: categoryRows.length, icon: 'category', color: '#F59E0B', bgColor: 'rgba(245,158,11,0.1)' },
+        { label: 'Suallar', value: questionRows.length, icon: 'quiz', color: '#22C55E', bgColor: 'rgba(34,197,94,0.1)' },
+        { label: 'Səhifələr', value: pageRows.length, icon: 'description', color: '#0EA5E9', bgColor: 'rgba(14,165,233,0.1)' }
+      ];
+
+      // Donut: rola görə istifadəçi bölgüsü
+      const roleCounts = new Map<string, number>();
+      for (const u of users) {
+        const roleName = u.roleName?.trim() || 'Rolsuz';
+        roleCounts.set(roleName, (roleCounts.get(roleName) ?? 0) + 1);
+      }
+      this.chartData.userRoles = {
+        series: Array.from(roleCounts.values()),
+        labels: Array.from(roleCounts.keys())
+      };
+
+      // Bar: firma üzrə mağaza sayı
+      const firmNameById = new Map<number, string>(firmRows.map(f => [f.id, f.name]));
+      const locationCountByFirm = new Map<number, number>();
+      for (const loc of locationRows) {
+        locationCountByFirm.set(loc.firmId, (locationCountByFirm.get(loc.firmId) ?? 0) + 1);
+      }
+      const firmEntries = Array.from(locationCountByFirm.entries());
+      this.chartData.locationsByFirm = {
+        series: [{ name: 'Mağazalar', data: firmEntries.map(([, count]) => count) }],
+        categories: firmEntries.map(([firmId]) => firmNameById.get(firmId) ?? `Firma #${firmId}`)
+      };
+
+      this.isLoadingStats = false;
+      this.dataReady = true;
+      this.tryLoadCharts();
+    });
+  }
+
+  private tryLoadCharts(): void {
+    if (!this.viewReady || !this.dataReady) return;
+    this.loadCharts();
   }
 
   private async loadCharts() {
     if (!isPlatformBrowser(this.platformId)) return;
     this.charts.destroyAll();
 
-    try {
-      await this.charts.loadUserRolesChart(
-        this.chartData.userRoles.series,
-        this.chartData.userRoles.labels
-      );
-    } catch { /* element may not exist on SSR */ }
-
-    try {
-      await this.charts.loadSystemActivityChart(
-        this.chartData.systemActivity.series,
-        this.chartData.systemActivity.categories
-      );
-    } catch { /* element may not exist on SSR */ }
-
-    for (const kpi of this.kpiCards) {
+    if (this.chartData.userRoles.series.length > 0) {
       try {
-        await this.charts.loadSparkline(kpi.sparkId, kpi.sparkData, kpi.color);
-      } catch { /* continue */ }
+        await this.charts.loadUserRolesChart(
+          this.chartData.userRoles.series,
+          this.chartData.userRoles.labels
+        );
+      } catch { /* element may not exist on SSR */ }
+    }
+
+    if (this.chartData.locationsByFirm.categories.length > 0) {
+      try {
+        await this.charts.loadLocationsByFirmChart(
+          this.chartData.locationsByFirm.series,
+          this.chartData.locationsByFirm.categories
+        );
+      } catch { /* element may not exist on SSR */ }
     }
   }
 

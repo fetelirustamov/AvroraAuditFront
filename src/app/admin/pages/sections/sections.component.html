@@ -10,7 +10,7 @@
                     Yeni Şöbə
                 </button>
 
-                <mat-form-field class="firm-filter">
+                <mat-form-field class="firm-filter" *ngIf="firmId == null">
                     <mat-label>Firma</mat-label>
                     <mat-select [(ngModel)]="selectedFirmId" (selectionChange)="onFirmChange()">
                         <mat-option [value]="null">Bütün firmalar</mat-option>
@@ -36,12 +36,6 @@
                     <td mat-cell *matCellDef="let r"> {{r.sectionName}} </td>
                 </ng-container>
 
-                <!-- Section Description -->
-                <ng-container matColumnDef="sectionDescription">
-                    <th mat-header-cell *matHeaderCellDef> SEKSİYA AÇIQLAMASI </th>
-                    <td mat-cell *matCellDef="let r"> {{r.sectionDescription || '-'}} </td>
-                </ng-container>
-
                 <!-- Actions -->
                 <ng-container matColumnDef="actions">
                     <th mat-header-cell *matHeaderCellDef> ƏMƏLİYYATLAR </th>
@@ -63,7 +57,13 @@
                 <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
 
                 <tr class="mat-row" *matNoDataRow>
-                    <td class="mat-cell text-center" colspan="4">Məlumat tapılmadı</td>
+                    <td class="mat-cell text-center" colspan="2">
+                        <div class="no-data-message">
+                            <span class="material-symbols-outlined">search_off</span>
+                            <p>Şöbə tapılmadı</p>
+                            <small>Yeni şöbə əlavə etmək üçün yuxarıdakı düymədən istifadə edin</small>
+                        </div>
+                    </td>
                 </tr>
             </table>
         </div>

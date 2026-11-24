@@ -1,18 +1,47 @@
 <app-admin-breadcrumb
-    title="Sistem Parametrləri"
-    [crumbs]="[{label: 'Sistem Parametrləri'}, {label: 'Şöbələr və Kateqoriyalar'}]">
+    title="Audit Strukturu"
+    [crumbs]="[{label: 'Sistem Parametrləri'}, {label: 'Audit Strukturu'}]">
 </app-admin-breadcrumb>
 
-<mat-tab-group class="master-data-tabs">
-    <mat-tab label="Şöbələr">
-        <div class="tab-content">
-            <app-sections [showBreadcrumb]="false"></app-sections>
-        </div>
-    </mat-tab>
+<mat-card class="firm-context-card mb-16 border-radius d-block bg-white border-0 shadow-none">
+    <mat-card-content>
+        <mat-form-field class="firm-context-select">
+            <mat-label>Firma</mat-label>
+            <mat-select [(ngModel)]="selectedFirmId" (selectionChange)="onFirmChange()" [disabled]="isLoadingFirms">
+                <mat-option *ngFor="let f of firms" [value]="f.id">{{ f.name }}</mat-option>
+            </mat-select>
+        </mat-form-field>
+        <p class="firm-context-hint" *ngIf="!isLoadingFirms && firms.length === 0">
+            Heç bir firma tapılmadı. Əvvəlcə "Firmalar" səhifəsindən firma əlavə edin.
+        </p>
+    </mat-card-content>
+</mat-card>
 
-    <mat-tab label="Kateqoriyalar">
-        <div class="tab-content">
-            <app-categories [showBreadcrumb]="false"></app-categories>
-        </div>
-    </mat-tab>
-</mat-tab-group>
+<ng-container *ngIf="selectedFirmId != null; else noFirmSelected">
+    <mat-tab-group class="master-data-tabs">
+        <mat-tab label="Şöbələr">
+            <div class="tab-content">
+                <app-sections [showBreadcrumb]="false" [firmId]="selectedFirmId"></app-sections>
+            </div>
+        </mat-tab>
+
+        <mat-tab label="Kateqoriyalar">
+            <div class="tab-content">
+                <app-categories [showBreadcrumb]="false" [firmId]="selectedFirmId"></app-categories>
+            </div>
+        </mat-tab>
+
+        <mat-tab label="Mağazalar">
+            <div class="tab-content">
+                <app-locations [firmId]="selectedFirmId"></app-locations>
+            </div>
+        </mat-tab>
+    </mat-tab-group>
+</ng-container>
+
+<ng-template #noFirmSelected>
+    <div class="no-firm-selected" *ngIf="!isLoadingFirms">
+        <span class="material-symbols-outlined">domain</span>
+        <p>Davam etmək üçün yuxarıdan bir firma seçin</p>
+    </div>
+</ng-template>

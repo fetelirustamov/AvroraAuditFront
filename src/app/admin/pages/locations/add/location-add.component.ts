@@ -28,6 +28,7 @@ interface LocationPayload {
     responsiblePersonId?: number;
     latitude?: string;
     longitude?: string;
+    radius?: number;
 }
 
 @Component({
@@ -51,14 +52,36 @@ export class LocationAddComponent implements OnInit {
     form!: FormGroup;
     firms: FirmDto[] = [];
     regions: any[] = [];
-    private allRegions: any[] = [];
-    private allLocations: LocationDto[] = [];
     sections: SectionDto[] = [];
     selectedSectionIds: number[] = [];
     pageTitle = 'Yeni mağaza/location';
     isEditMode = false;
     initialLat: number = 40.4093;
     initialLng: number = 49.8671;
+    regionsLoading = false;
+    regionsFailed = false;
+    sectionsLoading = false;
+    sectionsFailed = false;
+    /**
+     * Şöbə təyinatının yazıla biləcəyini bildirir. Redaktədə mövcud təyinatlar
+     * oxunmayıbsa false qalır - əks halda saxlama zamanı boş siyahı göndərilib
+     * mağazanın mövcud şöbələri silinərdi.
+     */
+    private sectionAssignmentReady = false;
+
+    // Region select-i boş qaldıqda səbəbi göstərir
+    get regionEmptyMessage(): string {
+        if (this.regionsLoading) return 'Regionlar yüklənir...';
+        if (this.regionsFailed) return 'Regionlar yüklənmədi (server xətası)';
+        return 'Bu firma üçün region təyin olunmayıb';
+    }
+
+    // Şöbə select-i boş qaldıqda səbəbi göstərir
+    get sectionEmptyMessage(): string {
+        if (this.sectionsLoading) return 'Şöbələr yüklənir...';
+        if (this.sectionsFailed) return 'Şöbələr yüklənmədi (server xətası)';
+        return 'Bu firma üçün şöbə təyin olunmayıb';
+    }
 
     constructor(
         private fb: FormBuilder,
@@ -68,11 +91,12 @@ export class LocationAddComponent implements OnInit {
         private locationService: LocationService,
         private sectionService: SectionService,
         @Optional() private dialogRef?: MatDialogRef<LocationAddComponent>,
-        @Optional() @Inject(MAT_DIALOG_DATA) public data?: { mode?: 'edit'; item?: LocationDto }
+        @Optional() @Inject(MAT_DIALOG_DATA) public data?: { mode?: 'edit'; item?: LocationDto; firmId?: number }
     ) {
         this.form = this.fb.group({
             firmId: [null, Validators.required],
-            regionId: [null, Validators.required],
+            // Region məcburi deyil - region təyin olunmamış mağazalar da yaradıla bilər
+            regionId: [null],
             locationCode: [null],
             locationName: ['', Validators.required],
             locationAddress: [''],
@@ -80,7 +104,8 @@ export class LocationAddComponent implements OnInit {
             contactNumber: [''],
             responsiblePersonId: [null],
             latitude: [''],
-            longitude: ['']
+            longitude: [''],
+            radius: [null]
         });
 
         if (data?.item) {
@@ -88,19 +113,40 @@ export class LocationAddComponent implements OnInit {
             this.pageTitle = 'Mağaza/location redaktə et';
             this.form.patchValue({
                 ...data.item,
-                regionId: this.toNullableNumber(data.item.regionId ?? data.item.RegionId ?? data.item.regionID ?? null)
+                regionId: this.toNullableNumber(data.item.regionId ?? data.item.RegionId ?? data.item.regionID ?? null),
+                radius: this.toNullableNumber(data.item.radius)
             } as LocationDto);
 
             const lat = parseFloat(data.item.latitude as string);
             const lng = parseFloat(data.item.longitude as string);
             if (!isNaN(lat)) this.initialLat = lat;
             if (!isNaN(lng)) this.initialLng = lng;
+        } else if (data?.firmId) {
+            // "Audit Strukturu" səhifəsindən firma konteksti ilə açılıb - firma sahəsini əvvəlcədən doldur
+            this.form.patchValue({ firmId: data.firmId });
         }
+
+        // Yaratmada silinəcək mövcud təyinat yoxdur
+        this.sectionAssignmentReady = !this.isEditMode;
     }
 
     ngOnInit(): void {
         this.loadFirms();
-        this.loadAllLocations();
+
+        // Dialoq firma konteksti ilə (Audit Strukturu) və ya redaktə rejimində açılanda
+        // "firma dəyişdi" hadisəsi baş vermir - asılı siyahıları burada özümüz yükləyirik
+        const firmId = this.toNullableNumber(this.form.get('firmId')?.value);
+        if (firmId == null) return;
+
+        this.loadRegionsByFirmId(firmId);
+        this.loadSectionsByFirmId(firmId);
+
+        if (this.isEditMode) {
+            const locationCode = this.toNullableNumber(this.form.get('locationCode')?.value);
+            if (locationCode != null && locationCode > 0) {
+                this.loadAssignedSections(firmId, locationCode);
+            }
+        }
     }
 
     private loadFirms(): void {
@@ -123,10 +169,6 @@ export class LocationAddComponent implements OnInit {
                 }
 
                 this.firms = firms;
-                const selectedFirmId = this.form.get('firmId')?.value as number | null;
-                if (selectedFirmId) {
-                    this.loadRegionsByFirmId(selectedFirmId);
-                }
             },
             error: (error) => {
                 console.error('Firmalar yüklənərkən xəta (location-add):', error);
@@ -138,119 +180,83 @@ export class LocationAddComponent implements OnInit {
     onFirmChange(firmId: number | null): void {
         this.form.patchValue({ regionId: null }, { emitEvent: false });
         this.regions = [];
-        this.allRegions = [];
         this.sections = [];
         this.selectedSectionIds = [];
+        this.regionsFailed = false;
+        this.sectionsFailed = false;
 
         if (!firmId) return;
         this.loadRegionsByFirmId(firmId);
         this.loadSectionsByFirmId(firmId);
     }
 
-    private loadAllLocations(): void {
-        this.locationService.list().subscribe({
-            next: (response: any) => {
-                if (response && Array.isArray(response.data)) {
-                    this.allLocations = response.data as LocationDto[];
-                } else if (Array.isArray(response)) {
-                    this.allLocations = response as LocationDto[];
-                } else {
-                    this.allLocations = [];
-                }
-                this.applyRegionAvailability();
-            },
-            error: () => {
-                this.allLocations = [];
-            }
-        });
-    }
-
-    private resolveRegionId(location: LocationDto): number | null {
-        return this.toNullableNumber(location.regionId ?? location.RegionId ?? location.regionID);
-    }
-
-    private getOccupiedRegionIds(firmId: number, excludeLocationId?: number): Set<number> {
-        const occupied = new Set<number>();
-        for (const loc of this.allLocations) {
-            if (loc.firmId !== firmId) continue;
-            if (excludeLocationId != null && loc.id === excludeLocationId) continue;
-            const regionId = this.resolveRegionId(loc);
-            if (regionId != null) occupied.add(regionId);
-        }
-        return occupied;
-    }
-
-    private applyRegionAvailability(): void {
-        if (!this.allRegions.length) {
-            this.regions = [];
-            return;
-        }
-
-        const firmId = this.toNullableNumber(this.form.get('firmId')?.value);
-        if (!firmId) {
-            this.regions = [...this.allRegions];
-            return;
-        }
-
-        const excludeId = this.isEditMode ? this.data?.item?.id : undefined;
-        const occupied = this.getOccupiedRegionIds(firmId, excludeId);
-        this.regions = this.allRegions.filter(region => {
-            const regionId = this.toNullableNumber(region.id);
-            return regionId == null || !occupied.has(regionId);
-        });
-
-        const currentRegionId = this.toNullableNumber(this.form.get('regionId')?.value);
-        if (currentRegionId != null && !this.regions.some(r => this.toNullableNumber(r.id) === currentRegionId)) {
-            this.form.patchValue({ regionId: null }, { emitEvent: false });
-        }
-    }
-
     private loadSectionsByFirmId(firmId: number): void {
+        this.sectionsLoading = true;
+        this.sectionsFailed = false;
         this.sectionService.getByFirmId(firmId).subscribe({
             next: (response: any) => {
+                this.sectionsLoading = false;
                 if (response && Array.isArray(response.data)) {
                     this.sections = response.data as SectionDto[];
                 } else if (Array.isArray(response)) {
                     this.sections = response as SectionDto[];
                 } else {
+                    // Firmanın şöbəsi olmadıqda API 204 No Content qaytarır - gövdə boş gəlir
                     this.sections = [];
                 }
             },
-            error: () => { this.sections = []; }
+            error: (error) => {
+                console.error('Şöbələr yüklənərkən xəta (location-add):', error);
+                this.sectionsLoading = false;
+                this.sectionsFailed = true;
+                this.sections = [];
+            }
+        });
+    }
+
+    /** Redaktədə mağazaya artıq təyin olunmuş şöbələri seçili gətirir */
+    private loadAssignedSections(firmId: number, locationCode: number): void {
+        this.locationService.getSectionsByLocationCode(locationCode, firmId).subscribe({
+            next: (response: any) => {
+                const rows: any[] = Array.isArray(response?.data?.items)
+                    ? response.data.items
+                    : (Array.isArray(response?.data) ? response.data : []);
+
+                this.selectedSectionIds = rows
+                    .map(r => this.toNullableNumber(r.id))
+                    .filter((id): id is number => id != null);
+                this.sectionAssignmentReady = true;
+            },
+            error: (error) => {
+                console.error('Mağazanın şöbələri yüklənərkən xəta (location-add):', error);
+                this.selectedSectionIds = [];
+                this.sectionsFailed = true;
+            }
         });
     }
 
     private loadRegionsByFirmId(firmId: number): void {
+        this.regionsLoading = true;
+        this.regionsFailed = false;
         this.locationService.getRegionsByFirmId(firmId).subscribe({
             next: (response: any) => {
+                this.regionsLoading = false;
                 const currentRegionId = this.toNullableNumber(this.form.get('regionId')?.value);
+                const rows: any[] = Array.isArray(response?.data) ? response.data : (Array.isArray(response) ? response : []);
 
-                if (response && Array.isArray(response.data)) {
-                    this.allRegions = response.data.map((r: any) => ({
-                        ...r,
-                        id: this.toNullableNumber(r.id ?? r.regionId ?? r.RegionId ?? r.regionID)
-                    }));
-                } else if (Array.isArray(response)) {
-                    this.allRegions = response.map((r: any) => ({
-                        ...r,
-                        id: this.toNullableNumber(r.id ?? r.regionId ?? r.RegionId ?? r.regionID)
-                    }));
-                } else {
-                    this.allRegions = [];
-                }
+                this.regions = rows.map((r: any) => ({
+                    ...r,
+                    id: this.toNullableNumber(r.id ?? r.regionId ?? r.RegionId ?? r.regionID)
+                }));
 
-                this.applyRegionAvailability();
-
-                if (currentRegionId != null) {
-                    const stillValid = this.regions.some(r => this.toNullableNumber(r.id) === currentRegionId);
-                    if (stillValid) {
-                        this.form.patchValue({ regionId: currentRegionId }, { emitEvent: false });
-                    }
+                if (currentRegionId != null && this.regions.some(r => this.toNullableNumber(r.id) === currentRegionId)) {
+                    this.form.patchValue({ regionId: currentRegionId }, { emitEvent: false });
                 }
             },
             error: (error) => {
                 console.error('Regionlar yüklənərkən xəta (location-add):', error);
-                this.allRegions = [];
+                this.regionsLoading = false;
+                this.regionsFailed = true;
                 this.regions = [];
             }
         });
@@ -277,21 +283,13 @@ export class LocationAddComponent implements OnInit {
         }
         const raw: LocationPayload = this.form.getRawValue();
 
-        const firmId = this.toNullableNumber(raw.firmId);
-        const regionId = this.toNullableNumber(raw.regionId);
-        if (firmId != null && regionId != null) {
-            const excludeId = this.isEditMode ? this.data?.item?.id : undefined;
-            if (this.getOccupiedRegionIds(firmId, excludeId).has(regionId)) {
-                this.notify.warning(
-                    'Bu ərazi artıq bağlıdır',
-                    { message: 'Seçilmiş firma üçün bu əraziyə yalnız bir bağlantı verilə bilər.' }
-                );
-                return;
-            }
-        }
-
-        // Backend-də int sahələrə null göndərmək xətaya səbəb olur, null-ları çıxarırıq
-        const payload: any = { ...raw };
+        // Backend-də int sahələrə null göndərmək xətaya səbəb olur, null-ları çıxarırıq.
+        // Region seçilməyəndə 0 gedir - bazada "region təyin olunmayıb" mənasını daşıyır.
+        const payload: any = {
+            ...raw,
+            radius: this.toNullableNumber(raw.radius) ?? 0,
+            regionId: this.toNullableNumber(raw.regionId) ?? 0
+        };
         if (payload.locationType == null) {
             delete payload.locationType;
         }
@@ -306,12 +304,32 @@ export class LocationAddComponent implements OnInit {
 
             this.locationService.update(updatePayload).subscribe({
                 next: (res) => {
-                    this.notify.success('Mağaza/location uğurla redaktə edildi');
-                    if (this.dialogRef) {
-                        this.dialogRef.close({ updated: true, data: res });
-                    } else {
-                        this.router.navigate(['/admin/locations']);
+                    const locationCode = this.toNullableNumber(payload.locationCode);
+                    // Təyinatlar oxunmayıbsa yazmırıq - boş siyahı mövcud şöbələri silərdi
+                    const canAssign = this.sectionAssignmentReady && locationCode != null && locationCode > 0;
+
+                    if (!canAssign) {
+                        if (this.selectedSectionIds.length > 0) {
+                            this.notify.warning('Mağaza yeniləndi, lakin şöbə təyinatı saxlanılmadı', {
+                                message: 'Mövcud təyinatlar oxunmadı və ya "Məkan Kodu" boşdur.'
+                            });
+                        } else {
+                            this.notify.success('Mağaza/location uğurla redaktə edildi');
+                        }
+                        this.finishEdit(res);
+                        return;
                     }
+
+                    this.locationService.assignSections({ locationCode, sectionIds: this.selectedSectionIds }).subscribe({
+                        next: () => {
+                            this.notify.success('Mağaza/location uğurla redaktə edildi');
+                            this.finishEdit(res);
+                        },
+                        error: () => {
+                            this.notify.warning('Mağaza yeniləndi, lakin şöbə təyinatı saxlanılmadı');
+                            this.finishEdit(res);
+                        }
+                    });
                 }
             });
             return;
@@ -320,38 +338,51 @@ export class LocationAddComponent implements OnInit {
         // Create mode
         this.locationService.create(payload).subscribe({
             next: (res) => {
-                const dataItem = Array.isArray(res?.data) ? res.data[0] : (res?.data as any);
-                const locationCode = dataItem?.locationCode ?? (res as any)?.locationCode ?? payload.locationCode;
+                // Şöbə təyinatı LocationSections cədvəlində məkan koduna bağlıdır
+                const locationCode = this.toNullableNumber(payload.locationCode);
 
-                if (this.selectedSectionIds.length > 0 && locationCode != null) {
-                    this.locationService.assignSections({ locationCode: Number(locationCode), sectionIds: this.selectedSectionIds }).subscribe({
-                        next: () => {
-                            this.notify.success('Mağaza/location uğurla əlavə edildi');
-                            if (this.dialogRef) {
-                                this.dialogRef.close({ created: true, data: res });
-                            } else {
-                                this.router.navigate(['/admin/locations']);
-                            }
-                        },
-                        error: () => {
-                            this.notify.warning('Location yaradıldı, lakin şöbələr assign edilmədi');
-                            if (this.dialogRef) {
-                                this.dialogRef.close({ created: true, data: res });
-                            } else {
-                                this.router.navigate(['/admin/locations']);
-                            }
-                        }
-                    });
-                } else {
+                if (this.selectedSectionIds.length === 0) {
                     this.notify.success('Mağaza/location uğurla əlavə edildi');
-                    if (this.dialogRef) {
-                        this.dialogRef.close({ created: true, data: res });
-                    } else {
-                        this.router.navigate(['/admin/locations']);
-                    }
+                    this.finishCreate(res);
+                    return;
                 }
+
+                if (locationCode == null || locationCode <= 0) {
+                    this.notify.warning('Mağaza yaradıldı, lakin şöbələr təyin edilmədi', {
+                        message: 'Şöbə təyinatı üçün "Məkan Kodu" doldurulmalıdır.'
+                    });
+                    this.finishCreate(res);
+                    return;
+                }
+
+                this.locationService.assignSections({ locationCode, sectionIds: this.selectedSectionIds }).subscribe({
+                    next: () => {
+                        this.notify.success('Mağaza/location uğurla əlavə edildi');
+                        this.finishCreate(res);
+                    },
+                    error: () => {
+                        this.notify.warning('Mağaza yaradıldı, lakin şöbələr təyin edilmədi');
+                        this.finishCreate(res);
+                    }
+                });
             }
         });
+    }
+
+    private finishCreate(res: any): void {
+        if (this.dialogRef) {
+            this.dialogRef.close({ created: true, data: res });
+        } else {
+            this.router.navigate(['/admin/locations']);
+        }
+    }
+
+    private finishEdit(res: any): void {
+        if (this.dialogRef) {
+            this.dialogRef.close({ updated: true, data: res });
+        } else {
+            this.router.navigate(['/admin/locations']);
+        }
     }
 
     cancel(): void {

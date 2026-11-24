@@ -1,6 +1,6 @@
 <app-admin-breadcrumb
     title="Səlahiyyət qrupları"
-    [crumbs]="[{label: 'Səlahiyyətlər'}, {label: 'Səlahiyyət qrupları'}]">
+    [crumbs]="[{label: 'İstifadəçi İdarəetməsi'}, {label: 'Səlahiyyət qrupları'}]">
 </app-admin-breadcrumb>
 
 <!-- Permission Groups Table -->
@@ -43,12 +43,6 @@
                     <td mat-cell *matCellDef="let row"> {{row.name}} </td>
                 </ng-container>
 
-                <!-- Description Column -->
-                <ng-container matColumnDef="description">
-                    <th mat-header-cell *matHeaderCellDef mat-sort-header> Təsviri </th>
-                    <td mat-cell *matCellDef="let row"> {{row.description || '—'}} </td>
-                </ng-container>
-
                 <!-- Actions Column -->
                 <ng-container matColumnDef="actions">
                     <th mat-header-cell *matHeaderCellDef> Əməliyyatlar </th>
@@ -71,7 +65,7 @@
                 <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
 
                 <tr class="mat-row" *matNoDataRow>
-                    <td class="mat-cell text-center" colspan="4">
+                    <td class="mat-cell text-center" colspan="3">
                         <div class="no-data-message">
                             <span class="material-symbols-outlined">search_off</span>
                             <p>Məlumat tapılmadı</p>

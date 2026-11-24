@@ -64,7 +64,13 @@
                 <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
 
                 <tr class="mat-row" *matNoDataRow>
-                    <td class="mat-cell text-center" colspan="4">Məlumat tapılmadı</td>
+                    <td class="mat-cell text-center" colspan="4">
+                        <div class="no-data-message">
+                            <span class="material-symbols-outlined">search_off</span>
+                            <p>Sual tapılmadı</p>
+                            <small>Yeni sual əlavə etmək üçün yuxarıdakı düymədən istifadə edin</small>
+                        </div>
+                    </td>
                 </tr>
             </table>
         </div>

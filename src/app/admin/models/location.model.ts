@@ -11,6 +11,7 @@ export interface LocationDto {
     regionID?: number;
     latitude?: string;
     longitude?: string;
+    radius?: number;
     RegionId?: number;
     RegionName?: string;
     status?: number;

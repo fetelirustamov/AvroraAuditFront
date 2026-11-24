@@ -43,7 +43,7 @@ export class CategoryAddComponent implements OnInit {
         private sectionService: SectionService,
         private categoryService: CategoryService,
         @Optional() private dialogRef?: MatDialogRef<CategoryAddComponent>,
-        @Optional() @Inject(MAT_DIALOG_DATA) public data?: CategoryDto | { mode: 'edit', item: CategoryDto }
+        @Optional() @Inject(MAT_DIALOG_DATA) public data?: CategoryDto | { mode: 'edit', item: CategoryDto } | { sectionId?: number, sections?: SectionDto[] }
     ) {
         this.form = this.fb.group({
             sectionId: [null, Validators.required],
@@ -53,13 +53,19 @@ export class CategoryAddComponent implements OnInit {
     }
 
     ngOnInit(): void {
-        this.sectionService.list().subscribe(response => {
-            if (response.success) {
-                this.sections = response.data;
-            }
-        });
-
         const dialogData: any = this.data as any;
+
+        if (dialogData?.sections && Array.isArray(dialogData.sections)) {
+            // "Audit Strukturu" səhifəsindən firma konteksti ilə açılıb - yalnız həmin firmanın şöbələri
+            this.sections = dialogData.sections;
+        } else {
+            this.sectionService.list().subscribe(response => {
+                if (response.success) {
+                    this.sections = response.data;
+                }
+            });
+        }
+
         if (dialogData?.mode === 'edit' && dialogData?.item) {
             this.isEditMode = true;
             this.pageTitle = 'Kateqoriyanı Redaktə Et';
@@ -68,6 +74,8 @@ export class CategoryAddComponent implements OnInit {
                 categoryName: dialogData.item.categoryName,
                 categoryDescription: dialogData.item.categoryDescription
             });
+        } else if (dialogData?.sectionId) {
+            this.form.patchValue({ sectionId: dialogData.sectionId });
         }
     }
 
