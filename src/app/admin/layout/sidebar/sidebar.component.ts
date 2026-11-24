@@ -5,7 +5,7 @@ import { MatExpansionModule } from '@angular/material/expansion';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { NgClass } from '@angular/common';
 import { MenuService } from '../../../common/menu/menu.service';
-import { adminRoutes } from '../../admin.routes';
+import { adminPageRoutes } from '../../admin-pages.routes';
 
 @Component({
   selector: 'app-sidebar',
@@ -17,7 +17,7 @@ export class SidebarComponent {
   private readonly menuService = inject(MenuService);
 
   // Menyu route ağacından (data.menu) icazəyə görə qurulur — statik HTML yoxdur.
-  readonly menu = this.menuService.build('/admin', adminRoutes);
+  readonly menu = this.menuService.build('/admin', adminPageRoutes);
 
   // Mat Expansion
   readonly panelOpenState = signal(false);

@@ -34,7 +34,7 @@ npx ng build --configuration production # dist/avrora-audit, bundle limiti 2.5 M
 
 ## Menyu və icazələr
 
-- Menyunun vahid mənbəyi route-ların `data.menu` sahəsidir (`area, section, order, title, icon, pageKey, group…`). Bu sahəni `MenuService` `adminRoutes`/`uiRoutes` massivindən oxuyur. Yeni səhifə əlavə edəndə menyunu HTML-də yox, route-da qeyd et.
+- Menyunun vahid mənbəyi route-ların `data.menu` sahəsidir (`area, section, order, title, icon, pageKey, group…`). Bu sahəni `MenuService` `admin/admin-pages.routes.ts` və `ui/ui-pages.routes.ts`-dəki massivlərdən oxuyur. Yeni səhifə əlavə edəndə menyunu HTML-də yox, route-da qeyd et. Bu fayllar shell komponentini (`AdminComponent` / `UiComponent`) import etməməlidir: sidebar onları import edir və dövri import yaranır.
 - İcazələr `PermissionService` vasitəsilə `GET /api/me/permissions`-dan gəlir; Admin bütün yoxlamaları keçir. `pageKey` bazadakı `Pages.[Key]` ilə dəqiq uyğun olmalıdır. Açar dəyişsə, həm SQL seed, həm route dəyişməlidir. Yeni açar üçün front deploy-dan **əvvəl** baza seed-i və rol icazələri lazımdır.
 - `permissionGuard` və `*hasPermission` mövcuddur. Köhnə `RoleGuard` / `*hasRole` / `data.roles` hələ bir neçə yerdə qalır. Yeni kodda onları yox, icazə qatını işlət.
 - Bu hesabatlar menyuya qəsdən salınmayıb, əlavə etmə:

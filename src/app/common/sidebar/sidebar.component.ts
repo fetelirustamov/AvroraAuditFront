@@ -6,7 +6,7 @@ import { NgClass } from '@angular/common';
 import { ToggleService } from '../header/toggle.service';
 import { AuthService } from '../../auth/auth.service';
 import { MenuService } from '../menu/menu.service';
-import { uiRoutes } from '../../ui/ui.routes';
+import { uiPageRoutes } from '../../ui/ui-pages.routes';
 
 @Component({
     selector: 'app-sidebar',
@@ -18,7 +18,7 @@ export class SidebarComponent {
     private readonly menuService = inject(MenuService);
 
     // Menyu route ağacından (data.menu) icazəyə görə qurulur — statik HTML yoxdur.
-    readonly menu = this.menuService.build('', uiRoutes);
+    readonly menu = this.menuService.build('', uiPageRoutes);
 
     // Mat Expansion
     readonly panelOpenState = signal(false);
