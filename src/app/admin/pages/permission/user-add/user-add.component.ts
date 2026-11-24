@@ -167,7 +167,8 @@ export class UserAddComponent implements OnInit {
     ) {
         this.userForm = this.fb.group({
             selectedUser: ['', Validators.required],
-            userStatus: [false],
+            // Təyinat rejimində siyahıda yalnız aktiv istifadəçilər var; redaktə rejimi statusu API-dən doldurur
+            userStatus: [true],
             selectedMarket: [[], Validators.required],
             selectedPermissionGroup: [''],
             // Kimlik sahələri yalnız redaktə rejimində dəyişdirilir. Yeni təyinat
@@ -452,10 +453,10 @@ export class UserAddComponent implements OnInit {
         const user = this.userForm.get('selectedUser')?.value as User | null;
         if (user) {
             this.selectedUser = user;
-            // Reset status to passive when new user is selected (only in create mode or manual change)
+            // Yeni seçilən istifadəçi aktivdir (siyahıda yalnız aktivlər var); firma və rol sıfırlanır
             if (!this.isEditMode) {
                 this.userForm.patchValue({
-                    userStatus: false,
+                    userStatus: true,
                     selectedMarket: [],
                     selectedPermissionGroup: ''
                 });
@@ -495,17 +496,10 @@ export class UserAddComponent implements OnInit {
         // Prefill və ya edit rejimində yan effektlərin qarşısını al
         if (this.isPrefilling || this.isEditMode) return;
 
+        // Passiv etmək firma və rolu silmir: backend təyinatı rol olmadan qəbul etmir (400),
+        // passiv istifadəçinin isə yalnız girişi bağlanır.
         const status = this.userForm.get('userStatus')?.value as boolean;
-        if (!status) {
-            // Yalnız yeni istifadəçi əlavə edərkən sıfırla
-            this.userForm.patchValue({
-                selectedMarket: [],
-                selectedPermissionGroup: ''
-            });
-            this.selectedMarket = [];
-            this.selectedPermissionGroup = '';
-        } else {
-            // Scroll into view of Permission Group card when becomes active
+        if (status) {
             this.smoothScrollTo(this.permissionCard);
         }
     }
@@ -547,11 +541,10 @@ export class UserAddComponent implements OnInit {
         const roleName = (formValue.selectedPermissionGroup ?? '').trim();
         const roleId = this.roles.find(r => r.name === roleName)?.id ?? 0;
 
-        if (active) {
-            if (!marketNames.length || !roleName) return null;
-            if (firmIds.length !== marketNames.length) return null;
-            if (!roleId) return null;
-        }
+        // Rol həmişə lazımdır (backend RoleId <= 0-ı rədd edir); firma yalnız aktiv istifadəçi üçün
+        if (!roleId) return null;
+        if (firmIds.length !== marketNames.length) return null;
+        if (active && !marketNames.length) return null;
 
         return {
             status: active ? 1 : 0,
@@ -615,8 +608,12 @@ export class UserAddComponent implements OnInit {
 
         const selectedUserObj = selected as User;
 
-        if (formValue.userStatus && (!formValue.selectedMarket || formValue.selectedMarket.length === 0 || !formValue.selectedPermissionGroup)) {
-            this.showMessage('Aktiv istifadəçi üçün market və səlahiyyət təyin edilməlidir', 'error');
+        if (!formValue.selectedPermissionGroup) {
+            this.showMessage('Səlahiyyət qrupu seçilməlidir', 'error');
+            return;
+        }
+        if (formValue.userStatus && (!formValue.selectedMarket || formValue.selectedMarket.length === 0)) {
+            this.showMessage('Aktiv istifadəçi üçün market təyin edilməlidir', 'error');
             return;
         }
 
