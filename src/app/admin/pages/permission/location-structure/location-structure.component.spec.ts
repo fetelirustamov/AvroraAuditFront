@@ -42,6 +42,31 @@ describe('LocationStructureComponent', () => {
     expect(component).toBeTruthy();
   });
 
+  /**
+   * Şəbəkəni komponentin real yükləmə axını ilə seçir: mağazaların firmaya görə süzülməsi və
+   * strukturların şəbəkəyə görə ayrılması testdə də həqiqi koddan keçir.
+   */
+  function loadNetwork(structures: unknown[]) {
+    component.onNetworkChange({ id: 1, name: 'Test' } as any);
+    flushHierarchy(structures);
+  }
+
+  /** loadHierarchy-nin üç sorğusunu cavablandırır (həm ilk yükləmə, həm idxaldan sonrakı yeniləmə). */
+  function flushHierarchy(structures: unknown[]) {
+    const ok = (data: unknown[]) => ({ success: true, message: '', data });
+    httpMock.expectOne(`${environment.apiUrl}/locations`).flush(ok([
+      { id: 1, firmId: 1, locationCode: '4336' },
+      { id: 2, firmId: 1, locationCode: '4337' },
+      { id: 3, firmId: 2, locationCode: '9999' }
+    ]));
+    httpMock.expectOne(`${environment.apiUrl}/users/firm/1`).flush(ok([
+      { id: 1, userCode: 200456 },
+      { id: 2, userCode: 200458 },
+      { id: 3, userCode: 200460 }
+    ]));
+    httpMock.expectOne(`${environment.apiUrl}/Structures`).flush(ok(structures));
+  }
+
   // ── Wide format parsing ──────────────────────────────────────────────────────
 
   describe('parseStructureWorkbook (wide format)', () => {
@@ -112,19 +137,7 @@ describe('LocationStructureComponent', () => {
   describe('importChains', () => {
     const chainsUrl = `${environment.apiUrl}/Structures/chains`;
 
-    beforeEach(() => {
-      component.selectedNetwork = { id: 1, name: 'Test' } as any;
-      component.allLocations = [
-        { id: 1, firmId: 1, locationCode: 4336 },
-        { id: 2, firmId: 1, locationCode: 4337 },
-        { id: 3, firmId: 2, locationCode: 9999 }
-      ] as any;
-      component.allUsers = [
-        { id: 1, userCode: 200456 },
-        { id: 2, userCode: 200458 },
-        { id: 3, userCode: 200460 }
-      ] as any;
-    });
+    beforeEach(() => loadNetwork([]));
 
     const run = (rows: unknown[]) => (component as any)['importChains'](rows);
 
@@ -144,6 +157,8 @@ describe('LocationStructureComponent', () => {
       });
 
       req.flush({ success: true, message: 'ok', data: { successCount: 2, failures: [] } });
+      // Uğurlu idxaldan sonra ağac serverdən yenidən qurulur
+      flushHierarchy([]);
 
       expect(component.uploadResults?.successCount).toBe(2);
       expect(component.uploadResults?.errorCount).toBe(0);
@@ -190,6 +205,7 @@ describe('LocationStructureComponent', () => {
       expect(req.request.body.chains[0].userCodes).toEqual([200456]);
 
       req.flush({ success: true, message: 'ok', data: { successCount: 1, failures: [] } });
+      flushHierarchy([]);
 
       expect(component.uploadResults?.warningCount).toBe(1);
       expect(component.uploadResults?.errorCount).toBe(0);
@@ -228,32 +244,22 @@ describe('LocationStructureComponent', () => {
     let exportSpy: jasmine.Spy;
 
     beforeEach(() => {
-      component.selectedNetwork = { id: 1, name: 'Test' } as any;
-      component.allLocations = [
-        { id: 1, firmId: 1, locationCode: 4336 },
-        { id: 2, firmId: 1, locationCode: 4337 },
-        { id: 3, firmId: 2, locationCode: 9999 }
-      ] as any;
       exportSpy = spyOn(TestBed.inject(FileExportService), 'exportGridToExcel')
         .and.resolveTo();
     });
 
     it('level sırasını sütun sırasına çevirir və qısa zəncirləri boş xana ilə doldurur', () => {
-      component.exportCurrentStructure();
-
       // Qəsdən qarışıq level sırası ilə qaytarırıq — ixrac özü sıralamalıdır
-      httpMock.expectOne(`${environment.apiUrl}/Structures`).flush({
-        success: true,
-        message: 'ok',
-        data: [
-          { id: 3, locationCode: 4336, userCode: 200460, level: 3 },
-          { id: 1, locationCode: 4336, userCode: 200456, level: 1 },
-          { id: 2, locationCode: 4336, userCode: 200458, level: 2 },
-          { id: 4, locationCode: 4337, userCode: 200456, level: 1 },
-          // Başqa şəbəkənin mağazası — ixraca düşməməlidir
-          { id: 5, locationCode: 9999, userCode: 200458, level: 1 }
-        ]
-      });
+      loadNetwork([
+        { id: 3, locationCode: 4336, userCode: 200460, level: 3 },
+        { id: 1, locationCode: 4336, userCode: 200456, level: 1 },
+        { id: 2, locationCode: 4336, userCode: 200458, level: 2 },
+        { id: 4, locationCode: 4337, userCode: 200456, level: 1 },
+        // Başqa şəbəkənin mağazası — ixraca düşməməlidir
+        { id: 5, locationCode: 9999, userCode: 200458, level: 1 }
+      ]);
+
+      component.exportCurrentStructure();
 
       expect(exportSpy).toHaveBeenCalledTimes(1);
       const grid = exportSpy.calls.mostRecent().args[0];
@@ -265,11 +271,9 @@ describe('LocationStructureComponent', () => {
     });
 
     it('şəbəkədə sxem yoxdursa fayl yaratmır', () => {
-      component.exportCurrentStructure();
+      loadNetwork([]);
 
-      httpMock.expectOne(`${environment.apiUrl}/Structures`).flush({
-        success: true, message: 'ok', data: []
-      });
+      component.exportCurrentStructure();
 
       expect(exportSpy).not.toHaveBeenCalled();
     });
