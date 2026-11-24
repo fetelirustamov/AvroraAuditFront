@@ -9,7 +9,7 @@ import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatMenuModule } from '@angular/material/menu';
 import { FileExportService, datedFileName } from '../../../shared/services/file-export.service';
-import { Subject, Subscription, forkJoin } from 'rxjs';
+import { Subject, Subscription, firstValueFrom, forkJoin } from 'rxjs';
 import { debounceTime, finalize, takeUntil } from 'rxjs/operators';
 import { TableState } from '../../../models/table-state.model';
 import { ReportsService } from '../reports.service';
@@ -17,6 +17,14 @@ import { InspectionsService } from '../../inspections/inspections.service';
 import { Firm } from '../../inspections/firm.model';
 import { NotificationService } from '../../../shared/services/notification.service';
 import { AuditLoadingOverlayComponent } from '../../components/audit-loading-overlay/audit-loading-overlay.component';
+
+/** Cari səhifənin sətirləri + bütün filtrlənmiş sətirlər üzrə cəmlər (API: InspectionReportResponse) */
+interface ReportPageWithTotals {
+    items?: unknown[];
+    total?: number;
+    plannedTotal?: number;
+    unPlannedTotal?: number;
+}
 
 @Component({
     selector: 'app-yoxlama-statistikasi',
@@ -46,6 +54,7 @@ export class YoxlamaStatistikasiComponent implements AfterViewInit, OnDestroy {
     storeDisplayedColumns = this.storeColumns.map(c => c.key);
     storeDataSource = new MatTableDataSource<any>([]);
     storeTotal = 0;
+    private storeSums = { planli_say: 0, plandankanar_say: 0 };
 
     employeeColumns = [
         { key: 'row', label: '№' },
@@ -57,6 +66,7 @@ export class YoxlamaStatistikasiComponent implements AfterViewInit, OnDestroy {
     employeeDisplayedColumns = this.employeeColumns.map(c => c.key);
     employeeDataSource = new MatTableDataSource<any>([]);
     employeeTotal = 0;
+    private employeeSums = { planli_say: 0, plandankanar_say: 0 };
 
     filtersForm = new FormGroup({
         year: new FormControl<number | null>(new Date().getFullYear()),
@@ -317,18 +327,20 @@ export class YoxlamaStatistikasiComponent implements AfterViewInit, OnDestroy {
         return f;
     }
 
-    private applyStoreResponse(res: { data?: { items?: unknown[]; total?: number } }): void {
+    private applyStoreResponse(res: { data?: ReportPageWithTotals }): void {
         const items = res?.data?.items ?? [];
         this.storeTotal = res?.data?.total ?? items.length;
+        this.storeSums = { planli_say: res?.data?.plannedTotal ?? 0, plandankanar_say: res?.data?.unPlannedTotal ?? 0 };
         const page = this.storeTableState.paginator.page;
         const size = this.storeTableState.paginator.size;
         this.storeDataSource.data = items.map((raw, i) => this.normalizeStoreRow(raw, page * size + i + 1));
         if (this.storePaginator) { this.storePaginator.length = this.storeTotal; }
     }
 
-    private applyEmployeeResponse(res: { data?: { items?: unknown[]; total?: number } }): void {
+    private applyEmployeeResponse(res: { data?: ReportPageWithTotals }): void {
         const items = res?.data?.items ?? [];
         this.employeeTotal = res?.data?.total ?? items.length;
+        this.employeeSums = { planli_say: res?.data?.plannedTotal ?? 0, plandankanar_say: res?.data?.unPlannedTotal ?? 0 };
         const page = this.employeeTableState.paginator.page;
         const size = this.employeeTableState.paginator.size;
         this.employeeDataSource.data = items.map((raw, i) => this.normalizeEmployeeRow(raw, page * size + i + 1));
@@ -367,39 +379,56 @@ export class YoxlamaStatistikasiComponent implements AfterViewInit, OnDestroy {
     get storeCount(): number { return this.storeTotal; }
     get employeeCount(): number { return this.employeeTotal; }
 
+    // Səhifələmə serverdədir: cədvəldə yalnız cari səhifə var, cəmlər isə bütün filtrlənmiş
+    // sətirlər üzrə serverdən gəlir.
     getStoreTotal(field: 'planli_say' | 'plandankanar_say'): number {
-        return this.storeDataSource.data.reduce((sum, r) => sum + (r[field] ?? 0), 0);
+        return this.storeSums[field];
     }
 
     getEmployeeTotal(field: 'planli_say' | 'plandankanar_say'): number {
-        return this.employeeDataSource.data.reduce((sum, r) => sum + (r[field] ?? 0), 0);
+        return this.employeeSums[field];
     }
 
-    exportExcel(tab: 'store' | 'employee'): void {
+    /** İxrac üçün cari səhifə yox, filtrə uyğun bütün sətirlər (page = -1 serverdə səhifələməni söndürür). */
+    private async fetchAllRows(tab: 'store' | 'employee'): Promise<any[]> {
+        const source = tab === 'store' ? this.storeTableState : this.employeeTableState;
+        const state = { ...source, paginator: { ...source.paginator, page: -1 } } as TableState;
+        const res: { data?: ReportPageWithTotals } = await firstValueFrom(tab === 'store'
+            ? this.reportsService.getInspectionDetailsByStoreRegion(state)
+            : this.reportsService.getInspectionDetailsByInspector(state));
+        const items = res?.data?.items ?? [];
+        return tab === 'store'
+            ? items.map((raw, i) => this.normalizeStoreRow(raw, i + 1))
+            : items.map((raw, i) => this.normalizeEmployeeRow(raw, i + 1));
+    }
+
+    async exportExcel(tab: 'store' | 'employee'): Promise<void> {
+        const all = await this.fetchAllRows(tab);
         const data = tab === 'store'
-            ? this.storeDataSource.data.map((r: any) => ({
+            ? all.map((r: any) => ({
                 '№': r.row, 'Ərazi kodu': r.magaza_kodu, 'Ərazi adı': r.magaza_adi,
                 'Bölgə': r.bolge, 'Planlı yoxlama sayı': r.planli_say, 'Plandankənar yoxlama sayı': r.plandankanar_say,
             }))
-            : this.employeeDataSource.data.map((r: any) => ({
+            : all.map((r: any) => ({
                 '№': r.row, 'İstifadəçi kodu': r.user_kodu, 'Əməkdaş adı': r.emekdas_adi,
                 'Planlı yoxlama sayı': r.planli_say, 'Plandankənar yoxlama sayı': r.plandankanar_say,
             }));
-        void this.fileExport.exportRowsToExcel(
+        await this.fileExport.exportRowsToExcel(
             data,
             tab === 'store' ? 'Ərazi bazında' : 'Əməkdaş bazında',
             datedFileName(`yoxlama-statistikasi-${tab}`, 'xlsx'),
         );
     }
 
-    exportPdf(tab: 'store' | 'employee'): void {
+    async exportPdf(tab: 'store' | 'employee'): Promise<void> {
         const isStore = tab === 'store';
+        const all = await this.fetchAllRows(tab);
         const headers = isStore
             ? ['№', 'Ərazi kodu', 'Ərazi adı', 'Bölgə', 'Planlı yoxlama sayı', 'Plandankənar yoxlama sayı']
             : ['№', 'İstifadəçi kodu', 'Əməkdaş adı və soyadı', 'Planlı yoxlama sayı', 'Plandankənar yoxlama sayı'];
         const rows = isStore
-            ? this.storeDataSource.data.map((r: any) => [r.row, r.magaza_kodu, r.magaza_adi, r.bolge, r.planli_say, r.plandankanar_say])
-            : this.employeeDataSource.data.map((r: any) => [r.row, r.user_kodu, r.emekdas_adi, r.planli_say, r.plandankanar_say]);
+            ? all.map((r: any) => [r.row, r.magaza_kodu, r.magaza_adi, r.bolge, r.planli_say, r.plandankanar_say])
+            : all.map((r: any) => [r.row, r.user_kodu, r.emekdas_adi, r.planli_say, r.plandankanar_say]);
         const docDef: any = {
             content: [{ table: { headerRows: 1, body: [headers.map(h => ({ text: h, style: 'th' })), ...rows] }, layout: 'lightHorizontalLines' }],
             styles: { th: { bold: true, color: '#fff', fillColor: '#605DFF', fontSize: 9 } },
