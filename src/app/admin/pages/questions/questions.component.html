@@ -31,7 +31,7 @@
                 <!-- Type -->
                 <ng-container matColumnDef="type">
                     <th mat-header-cell *matHeaderCellDef mat-sort-header> SUAL TİPİ </th>
-                    <td mat-cell *matCellDef="let r"> {{ r.questionType ?? r.questionTypeID }} </td>
+                    <td mat-cell *matCellDef="let r"> {{ typeLabel(r) }} </td>
                 </ng-container>
 
                 <!-- Question -->
@@ -105,9 +105,8 @@
                 <mat-form-field>
                     <mat-label>Sual Tipi</mat-label>
                     <mat-select formControlName="type">
-                        <mat-option value="text">Mətn</mat-option>
-                        <mat-option value="multiple">Çox seçimli</mat-option>
-                        <mat-option value="single">Tək seçimli</mat-option>
+                        <mat-option [value]="null">Hamısı</mat-option>
+                        <mat-option *ngFor="let t of questionTypes" [value]="t.id">{{ t.label }}</mat-option>
                     </mat-select>
                 </mat-form-field>
             </div>

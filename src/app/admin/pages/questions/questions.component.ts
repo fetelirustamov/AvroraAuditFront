@@ -17,7 +17,8 @@ import { QuestionService } from '../../services/question.service';
 import { ConfirmDialogService } from '../../shared/confirm-dialog/confirm-dialog.service';
 import { CategoryService } from '../../services/category.service';
 import { CategoryDto } from '../../models/category.model';
-import { QuestionDto } from '../../models/question.model';
+import { QUESTION_TYPES, QuestionDto, questionTypeLabel, toQuestionTypeId } from '../../models/question.model';
+import { NotificationService } from '../../../shared/services/notification.service';
 import { AdminBreadcrumbComponent } from '../../shared/breadcrumb/admin-breadcrumb.component';
 import { AuditLoadingOverlayComponent } from '../../../ui/components/audit-loading-overlay/audit-loading-overlay.component';
 
@@ -57,6 +58,7 @@ export class QuestionsComponent implements OnInit, AfterViewInit {
 
   rows: QuestionRow[] = [];
   categories: CategoryDto[] = [];
+  readonly questionTypes = QUESTION_TYPES;
 
   // Advanced search
   searchForm!: FormGroup;
@@ -71,9 +73,11 @@ export class QuestionsComponent implements OnInit, AfterViewInit {
     private fb: FormBuilder,
     private categoryService: CategoryService,
     private confirmDialog: ConfirmDialogService,
-    private dialog: MatDialog
+    private dialog: MatDialog,
+    private notify: NotificationService
   ) {
     this.dataSource = new MatTableDataSource<QuestionRow>(this.rows);
+    this.dataSource.filterPredicate = (row, filter) => QuestionsComponent.matches(row, filter);
   }
 
   ngOnInit(): void {
@@ -147,15 +151,25 @@ export class QuestionsComponent implements OnInit, AfterViewInit {
 
   onSearchSubmit(): void {
     const { type, question, categoryId } = this.searchForm.getRawValue();
-    const categoryName = this.categories.find(c => c.id === categoryId)?.categoryName || '';
-    const term = [type, question, categoryName]
-      .filter(Boolean)
-      .join(' ')
-      .toString()
-      .toLowerCase();
-    this.dataSource.filter = term;
+    // Hər sahə ayrıca yoxlanılır (filterPredicate); boş sahə süzgəcə daxil olmur
+    this.dataSource.filter = JSON.stringify({
+      type: toQuestionTypeId(type),
+      question: (question ?? '').trim().toLocaleLowerCase('az'),
+      categoryId: categoryId ?? null
+    });
     if (this.dataSource.paginator) this.dataSource.paginator.firstPage();
     this.closeModal();
+  }
+
+  private static matches(row: QuestionRow, filter: string): boolean {
+    const f = JSON.parse(filter) as { type: number | null; question: string; categoryId: number | null };
+    return (f.type === null || toQuestionTypeId(row.questionType ?? row.questionTypeID) === f.type)
+      && (f.categoryId === null || row.categoryId === f.categoryId)
+      && (!f.question || (row.questionText ?? '').toLocaleLowerCase('az').includes(f.question));
+  }
+
+  typeLabel(row: QuestionRow): string {
+    return questionTypeLabel(row.questionType ?? row.questionTypeID);
   }
 
   resetForm(): void {
@@ -175,7 +189,13 @@ export class QuestionsComponent implements OnInit, AfterViewInit {
       })
       .subscribe(confirmed => {
         if (!confirmed) return;
-        this.questionService.delete(row.id).subscribe(() => this.load());
+        this.questionService.delete(row.id).subscribe({
+          next: () => {
+            this.notify.success('Sual silindi', { message: 'Sual mobil checklist-dən çıxarıldı. Köhnə yoxlama nəticələri dəyişmir.' });
+            this.load();
+          },
+          error: (err) => this.notify.error('Sual silinmədi', { message: err?.error?.message || 'Serverlə əlaqədə xəta baş verdi.' })
+        });
       });
   }
   view(row: QuestionRow) { this.router.navigate(['/admin/questions/view', row.id], { state: row }); }
