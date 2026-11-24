@@ -185,7 +185,8 @@ export class GroupsAddComponent implements OnInit {
           this.notify.success('Qrup uğurla yeniləndi');
           this.router.navigate(['/admin/permissions/permission-groups']);
         },
-        error: () => this.notify.error('Yeniləmə zamanı xəta baş verdi')
+        // 409: sistem qrupunun (Admin, Inspector, HeadInspector) adı dəyişdirilə bilməz
+        error: (err) => this.notify.error('Qrup yenilənmədi', { message: err?.error?.message || 'Yeniləmə zamanı xəta baş verdi' })
       });
     } else {
       const payload: RoleCreateDto = {

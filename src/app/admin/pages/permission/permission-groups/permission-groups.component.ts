@@ -109,7 +109,8 @@ export class PermissionGroupsComponent implements OnInit, AfterViewInit {
           this.notify.success('Qrup uğurla silindi');
           this.loadRoles();
         },
-        error: () => this.notify.error('Silmə zamanı xəta baş verdi')
+        // 409: sistem qrupu və ya istifadəçilərə təyin olunmuş qrup - səbəb serverin mesajındadır
+        error: (err) => this.notify.error('Qrup silinmədi', { message: err?.error?.message || 'Silmə zamanı xəta baş verdi' })
       });
     });
   }
