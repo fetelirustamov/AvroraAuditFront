@@ -1,7 +1,6 @@
 import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
-import { CustomizerSettingsService } from '../../../../customizer-settings/customizer-settings.service';
-import { RevenueService } from '../../../../pages/ecommerce-page/e-seller-details/revenue/revenue.service';
+import { InspectionTrendChartService } from './inspection-trend-chart.service';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatMenuModule } from '@angular/material/menu';
@@ -21,8 +20,7 @@ export class MiddleSectionComponent implements OnChanges {
   private chartReady = false;
 
   constructor(
-    public themeService: CustomizerSettingsService,
-    private revenueService: RevenueService,
+    private trendChart: InspectionTrendChartService,
     private datePipe: DatePipe
   ) {}
 
@@ -51,10 +49,10 @@ export class MiddleSectionComponent implements OnChanges {
       { name: 'Açıq', data: rows.map((r) => r.openCount) }
     ];
     if (!this.chartReady) {
-      await this.revenueService.loadChart(series, categories);
+      await this.trendChart.loadChart(series, categories);
       this.chartReady = true;
     } else {
-      this.revenueService.updateChart(series, categories);
+      this.trendChart.updateChart(series, categories);
     }
   }
 

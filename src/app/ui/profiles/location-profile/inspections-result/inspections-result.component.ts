@@ -5,7 +5,6 @@ import { MatCardModule } from '@angular/material/card';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
 import { MatTabsModule } from '@angular/material/tabs';
-import { CustomizerSettingsService } from '../../../../customizer-settings/customizer-settings.service';
 import { InspectionsListComponent } from '../../../inspections/inspections-list/inspections-list.component';
 import { MatTableModule } from '@angular/material/table';
 
@@ -45,9 +44,7 @@ export class InspectionsResultComponent {
     // this.dataSource.filter = filterValue.trim().toLowerCase();
   }
 
-  constructor(
-    public themeService: CustomizerSettingsService
-  ) {
+  constructor() {
     console.log(this.data);
   }
 

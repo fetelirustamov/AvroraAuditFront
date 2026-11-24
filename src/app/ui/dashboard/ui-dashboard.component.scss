@@ -1,772 +1,473 @@
-// ── Design Tokens ─────────────────────────────────────────────────────────────
-$primary:    #3B82F6;   // blue (matches reference)
-$success:    #22C55E;
-$warning:    #F59E0B;
-$danger:     #EF4444;
-$info:       #6366F1;
+// Dashboard — login-dən sonrakı əsas ekran.
+//
+// Səhifə başlığı, cədvəl sarğısı, status nişanı və boş vəziyyət
+// `src/_design-system.scss`-dən, filtr paneli isə ortaq toolbar partial-ından
+// gəlir. Burada yalnız dashboard-a xas olanlar var: bento şəbəkəsi, panel
+// kartı, KPI plitəsi, gauge bloku və reytinq cədvəlindəki bal zolağı.
 
-$text-dark:  #0F172A;
-$text-body:  #64748B;
-$text-light: #94A3B8;
-$border:     #E2E8F0;
-$bg-muted:   #F8FAFC;
-$card-bg:    #FFFFFF;
+@import '../reports/report-filter-toolbar';
 
-$radius-lg:  14px;
-$radius-md:  10px;
-$radius-sm:  8px;
+// Dashboard-un vurğu rəngi (paylaşılan .report-page-header onu oxuyur)
+.report-page-header {
+    --page-accent-from: #4B48CC;
+    --page-accent-to: #7C7AFF;
 
-$shadow-sm:  0 1px 3px rgba(0,0,0,0.06), 0 2px 12px rgba(0,0,0,0.04);
-$shadow-md:  0 4px 12px rgba(0,0,0,0.08), 0 8px 24px rgba(0,0,0,0.06);
-
-// Dark mode
-$dark-bg:      #0C1427;
-$dark-surface: #131B2E;
-$dark-border:  #1E293B;
-$dark-text:    #F1F5F9;
-$dark-muted:   #64748B;
-
-// ── Root ──────────────────────────────────────────────────────────────────────
-.ui-dashboard {
-    padding: 24px 28px;
-    max-width: 1600px;
-    margin: 0 auto;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    animation: dashIn 0.3s ease-out both;
-
-    @keyframes dashIn {
-        from { opacity: 0; transform: translateY(8px); }
-        to   { opacity: 1; transform: translateY(0); }
-    }
-
-    // ── Shared Card Base ───────────────────────────────────────────────────
-    .card {
-        background: $card-bg;
-        border: 1px solid $border;
-        border-radius: $radius-lg;
-        box-shadow: $shadow-sm;
-        overflow: hidden;
-        transition: box-shadow 0.2s ease;
-
-        &:hover { box-shadow: $shadow-md; }
-        &.chart-card { display: flex; flex-direction: column; }
-    }
-
-    .card-header {
+    .header-actions {
         display: flex;
         align-items: center;
-        justify-content: space-between;
         gap: 10px;
-        padding: 14px 18px;
-        border-bottom: 1px solid $border;
-        background: $bg-muted;
-
-        .card-title-group { flex: 1; min-width: 0; }
-
-        .card-title {
-            font-size: 14px;
-            font-weight: 700;
-            color: $text-dark;
-            margin: 0;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-
-            .card-icon { font-size: 18px; color: $primary; flex-shrink: 0; }
-        }
-
-        .card-header-badges {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .btn-icon {
-            background: transparent;
-            border: none;
-            padding: 5px;
-            border-radius: $radius-sm;
-            color: $text-light;
-            cursor: pointer;
-            transition: all 0.15s;
-            display: flex;
-            align-items: center;
-            flex-shrink: 0;
-
-            &:hover { background: darken($bg-muted, 4%); color: $text-body; }
-
-            .material-symbols-outlined { font-size: 18px; }
-        }
     }
+}
 
-    .card-body {
-        padding: 16px 18px;
-        flex: 1;
+.period-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    border: 1px solid rgba(255, 255, 255, .25);
+    border-radius: var(--radius-sm);
+    background: rgba(255, 255, 255, .12);
+    color: var(--whiteColor);
+    font-size: 12px;
+    font-weight: 600;
+
+    .material-symbols-outlined {
+        font-size: 17px;
+        opacity: .85;
     }
+}
 
-    .badge {
+// ── Filtr panelinin «Sıfırla» düyməsi ───────────────────────────────────────
+// Ortaq toolbar-da yalnız `.search-btn` var; sıfırlama dashboard-a xasdır.
+.filter-toolbar-action {
+    gap: 10px;
+}
+
+.reset-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: 46px;
+    padding: 0 18px;
+    border: 1px solid var(--borderColor);
+    border-radius: 12px;
+    background: var(--surface-muted);
+    color: var(--bodyColor);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background .2s, color .2s, border-color .2s;
+
+    .material-symbols-outlined {
+        font-size: 19px;
+    }
+    &:hover:not(:disabled) {
+        border-color: var(--primaryColor);
+        background: var(--primarySoft);
+        color: var(--primaryColor);
+    }
+    &:disabled {
+        opacity: .5;
+        cursor: not-allowed;
+    }
+}
+
+// ── Bento şəbəkəsi ──────────────────────────────────────────────────────────
+// 6 sütunlu şəbəkə: hər blok öz enini `span` ilə seçir, ona görə sətirlər
+// ayrıca sarğı div-i tələb etmir.
+.bento {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.panel {
+    grid-column: span 3;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    overflow: hidden;
+    border: 1px solid var(--borderColor);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    box-shadow: var(--shadow-sm);
+
+    &--wide { grid-column: span 6; }
+    &--gauge { grid-column: span 2; }
+    &--risk { grid-column: span 4; }
+    &--narrow { grid-column: span 2; }
+}
+
+.panel-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--borderColor);
+}
+
+.panel-title-group {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    min-width: 0;
+}
+
+.panel-icon {
+    flex-shrink: 0;
+    padding: 5px;
+    border-radius: 9px;
+    background: var(--primarySoft);
+    color: var(--primaryColor);
+    font-size: 20px;
+}
+
+.panel-title {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-strong);
+}
+
+.panel-hint {
+    margin: 2px 0 0;
+    font-size: 11px;
+    line-height: 1.45;
+    color: var(--text-muted);
+}
+
+.panel-body {
+    flex: 1;
+    padding: 12px 12px 4px;
+}
+
+.chart-area {
+    min-height: 260px;
+}
+
+// ── Uyğunluq indeksi ────────────────────────────────────────────────────────
+.gauge-body {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding-bottom: 16px;
+}
+
+.gauge-area {
+    min-height: 240px;
+}
+
+.gauge-legend {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    padding: 0 10px;
+}
+
+.gauge-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    color: var(--bodyColor);
+}
+
+.zone-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+// ── KPI plitələri ───────────────────────────────────────────────────────────
+.kpi-grid {
+    grid-column: span 4;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.kpi-tile {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    padding: 16px 18px 0;
+    overflow: hidden;
+    border: 1px solid var(--borderColor);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    box-shadow: var(--shadow-sm);
+    transition: box-shadow .2s, transform .15s;
+
+    &:hover {
+        box-shadow: var(--shadow-md);
+        transform: translateY(-2px);
+    }
+}
+
+.kpi-tile-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.kpi-tile-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    background: var(--primarySoft);
+    color: var(--primaryColor);
+
+    .material-symbols-outlined {
+        font-size: 20px;
+    }
+    &.tone-success {
+        background: var(--successSoft);
+        color: var(--successColor);
+    }
+    &.tone-warning {
+        background: var(--warningSoft);
+        color: var(--warningStrong);
+    }
+    &.tone-danger {
+        background: var(--dangerSoft);
+        color: var(--dangerColor);
+    }
+}
+
+.kpi-delta {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding: 3px 8px;
+    border-radius: 20px;
+    background: var(--surface-subtle);
+    color: var(--bodyColor);
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+    cursor: default;
+
+    .material-symbols-outlined {
+        font-size: 15px;
+    }
+    &.is-good {
+        background: var(--successSoft);
+        color: #1C8A02;
+    }
+    &.is-bad {
+        background: var(--dangerSoft);
+        color: #E12F14;
+    }
+    // Müqayisə bazası olmayanda — neytral və kiçik
+    &.is-muted {
+        color: var(--text-muted);
         font-size: 10px;
+        font-weight: 600;
+    }
+}
+
+.kpi-tile-value {
+    margin-top: 12px;
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--text-strong);
+}
+
+.kpi-tile-label {
+    margin-top: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--bodyColor);
+}
+
+.kpi-tile-hint {
+    margin-top: 2px;
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+.kpi-spark {
+    margin: 6px -18px 0;
+    min-height: 44px;
+}
+
+// ── Reytinq cədvəlinin başlığındakı keçid düymələri ─────────────────────────
+.segmented {
+    flex-shrink: 0;
+    display: inline-flex;
+    padding: 3px;
+    border-radius: 10px;
+    background: var(--surface-subtle);
+
+    button {
+        padding: 6px 14px;
+        border: none;
+        border-radius: 8px;
+        background: transparent;
+        color: var(--bodyColor);
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background .2s, color .2s;
+
+        &.is-active {
+            background: var(--surface);
+            color: var(--primaryColor);
+            box-shadow: var(--shadow-sm);
+        }
+    }
+}
+
+// ── Reytinq cədvəli ─────────────────────────────────────────────────────────
+.ranking-table {
+    border-collapse: collapse;
+
+    th {
+        padding: 10px 14px;
+        background: var(--surface-subtle);
+        border-bottom: 2px solid var(--borderColor);
+        color: var(--bodyColor);
+        font-size: 11px;
         font-weight: 700;
-        padding: 3px 8px;
-        border-radius: 100px;
-        letter-spacing: 0.3px;
-
-        &.badge-danger  { background: #FEE2E2; color: $danger; }
-        &.badge-success { background: #DCFCE7; color: $success; }
-        &.badge-info    { background: #EEF2FF; color: $info; }
+        text-align: center;
+        text-transform: uppercase;
+        letter-spacing: .4px;
     }
-
-    .chart-area {
-        min-height: 270px;
-        &.chart-area-heatmap { min-height: 300px; }
+    td {
+        padding: 10px 14px;
+        border-bottom: 1px solid var(--borderColor);
+        color: var(--bodyColor);
+        font-size: 13px;
+        text-align: center;
     }
-
-    // ── Page Header Card ───────────────────────────────────────────────────
-    .page-header {
-        padding: 0;
-        border-left: 4px solid $primary;
-        border-radius: $radius-lg;
-
-        &:hover { box-shadow: $shadow-sm; }
-
-        .page-header-inner {
-            padding: 20px 24px;
-        }
-
-        .page-title {
-            font-size: 24px;
-            font-weight: 800;
-            color: $text-dark;
-            margin: 0 0 4px;
-            letter-spacing: -0.3px;
-        }
-
-        .page-subtitle {
-            font-size: 13px;
-            color: $text-body;
-            margin: 0;
-        }
+    tbody tr:last-child td {
+        border-bottom: none;
     }
+    tbody tr:hover td {
+        background: var(--surface-muted);
+    }
+    .text-left {
+        text-align: left;
+    }
+    .cell-strong {
+        color: var(--text-strong);
+        font-weight: 600;
+    }
+    .col-score {
+        min-width: 190px;
+    }
+}
 
-    // ── Filter Section ─────────────────────────────────────────────────────
-    .filter-section {
-        background: $card-bg;
-        border-radius: $radius-lg;
-        box-shadow: 0 1px 4px rgba(0,0,0,0.05), 0 4px 20px rgba(0,0,0,0.04);
-        padding: 22px 24px 24px;
+.cell-code {
+    display: inline-block;
+    margin-right: 6px;
+    padding: 1px 7px;
+    border-radius: 6px;
+    background: var(--surface-subtle);
+    color: var(--text-muted);
+    font-size: 11px;
+    font-weight: 600;
+}
 
-        // ── Header ───────────────────────────────────────────────────────
-        .fs-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 16px;
-            margin-bottom: 16px;
-        }
+.score-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
 
-        .fs-title-block {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
+.score-bar-track {
+    flex: 1;
+    height: 7px;
+    min-width: 90px;
+    border-radius: 4px;
+    background: var(--surface-subtle);
+    overflow: hidden;
+}
 
-        .fs-title-icon {
-            width: 38px;
-            height: 38px;
-            border-radius: 10px;
-            background: rgba($primary, 0.08);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
+.score-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width .35s ease;
+}
 
-            .material-symbols-outlined { font-size: 20px; color: $primary; }
-        }
+.score-bar-value {
+    min-width: 48px;
+    text-align: right;
+    font-size: 12px;
+    font-weight: 700;
 
-        .fs-title {
-            font-size: 15px;
-            font-weight: 700;
-            color: $text-dark;
-            margin: 0 0 2px;
-            letter-spacing: -0.1px;
-        }
+    &.is-success { color: #1C8A02; }
+    &.is-warning { color: #C46A00; }
+    &.is-danger  { color: #E12F14; }
+}
 
-        .fs-subtitle {
-            font-size: 12px;
-            color: $text-light;
-            margin: 0;
-        }
+// ── Bubble tooltip (ApexCharts `custom` ilə qurulur) ────────────────────────
+:host ::ng-deep .apex-bubble-tip {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 9px 12px;
+    font-size: 12px;
+    color: var(--text-strong);
 
-        .fs-actions {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            flex-shrink: 0;
-        }
+    strong {
+        margin-bottom: 3px;
+        font-size: 12px;
+    }
+    span {
+        color: var(--bodyColor);
+    }
+}
 
-        .btn-fs-reset {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            padding: 0 14px;
-            height: 36px;
-            border: 1px solid $border;
-            background: transparent;
-            border-radius: $radius-sm;
-            font-size: 13px;
-            font-weight: 500;
-            color: $text-body;
-            cursor: pointer;
-            transition: all 0.18s;
-            white-space: nowrap;
+// ── Adaptiv ─────────────────────────────────────────────────────────────────
+// Qeyd: 6 sütunlu şəbəkədə hər sətir tam dolur (2+4, 3+3, 4+2, 6), ona görə
+// aralıq kəsilmə nöqtəsi yoxdur — bloklar sadəcə daralır. Əvvəl burada 1280px
+// üçün qayda vardı, o isə gauge və funnel sətirlərinin yarısını boş qoyurdu.
+@media (max-width: 900px) {
+    .bento {
+        grid-template-columns: minmax(0, 1fr);
+    }
+    .panel,
+    .panel--wide,
+    .panel--gauge,
+    .panel--risk,
+    .panel--narrow,
+    .kpi-grid {
+        grid-column: span 1;
+    }
+    .kpi-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
 
-            .material-symbols-outlined { font-size: 15px; }
+@media (max-width: 600px) {
+    .kpi-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+    .filter-toolbar-action {
+        flex-direction: column;
+        align-items: stretch;
+        width: 100%;
 
-            &:hover:not([disabled]) {
-                border-color: $primary;
-                color: $primary;
-                background: rgba($primary, 0.04);
-            }
-
-            &[disabled] { opacity: 0.35; cursor: not-allowed; }
-        }
-
-        .btn-fs-apply {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            padding: 0 18px;
-            height: 36px;
-            border: none;
-            background: $primary;
-            border-radius: $radius-sm;
-            font-size: 13px;
-            font-weight: 600;
-            color: #fff;
-            cursor: pointer;
-            white-space: nowrap;
-            transition: background 0.18s, box-shadow 0.18s;
-
-            .material-symbols-outlined { font-size: 15px; }
-
-            &:hover { background: darken($primary, 8%); box-shadow: 0 4px 12px rgba($primary, 0.35); }
-        }
-
-        // ── Divider ──────────────────────────────────────────────────────
-        .fs-divider {
-            height: 1px;
-            background: $border;
-            margin-bottom: 20px;
-        }
-
-        // ── 3-column grid ─────────────────────────────────────────────────
-        .fs-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 14px 20px;
-
-            @media (max-width: 960px) { grid-template-columns: repeat(2, 1fr); }
-            @media (max-width: 580px) { grid-template-columns: 1fr; }
-        }
-
-        // ── Each field group ──────────────────────────────────────────────
-        .fs-group {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-
-            &--disabled {
-                .fs-label { opacity: 0.45; }
-            }
-        }
-
-        .fs-label {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            font-size: 12px;
-            font-weight: 600;
-            color: $text-body;
-            user-select: none;
-            letter-spacing: 0.1px;
-
-            .material-symbols-outlined { font-size: 13px; color: $text-light; }
-        }
-
-        .fs-field {
+        .reset-btn {
             width: 100%;
         }
     }
-
-    // ── Loading Bar ────────────────────────────────────────────────────────
-    .loading-bar {
-        height: 3px;
-        background: $border;
-        border-radius: 2px;
-        overflow: hidden;
-        margin: -4px 0;
-
-        .loading-progress {
-            height: 100%;
-            background: linear-gradient(90deg, $primary 0%, #818CF8 50%, $primary 100%);
-            background-size: 200% 100%;
-            animation: loadSlide 1.4s ease-in-out infinite;
-        }
-
-        @keyframes loadSlide {
-            0%   { background-position: 200% 0; }
-            100% { background-position: -200% 0; }
-        }
+    .panel-body {
+        padding: 8px 4px 0;
     }
-
-    // ── Loading dimmer ─────────────────────────────────────────────────────
-    .is-loading {
-        opacity: 0.55;
-        pointer-events: none;
-        transition: opacity 0.25s ease;
-    }
-
-    // ── Row 1 Grid: Bar (flex:1.5) | Donut (flex:1) | Insights (260px) ────
-    .row-1-grid {
-        display: grid;
-        grid-template-columns: 1.5fr 1fr 260px;
-        gap: 16px;
-
-        @media (max-width: 1280px) { grid-template-columns: 1fr 1fr; }
-        @media (max-width: 900px)  { grid-template-columns: 1fr; }
-    }
-
-    .bar-card   { /* grows naturally */ }
-    .donut-card { /* medium card */ }
-
-    .card-body-donut {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    // ── Rows 2+3 Grid: Main charts (1fr) | Right panel (260px) ───────────
-    .rows-23-grid {
-        display: grid;
-        grid-template-columns: 1fr 260px;
-        gap: 16px;
-
-        @media (max-width: 1100px) { grid-template-columns: 1fr; }
-    }
-
-    .main-col {
-        display: flex;
+    .panel-header {
         flex-direction: column;
-        gap: 16px;
-        min-width: 0;
-    }
-
-    .right-panel {
-        display: flex;
-        flex-direction: column;
-        gap: 16px;
-        min-width: 0;
-    }
-
-    // ── Insights Card #1 (in row-1-grid) ──────────────────────────────────
-    .insights-card-1 {
-        display: flex;
-        flex-direction: column;
-
-        .insights-body {
-            padding: 14px 16px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            flex: 1;
-        }
-
-        .ins-row {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 10px 12px;
-            background: $bg-muted;
-            border-radius: $radius-sm;
-        }
-
-        .ins-dot {
-            width: 9px;
-            height: 9px;
-            border-radius: 50%;
-            flex-shrink: 0;
-
-            &.danger  { background: $danger; }
-            &.success { background: $success; }
-        }
-
-        .ins-text {
-            display: flex;
-            flex-direction: column;
-            gap: 1px;
-
-            .ins-label { font-size: 11px; color: $text-light; }
-            .ins-value { font-size: 14px; font-weight: 700; color: $text-dark; }
-        }
-
-        .ins-trend-note {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            font-size: 12px;
-            font-weight: 600;
-            color: $success;
-            padding: 0 2px;
-
-            .ins-trend-icon { font-size: 17px; }
-        }
-
-        .ins-actions {
-            display: flex;
-            gap: 8px;
-            margin-top: auto;
-            padding-top: 6px;
-
-            .btn-sm-outline,
-            .btn-sm-primary {
-                flex: 1;
-                padding: 8px 6px;
-                border-radius: $radius-sm;
-                font-size: 13px;
-                font-weight: 600;
-                cursor: pointer;
-                transition: all 0.15s;
-                text-align: center;
-            }
-
-            .btn-sm-outline {
-                background: transparent;
-                border: 1px solid $border;
-                color: $text-body;
-
-                &:hover { background: $bg-muted; }
-            }
-
-            .btn-sm-primary {
-                background: $primary;
-                border: none;
-                color: #fff;
-
-                &:hover { background: darken($primary, 10%); }
-            }
-        }
-    }
-
-    // ── Insights Card #2 (in right-panel) ─────────────────────────────────
-    .insights-card-2 {
-        .insights-body-2 { padding: 4px 16px 12px; }
-
-        .ins2-row {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 12px 0;
-            border-bottom: 1px solid $border;
-
-            &.ins2-row-last { border-bottom: none; }
-        }
-
-        .ins2-icon {
-            width: 32px;
-            height: 32px;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-
-            .material-symbols-outlined { font-size: 17px; }
-
-            &.info    { background: #DBEAFE; .material-symbols-outlined { color: $primary; } }
-            &.warning { background: #FEF3C7; .material-symbols-outlined { color: $warning; } }
-            &.danger  { background: #FEE2E2; .material-symbols-outlined { color: $danger; } }
-        }
-
-        .ins2-content {
-            flex: 1;
-            min-width: 0;
-
-            .ins2-label { font-size: 10px; color: $text-light; display: block; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
-            .ins2-value { font-size: 13px; font-weight: 700; color: $text-dark; }
-        }
-
-        .ins2-badge {
-            font-size: 10px;
-            font-weight: 700;
-            padding: 3px 6px;
-            border-radius: 100px;
-            white-space: nowrap;
-            flex-shrink: 0;
-
-            &.danger-badge  { background: #FEE2E2; color: $danger; }
-            &.success-badge { background: #DCFCE7; color: $success; }
-        }
-    }
-
-    // ── Side Stats Card ────────────────────────────────────────────────────
-    .side-stats-card {
-        flex: 1;
-
-        .side-stats-body { padding: 4px 18px 12px; }
-
-        .stat-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 12px 0;
-            border-bottom: 1px solid $border;
-
-            &:last-child { border-bottom: none; }
-        }
-
-        .stat-item-left {
-            display: flex;
-            flex-direction: column;
-            gap: 1px;
-        }
-
-        .stat-item-label {
-            font-size: 12px;
-            font-weight: 500;
-            color: $text-body;
-        }
-
-        .stat-item-store {
-            font-size: 11px;
-            color: $text-light;
-        }
-
-        .stat-item-right {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-
-        .stat-item-value {
-            font-size: 20px;
-            font-weight: 800;
-            color: $text-dark;
-            letter-spacing: -0.5px;
-        }
-
-        .stat-trend {
-            .material-symbols-outlined { font-size: 15px; }
-
-            &.up   .material-symbols-outlined { color: $success; }
-            &.down .material-symbols-outlined { color: $danger; }
-        }
-    }
-
-    // ── Heatmap card ───────────────────────────────────────────────────────
-    .heatmap-card {
-        // full width, nothing special
-    }
-
-    // ── Empty State ────────────────────────────────────────────────────────
-    .empty-state {
-        text-align: center;
-        padding: 60px 24px;
-        background: $card-bg;
-        border-radius: $radius-lg;
-        border: 2px dashed $border;
-
-        .empty-icon {
-            font-size: 52px;
-            color: $text-light;
-            display: block;
-            margin-bottom: 14px;
-        }
-
-        h3 { font-size: 17px; font-weight: 700; color: $text-dark; margin: 0 0 8px; }
-        p  { font-size: 13px; color: $text-body; margin: 0 auto; max-width: 360px; }
-    }
-
-    // ── Responsive ─────────────────────────────────────────────────────────
-    @media (max-width: 768px) {
-        padding: 12px 14px;
-        gap: 12px;
-
-        .page-header .page-header-inner { padding: 14px 16px; }
-        .page-header .page-title { font-size: 20px; }
-
-        .filter-card .filter-row {
-            flex-direction: column;
-            .filter-field { min-width: 100%; }
-        }
-
-        .card-header { padding: 12px 14px; }
-        .card-body { padding: 12px 14px; }
-        .chart-area { min-height: 220px; }
-    }
-
-    // ── Dark Mode ──────────────────────────────────────────────────────────
-    :host-context(.dark-theme) {
-        .card {
-            background: $dark-bg;
-            border-color: $dark-border;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-
-            &:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.45); }
-        }
-
-        .card-header {
-            background: $dark-surface;
-            border-bottom-color: $dark-border;
-            .card-title { color: $dark-text; }
-        }
-
-        .page-header .page-header-inner {
-            .page-title    { color: $dark-text; }
-            .page-subtitle { color: $dark-muted; }
-        }
-
-        .filter-section {
-            background: $dark-bg;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-
-            .fs-title    { color: $dark-text; }
-            .fs-subtitle { color: $dark-muted; }
-            .fs-divider  { background: $dark-border; }
-
-            .fs-title-icon { background: rgba($primary, 0.15); }
-
-            .btn-fs-reset {
-                border-color: $dark-border;
-                color: $dark-muted;
-
-                &:hover:not([disabled]) { border-color: $primary; color: $primary; }
-            }
-
-            .fs-label { color: $dark-muted; }
-        }
-
-        .insights-card-1 {
-            .ins-row      { background: $dark-surface; }
-            .ins-text .ins-value { color: $dark-text; }
-        }
-
-        .insights-card-2 {
-            .ins2-row     { border-bottom-color: $dark-border; }
-            .ins2-content .ins2-value { color: $dark-text; }
-        }
-
-        .side-stats-card {
-            .stat-item        { border-bottom-color: $dark-border; }
-            .stat-item-value  { color: $dark-text; }
-            .stat-item-label  { color: $dark-muted; }
-        }
-
-        .empty-state {
-            background: $dark-bg;
-            border-color: $dark-border;
-            h3 { color: $dark-text; }
-        }
-    }
-
-    // ── ApexCharts fixes ───────────────────────────────────────────────────
-    .card .apexcharts-canvas { max-width: 100% !important; }
-    .card .apexcharts-svg    { overflow: hidden; }
-
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Material overrides for filter section
-// Must be at root level so ::ng-deep compiles correctly
-// ─────────────────────────────────────────────────────────────────────────────
-:host ::ng-deep .filter-section {
-
-    .mat-mdc-form-field {
-        width: 100%;
-
-        // Remove dead space below field (hints / errors)
-        .mat-mdc-form-field-subscript-wrapper { display: none !important; }
-
-        // ── Compact height: lock wrapper + flex + infix all together ──────
-        .mat-mdc-text-field-wrapper,
-        .mdc-text-field--outlined {
-            height: 36px !important;
-            padding-left: 12px !important;
-            padding-right: 4px !important;
-        }
-
-        .mat-mdc-form-field-flex {
-            height: 36px !important;
-            align-items: center !important;
-            padding-top: 0 !important;
-        }
-
-        .mat-mdc-form-field-infix {
-            min-height: unset !important;
-            height: 36px !important;
-            padding-top: 7px !important;
-            padding-bottom: 7px !important;
-            border-top: none !important;
-        }
-
-        // ── Seal notch (no floating label → solid top border) ────────────
-        .mdc-notched-outline__notch {
-            border-top: 1px solid #EDF0F5 !important;
-        }
-
-        // ── Default border: light gray ────────────────────────────────────
-        .mdc-notched-outline__leading,
-        .mdc-notched-outline__notch,
-        .mdc-notched-outline__trailing {
-            border-color: #EDF0F5 !important;
-            transition: border-color 0.18s, border-width 0.18s;
-        }
-
-        // ── Focus: primary color ──────────────────────────────────────────
-        &.mat-focused {
-            .mdc-notched-outline__leading,
-            .mdc-notched-outline__notch,
-            .mdc-notched-outline__trailing {
-                border-color: #3B82F6 !important;
-                border-width: 1.5px !important;
-            }
-            .mdc-notched-outline__notch {
-                border-top-width: 1.5px !important;
-            }
-        }
-
-        // ── Hover ─────────────────────────────────────────────────────────
-        &:not(.mat-focused):not(.mat-form-field-disabled):hover {
-            .mdc-notched-outline__leading,
-            .mdc-notched-outline__notch,
-            .mdc-notched-outline__trailing {
-                border-color: #CBD5E1 !important;
-            }
-        }
-
-        // ── Disabled ──────────────────────────────────────────────────────
-        &.mat-form-field-disabled {
-            opacity: 0.55;
-            .mdc-notched-outline__leading,
-            .mdc-notched-outline__notch,
-            .mdc-notched-outline__trailing {
-                border-color: #EEF0F4 !important;
-            }
-        }
-
-        // ── Select typography ─────────────────────────────────────────────
-        .mat-mdc-select-value-text {
-            font-size: 13px;
-            font-weight: 500;
-            color: #0F172A;
-        }
-
-        .mat-mdc-select-placeholder { font-size: 13px; color: #94A3B8; }
-        .mat-mdc-select-arrow-wrapper { padding-right: 4px; }
-        .mat-mdc-select-arrow { color: #94A3B8; }
     }
 }

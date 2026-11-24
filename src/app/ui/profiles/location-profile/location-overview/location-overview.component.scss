@@ -104,16 +104,6 @@
         &.kpi-purple .kpi-fill { background: linear-gradient(90deg, #9B59B6, #AD63F6); }
     }
 
-    &.dark-theme {
-        .kpi-card {
-            background: #15203C;
-            border-color: #1E3461;
-
-            .kpi-number { color: #F1F5F9; }
-            .kpi-label  { color: #94A3B8; }
-            .kpi-bar    { background: #1E3461; }
-        }
-    }
 }
 
 /* Max width 767px */

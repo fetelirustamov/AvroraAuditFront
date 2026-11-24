@@ -5,7 +5,6 @@ import { CommonModule, NgFor } from '@angular/common';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { AuditLoadingOverlayComponent } from '../../components/audit-loading-overlay/audit-loading-overlay.component';
-import { CustomizerSettingsService } from '../../../customizer-settings/customizer-settings.service';
 import { LocationOverviewComponent } from './location-overview/location-overview.component';
 import { MiddleSectionComponent } from './middle-section/middle-section.component';
 import { InspectionsService } from '../../inspections/inspections.service';
@@ -46,7 +45,6 @@ export class LocationProfileComponent {
   constructor(
     private inspectionsService: InspectionsService,
     private locationProfileService: LocationProfileService,
-    public themeService: CustomizerSettingsService
   ) {
     this.getFirms();
   }
