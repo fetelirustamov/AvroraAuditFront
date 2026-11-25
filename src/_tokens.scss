@@ -25,6 +25,7 @@
     --fs-16: 16px;
     --fs-20: 20px;
     --fs-24: 24px;
+    --fs-28: 28px;
 
     // ── Boşluq (4px addım) ──────────────────────────────────────────────────
     --space-1: 4px;
@@ -98,4 +99,19 @@
     --focus-ring: 0 0 0 2px var(--surface), 0 0 0 4px var(--accent);
 
     --transition: .2s ease;
+
+    // ── Giriş səhnəsi ───────────────────────────────────────────────────────
+    //  Yalnız giriş ekranlarının (/login, /admin-login) dekorativ səhnəsi üçün.
+    //  Giriş brend anıdır: tünd neft fonu, ölçü toru və illüstrasiya burada
+    //  qəsdən icazəlidir. Tətbiqin başqa yerində işlətmə.
+    //  --stage-text-muted tünd fon üzərində 4.5:1-dən yuxarıdır.
+    --stage-bg: #0B3B42;
+    --stage-line: rgba(226, 239, 241, .07);
+    --stage-line-strong: rgba(226, 239, 241, .2);
+    --stage-text: #F3F7F6;
+    --stage-text-muted: #A6C2C4;
+    --stage-ok: #7FD3BE;            // səhnədə "uyğun" işarəsi
+    --stage-flag: #F0B35B;          // səhnədə "uyğunsuzluq" işarəsi
+    --fs-stage: clamp(30px, 3.1vw, 46px);   // səhnə başlığı
+    --shadow-stage: 0 24px 48px rgba(4, 22, 25, .35), 0 2px 6px rgba(4, 22, 25, .2);
 }

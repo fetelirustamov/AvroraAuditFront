@@ -1,112 +1,357 @@
-// Giriş səhifəsi: neytral səth üzərində bir kart.
-// Müştəri brendi yalnız loqo yerindən gəlir; sahə və düymə qlobal
-// .g-modern-field / .g-search-btn sistemindəndir.
+// Giriş səhifəsi. Çərçivə, forma və ölçülər ortaq `_auth-layout.scss`-dədir;
+// burada yalnız səhnənin illüstrasiyası var: mağaza planı, müfəttişin marşrutu,
+// yoxlama vərəqi və təsdiq zənciri. Hamısı dekorativdir (aria-hidden).
+@use '../auth-layout';
 
-:host {
-    display: block;
+// ── Mağaza planı ───────────────────────────────────────────────────────────
+.floorplan {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: min(80%, 540px);
+    height: auto;
+    overflow: visible;
+    animation: auth-fade .6s ease-out both;
 }
 
-.signin-page {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 100vh;
-    padding: var(--space-6) var(--space-4);
-    background: var(--bg);
+.fp-wall {
+    fill: none;
+    stroke: var(--stage-line-strong);
+    stroke-width: 2;
 }
 
-.signin-card {
-    width: 100%;
-    max-width: 400px;
-    padding: var(--space-8) var(--space-7) var(--space-7);
-    border: 1px solid var(--border);
+.fp-shelf,
+.fp-desk {
+    fill: var(--stage-line);
+    stroke: var(--stage-line-strong);
+    stroke-width: 1;
+}
+
+.fp-cold {
+    fill: none;
+    stroke: var(--stage-text-muted);
+    stroke-width: 1;
+    stroke-dasharray: 3 3;
+}
+
+.fp-cold-line {
+    stroke: var(--stage-line-strong);
+    stroke-width: 1;
+}
+
+.fp-route {
+    fill: none;
+    stroke: var(--stage-line-strong);
+    stroke-width: 2;
+    stroke-dasharray: 2 6;
+    stroke-linecap: round;
+}
+
+// Keçilmiş marşrut: yükləmədə xətt boyunca çəkilir
+.fp-route-done {
+    fill: none;
+    stroke: var(--stage-ok);
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-dasharray: 1;
+    stroke-dashoffset: 0;
+    opacity: .7;
+    animation: fp-draw 1.8s .3s ease-in-out both;
+}
+
+.fp-pin {
+    animation: auth-pop .35s cubic-bezier(.3, 1.6, .5, 1) both;
+    transform-box: fill-box;
+    transform-origin: center;
+
+    circle {
+        stroke: var(--stage-bg);
+        stroke-width: 3;
+    }
+
+    &.ok circle { fill: var(--stage-ok); }
+    &.flag circle { fill: var(--stage-flag); }
+
+    &.p1 { animation-delay: .5s; }
+    &.p2 { animation-delay: .9s; }
+    &.p3 { animation-delay: 1.3s; }
+    &.p4 { animation-delay: 1.9s; }
+}
+
+.fp-pin-mark {
+    fill: none;
+    stroke: var(--stage-bg);
+    stroke-width: 2.4;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+// Uyğunsuzluq nöqtəsi dalğa ilə diqqəti çəkir
+.fp-pin.flag .fp-pulse {
+    fill: none;
+    stroke: var(--stage-flag);
+    stroke-width: 2;
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: fp-pulse 2.4s 2.3s ease-out infinite;
+    opacity: 0;
+}
+
+@keyframes fp-draw {
+    from { stroke-dashoffset: 1; }
+}
+
+@keyframes fp-pulse {
+    0% { opacity: .8; transform: scale(1); }
+    70%, 100% { opacity: 0; transform: scale(2.4); }
+}
+
+// ── Yoxlama vərəqi ─────────────────────────────────────────────────────────
+.sheet {
+    position: absolute;
+    right: 0;
+    bottom: var(--space-2);
+    width: min(300px, 64%);
+    padding: var(--space-4) var(--space-5) var(--space-5);
     border-radius: var(--radius-lg);
     background: var(--surface);
-    box-shadow: var(--shadow-sm);
+    box-shadow: var(--shadow-stage);
+    color: var(--text);
+    animation: auth-rise .6s .25s ease-out both;
 }
 
-.signin-logo {
-    display: block;
-    width: auto;
-    max-width: 100%;
-    height: 36px;
-    margin-bottom: var(--space-7);
-}
-
-.signin-title {
-    margin: 0 0 var(--space-1);
-    font-size: var(--fs-24);
-    font-weight: 600;
-    line-height: 1.25;
-    color: var(--text-strong);
-}
-
-.signin-lead {
-    margin: 0 0 var(--space-6);
-    font-size: var(--fs-14);
-    line-height: 1.5;
-    color: var(--text-muted);
-}
-
-.signin-field {
-    margin-bottom: var(--space-4);
-}
-
-.password-toggle {
-    color: var(--text-muted);
-}
-
-.signin-alert {
+.sheet-head {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
+    justify-content: space-between;
     gap: var(--space-2);
-    margin-bottom: var(--space-4);
-    padding: var(--space-3);
-    border: 1px solid var(--danger-soft);
-    border-radius: var(--radius-md);
-    background: var(--danger-soft);
-    color: var(--danger-text);
-    font-size: var(--fs-13);
-    line-height: 20px;
+    padding-bottom: var(--space-3);
+    border-bottom: 1px dashed var(--border-strong);
+    font-family: var(--font-mono);
+    font-size: var(--fs-12);
+    color: var(--text-muted);
+}
+
+.sheet-store {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    padding: 2px var(--space-2);
+    border-radius: var(--radius-sm);
+    background: var(--surface-subtle);
+    color: var(--text-strong);
 
     mat-icon {
-        flex-shrink: 0;
-        width: 20px;
-        height: 20px;
-        font-size: 20px;
+        width: 14px;
+        height: 14px;
+        font-size: 14px;
     }
 }
 
-.signin-submit {
-    width: 100%;
-    min-height: 44px !important;
-    margin-top: var(--space-2);
+.sheet-title {
+    margin: var(--space-3) 0 var(--space-2);
     font-size: var(--fs-14);
+    font-weight: 600;
+    color: var(--text-strong);
 }
 
-.signin-spinner {
-    width: 16px;
-    height: 16px;
-    border: 2px solid currentColor;
-    border-right-color: transparent;
-    border-radius: 50%;
-    animation: signin-spin .8s linear infinite;
+.sheet-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+
+    li {
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+        min-height: 34px;
+        border-bottom: 1px solid var(--border);
+        font-size: var(--fs-13);
+
+        > mat-icon {
+            width: 18px;
+            height: 18px;
+            margin-left: auto;
+            font-size: 18px;
+            color: var(--success);
+            animation: auth-pop .3s cubic-bezier(.3, 1.6, .5, 1) both;
+        }
+    }
+
+    .r1 > mat-icon { animation-delay: .6s; }
+    .r2 > mat-icon { animation-delay: 1s; }
+    .r3 > mat-icon { animation-delay: 1.4s; }
+    .r4 .sheet-chip { animation-delay: 2s; }
+
+    .flag .sheet-q {
+        color: var(--text-strong);
+        font-weight: 500;
+    }
 }
 
-@keyframes signin-spin {
-    to {
-        transform: rotate(360deg);
+.sheet-no {
+    font-family: var(--font-mono);
+    font-size: var(--fs-12);
+    color: var(--text-faint);
+}
+
+.sheet-q {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.sheet-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    flex-shrink: 0;
+    margin-left: auto;
+    padding: 2px 6px;
+    border-radius: var(--radius-sm);
+    background: var(--warning-soft);
+    color: var(--warning-text);
+    font-size: var(--fs-12);
+    font-weight: 500;
+    animation: auth-pop .3s cubic-bezier(.3, 1.6, .5, 1) both;
+
+    mat-icon {
+        width: 14px;
+        height: 14px;
+        font-size: 14px;
+    }
+}
+
+.sheet-score {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: baseline;
+    gap: var(--space-2) var(--space-3);
+    margin-top: var(--space-4);
+    font-size: var(--fs-12);
+    color: var(--text-muted);
+
+    strong {
+        font-family: var(--font-mono);
+        font-size: var(--fs-20);
+        font-weight: 500;
+        color: var(--success-text);
+    }
+}
+
+.sheet-bar {
+    grid-column: 1 / -1;
+    height: 6px;
+    border-radius: 3px;
+    background: var(--surface-subtle);
+    overflow: hidden;
+
+    i {
+        display: block;
+        width: 88%;
+        height: 100%;
+        border-radius: inherit;
+        background: var(--success);
+        transform-origin: left;
+        animation: sheet-fill 1s 2.1s ease-out both;
+    }
+}
+
+@keyframes sheet-fill {
+    from { transform: scaleX(0); }
+}
+
+// ── Təsdiq zənciri ─────────────────────────────────────────────────────────
+.chain {
+    position: absolute;
+    left: 0;
+    bottom: var(--space-2);
+    padding: var(--space-3) var(--space-4);
+    border: 1px solid var(--stage-line-strong);
+    border-radius: var(--radius-lg);
+    background: var(--stage-bg);
+    animation: auth-rise .6s 1.2s ease-out both;
+}
+
+.chain-label {
+    display: block;
+    margin-bottom: var(--space-2);
+    font-family: var(--font-mono);
+    font-size: var(--fs-12);
+    color: var(--stage-text-muted);
+}
+
+// Şaquli addımlar: vərəqlə yan-yana sığsın deyə dar saxlanır
+.chain-steps {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-size: var(--fs-13);
+    color: var(--stage-text);
+
+    li {
+        position: relative;
+        display: flex;
+        align-items: center;
+        gap: var(--space-3);
+        min-height: 26px;
+        white-space: nowrap;
+
+        // Addımları birləşdirən xətt
+        & + li::before {
+            content: "";
+            position: absolute;
+            left: 4px;
+            bottom: 17px;
+            width: 1px;
+            height: 18px;
+            background: var(--stage-line-strong);
+        }
+    }
+
+    i {
+        flex-shrink: 0;
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+    }
+
+    .done i { background: var(--stage-ok); }
+
+    .now i {
+        border: 2px solid var(--stage-flag);
+        animation: fp-blink 1.6s ease-in-out infinite;
+    }
+}
+
+@keyframes fp-blink {
+    50% { opacity: .35; }
+}
+
+// Dar səhnədə (iki sütun hələ var) zəncir vərəqlə toqquşur
+@media (max-width: 1279.98px) {
+    .chain {
+        display: none;
+    }
+
+    .floorplan {
+        width: 88%;
     }
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .signin-spinner {
-        animation-duration: 2.4s;
-    }
-}
-
-@media only screen and (max-width: 479.98px) {
-    .signin-card {
-        padding: var(--space-7) var(--space-5) var(--space-6);
+    .floorplan,
+    .fp-route-done,
+    .fp-pin,
+    .fp-pin.flag .fp-pulse,
+    .sheet,
+    .sheet-list li > mat-icon,
+    .sheet-chip,
+    .sheet-bar i,
+    .chain,
+    .chain-steps .now i {
+        animation: none;
     }
 }

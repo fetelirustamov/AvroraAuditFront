@@ -1,60 +1,145 @@
-<main class="signin-page">
-    <section class="signin-card" aria-labelledby="signin-title">
-        <img src="images/logo-big.svg" alt="Loqo" class="signin-logo">
+<main class="auth">
+    <!-- Səhnə: məhsulun nə etdiyini göstərir. İllüstrasiya dekorativdir, ekran oxuyucudan gizlənir. -->
+    <section class="auth-stage">
+        <span class="stage-mark tl" aria-hidden="true"></span>
+        <span class="stage-mark tr" aria-hidden="true"></span>
+        <span class="stage-mark bl" aria-hidden="true"></span>
+        <span class="stage-mark br" aria-hidden="true"></span>
 
-        <h1 id="signin-title" class="signin-title">Sistemə giriş</h1>
-        <p class="signin-lead">Mağaza yoxlamaları, uyğunsuzluqlar və hesabatlar üçün audit sistemi.</p>
+        <p class="stage-tag">Mağaza yoxlama sistemi</p>
+        <p class="stage-title">Hər rəf, hər sual, hər uyğunsuzluq <em>nəzarətdə.</em></p>
+        <p class="stage-lead">Yoxlama planından təsdiq zəncirinə qədər mağazadakı bütün iş bir yerdə.</p>
 
-        <form [formGroup]="loginForm" class="signin-form" (ngSubmit)="login()" novalidate>
-            <div class="signin-field">
-                <label for="email" class="g-field-label">E-poçt</label>
-                <mat-form-field appearance="outline" class="g-modern-field">
-                    <input #emailInput matInput id="email" formControlName="email" type="email"
-                        autocomplete="username" inputmode="email" spellcheck="false">
-                    @if (loginForm.controls.email.hasError('required')) {
-                        <mat-error>E-poçt tələb olunur</mat-error>
-                    } @else if (loginForm.controls.email.hasError('email')) {
-                        <mat-error>Düzgün e-poçt ünvanı daxil edin</mat-error>
-                    }
-                </mat-form-field>
-            </div>
+        <div class="stage-scene" aria-hidden="true">
+            <!-- Mağazanın planı: rəflər, soyuducular, kassa və müfəttişin marşrutu -->
+            <svg class="floorplan" viewBox="0 0 560 380" focusable="false">
+                <path class="fp-wall" d="M230 372 H12 V12 H548 V372 H310" />
+                <rect class="fp-shelf" x="30" y="28" width="420" height="16" rx="2" />
+                <rect class="fp-cold" x="476" y="60" width="54" height="230" rx="3" />
+                <line class="fp-cold-line" x1="476" y1="117" x2="530" y2="117" />
+                <line class="fp-cold-line" x1="476" y1="175" x2="530" y2="175" />
+                <line class="fp-cold-line" x1="476" y1="232" x2="530" y2="232" />
+                <rect class="fp-shelf" x="80" y="90" width="22" height="170" rx="2" />
+                <rect class="fp-shelf" x="150" y="90" width="22" height="170" rx="2" />
+                <rect class="fp-shelf" x="220" y="90" width="22" height="170" rx="2" />
+                <rect class="fp-shelf" x="290" y="90" width="22" height="170" rx="2" />
+                <rect class="fp-shelf" x="360" y="90" width="22" height="170" rx="2" />
+                <rect class="fp-desk" x="40" y="318" width="54" height="22" rx="2" />
+                <rect class="fp-desk" x="120" y="318" width="54" height="22" rx="2" />
 
-            <div class="signin-field">
-                <label for="password" class="g-field-label">Parol</label>
-                <mat-form-field appearance="outline" class="g-modern-field">
-                    <input #passwordInput matInput id="password" formControlName="password"
-                        [type]="hidePassword ? 'password' : 'text'" autocomplete="current-password">
-                    <button mat-icon-button matSuffix type="button" class="password-toggle"
-                        (click)="hidePassword = !hidePassword"
-                        [attr.aria-label]="hidePassword ? 'Parolu göstər' : 'Parolu gizlət'"
-                        [attr.aria-pressed]="!hidePassword">
-                        <mat-icon>{{ hidePassword ? 'visibility' : 'visibility_off' }}</mat-icon>
-                    </button>
-                    @if (loginForm.controls.password.hasError('required')) {
-                        <mat-error>Parol tələb olunur</mat-error>
-                    } @else if (loginForm.controls.password.hasError('minlength')) {
-                        <mat-error>Parol ən azı 5 simvol olmalıdır</mat-error>
-                    }
-                </mat-form-field>
-            </div>
+                <path class="fp-route" d="M270 372 V300 H55 V72 H126 V280 H196 V72 H266 V280 H336 V72 H425 V190" />
+                <path class="fp-route-done" pathLength="1" d="M270 372 V300 H55 V72 H126 V280 H196 V72 H266 V280 H336 V72 H425 V190" />
 
-            @if (errorMessage) {
-                <div class="signin-alert" role="alert">
-                    <mat-icon aria-hidden="true">error</mat-icon>
-                    <span>{{ errorMessage }}</span>
+                <g class="fp-pin ok p1" transform="translate(147 300)">
+                    <circle r="13" /><path class="fp-pin-mark" d="M-5 0 L-1.5 3.5 L5.5 -3.5" />
+                </g>
+                <g class="fp-pin ok p2" transform="translate(126 176)">
+                    <circle r="13" /><path class="fp-pin-mark" d="M-5 0 L-1.5 3.5 L5.5 -3.5" />
+                </g>
+                <g class="fp-pin ok p3" transform="translate(266 176)">
+                    <circle r="13" /><path class="fp-pin-mark" d="M-5 0 L-1.5 3.5 L5.5 -3.5" />
+                </g>
+                <g class="fp-pin flag p4" transform="translate(425 190)">
+                    <circle class="fp-pulse" r="13" />
+                    <circle r="13" /><path class="fp-pin-mark" d="M0 -6 V2 M0 6 V6.5" />
+                </g>
+            </svg>
+
+            <!-- Yoxlama vərəqi: plandakı nöqtələrlə eyni sıra -->
+            <div class="sheet">
+                <div class="sheet-head">
+                    <span class="sheet-id">Yoxlama № 0427</span>
+                    <span class="sheet-store"><mat-icon>storefront</mat-icon>Mağaza 014</span>
                 </div>
-            }
+                <p class="sheet-title">Gündəlik mağaza yoxlaması</p>
+                <ol class="sheet-list">
+                    <li class="ok r1"><span class="sheet-no">01</span><span class="sheet-q">Kassa zonası</span><mat-icon>check_circle</mat-icon></li>
+                    <li class="ok r2"><span class="sheet-no">02</span><span class="sheet-q">Rəf düzülüşü</span><mat-icon>check_circle</mat-icon></li>
+                    <li class="ok r3"><span class="sheet-no">03</span><span class="sheet-q">Qiymət etiketləri</span><mat-icon>check_circle</mat-icon></li>
+                    <li class="flag r4"><span class="sheet-no">04</span><span class="sheet-q">Soyuducular</span><span class="sheet-chip"><mat-icon>flag</mat-icon>Uyğunsuzluq</span></li>
+                </ol>
+                <div class="sheet-score">
+                    <span>Uyğunluq</span>
+                    <strong>88%</strong>
+                    <span class="sheet-bar"><i></i></span>
+                </div>
+            </div>
 
-            <!-- Yalnız sorğu gedərkən bağlıdır: Enter həmişə submit edir, səhv sahə fokuslanır -->
-            <button type="submit" class="g-search-btn signin-submit" [disabled]="isLoading"
-                [attr.aria-busy]="isLoading">
-                @if (isLoading) {
-                    <span class="signin-spinner" aria-hidden="true"></span>
-                    Giriş edilir…
-                } @else {
-                    Giriş et
+            <!-- Uyğunsuzluğun təsdiq zənciri -->
+            <div class="chain">
+                <span class="chain-label">Təsdiq zənciri</span>
+                <ol class="chain-steps">
+                    <li class="done"><i></i>Mağaza müdiri</li>
+                    <li class="done"><i></i>Satış müdiri</li>
+                    <li class="now"><i></i>Direktor</li>
+                </ol>
+            </div>
+        </div>
+    </section>
+
+    <section class="auth-panel" aria-labelledby="signin-title">
+        <div class="auth-form-wrap">
+            <img src="images/logo-big.svg" alt="Loqo" class="auth-logo">
+
+            <h1 id="signin-title" class="auth-title">Sistemə giriş</h1>
+            <p class="auth-lead">Hesabınızın e-poçtu və parolu ilə daxil olun.</p>
+
+            <form [formGroup]="loginForm" (ngSubmit)="login()" novalidate>
+                <div class="auth-field">
+                    <label for="email" class="g-field-label">E-poçt</label>
+                    <mat-form-field appearance="outline" class="g-modern-field">
+                        <input #emailInput matInput id="email" formControlName="email" type="email"
+                            autocomplete="username" inputmode="email" spellcheck="false">
+                        @if (loginForm.controls.email.hasError('required')) {
+                            <mat-error>E-poçt tələb olunur</mat-error>
+                        } @else if (loginForm.controls.email.hasError('email')) {
+                            <mat-error>Düzgün e-poçt ünvanı daxil edin</mat-error>
+                        }
+                    </mat-form-field>
+                </div>
+
+                <div class="auth-field">
+                    <label for="password" class="g-field-label">Parol</label>
+                    <mat-form-field appearance="outline" class="g-modern-field">
+                        <input #passwordInput matInput id="password" formControlName="password"
+                            [type]="hidePassword ? 'password' : 'text'" autocomplete="current-password">
+                        <button mat-icon-button matSuffix type="button" class="password-toggle"
+                            (click)="hidePassword = !hidePassword"
+                            [attr.aria-label]="hidePassword ? 'Parolu göstər' : 'Parolu gizlət'"
+                            [attr.aria-pressed]="!hidePassword">
+                            <mat-icon>{{ hidePassword ? 'visibility' : 'visibility_off' }}</mat-icon>
+                        </button>
+                        @if (loginForm.controls.password.hasError('required')) {
+                            <mat-error>Parol tələb olunur</mat-error>
+                        } @else if (loginForm.controls.password.hasError('minlength')) {
+                            <mat-error>Parol ən azı 5 simvol olmalıdır</mat-error>
+                        }
+                    </mat-form-field>
+                </div>
+
+                @if (errorMessage) {
+                    <div class="auth-alert" role="alert">
+                        <mat-icon aria-hidden="true">error</mat-icon>
+                        <span>{{ errorMessage }}</span>
+                    </div>
                 }
-            </button>
-        </form>
+
+                <!-- Yalnız sorğu gedərkən bağlıdır: Enter həmişə submit edir, səhv sahə fokuslanır -->
+                <button type="submit" class="g-search-btn auth-submit" [disabled]="isLoading"
+                    [attr.aria-busy]="isLoading">
+                    @if (isLoading) {
+                        <span class="auth-spinner" aria-hidden="true"></span>
+                        Giriş edilir…
+                    } @else {
+                        Giriş et
+                    }
+                </button>
+            </form>
+
+            <p class="auth-note">
+                <mat-icon aria-hidden="true">help</mat-icon>
+                <span>Parolu unutmusunuzsa və ya hesabınız yoxdursa, sistem administratoruna müraciət edin.</span>
+            </p>
+        </div>
     </section>
 </main>
