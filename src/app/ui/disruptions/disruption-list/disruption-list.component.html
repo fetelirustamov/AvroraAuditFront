@@ -8,10 +8,10 @@
             <div class="g-filter-field">
                 <label class="g-field-label">
                     <span class="material-symbols-outlined">business</span>
-                    Müəssisə
+                    Müəssisə <span class="text-danger" aria-hidden="true">*</span>
                 </label>
                 <mat-form-field appearance="outline" class="g-modern-field">
-                    <mat-select formControlName="firmId" (selectionChange)="onSelectFirm($event.value)">
+                    <mat-select formControlName="firmId" required (selectionChange)="onSelectFirm($event.value)">
                         <mat-option *ngFor="let firm of firms" [value]="firm.id">{{ firm.name }}</mat-option>
                     </mat-select>
                 </mat-form-field>
@@ -22,7 +22,7 @@
                     Lokasiya
                 </label>
                 <mat-form-field appearance="outline" class="g-modern-field">
-                    <mat-select formControlName="locationCode" (selectionChange)="onSelectLocation($event.value)">
+                    <mat-select formControlName="locationCode">
                         <mat-option *ngFor="let location of locations" [value]="location.locationCode">{{ location.locationName }}</mat-option>
                     </mat-select>
                 </mat-form-field>

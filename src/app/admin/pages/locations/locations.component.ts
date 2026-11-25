@@ -22,6 +22,8 @@ import { LocationService } from '../../services/location.service';
 import { LocationDto } from '../../models/location.model';
 import { AdminBreadcrumbComponent } from '../../shared/breadcrumb/admin-breadcrumb.component';
 import { AuditLoadingOverlayComponent } from '../../../ui/components/audit-loading-overlay/audit-loading-overlay.component';
+import { NotificationService } from '../../../shared/services/notification.service';
+import { apiErrorMessage } from '../../../shared/utils/api-error';
 
 interface LocationRow {
   id?: number;
@@ -84,6 +86,8 @@ export class LocationsComponent implements OnInit, OnChanges, AfterViewInit {
   rows: LocationRow[] = [];
 
   isLoading = false;
+  /** Siyahı serverdən gəlmədi: boş siyahı ("mağaza yoxdur") ilə qarışdırılmasın */
+  loadFailed = false;
 
   // Advanced search
   searchForm!: FormGroup;
@@ -96,6 +100,7 @@ export class LocationsComponent implements OnInit, OnChanges, AfterViewInit {
     private fb: FormBuilder,
     private confirmDialog: ConfirmDialogService,
     private locationService: LocationService,
+    private notify: NotificationService,
   ) {
     this.dataSource = new MatTableDataSource<LocationRow>([]);
     this.setupFilterPredicate();
@@ -190,15 +195,23 @@ export class LocationsComponent implements OnInit, OnChanges, AfterViewInit {
         this.loadLocations();
       },
       error: (error) => {
-        console.error('Firmalar yüklənərkən xəta (locations):', error);
         this.isLoading = false;
         this.firms = [];
+        this.loadFailed = true;
+        this.notify.error(apiErrorMessage(error, 'Firmalar yüklənmədi'));
       }
     });
   }
 
+  /** Yükləmə xətasından sonra "Yenidən cəhd et" */
+  reload(): void {
+    if (this.firms.length) this.loadLocations();
+    else this.loadFirms();
+  }
+
   private loadLocations(): void {
     this.isLoading = true;
+    this.loadFailed = false;
     this.locationService.list().subscribe({
       next: (response) => {
         if (!response || !response.data) {
@@ -230,10 +243,11 @@ export class LocationsComponent implements OnInit, OnChanges, AfterViewInit {
         this.isLoading = false;
       },
       error: (error) => {
-        console.error('Location-lar yüklənərkən xəta:', error);
         this.rows = [];
         this.dataSource.data = [];
         this.isLoading = false;
+        this.loadFailed = true;
+        this.notify.error(apiErrorMessage(error, 'Mağazalar yüklənmədi'));
       }
     });
   }
@@ -295,8 +309,8 @@ export class LocationsComponent implements OnInit, OnChanges, AfterViewInit {
         }
       },
       error: (error) => {
-        console.error('Regionlar yüklənərkən xəta:', error);
         this.regions = [];
+        this.notify.error(apiErrorMessage(error, 'Regionlar yüklənmədi'));
       }
     });
   }
@@ -335,23 +349,22 @@ export class LocationsComponent implements OnInit, OnChanges, AfterViewInit {
     this.confirmDialog.confirm({
       title: 'Məkan silinsin?',
       message: `"${row.locationName}" məkanını silmək istədiyinizə əminsiniz?`,
-      confirmText: 'Bəli, sil',
-      cancelText: 'Ləğv et'
+      confirmText: 'Sil',
+      tone: 'danger'
     }).subscribe(confirmed => {
       if (!confirmed) return;
 
       if (!row.id) {
-        console.error('Silmək üçün id tapılmadı');
+        this.notify.error('Mağaza silinmədi', { message: 'Mağazanın ID-si tapılmadı.' });
         return;
       }
 
       this.locationService.delete(row.id).subscribe({
         next: () => {
+          this.notify.success('Mağaza silindi');
           this.loadLocations();
         },
-        error: (error) => {
-          console.error('Location silinərkən xəta:', error);
-        }
+        error: (error) => this.notify.error(apiErrorMessage(error, 'Mağaza silinmədi'))
       });
     });
   }

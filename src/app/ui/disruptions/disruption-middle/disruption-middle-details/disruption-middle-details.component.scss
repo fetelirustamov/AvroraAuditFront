@@ -57,68 +57,22 @@
 .button-group {
     display: flex;
     gap: 10px;
-    /* Düymələr arasında boşluq */
 }
 
-.custom-button {
-    cursor: pointer;
-    padding: 8px 16px;
-    /* Düymələrin daxili boşluqları */
-    font-size: 14px;
-    /* Mətn ölçüsü */
-    border-radius: 8px;
-    /* Daha yumşaq künclər */
-    transition: all 0.3s ease;
-    /* Hover effekti üçün animasiya */
+/* Sorğu gedərkən və ya seçim yoxdursa düymələr bağlıdır (encapsulation None: selektor komponentlə məhdudlaşdırılıb) */
+app-disruption-middle-details {
+    .button-group button:disabled,
+    .action-btn:disabled {
+        opacity: .5;
+        cursor: not-allowed;
+        transform: none !important;
+    }
 }
 
-.custom-button:hover {
-    opacity: 0.9;
-    /* Hover zamanı yüngül şəffaflıq */
-    transform: translateY(-2px);
-    /* Yüngül qaldırma effekti */
-}
-
-/* Responsivlik üçün */
-.button-group {
-    display: flex;
-    gap: 10px;
-    /* Düymələr arasında boşluq */
-}
-
-.custom-button {
-    padding: 8px 16px;
-    /* Düymələrin daxili boşluqları */
-    font-size: 14px;
-    /* Mətn ölçüsü */
-    border-radius: 8px;
-    /* Daha yumşaq künclər */
-    transition: all 0.3s ease;
-    /* Hover effekti üçün animasiya */
-}
-
-.custom-button:hover {
-    opacity: 0.9;
-    /* Hover zamanı yüngül şəffaflıq */
-    transform: translateY(-2px);
-    /* Yüngül qaldırma effekti */
-}
-
-/* Responsivlik üçün */
 @media (max-width: 576px) {
     .button-group {
         flex-wrap: wrap;
-        /* Kiçik ekranlarda düymələri alt-alta sırala */
         justify-content: center;
-        /* Mərkəzə hizala */
-    }
-
-    .custom-button {
-        cursor: pointer;
-        width: 100%;
-        /* Düymələri tam eninə yay */
-        margin-bottom: 8px;
-        /* Düymələr arasında şaquli boşluq */
     }
 }
 

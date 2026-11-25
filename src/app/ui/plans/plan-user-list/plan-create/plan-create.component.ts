@@ -47,8 +47,12 @@ export class PlanCreateComponent {
   public data: any;
   public isLoading = false;
   public planForm!: FormGroup;
-  // planForm: FormGroup<any> = this.fb.group({
-  //   panels: this.fb.array([])ı;
+  /** Datepicker-də keçmiş günlər seçilmir. */
+  public readonly minDate = (() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return today;
+  })();
 
   constructor(
     private fb: FormBuilder,
@@ -84,9 +88,12 @@ export class PlanCreateComponent {
   private loadLocations(): void {
     this.inspectionService
       .getLocationByFirmId(this.data.organization)
-      .subscribe((locations) => {
-        this.locations = locations.data;
-        this.filteredLocations = locations.data;
+      .subscribe({
+        next: (locations) => {
+          this.locations = locations.data;
+          this.filteredLocations = locations.data;
+        },
+        error: (error) => this.notify.error(apiErrorMessage(error, 'Ərazi siyahısı yüklənmədi')),
       });
   }
 
@@ -115,12 +122,20 @@ export class PlanCreateComponent {
     this.panels.push(this.createPanelFormGroup());
   }
 
+  /** Sonuncu sətir silinmir: boş forma göndəriləndə heç bir sorğu getmir. */
   removePanel(index: number): void {
+    if (this.panels.length <= 1) return;
     this.panels.removeAt(index);
   }
 
   createPlan(): void {
     if (this.isLoading) return;
+    if (this.panels.length === 0) {
+      this.notify.warning('Plan yoxdur', {
+        message: 'Ən azı bir plan sətri əlavə edin.',
+      });
+      return;
+    }
     if (this.planForm.invalid) {
       this.planForm.markAllAsTouched();
       this.notify.warning('Forma tamamlanmayıb', {

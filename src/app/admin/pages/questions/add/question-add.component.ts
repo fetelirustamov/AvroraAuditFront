@@ -9,7 +9,9 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatIconModule } from '@angular/material/icon';
+import { finalize } from 'rxjs';
 import { NotificationService } from '../../../../shared/services/notification.service';
+import { apiErrorMessage } from '../../../../shared/utils/api-error';
 import { MatDialogModule } from '@angular/material/dialog';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { CdkTextareaAutosize, TextFieldModule } from '@angular/cdk/text-field';
@@ -140,6 +142,7 @@ export class QuestionAddComponent implements OnInit {
     pageTitle = 'Yeni Sual Yaradın';
     editMode = false;
     viewMode = false;
+    isSaving = false;
     id?: string | null;
 
     constructor(
@@ -183,7 +186,10 @@ export class QuestionAddComponent implements OnInit {
             this.pageTitle = 'Sualı redaktə edin';
         }
 
-        this.categoryService.getAllCategories().subscribe(list => this.categories = list.data);
+        this.categoryService.getAllCategories().subscribe({
+            next: list => this.categories = list.data,
+            error: e => this.notify.error(apiErrorMessage(e, 'Kateqoriyalar yüklənmədi'))
+        });
 
         if ((this.editMode || this.viewMode) && this.id) {
             this.questionService.get(+this.id).subscribe({
@@ -238,7 +244,8 @@ export class QuestionAddComponent implements OnInit {
                         this.form.disable({ emitEvent: false });
                     }
                 },
-                error: () => {
+                error: (e) => {
+                    this.notify.error(apiErrorMessage(e, 'Sual yüklənmədi'));
                     if (this.viewMode) {
                         this.form.disable({ emitEvent: false });
                     }
@@ -281,8 +288,8 @@ export class QuestionAddComponent implements OnInit {
         this.confirmDialog.confirm({
             title: 'Cavab silinsin?',
             message: 'Bu cavabı silmək istədiyinizə əminsiniz?',
-            confirmText: 'Bəli, sil',
-            cancelText: 'Ləğv et'
+            confirmText: 'Sil',
+            tone: 'danger'
         }).subscribe(confirmed => {
             if (!confirmed) return;
             this.answers.removeAt(index);
@@ -297,6 +304,7 @@ export class QuestionAddComponent implements OnInit {
 
     submit(): void {
         if (this.viewMode) { this.router.navigate(['/admin/questions']); return; }
+        if (this.isSaving) return;
         const answersOk = this.validateAnswersForType();
         if (this.form.invalid || !answersOk) {
             this.form.markAllAsTouched();
@@ -310,19 +318,30 @@ export class QuestionAddComponent implements OnInit {
             return;
         }
 
+        this.isSaving = true;
         if (this.editMode && this.id) {
             const questionId = +this.id;
             const payload = this.buildApiPayload(raw, questionTypeId, questionId);
-            this.questionService.update({ ...payload, id: questionId }).subscribe(() => {
-                this.notify.success('Sual uğurla redaktə edildi');
-                this.router.navigate(['/admin/questions']);
-            });
+            this.questionService.update({ ...payload, id: questionId })
+                .pipe(finalize(() => this.isSaving = false))
+                .subscribe({
+                    next: () => {
+                        this.notify.success('Sual uğurla redaktə edildi');
+                        this.router.navigate(['/admin/questions']);
+                    },
+                    error: e => this.notify.error(apiErrorMessage(e, 'Sual redaktə edilmədi'))
+                });
         } else {
             const payload = this.buildApiPayload(raw, questionTypeId);
-            this.questionService.create(payload).subscribe(() => {
-                this.notify.success('Sual uğurla əlavə edildi');
-                this.router.navigate(['/admin/questions']);
-            });
+            this.questionService.create(payload)
+                .pipe(finalize(() => this.isSaving = false))
+                .subscribe({
+                    next: () => {
+                        this.notify.success('Sual uğurla əlavə edildi');
+                        this.router.navigate(['/admin/questions']);
+                    },
+                    error: e => this.notify.error(apiErrorMessage(e, 'Sual əlavə edilmədi'))
+                });
         }
     }
 

@@ -6,6 +6,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { Observable, catchError, finalize, map, of, switchMap } from 'rxjs';
 import { NotificationService } from '../../../../shared/services/notification.service';
 import { apiErrorMessage } from '../../../../shared/utils/api-error';
 import { Router } from '@angular/router';
@@ -57,6 +58,7 @@ export class LocationAddComponent implements OnInit {
     selectedSectionIds: number[] = [];
     pageTitle = 'Yeni mağaza/location';
     isEditMode = false;
+    isSaving = false;
     initialLat: number = 40.4093;
     initialLng: number = 49.8671;
     regionsLoading = false;
@@ -174,8 +176,8 @@ export class LocationAddComponent implements OnInit {
                 this.firms = firms;
             },
             error: (error) => {
-                console.error('Firmalar yüklənərkən xəta (location-add):', error);
                 this.firms = [];
+                this.notify.error(apiErrorMessage(error, 'Firmalar yüklənmədi'));
             }
         });
     }
@@ -279,6 +281,7 @@ export class LocationAddComponent implements OnInit {
     }
 
     submit(): void {
+        if (this.isSaving) return;
         if (this.form.invalid) {
             this.form.markAllAsTouched();
             this.notify.warning('Forma tamamlanmayıb', { message: 'Zəhmət olmasa tələb olunan sahələri doldurun.' });
@@ -300,79 +303,76 @@ export class LocationAddComponent implements OnInit {
             delete payload.responsiblePersonId;
         }
 
+        const locationCode = this.toNullableNumber(payload.locationCode);
+        this.isSaving = true;
+
         // Edit mode
         if (this.isEditMode && this.data?.item?.id) {
             const id = this.data.item.id as number;
             const updatePayload: LocationDto = { ...this.data.item, ...payload, id };
+            // Təyinatlar oxunmayıbsa yazmırıq - boş siyahı mövcud şöbələri silərdi
+            const canAssign = this.sectionAssignmentReady && locationCode != null && locationCode > 0;
 
-            this.locationService.update(updatePayload).subscribe({
-                next: (res) => {
-                    const locationCode = this.toNullableNumber(payload.locationCode);
-                    // Təyinatlar oxunmayıbsa yazmırıq - boş siyahı mövcud şöbələri silərdi
-                    const canAssign = this.sectionAssignmentReady && locationCode != null && locationCode > 0;
-
-                    if (!canAssign) {
-                        if (this.selectedSectionIds.length > 0) {
-                            this.notify.warning('Mağaza yeniləndi, lakin şöbə təyinatı saxlanılmadı', {
-                                message: 'Mövcud təyinatlar oxunmadı və ya "Məkan Kodu" boşdur.'
-                            });
-                        } else {
-                            this.notify.success('Mağaza/location uğurla redaktə edildi');
-                        }
-                        this.finishEdit(res);
-                        return;
+            this.locationService.update(updatePayload).pipe(
+                switchMap(res => this.assignSections(canAssign ? locationCode : null).pipe(
+                    map(assigned => ({ res, assigned }))
+                )),
+                finalize(() => this.isSaving = false)
+            ).subscribe({
+                next: ({ res, assigned }) => {
+                    if (assigned === false) {
+                        this.notify.warning('Mağaza yeniləndi, lakin şöbə təyinatı saxlanılmadı');
+                    } else if (assigned === null && this.selectedSectionIds.length > 0) {
+                        this.notify.warning('Mağaza yeniləndi, lakin şöbə təyinatı saxlanılmadı', {
+                            message: 'Mövcud təyinatlar oxunmadı və ya "Məkan Kodu" boşdur.'
+                        });
+                    } else {
+                        this.notify.success('Mağaza/location uğurla redaktə edildi');
                     }
-
-                    this.locationService.assignSections({ locationCode, sectionIds: this.selectedSectionIds }).subscribe({
-                        next: () => {
-                            this.notify.success('Mağaza/location uğurla redaktə edildi');
-                            this.finishEdit(res);
-                        },
-                        error: () => {
-                            this.notify.warning('Mağaza yeniləndi, lakin şöbə təyinatı saxlanılmadı');
-                            this.finishEdit(res);
-                        }
-                    });
+                    this.finishEdit(res);
                 },
                 error: (error) => this.notify.error(apiErrorMessage(error, 'Mağaza yenilənmədi'))
             });
             return;
         }
 
-        // Create mode
-        this.locationService.create(payload).subscribe({
-            next: (res) => {
-                // Şöbə təyinatı LocationSections cədvəlində məkan koduna bağlıdır
-                const locationCode = this.toNullableNumber(payload.locationCode);
+        // Create mode. Şöbə təyinatı LocationSections cədvəlində məkan koduna bağlıdır
+        const hasSections = this.selectedSectionIds.length > 0;
+        const codeValid = locationCode != null && locationCode > 0;
 
-                if (this.selectedSectionIds.length === 0) {
-                    this.notify.success('Mağaza/location uğurla əlavə edildi');
-                    this.finishCreate(res);
-                    return;
-                }
-
-                if (locationCode == null || locationCode <= 0) {
+        this.locationService.create(payload).pipe(
+            switchMap(res => this.assignSections(hasSections && codeValid ? locationCode : null).pipe(
+                map(assigned => ({ res, assigned }))
+            )),
+            finalize(() => this.isSaving = false)
+        ).subscribe({
+            next: ({ res, assigned }) => {
+                if (assigned === false) {
+                    this.notify.warning('Mağaza yaradıldı, lakin şöbələr təyin edilmədi');
+                } else if (hasSections && !codeValid) {
                     this.notify.warning('Mağaza yaradıldı, lakin şöbələr təyin edilmədi', {
                         message: 'Şöbə təyinatı üçün "Məkan Kodu" doldurulmalıdır.'
                     });
-                    this.finishCreate(res);
-                    return;
+                } else {
+                    this.notify.success('Mağaza/location uğurla əlavə edildi');
                 }
-
-                this.locationService.assignSections({ locationCode, sectionIds: this.selectedSectionIds }).subscribe({
-                    next: () => {
-                        this.notify.success('Mağaza/location uğurla əlavə edildi');
-                        this.finishCreate(res);
-                    },
-                    error: () => {
-                        this.notify.warning('Mağaza yaradıldı, lakin şöbələr təyin edilmədi');
-                        this.finishCreate(res);
-                    }
-                });
+                this.finishCreate(res);
             },
             // 409: kod artıq istifadə olunub (silinmiş mağaza daxil)
             error: (error) => this.notify.error(apiErrorMessage(error, 'Mağaza yaradılmadı'))
         });
+    }
+
+    /**
+     * Mağaza saxlandıqdan sonra şöbə təyinatını yazır.
+     * Nəticə: null yazılmadı (kod yoxdur), true uğurlu, false uğursuz (mağaza artıq saxlanıb).
+     */
+    private assignSections(locationCode: number | null): Observable<boolean | null> {
+        if (locationCode == null) return of(null);
+        return this.locationService.assignSections({ locationCode, sectionIds: this.selectedSectionIds }).pipe(
+            map(() => true),
+            catchError(() => of(false))
+        );
     }
 
     private finishCreate(res: any): void {

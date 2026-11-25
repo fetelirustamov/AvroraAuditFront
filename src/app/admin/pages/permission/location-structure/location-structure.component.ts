@@ -10,8 +10,11 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatMenuModule } from '@angular/material/menu';
 import { AuditLoadingOverlayComponent } from '../../../../ui/components/audit-loading-overlay/audit-loading-overlay.component';
 import { NotificationService } from '../../../../shared/services/notification.service';
+import { MatDialog } from '@angular/material/dialog';
 import { forkJoin, Observable, of } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { catchError, finalize } from 'rxjs/operators';
+import { apiErrorMessage } from '../../../../shared/utils/api-error';
+import { ImportIssue, ImportPreviewData, ImportPreviewDialogComponent, ImportPreviewRow } from './import-preview-dialog.component';
 import { FileExportService, datedFileName } from '../../../../shared/services/file-export.service';
 import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dialog.service';
 import { FirmService } from '../../../services/firm.service';
@@ -96,8 +99,9 @@ interface StoreEditModel {
 
 /** Excel idxal (wide format). */
 interface ParsedImportRow { rowNumber: number; locationCode: number | null; userCodes: number[]; }
-interface ImportIssue { row: number; message: string; }
 interface ImportResult { successCount: number; warningCount: number; errorCount: number; issues: ImportIssue[]; }
+/** Yoxlanmış fayl: göndəriləcək zəncirlər + ötürülən sətirlər. */
+interface ImportPlan { chains: StructureChainDto[]; rowOfLocation: Map<number, number>; issues: ImportIssue[]; warningCount: number; }
 
 @Component({
   selector: 'app-location-structure',
@@ -184,6 +188,7 @@ export class LocationStructureComponent implements OnInit {
     private structureService: StructureService,
     private notify: NotificationService,
     private fileExport: FileExportService,
+    private dialog: MatDialog,
   ) { }
 
   ngOnInit() { this.loadFirms(); }
@@ -193,7 +198,10 @@ export class LocationStructureComponent implements OnInit {
     this.isLoadingFirms = true;
     this.firmService.getAllFirms().subscribe({
       next: (r: any) => { this.marketNetworks = this.extractArray<FirmDto>(r); this.isLoadingFirms = false; },
-      error: () => { this.marketNetworks = []; this.isLoadingFirms = false; }
+      error: (err) => {
+        this.marketNetworks = []; this.isLoadingFirms = false;
+        this.notify.error(apiErrorMessage(err, 'Market şəbəkələri yüklənmədi'));
+      }
     });
   }
 
@@ -264,8 +272,7 @@ export class LocationStructureComponent implements OnInit {
         this.buildTree(true);
         this.isLoadingData = false;
       },
-      error: (err) => {
-        console.error('Struktur yüklənərkən xəta:', err);
+      error: () => {
         this.rawStructures = []; this.roots = []; this.orphans = [];
         this.isLoadingData = false;
         this.notify.error('Məlumat yüklənmədi');
@@ -712,7 +719,7 @@ export class LocationStructureComponent implements OnInit {
         this.buildTree(false);
         this.notify.success('İstifadəçi zəncirə əlavə edildi');
       },
-      error: (err) => { console.error(err); store.saving = false; this.notify.error('Əlavə edilmədi'); }
+      error: (err) => { store.saving = false; this.notify.error(apiErrorMessage(err, 'Əlavə edilmədi')); }
     });
   }
 
@@ -736,7 +743,7 @@ export class LocationStructureComponent implements OnInit {
 
     forkJoin(reqs).subscribe({
       next: () => { store.saving = false; this.buildTree(false); },
-      error: (err) => { console.error(err); store.saving = false; this.notify.error('Sıra yenilənmədi'); this.buildTree(false); }
+      error: (err) => { store.saving = false; this.notify.error(apiErrorMessage(err, 'Sıra yenilənmədi')); this.buildTree(false); }
     });
   }
 
@@ -744,7 +751,7 @@ export class LocationStructureComponent implements OnInit {
     this.confirmDialog.confirm({
       title: 'İstifadəçi silinsin?',
       message: `"${member.name}" istifadəçisini "${store.name}" mağazasının onay sxemindən silmək istədiyinizə əminsiniz?`,
-      confirmText: 'Bəli, sil', cancelText: 'Ləğv et'
+      confirmText: 'Sil', tone: 'danger'
     }).subscribe(confirmed => {
       if (!confirmed) return;
 
@@ -755,7 +762,10 @@ export class LocationStructureComponent implements OnInit {
         const changed: StructureDto[] = [];
         raws.forEach((r, i) => { if (r.level !== i + 1) { r.level = i + 1; changed.push(r); } });
         const reqs = changed.filter(r => r.id).map(r => this.structureService.update(r.id!, this.rawPayload(r)));
-        if (reqs.length) forkJoin(reqs).subscribe({ next: () => this.buildTree(false), error: () => this.buildTree(false) });
+        if (reqs.length) forkJoin(reqs).subscribe({
+          next: () => this.buildTree(false),
+          error: (err) => { this.notify.error(apiErrorMessage(err, 'Qalan pillələrin sırası yenilənmədi')); this.buildTree(false); }
+        });
         else this.buildTree(false);
         this.notify.success('İstifadəçi silindi');
       };
@@ -764,7 +774,7 @@ export class LocationStructureComponent implements OnInit {
         store.saving = true;
         this.structureService.delete(member.structureId).subscribe({
           next: () => { store.saving = false; finish(); },
-          error: (err) => { console.error(err); store.saving = false; this.notify.error('Xəta baş verdi'); }
+          error: (err) => { store.saving = false; this.notify.error(apiErrorMessage(err, 'İstifadəçi zəncirdən silinmədi')); }
         });
       } else finish();
     });
@@ -788,10 +798,18 @@ export class LocationStructureComponent implements OnInit {
     const files = e.dataTransfer?.files;
     if (files && files.length > 0) this.processExcelFile(files[0]);
   }
-  onFileSelected(e: any) { const f = e.target.files[0]; if (f) this.processExcelFile(f); }
+  onFileSelected(e: Event) {
+    const input = e.target as HTMLInputElement;
+    const f = input.files?.[0];
+    // Eyni fayl yenidən seçiləndə də (change) hadisəsi gəlsin: ləğvdən və ya xətadan sonra
+    input.value = '';
+    if (f) this.processExcelFile(f);
+  }
 
   async processExcelFile(file: File) {
     if (!this.selectedNetwork) { this.notify.error('Əvvəlcə market şəbəkəsi seçin'); return; }
+    // Ön baxışdakı "hazırkı zəncir" və mağaza/istifadəçi yoxlaması yüklənmiş strukturdan gəlir
+    if (this.isLoadingData) { this.notify.warning('Struktur hələ yüklənir, bir az sonra yenidən cəhd edin'); return; }
     this.uploadResults = null;
     let parsed: ParsedImportRow[];
     try { parsed = await this.parseStructureWorkbook(file); }
@@ -831,7 +849,33 @@ export class LocationStructureComponent implements OnInit {
     return Number.isFinite(n) ? n : null;
   }
 
+  /**
+   * Faylı yoxlayır, ön baxış dialoqunu açır və yalnız təsdiqdən sonra göndərir.
+   * Hər sətir mağazanın BÜTÜN zəncirini əvəz edir (qəsdən dağıdıcı, merge deyil).
+   */
   private importChains(rows: ParsedImportRow[]): void {
+    const plan = this.buildImportPlan(rows);
+
+    if (plan.chains.length === 0) {
+      this.uploadResults = { successCount: 0, warningCount: plan.warningCount, errorCount: plan.issues.length - plan.warningCount, issues: plan.issues };
+      this.notify.warning('İdxal ediləcək etibarlı sətir tapılmadı');
+      return;
+    }
+
+    this.dialog.open<ImportPreviewDialogComponent, ImportPreviewData, boolean>(ImportPreviewDialogComponent, {
+      width: '760px',
+      maxWidth: '95vw',
+      data: {
+        networkName: this.selectedNetwork?.name ?? '',
+        rows: plan.chains.map(c => this.previewRow(c)),
+        issues: plan.issues
+      }
+    }).afterClosed().subscribe(confirmed => {
+      if (confirmed) this.submitChains(plan);
+    });
+  }
+
+  private buildImportPlan(rows: ParsedImportRow[]): ImportPlan {
     const knownUsers = new Set(this.allUsers.map(u => u.userCode).filter(c => c != null));
     const issues: ImportIssue[] = [];
     const chains: StructureChainDto[] = [];
@@ -851,30 +895,50 @@ export class LocationStructureComponent implements OnInit {
       chains.push({ locationCode: row.locationCode, userCodes: row.userCodes });
     }
 
-    if (chains.length === 0) {
-      this.uploadResults = { successCount: 0, warningCount, errorCount: issues.length - warningCount, issues };
-      this.notify.warning('İdxal ediləcək etibarlı sətir tapılmadı');
-      return;
-    }
+    return { chains, rowOfLocation, issues, warningCount };
+  }
 
+  /** Ön baxış sətri: səhifədə yüklənmiş hazırkı zəncir → fayldakı yeni zəncir. */
+  private previewRow(chain: StructureChainDto): ImportPreviewRow {
+    const currentCodes = this.rawForStore(chain.locationCode)
+      .sort((a, b) => (a.level ?? 0) - (b.level ?? 0))
+      .map(s => s.userCode)
+      .filter((c): c is number => c != null);
+    return {
+      code: chain.locationCode,
+      name: this.storeName(chain.locationCode),
+      current: currentCodes.map(c => this.personLabel(c)),
+      next: chain.userCodes.map(c => this.personLabel(c)),
+      unchanged: currentCodes.length === chain.userCodes.length && currentCodes.every((c, i) => c === chain.userCodes[i])
+    };
+  }
+
+  private personLabel(userCode: number): string {
+    const u = this.userByCode.get(userCode);
+    return u ? `${this.getUserFullName(u)} (${userCode})` : `İşçi (${userCode})`;
+  }
+
+  private submitChains(plan: ImportPlan): void {
+    const { chains, rowOfLocation, warningCount } = plan;
+    const issues = [...plan.issues];
     this.isImporting = true;
-    this.structureService.replaceChains({ chains }).subscribe({
-      next: (response) => {
-        this.isImporting = false;
-        const result = response?.data;
-        for (const failure of result?.failures ?? []) issues.push({ row: rowOfLocation.get(failure.locationCode) ?? 0, message: failure.message });
-        const successCount = result?.successCount ?? 0;
-        const errorCount = issues.length - warningCount;
-        this.uploadResults = { successCount, warningCount, errorCount, issues };
-        if (successCount > 0) { this.notify.success(`${successCount} mağazanın onay sxemi yeniləndi`); this.loadHierarchy(); }
-        if (errorCount > 0) this.notify.error(`${errorCount} sətir idxal edilmədi`);
-      },
-      error: (err) => {
-        this.isImporting = false; console.error(err);
-        this.uploadResults = { successCount: 0, warningCount, errorCount: (issues.length - warningCount) + chains.length, issues };
-        this.notify.error('İdxal alınmadı', { message: err?.error?.message || 'Server xətası' });
-      }
-    });
+    this.structureService.replaceChains({ chains })
+      .pipe(finalize(() => this.isImporting = false))
+      .subscribe({
+        next: (response) => {
+          const result = response?.data;
+          for (const failure of result?.failures ?? []) issues.push({ row: rowOfLocation.get(failure.locationCode) ?? 0, message: failure.message });
+          const successCount = result?.successCount ?? 0;
+          const errorCount = issues.length - warningCount;
+          this.uploadResults = { successCount, warningCount, errorCount, issues };
+          if (successCount > 0) { this.notify.success(`${successCount} mağazanın onay sxemi yeniləndi`); this.loadHierarchy(); }
+          if (errorCount > 0) this.notify.error(`${errorCount} sətir idxal edilmədi`);
+        },
+        error: (err) => {
+          this.uploadResults = { successCount: 0, warningCount, errorCount: (issues.length - warningCount) + chains.length, issues };
+          this.notify.error('İdxal alınmadı', { message: apiErrorMessage(err, 'Server xətası') });
+        }
+      });
   }
 
   downloadTemplate() {

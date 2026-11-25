@@ -12,6 +12,13 @@
     --page-accent-to: #FFB547;
 }
 
+// Axtarışdan əvvəl və bütün sətirlər yüklənərkən ixrac bağlıdır
+.export-btn:disabled {
+    opacity: .5;
+    cursor: not-allowed;
+    transform: none;
+}
+
 // Narıncı vurğuya uyğun yerli tonlar
 $accent: #E65100;
 $accent-soft: #FFF3E0;

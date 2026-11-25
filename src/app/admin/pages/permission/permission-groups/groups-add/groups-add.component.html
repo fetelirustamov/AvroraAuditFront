@@ -9,7 +9,7 @@
             <button *ngIf="isViewMode" class="btn-back" mat-flat-button color="primary" type="button"
                 (click)="goBack()">Geri</button>
             <button *ngIf="isEditMode" mat-flat-button class="btn-success" (click)="save()"
-                [disabled]="form.invalid || isLoading">Düzəliş Et</button>
+                [disabled]="form.invalid || isLoading || isSaving">Düzəliş Et</button>
             <button *ngIf="isEditMode" mat-stroked-button color="warn" type="button" (click)="cancel()">İmtina</button>
         </div>
     </div>
@@ -19,7 +19,7 @@
 
 <form [formGroup]="form" class="groups-add-container">
     <div class="d-flex gap-3 mb-20 action-buttons" *ngIf="!isEditMode && !isViewMode">
-        <button mat-flat-button color="primary" (click)="save()" [disabled]="form.invalid || isLoading">
+        <button mat-flat-button color="primary" (click)="save()" [disabled]="form.invalid || isLoading || isSaving">
             <i class="material-symbols-outlined">save</i>
             Əlavə Et
         </button>

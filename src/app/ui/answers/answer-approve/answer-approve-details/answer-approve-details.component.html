@@ -100,7 +100,7 @@
                                 (click)="changeDisruptionAnswerStatus(element, 1)">
                                 <span class="material-symbols-outlined approve-icon">check_circle</span>
                             </button>
-                            <button mat-icon-button matTooltip="Rədd"
+                            <button mat-icon-button matTooltip="Rədd" [disabled]="isSaving"
                                 (click)="openRejectDialog(element)">
                                 <span class="material-symbols-outlined reject-icon">cancel</span>
                             </button>

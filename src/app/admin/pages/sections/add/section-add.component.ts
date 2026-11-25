@@ -6,7 +6,9 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { finalize } from 'rxjs';
 import { NotificationService } from '../../../../shared/services/notification.service';
+import { apiErrorMessage } from '../../../../shared/utils/api-error';
 import { Router } from '@angular/router';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { SectionDto } from '../../../models/section.model';
@@ -35,6 +37,7 @@ export class SectionAddComponent implements OnInit {
 
     pageTitle = 'Yeni Şöbə';
     isEditMode = false;
+    isSaving = false;
 
     constructor(
         private fb: FormBuilder,
@@ -71,14 +74,18 @@ export class SectionAddComponent implements OnInit {
     }
 
     private loadFirms() {
-        this.firmService.getAllFirms().subscribe(response => {
-            if (response.success) {
-                this.firms = response.data;
-            }
+        this.firmService.getAllFirms().subscribe({
+            next: response => {
+                if (response.success) {
+                    this.firms = response.data;
+                }
+            },
+            error: e => this.notify.error(apiErrorMessage(e, 'Firmalar yüklənmədi'))
         });
     }
 
     submit(): void {
+        if (this.isSaving) return;
         if (this.form.invalid) {
             this.form.markAllAsTouched();
             this.notify.warning('Forma tamamlanmayıb', { message: 'Zəhmət olmasa tələb olunan sahələri doldurun.' });
@@ -86,27 +93,38 @@ export class SectionAddComponent implements OnInit {
         }
         const payload = this.form.getRawValue();
 
+        this.isSaving = true;
         if (this.isEditMode && (this.data as any)?.item?.id) {
             const id = (this.data as any).item.id as number;
-            this.sectionService.update({ ...payload, id }).subscribe(res => {
-                this.notify.success('Şöbə uğurla redaktə edildi');
-                if (this.dialogRef) {
-                    this.dialogRef.close({ updated: true, data: res });
-                } else {
-                    this.router.navigate(['/admin/sections']);
-                }
-            });
+            this.sectionService.update({ ...payload, id })
+                .pipe(finalize(() => this.isSaving = false))
+                .subscribe({
+                    next: res => {
+                        this.notify.success('Şöbə uğurla redaktə edildi');
+                        if (this.dialogRef) {
+                            this.dialogRef.close({ updated: true, data: res });
+                        } else {
+                            this.router.navigate(['/admin/sections']);
+                        }
+                    },
+                    error: e => this.notify.error(apiErrorMessage(e, 'Şöbə redaktə edilmədi'))
+                });
             return;
         }
 
-        this.sectionService.create(payload).subscribe(response => {
-            this.notify.success('Şöbə uğurla əlavə edildi');
-            if (this.dialogRef) {
-                this.dialogRef.close({ created: true, data: response });
-            } else {
-                this.router.navigate(['/admin/sections']);
-            }
-        });
+        this.sectionService.create(payload)
+            .pipe(finalize(() => this.isSaving = false))
+            .subscribe({
+                next: response => {
+                    this.notify.success('Şöbə uğurla əlavə edildi');
+                    if (this.dialogRef) {
+                        this.dialogRef.close({ created: true, data: response });
+                    } else {
+                        this.router.navigate(['/admin/sections']);
+                    }
+                },
+                error: e => this.notify.error(apiErrorMessage(e, 'Şöbə əlavə edilmədi'))
+            });
     }
 
     cancel(): void {

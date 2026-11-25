@@ -9,7 +9,7 @@
             <p class="page-subtitle">Ərazi və bölgə bazında şöbə puanlama statistikası</p>
         </div>
         <div class="header-actions">
-            <button class="export-btn" [matMenuTriggerFor]="downloadMenu">
+            <button type="button" class="export-btn" [matMenuTriggerFor]="downloadMenu" [disabled]="!allRows">
                 <span class="material-symbols-outlined">download</span>
                 Yüklə
                 <span class="material-symbols-outlined arrow-icon">expand_more</span>
@@ -100,7 +100,7 @@
     <div class="kpi-card">
         <div class="kpi-icon faiz-icon"><span class="material-symbols-outlined">percent</span></div>
         <div class="kpi-body">
-            <div class="kpi-value">{{ getAvgFaiz() }}%</div>
+            <div class="kpi-value">{{ avgFaizLabel }}</div>
             <div class="kpi-label">Ortalama faiz nisbəti</div>
         </div>
     </div>

@@ -85,8 +85,11 @@ export class InspectionDetailsComponent {
   }
 
   getSections() {
-    this.inspectionService.getSections(this.stateDate.id).subscribe((x) => {
-      this.sections = x.data;
+    this.inspectionService.getSections(this.stateDate.id).subscribe({
+      next: (x) => {
+        this.sections = x.data;
+      },
+      error: (error) => this.notify.error(apiErrorMessage(error, 'Şöbələr yüklənmədi')),
     });
     this.componentService.GetSectionChecklistResults(Number(this.stateDate.id)).subscribe({
       next: (x) => {
@@ -122,6 +125,8 @@ export class InspectionDetailsComponent {
             this.notify.success(status === APPROVED ? 'Yoxlama təsdiqləndi' : 'Yoxlama mobilə qaytarıldı');
             this.canDecide = false;
             this.goBack();
+          } else {
+            this.notify.error(data.message || 'Status dəyişmədi');
           }
         },
         error: (error) => this.notify.error(apiErrorMessage(error, 'Status dəyişmədi'))

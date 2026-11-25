@@ -4,7 +4,7 @@
             <div class="header-container">
                 <mat-card-title>{{pageTitle}}</mat-card-title>
                 <div class="top-actions">
-                    <button mat-flat-button color="primary" type="submit" (click)="submit()">Təsdiqlə</button>
+                    <button mat-flat-button color="primary" type="submit" (click)="submit()" [disabled]="isSaving">Təsdiqlə</button>
                     <button mat-stroked-button color="warn" type="button" (click)="cancel()">İmtina</button>
                 </div>
             </div>

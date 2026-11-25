@@ -10,6 +10,8 @@ import { MatCardModule } from '@angular/material/card';
 import { MatTableModule } from '@angular/material/table';
 import { MediaType, Module } from '../../components/media/media-type.enum';
 import { MediaComponent } from '../../components/media/media.component';
+import { NotificationService } from '../../../shared/services/notification.service';
+import { apiErrorMessage } from '../../../shared/utils/api-error';
 
 // Son onaylanmış və ya rədd olunmuş uyğunsuzluqlara yalnız baxış — onay işi Müfəttiş təsdiqi ekranındadır
 @Component({
@@ -45,7 +47,8 @@ export class DisruptionDetailsComponent {
   constructor(
     private _tableService: TableService,
     private router: Router,
-    private location: Location
+    private location: Location,
+    private notify: NotificationService
   ) {
     this._tableService.api_url = 'disruptions/getDetails';
     this._tableState.paginator.page = 0;
@@ -115,10 +118,13 @@ export class DisruptionDetailsComponent {
       finalize(() => {
         this.isLoading = false;
       })
-    ).subscribe((response) => {
-      this._tableState.paginator.total = response.data?.total || 0;
-      this.dataSource = response.data?.items || [];
-      this.allDataCount = response.data?.total || 0;
+    ).subscribe({
+      next: (response) => {
+        this._tableState.paginator.total = response.data?.total || 0;
+        this.dataSource = response.data?.items || [];
+        this.allDataCount = response.data?.total || 0;
+      },
+      error: (error) => this.notify.error(apiErrorMessage(error, 'Uyğunsuzluqlar yüklənmədi'))
     });
   }
 }

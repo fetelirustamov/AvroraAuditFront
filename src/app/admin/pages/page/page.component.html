@@ -36,13 +36,18 @@
 
                 <div class="form-col">
                     <label class="field-label">
-                        Səhifə Uzantısı <span class="required">*</span>
+                        Açar <span class="required">*</span>
                     </label>
                     <mat-form-field appearance="outline" class="w-100">
                         <mat-icon matPrefix class="prefix-icon">key</mat-icon>
                         <input matInput formControlName="key" placeholder="məs. planning">
+                        @if (isEditMode) {
+                            <mat-hint>Açar route və icazələrlə bağlıdır, dəyişdirilmir</mat-hint>
+                        } @else {
+                            <mat-hint>Route-dakı pageKey ilə dəqiq eyni olmalıdır</mat-hint>
+                        }
                         @if (form.get('key')?.hasError('required') && form.get('key')?.touched) {
-                            <mat-error>Uzantı tələb olunur</mat-error>
+                            <mat-error>Açar tələb olunur</mat-error>
                         }
                         @if (form.get('key')?.hasError('minlength') && form.get('key')?.touched) {
                             <mat-error>Ən az 2 simvol olmalıdır</mat-error>
@@ -51,7 +56,7 @@
                 </div>
 
                 <div class="form-actions">
-                    <button type="submit" mat-flat-button class="submit-btn" [class.edit-btn]="isEditMode">
+                    <button type="submit" mat-flat-button class="submit-btn" [class.edit-btn]="isEditMode" [disabled]="isSaving">
                         <i class="material-symbols-outlined">{{ isEditMode ? 'save' : 'add' }}</i>
                         {{ isEditMode ? 'Yadda Saxla' : 'Əlavə Et' }}
                     </button>
@@ -124,7 +129,7 @@
 
                 <!-- Key Column -->
                 <ng-container matColumnDef="key">
-                    <th mat-header-cell *matHeaderCellDef mat-sort-header>UZANTI</th>
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header>AÇAR</th>
                     <td mat-cell *matCellDef="let row">
                         <code class="key-badge">{{ row.key }}</code>
                     </td>

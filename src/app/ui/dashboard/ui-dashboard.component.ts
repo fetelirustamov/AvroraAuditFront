@@ -8,6 +8,7 @@ import { Subject, finalize, takeUntil } from 'rxjs';
 
 import { LocationService } from '../../admin/services/location.service';
 import { NotificationService } from '../../shared/services/notification.service';
+import { apiErrorMessage } from '../../shared/utils/api-error';
 import { AuditLoadingOverlayComponent } from '../components/audit-loading-overlay/audit-loading-overlay.component';
 import { Firm } from '../inspections/firm.model';
 import { InspectionsService } from '../inspections/inspections.service';
@@ -108,6 +109,8 @@ export class UiDashboardComponent implements OnInit, OnDestroy {
     isLoading = false;
     hasLoaded = false;
     overview: DashboardOverview | null = null;
+    /** Sorğu uğursuz olanda istifadəçiyə göstərilən mesaj; boş vəziyyətdən ayrıdır */
+    loadError: string | null = null;
 
     kpis: KpiCard[] = [];
     ranking: DashboardLocation[] = [];
@@ -247,6 +250,7 @@ export class UiDashboardComponent implements OnInit, OnDestroy {
         const { year, month, firmId, regionId, locationCode } = this.filtersForm.value;
 
         this.isLoading = true;
+        this.loadError = null;
         this.visuals.destroyAll();
 
         this.dashboardService.getOverview({
@@ -263,12 +267,12 @@ export class UiDashboardComponent implements OnInit, OnDestroy {
                     this.hasLoaded = true;
                     this.applyOverview();
                 },
-                error: () => {
+                error: error => {
                     this.overview = null;
                     this.hasLoaded = true;
                     this.kpis = [];
                     this.ranking = [];
-                    this.notify.error('Dashboard məlumatları yüklənmədi');
+                    this.loadError = apiErrorMessage(error, 'Dashboard məlumatları yüklənmədi');
                 }
             });
     }

@@ -19,6 +19,7 @@ import { CategoryService } from '../../services/category.service';
 import { CategoryDto } from '../../models/category.model';
 import { QUESTION_TYPES, QuestionDto, questionTypeLabel, toQuestionTypeId } from '../../models/question.model';
 import { NotificationService } from '../../../shared/services/notification.service';
+import { apiErrorMessage } from '../../../shared/utils/api-error';
 import { AdminBreadcrumbComponent } from '../../shared/breadcrumb/admin-breadcrumb.component';
 import { AuditLoadingOverlayComponent } from '../../../ui/components/audit-loading-overlay/audit-loading-overlay.component';
 
@@ -123,10 +124,13 @@ export class QuestionsComponent implements OnInit, AfterViewInit {
   }
 
   private loadCategories(): void {
-    this.categoryService.getAllCategories().subscribe((response) => {
-      if ((response as any)?.success !== false && Array.isArray(response.data)) {
-        this.categories = response.data;
-      }
+    this.categoryService.getAllCategories().subscribe({
+      next: (response) => {
+        if ((response as any)?.success !== false && Array.isArray(response.data)) {
+          this.categories = response.data;
+        }
+      },
+      error: (e) => this.notify.error(apiErrorMessage(e, 'Kateqoriyalar yüklənmədi'))
     });
   }
 
@@ -184,8 +188,8 @@ export class QuestionsComponent implements OnInit, AfterViewInit {
       .confirm({
         title: 'Sual silinsin?',
         message: `"${row.questionText}" sualını silmək istədiyinizə əminsiniz?`,
-        confirmText: 'Bəli, sil',
-        cancelText: 'Ləğv et'
+        confirmText: 'Sil',
+        tone: 'danger'
       })
       .subscribe(confirmed => {
         if (!confirmed) return;

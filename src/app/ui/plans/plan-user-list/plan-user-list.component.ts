@@ -89,8 +89,14 @@ export class PlanUserListComponent {
     this.applyFilter();
   }
 
+  /** "Hamısını seç" yalnız axtarışdan keçən (görünən) sətirlərə aiddir. */
   isAllSelected(): boolean {
-    return this.selection.selected.length === this.dataSource.data.length && this.dataSource.data.length > 0;
+    const visible = this.dataSource.filteredData;
+    return visible.length > 0 && visible.every((row) => this.selection.isSelected(row));
+  }
+
+  isSomeSelected(): boolean {
+    return this.dataSource.filteredData.some((row) => this.selection.isSelected(row));
   }
 
   checkboxLabel(row?: InspectorRow): string {
@@ -101,11 +107,12 @@ export class PlanUserListComponent {
   }
 
   toggleAllRows(): void {
+    const visible = this.dataSource.filteredData;
     if (this.isAllSelected()) {
-      this.selection.clear();
+      this.selection.deselect(...visible);
       return;
     }
-    this.selection.select(...this.dataSource.data);
+    this.selection.select(...visible);
   }
 
   getFirms(): void {

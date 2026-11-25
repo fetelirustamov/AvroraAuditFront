@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpTestingController } from '@angular/common/http/testing';
+import { of } from 'rxjs';
 
 import { LocationStructureComponent } from './location-structure.component';
 import { appTestProviders } from '../../../../../testing/test-providers';
@@ -137,15 +138,33 @@ describe('LocationStructureComponent', () => {
   describe('importChains', () => {
     const chainsUrl = `${environment.apiUrl}/Structures/chains`;
 
-    beforeEach(() => loadNetwork([]));
+    /** Ön baxış dialoqu: true = istifadəçi təsdiqlədi, false = ləğv etdi. */
+    let dialogResult: boolean;
+    let openSpy: jasmine.Spy;
+
+    beforeEach(() => {
+      loadNetwork([{ id: 1, locationCode: 4336, userCode: 200460, level: 1 }]);
+      dialogResult = true;
+      openSpy = spyOn((component as any).dialog, 'open')
+        .and.callFake(() => ({ afterClosed: () => of(dialogResult) }));
+    });
 
     const run = (rows: unknown[]) => (component as any)['importChains'](rows);
 
-    it('etibarlı sətirləri bir sorğuda zəncir kimi göndərir', () => {
+    it('etibarlı sətirləri təsdiqdən sonra bir sorğuda zəncir kimi göndərir', () => {
       run([
         { rowNumber: 2, locationCode: 4336, userCodes: [200456, 200458] },
         { rowNumber: 3, locationCode: 4337, userCodes: [200460] }
       ]);
+
+      // Ön baxış: mağaza başına hazırkı → yeni zəncir
+      expect(openSpy).toHaveBeenCalledTimes(1);
+      const preview = openSpy.calls.mostRecent().args[1].data;
+      expect(preview.rows.length).toBe(2);
+      expect(preview.rows[0].code).toBe(4336);
+      expect(preview.rows[0].current.length).toBe(1);
+      expect(preview.rows[0].next.length).toBe(2);
+      expect(preview.rows[1].current).toEqual([]);
 
       const req = httpMock.expectOne(chainsUrl);
       expect(req.request.method).toBe('POST');
@@ -165,11 +184,38 @@ describe('LocationStructureComponent', () => {
       expect(component.isImporting).toBeFalse();
     });
 
+    it('ləğv ediləndə heç nə göndərmir', () => {
+      dialogResult = false;
+      run([
+        { rowNumber: 2, locationCode: 4336, userCodes: [200456] }
+      ]);
+
+      expect(openSpy).toHaveBeenCalledTimes(1);
+      httpMock.expectNone(chainsUrl);
+      expect(component.uploadResults).toBeNull();
+    });
+
+    it('ötürülən sətirləri ön baxışda göstərir', () => {
+      run([
+        { rowNumber: 2, locationCode: 4336, userCodes: [200456] },
+        { rowNumber: 3, locationCode: 9999, userCodes: [200456] }
+      ]);
+
+      const preview = openSpy.calls.mostRecent().args[1].data;
+      expect(preview.rows.length).toBe(1);
+      expect(preview.issues.length).toBe(1);
+      expect(preview.issues[0].row).toBe(3);
+
+      httpMock.expectOne(chainsUrl).flush({ success: true, message: 'ok', data: { successCount: 1, failures: [] } });
+      flushHierarchy([]);
+    });
+
     it('tanınmayan istifadəçi kodu olan sətri tam rədd edir', () => {
       run([
         { rowNumber: 2, locationCode: 4336, userCodes: [200456, 999999] }
       ]);
 
+      expect(openSpy).not.toHaveBeenCalled();
       httpMock.expectNone(chainsUrl);
       expect(component.uploadResults?.successCount).toBe(0);
       expect(component.uploadResults?.errorCount).toBe(1);

@@ -7,7 +7,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule, MatTableDataSource } from '@angular/material/table';
 import { MatPaginator, MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatMenuModule } from '@angular/material/menu';
-import { debounceTime, finalize, Subject } from 'rxjs';
+import { debounceTime, finalize, Subject, Subscription } from 'rxjs';
 import { FileExportService, datedFileName } from '../../../shared/services/file-export.service';
 import { InspectionsService } from '../../inspections/inspections.service';
 import { Firm } from '../../inspections/firm.model';
@@ -15,6 +15,8 @@ import { NotificationService } from '../../../shared/services/notification.servi
 import { ReportsService } from '../reports.service';
 import { AuditLoadingOverlayComponent } from '../../components/audit-loading-overlay/audit-loading-overlay.component';
 import { TableState } from '../../../models/table-state.model';
+import { apiErrorMessage } from '../../../shared/utils/api-error';
+import { weightedPercent } from '../../../shared/utils/compliance';
 
 /** UI sütun açarlarından Swagger sıralama/filter sütun adlarına */
 const COLUMN_TO_API_FILTER: Record<string, string> = {
@@ -69,6 +71,11 @@ export class SobelerPuanlamasiComponent {
     private columnFilterSubject = new Subject<{ key: string; value: string }>();
     private columnApiFilters: Record<string, string> = {};
     private hasSubmittedSearch = false;
+    /** Filtrə uyğun bütün sətirlər; axtarışdan əvvəl və yüklənərkən null-dır (ixrac bağlıdır) */
+    allRows: any[] | null = null;
+    /** Çəkili orta: Σ toplanan bal / Σ ümumi bal × 100 */
+    avgFaiz: number | null = null;
+    private allRowsSub?: Subscription;
 
     years = Array.from({ length: 6 }, (_, i) => new Date().getFullYear() - i);
     months = [
@@ -124,24 +131,26 @@ export class SobelerPuanlamasiComponent {
         }
         // Sütun filtrləri birbaşa serverə göndərilir; «Axtar» gözləmədən sorğu göndərilir
         this.hasSubmittedSearch = true;
-        this.resetToFirstPage();
-        this.syncFilterPayload();
-        this.fetch();
+        this.search();
     }
 
     clearFilters(): void {
         this.columnApiFilters = {};
         document.querySelectorAll<HTMLInputElement>('.filter-input').forEach(i => { i.value = ''; });
-        this.resetToFirstPage();
-        this.syncFilterPayload();
-        this.fetch();
+        this.search();
     }
 
     onSearch(): void {
         this.hasSubmittedSearch = true;
+        this.search();
+    }
+
+    /** Filtr dəyişdi: cədvəl ilk səhifədən, orta faiz və ixrac məlumatı bütün sətirlərdən yenilənir */
+    private search(): void {
         this.resetToFirstPage();
         this.syncFilterPayload();
         this.fetch();
+        this.loadAllRows();
     }
 
     onPage(e: PageEvent): void {
@@ -185,12 +194,31 @@ export class SobelerPuanlamasiComponent {
                     this.dataSource.data = (items as any[]).map((item, idx) =>
                         this.mapApiRow(item, page * size + idx + 1));
                 },
-                error: () => {
-                    this.notify.error('Məlumat yüklənmədi');
+                error: (error) => {
+                    this.notify.error(apiErrorMessage(error, 'Məlumat yüklənmədi'));
                     this.dataSource.data = [];
                     this.allCount = 0;
                 },
             });
+    }
+
+    /**
+     * Filtrə uyğun bütün sətirlər (page = -1 serverdə səhifələməni söndürür).
+     * Cədvəl serverdə səhifələnir, ona görə orta faiz və ixrac cari səhifədən yox, buradan götürülür.
+     */
+    private loadAllRows(): void {
+        this.allRowsSub?.unsubscribe();
+        this.allRows = null;
+        this.avgFaiz = null;
+        const state = { ...this.tableState, paginator: { ...this.tableState.paginator, page: -1 } } as TableState;
+        this.allRowsSub = this.reportsService.getCategoryScoreDetailsBySection(state).subscribe({
+            next: res => {
+                const items: any[] = (res as any)?.data?.items ?? [];
+                this.allRows = items.map((item, idx) => this.mapApiRow(item, idx + 1));
+                this.avgFaiz = weightedPercent(this.allRows, 'toplanan_total_bal', 'umumi_total_bal');
+            },
+            error: (error) => this.notify.error(apiErrorMessage(error, 'Orta faiz və ixrac məlumatı yüklənmədi')),
+        });
     }
 
     private mapApiRow(item: any, rowNo: number): any {
@@ -215,15 +243,14 @@ export class SobelerPuanlamasiComponent {
         };
     }
 
-    getAvgFaiz(): string {
-        const data = this.dataSource.data;
-        if (!data.length) return '0';
-        const avg = data.reduce((s, r) => s + Number(r.faiz_nisbeti), 0) / data.length;
-        return avg.toFixed(1);
+    get avgFaizLabel(): string {
+        if (this.allRows === null) { return '…'; }
+        return this.avgFaiz === null ? '—' : `${this.avgFaiz.toFixed(1)}%`;
     }
 
     exportExcel(): void {
-        const data = this.dataSource.data.map((r: any) => ({
+        if (!this.allRows) { return; }
+        const data = this.allRows.map((r: any) => ({
             '№': r.row, 'Bölgəsi': r.bolge, 'Ərazi kodu': r.magaza_kodu,
             'Ərazi adı': r.magaza_adi, 'Tasnifat': r.tasnifat, 'Şöbələr': r.sobe,
             'Şöbə üzrə toplanan bal': r.toplanan_total_bal, 'Şöbə üzrə ümumi bal': r.umumi_total_bal,
@@ -238,7 +265,8 @@ export class SobelerPuanlamasiComponent {
 
     exportPdf(): void {
         const headers = ['№', 'Bölgəsi', 'Ərazi kodu', 'Ərazi adı', 'Tasnifat', 'Şöbələr', 'Şöbə üzrə toplanan bal', 'Şöbə üzrə ümumi bal', 'Faiz(%)'];
-        const rows = this.dataSource.data.map((r: any) => [r.row, r.bolge, r.magaza_kodu, r.magaza_adi, r.tasnifat, r.sobe, r.toplanan_total_bal, r.umumi_total_bal, r.faiz_nisbeti]);
+        if (!this.allRows) { return; }
+        const rows = this.allRows.map((r: any) => [r.row, r.bolge, r.magaza_kodu, r.magaza_adi, r.tasnifat, r.sobe, r.toplanan_total_bal, r.umumi_total_bal, r.faiz_nisbeti]);
         const docDef: any = {
             pageOrientation: 'landscape',
             content: [{ table: { headerRows: 1, body: [headers.map(h => ({ text: h, style: 'th' })), ...rows] }, layout: 'lightHorizontalLines' }],

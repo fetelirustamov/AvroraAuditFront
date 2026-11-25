@@ -23,6 +23,9 @@ import { CdkAccordionModule } from '@angular/cdk/accordion';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { AuditLoadingOverlayComponent } from '../audit-loading-overlay/audit-loading-overlay.component';
 import { complianceTone } from '../../../shared/utils/compliance';
+import { apiErrorMessage } from '../../../shared/utils/api-error';
+import { NotificationService } from '../../../shared/services/notification.service';
+import { finalize } from 'rxjs';
 
 // Tree node interfaces
 
@@ -77,6 +80,7 @@ export class InspectionSectionComponent {
     private _componentService: ComponentService,
     private router: Router,
     private cdr: ChangeDetectorRef,
+    private notify: NotificationService,
   ) {
 
 
@@ -84,13 +88,19 @@ export class InspectionSectionComponent {
 
 
   getQuestionsAnswersByHeaderId(headerId: number) {
-    this._componentService.getQuestionsAnswersByHeaderId(headerId).subscribe((response) => {
-      if (response.success) {
-        this.questions = response.data;
-        this.groupQuestionsByCategory();
-        console.log(this.questions)
-      }
-    });
+    this._componentService.getQuestionsAnswersByHeaderId(headerId)
+      .pipe(finalize(() => (this.isLoading = false)))
+      .subscribe({
+        next: (response) => {
+          if (response.success) {
+            this.questions = response.data;
+            this.groupQuestionsByCategory();
+          } else {
+            this.notify.error(response.message || 'Suallar yüklənmədi');
+          }
+        },
+        error: (error) => this.notify.error(apiErrorMessage(error, 'Suallar yüklənmədi')),
+      });
   }
 
   private groupQuestionsByCategory() {
@@ -101,7 +111,6 @@ export class InspectionSectionComponent {
       }
       map.get(q.categoryName)!.push(q);
     }
-    this.isLoading = false;
     this.groupedQuestions = Array.from(map.entries()).map(([categoryName, questions]) => ({ categoryName, questions }));
   }
 
@@ -109,10 +118,14 @@ export class InspectionSectionComponent {
     return Array.isArray(val);
   }
 
-  /** Bəli/Xeyr tipli sualda cavabın müsbət olub-olmadığını yoxlayır */
-  isYes(element: QuestionWithDetails): boolean {
-    const r = String(element.result);
-    return r === 'true' || r === '1' || r === '1.00';
+  /** Bəli/Xeyr tipli sualın cavabı; cavablandırılmayıbsa 'none' (Xeyr kimi göstərilməməlidir). */
+  yesNoAnswer(element: QuestionWithDetails): 'yes' | 'no' | 'none' {
+    const result = element.result as unknown;
+    if (result === null || result === undefined || result === '') {
+      return 'none';
+    }
+    const r = String(result);
+    return r === 'true' || r === '1' || r === '1.00' ? 'yes' : 'no';
   }
 
   /** Radio/checkbox tipli sualda variantın seçilib-seçilmədiyini yoxlayır */

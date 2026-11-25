@@ -8,7 +8,7 @@
             <div class="g-filter-field">
                 <label class="g-field-label">
                     <span class="material-symbols-outlined">business</span>
-                    Müəssisə
+                    Müəssisə <span class="text-danger">*</span>
                 </label>
                 <mat-form-field appearance="outline" class="g-modern-field">
                     <mat-select formControlName="firmId">
@@ -139,12 +139,12 @@
                                 </button>
 
                                 <button type="button" class="action-btn approve-btn" (click)="changePlanStatus(element,4)"
-                                    matTooltip="Yoxlamanı təsdiqlə" matTooltipPosition="above">
+                                    [disabled]="isSaving" matTooltip="Yoxlamanı təsdiqlə" matTooltipPosition="above">
                                     <span class="material-symbols-outlined">check_circle</span>
                                 </button>
 
                                 <button type="button" class="action-btn reject-btn" (click)="changePlanStatus(element,2)"
-                                    matTooltip="Yoxlamanı ləğv et" matTooltipPosition="above">
+                                    [disabled]="isSaving" matTooltip="Yoxlamanı ləğv et" matTooltipPosition="above">
                                     <span class="material-symbols-outlined">cancel</span>
                                 </button>
                             </div>

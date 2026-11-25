@@ -139,7 +139,6 @@ export class AnswerApproveDetailsComponent {
 
 
   openDetailsDialog(disruption: DisruptionAnswerDTO) {
-    console.log(disruption);
     this.selectedDisruption = disruption;
 
     this.isDetailsDialogOpen = true;
@@ -149,10 +148,12 @@ export class AnswerApproveDetailsComponent {
   }
 
   getAnswerByDisruptionId(id: string) {
-    this.disruptionAnswerService.GetDisruptionAnswerByDisruptionId(id).subscribe((response) => {
-
-      this.dataSourceModal = response.data;
-      this.isDetailsDialogOpen = true;
+    this.disruptionAnswerService.GetDisruptionAnswerByDisruptionId(id).subscribe({
+      next: (response) => {
+        this.dataSourceModal = response.data;
+        this.isDetailsDialogOpen = true;
+      },
+      error: (error) => this.notify.error(apiErrorMessage(error, 'Cavab tarixçəsi yüklənmədi')),
     });
   }
 
@@ -201,10 +202,13 @@ export class AnswerApproveDetailsComponent {
         this.isLoading = false;
         // this.cdr.detectChanges();
       })
-    ).subscribe((response) => {
-      this._tableState.paginator.total = response.data?.total || 0;
-      this.dataSource = response.data?.items || [];
-      this.allDataCount = response.data?.total || 0;
+    ).subscribe({
+      next: (response) => {
+        this._tableState.paginator.total = response.data?.total || 0;
+        this.dataSource = response.data?.items || [];
+        this.allDataCount = response.data?.total || 0;
+      },
+      error: (error) => this.notify.error(apiErrorMessage(error, 'Cavablar yüklənmədi')),
     });
   }
 

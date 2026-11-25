@@ -84,6 +84,7 @@ export class PlanCheckedComponent {
   public firms: Firm[] = [];
   planForm!: FormGroup;
   public isLoading = false;
+  public isSaving = false;
   public searchTerm: string = '';
   public pageSize: number = 10;
 
@@ -114,9 +115,11 @@ export class PlanCheckedComponent {
 
 
   getFirms() {
-
-    this.inspectionService.getFirms().subscribe((response) => {
-      this.firms = response.data;
+    this.inspectionService.getFirms().subscribe({
+      next: (response) => {
+        this.firms = response.data;
+      },
+      error: (error) => this.notify.error(apiErrorMessage(error, 'Müəssisə siyahısı yüklənmədi')),
     });
   }
 
@@ -145,29 +148,24 @@ export class PlanCheckedComponent {
 
 
   onSearch() {
-    if (this.planForm.valid) {
-      this.isLoading = true;
-      const formData = this.planForm.value;
-
-      const firmId = formData.firmId;
-      const startDate = this.datePipe.transform(formData.dateRange?.start, 'yyyy-MM-dd');
-      const endDate = this.datePipe.transform(formData.dateRange?.end, 'yyyy-MM-dd');
-
-      setFilter(this._tableState.filter, 'startDate', startDate);
-
-      setFilter(this._tableState.filter, 'endDate', endDate);
-
-      setFilter(this._tableState.filter, 'firmId', firmId);
-      // Yeni axtarış ilk səhifədən başlasın
-      this._tableState.paginator.page = 0;
-      if (this.paginator) this.paginator.pageIndex = 0;
-
-      // Backend çağırışı
-      this.fill();
-
-    } else {
-      console.log('Form düzgün doldurulmayıb.');
+    if (this.planForm.invalid) {
+      this.planForm.markAllAsTouched();
+      this.notify.warning('Məcburi sahələr seçilməyib', { message: 'Müəssisəni seçin.' });
+      return;
     }
+
+    const formData = this.planForm.value;
+    const startDate = this.datePipe.transform(formData.dateRange?.start, 'yyyy-MM-dd');
+    const endDate = this.datePipe.transform(formData.dateRange?.end, 'yyyy-MM-dd');
+
+    setFilter(this._tableState.filter, 'startDate', startDate);
+    setFilter(this._tableState.filter, 'endDate', endDate);
+    setFilter(this._tableState.filter, 'firmId', formData.firmId);
+    // Yeni axtarış ilk səhifədən başlasın
+    this._tableState.paginator.page = 0;
+    if (this.paginator) this.paginator.pageIndex = 0;
+
+    this.fill();
   }
 
 
@@ -181,10 +179,13 @@ export class PlanCheckedComponent {
 
     this._tableService.fill(this._tableState).pipe(
       finalize(() => this.isLoading = false)
-    ).subscribe((response) => {
-      this._tableState.paginator.total = response.data?.total || 0;
-      this.dataSource = response.data?.items || [];
-      this.allDataCount = response.data?.total || 0;// artıq MatTableDataSource yoxdur
+    ).subscribe({
+      next: (response) => {
+        this._tableState.paginator.total = response.data?.total || 0;
+        this.dataSource = response.data?.items || [];
+        this.allDataCount = response.data?.total || 0;
+      },
+      error: (error) => this.notify.error(apiErrorMessage(error, 'Planlar yüklənmədi')),
     });
   }
 
@@ -231,20 +232,24 @@ export class PlanCheckedComponent {
   }
 
   private submitReject(items: PlanApprove[]): void {
-    this.planService.aprovePlan(items).subscribe({
-      next: (data) => {
-        const updatedCount = Number(data?.data ?? 0);
-        if (data?.success && updatedCount > 0) {
-          this.notify.success('Yoxlama rədd edildi');
-          this.selection.clear();
-          this.fill();
-          return;
-        }
-        this.notify.error(data?.message || 'Status dəyişmədi');
-      },
-      // 409: uyğunsuzluqları artıq mağaza zəncirinə düşmüş plan geri qaytarılmır - səbəbi göstər
-      error: (error) => this.notify.error(apiErrorMessage(error, 'Status dəyişmədi'))
-    });
+    if (this.isSaving) return;
+    this.isSaving = true;
+    this.planService.aprovePlan(items)
+      .pipe(finalize(() => (this.isSaving = false)))
+      .subscribe({
+        next: (data) => {
+          const updatedCount = Number(data?.data ?? 0);
+          if (data?.success && updatedCount > 0) {
+            this.notify.success('Yoxlama rədd edildi');
+            this.selection.clear();
+            this.fill();
+            return;
+          }
+          this.notify.error(data?.message || 'Status dəyişmədi');
+        },
+        // 409: uyğunsuzluqları artıq mağaza zəncirinə düşmüş plan geri qaytarılmır - səbəbi göstər
+        error: (error) => this.notify.error(apiErrorMessage(error, 'Status dəyişmədi'))
+      });
   }
 
 }

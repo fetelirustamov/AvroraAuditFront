@@ -100,8 +100,8 @@ export class PermissionGroupsComponent implements OnInit, AfterViewInit {
     this.confirmDialog.confirm({
       title: 'Səlahiyyət qrupu silinsin?',
       message: `"${row.name}" qrupunu silmək istədiyinizə əminsiniz?`,
-      confirmText: 'Bəli, sil',
-      cancelText: 'Ləğv et'
+      confirmText: 'Sil',
+      tone: 'danger'
     }).subscribe(confirmed => {
       if (!confirmed) return;
       this.roleService.deleteRole(row.id).subscribe({

@@ -1,0 +1,111 @@
+// Görünüş admin/shared/confirm-dialog ilə eynidir; yalnız ön baxış cədvəli əlavədir.
+.preview-dialog {
+  padding: 24px;
+}
+
+.preview-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 12px 0;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.icon {
+  color: #f97316;
+  font-size: 24px;
+}
+
+.preview-message {
+  margin: 0 0 16px 0;
+  font-size: 14px;
+  color: #4b5563;
+}
+
+.preview-table-wrap {
+  max-height: 360px;
+  overflow-y: auto;
+  border: 1px solid var(--borderColor);
+  border-radius: var(--radius-sm);
+}
+
+.preview-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+
+  th {
+    position: sticky;
+    top: 0;
+    padding: 8px 12px;
+    background: var(--surface-subtle);
+    color: var(--gray-600);
+    font-size: 12px;
+    font-weight: 700;
+    text-align: left;
+  }
+
+  td {
+    padding: 8px 12px;
+    border-top: 1px solid var(--borderColor);
+    vertical-align: top;
+  }
+
+  tr.unchanged td { color: var(--gray-500); }
+}
+
+.store-name { display: block; font-weight: 600; }
+.store-code { font-size: 12px; color: var(--gray-500); }
+
+.chain {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.muted {
+  font-size: 12px;
+  color: var(--gray-500);
+}
+
+.issues-title {
+  margin: 16px 0 4px 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--warningText);
+}
+
+// location-structure.component.scss-dəki .issue-list ilə eyni
+.issue-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 160px;
+  overflow-y: auto;
+
+  li {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    padding: 6px 0;
+    font-size: 12.5px;
+    border-top: 1px solid var(--borderColor);
+  }
+
+  .issue-row {
+    flex-shrink: 0;
+    padding: 1px 8px;
+    border-radius: 6px;
+    background: var(--surface-subtle);
+    color: var(--gray-600);
+    font-size: 11px;
+    font-weight: 700;
+  }
+}
+
+.preview-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+}

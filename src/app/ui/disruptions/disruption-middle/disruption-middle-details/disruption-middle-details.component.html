@@ -2,26 +2,22 @@
     <div class="row align-items-center mb-25">
         <div class="col-12" *ngIf="action==true">
             <div class="button-group text-end d-flex justify-content-end gap-2">
-                <span class="badge custom-button"
-                    [class.text-bg-primary]="selection.hasValue()"
-                    [class.text-bg-secondary]="!selection.hasValue()"
-                    [style.opacity]="selection.hasValue() ? '1' : '0.5'"
-                    [style.cursor]="selection.hasValue() ? 'pointer' : 'not-allowed'"
-                    (click)="selection.hasValue() && approveSelected()">Təsdiq</span>
-
-                <span class="badge custom-button"
-                    [class.text-bg-danger]="selection.hasValue()"
-                    [class.text-bg-secondary]="!selection.hasValue()"
-                    [style.opacity]="selection.hasValue() ? '1' : '0.5'"
-                    [style.cursor]="selection.hasValue() ? 'pointer' : 'not-allowed'"
-                    (click)="selection.hasValue() && changeSelectedDisruptionStatus(-1)">Rədd</span>
-
-                <span class="badge custom-button" *ngIf="isheadInspector==true"
-                    [class.text-bg-warning]="selection.hasValue()"
-                    [class.text-bg-secondary]="!selection.hasValue()"
-                    [style.opacity]="selection.hasValue() ? '1' : '0.5'"
-                    [style.cursor]="selection.hasValue() ? 'pointer' : 'not-allowed'"
-                    (click)="selection.hasValue() && changeSelectedDisruptionStatus(0)">Müfəttişə göndər</span>
+                <button type="button" class="g-approve-btn" (click)="approveSelected()"
+                    [disabled]="isSaving || !selection.hasValue()">
+                    <span class="material-symbols-outlined">check_circle</span>
+                    Təsdiq
+                </button>
+                <button type="button" class="g-reject-btn" (click)="changeSelectedDisruptionStatus(-1)"
+                    [disabled]="isSaving || !selection.hasValue()">
+                    <span class="material-symbols-outlined">cancel</span>
+                    Rədd
+                </button>
+                <button type="button" class="g-secondary-btn" *ngIf="isheadInspector"
+                    (click)="changeSelectedDisruptionStatus(0)"
+                    [disabled]="isSaving || !selection.hasValue()">
+                    <span class="material-symbols-outlined">arrow_back</span>
+                    Müfəttişə göndər
+                </button>
             </div>
         </div>
     </div>
@@ -131,17 +127,20 @@
                             <div class="action-buttons">
                                 <button type="button" class="action-btn approve-btn"
                                     (click)="changeDisruptionStatus(element, approveStatus(element))"
+                                    [disabled]="isSaving"
                                     matTooltip="Təsdiqlə" matTooltipPosition="above">
                                     <span class="material-symbols-outlined">check_circle</span>
                                 </button>
                                 <button type="button" class="action-btn reject-btn"
                                     (click)="changeDisruptionStatus(element, -1)"
+                                    [disabled]="isSaving"
                                     matTooltip="Rədd et" matTooltipPosition="above">
                                     <span class="material-symbols-outlined">cancel</span>
                                 </button>
                                 <button type="button" class="action-btn back-btn"
                                     *ngIf="isheadInspector && element.status == 1"
                                     (click)="changeDisruptionStatus(element, 0)"
+                                    [disabled]="isSaving"
                                     matTooltip="Müfəttişə göndər" matTooltipPosition="above">
                                     <span class="material-symbols-outlined">arrow_back</span>
                                 </button>
@@ -225,12 +224,15 @@
                         </div>
                         <div class="col-md-12">
                             <div class="form-group">
-                                <label class="main-label d-block fw-medium text-black">Deadline</label>
+                                <label class="main-label d-block fw-medium text-black">Son tarix (gün)</label>
                                 <mat-form-field>
-                                    <mat-label>Deadline</mat-label>
-                                    <input matInput formControlName="deadline" type="number">
+                                    <mat-label>Son tarix (gün)</mat-label>
+                                    <input matInput formControlName="deadline" type="number" min="1" step="1">
                                     <mat-error *ngIf="editForm.get('deadline')?.hasError('required')">
-                                        Deadline tələb olunur
+                                        Son tarix tələb olunur
+                                    </mat-error>
+                                    <mat-error *ngIf="editForm.get('deadline')?.hasError('min')">
+                                        Son tarix ən azı 1 gün olmalıdır
                                     </mat-error>
                                 </mat-form-field>
                             </div>
@@ -252,13 +254,13 @@
                                 <label class="main-label d-block fw-medium text-black">
                                     Şəkil Yüklə
                                 </label>
-                                <file-upload class="file-uploader" formControlName="files" [multiple]="true" [accept]="'image/*'"></file-upload>
+                                <file-upload class="file-uploader" formControlName="files" [multiple]="true" [accept]="acceptedImageTypes"></file-upload>
                             </div>
                         </div>
                     </div>
                     <div class="btn-box">
-                        <button mat-button (click)="closeEditDialog()" color="warn">Ləğv Et</button>
-                        <button mat-button color="primary" type="submit">Yadda Saxla</button>
+                        <button mat-button type="button" (click)="closeEditDialog()" color="warn">Ləğv Et</button>
+                        <button mat-button color="primary" type="submit" [disabled]="isSaving">Yadda Saxla</button>
                     </div>
                 </form>
             </mat-card-content>

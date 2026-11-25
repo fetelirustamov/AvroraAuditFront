@@ -113,7 +113,7 @@
                         <input #fileInput type="file" (change)="onFileSelected($event)" accept=".xlsx,.xls" hidden>
                         <div class="tpl-actions">
                             <button type="button" class="g-secondary-btn" (click)="downloadTemplate()"><span class="material-symbols-outlined" aria-hidden="true">description</span>Boş şablon</button>
-                            <button type="button" class="g-secondary-btn" (click)="exportCurrentStructure()" [disabled]="!hasNetwork"><span class="material-symbols-outlined" aria-hidden="true">table_chart</span>Strukturu yüklə</button>
+                            <button type="button" class="g-secondary-btn" (click)="exportCurrentStructure()" [disabled]="!hasNetwork"><span class="material-symbols-outlined" aria-hidden="true">table_chart</span>Strukturu ixrac et</button>
                         </div>
                         <div class="upload-progress" *ngIf="isImporting" role="status" aria-live="polite">
                             <span>Onay sxemləri yazılır…</span>

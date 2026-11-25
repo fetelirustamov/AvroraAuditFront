@@ -9,12 +9,11 @@
   </p>
 
   <div class="confirm-actions">
-    <button mat-stroked-button color="warn" (click)="onCancel()">
+    <button mat-stroked-button type="button" cdkFocusInitial (click)="onCancel()">
       {{ data.cancelText || 'Ləğv et' }}
     </button>
-    <button mat-flat-button color="primary" (click)="onConfirm()">
-      {{ data.confirmText || 'Bəli, sil' }}
+    <button mat-flat-button type="button" [color]="data.tone === 'danger' ? 'warn' : 'primary'" (click)="onConfirm()">
+      {{ data.confirmText || 'Təsdiqlə' }}
     </button>
   </div>
 </div>
-

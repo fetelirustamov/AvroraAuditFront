@@ -78,11 +78,20 @@
 
                 <tr class="mat-row" *matNoDataRow>
                     <td class="mat-cell text-center" colspan="7">
-                        <div class="no-data-message">
-                            <span class="material-symbols-outlined">search_off</span>
-                            <p>Mağaza tapılmadı</p>
-                            <small>Yeni mağaza əlavə etmək üçün yuxarıdakı düymədən istifadə edin</small>
-                        </div>
+                        @if (loadFailed) {
+                            <div class="no-data-message">
+                                <span class="material-symbols-outlined">error</span>
+                                <p>Mağazalar yüklənmədi</p>
+                                <small>Serverlə əlaqədə xəta baş verdi.</small>
+                                <button mat-stroked-button type="button" (click)="reload()">Yenidən cəhd et</button>
+                            </div>
+                        } @else if (!isLoading) {
+                            <div class="no-data-message">
+                                <span class="material-symbols-outlined">search_off</span>
+                                <p>Mağaza tapılmadı</p>
+                                <small>Yeni mağaza əlavə etmək üçün yuxarıdakı düymədən istifadə edin</small>
+                            </div>
+                        }
                     </td>
                 </tr>
             </table>

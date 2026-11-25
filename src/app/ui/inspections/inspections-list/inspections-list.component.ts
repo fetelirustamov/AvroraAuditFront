@@ -24,6 +24,8 @@ import { Router } from '@angular/router';
 import { MatSort, MatSortModule } from '@angular/material/sort';
 import { InspectionsListCacheService, InspectionsListSnapshot } from '../inspections-list-cache.service';
 import { setFilter } from '../../../shared/utils/table-filter';
+import { apiErrorMessage } from '../../../shared/utils/api-error';
+import { NotificationService } from '../../../shared/services/notification.service';
 
 @Component({
   selector: 'app-inspections-list',
@@ -81,7 +83,8 @@ export class InspectionsListComponent implements AfterViewInit {
     private _tableService: TableService,
     private datePipe: DatePipe,
     private router: Router,
-    private inspectionsListCache: InspectionsListCacheService) {
+    private inspectionsListCache: InspectionsListCacheService,
+    private notify: NotificationService) {
     this.getFirms();
 
     this._tableState = new TableState();
@@ -169,15 +172,21 @@ export class InspectionsListComponent implements AfterViewInit {
   }
 
   getFirms() {
-    this.inspectionsService.getFirms().subscribe((response) => {
-      this.firms = response.data;
+    this.inspectionsService.getFirms().subscribe({
+      next: (response) => {
+        this.firms = response.data;
+      },
+      error: (error) => this.notify.error(apiErrorMessage(error, 'Müəssisə siyahısı yüklənmədi')),
     });
   }
 
 
   getLocations(firmId: number) {
-    this.inspectionsService.getLocationByFirmId(firmId).subscribe((response) => {
-      this.locations = response.data;
+    this.inspectionsService.getLocationByFirmId(firmId).subscribe({
+      next: (response) => {
+        this.locations = response.data;
+      },
+      error: (error) => this.notify.error(apiErrorMessage(error, 'Lokasiya siyahısı yüklənmədi')),
     });
   }
 
@@ -192,37 +201,29 @@ export class InspectionsListComponent implements AfterViewInit {
 
 
   onFormSubmit() {
-    if (this.inspectionsForm.valid) {
-      this.isLoading = true;
-      const formData = this.inspectionsForm.value;
-
-      const firmId = formData.firmId;
-      const locationCode = formData.locationCode;
-      const startDate = this.datePipe.transform(formData.dateRange?.start, 'yyyy-MM-dd');
-      const endDate = this.datePipe.transform(formData.dateRange?.end, 'yyyy-MM-dd');
-      setFilter(this._tableState.filter, 'startDate', startDate);
-
-      setFilter(this._tableState.filter, 'endDate', endDate);
-
-      setFilter(this._tableState.filter, 'locationCode', locationCode);
-
-      setFilter(this._tableState.filter, 'firmId', firmId);
-      // Yeni axtarış ilk səhifədən başlasın
-      this._tableState.paginator.page = 0;
-      if (this.paginator) this.paginator.pageIndex = 0;
-
-      // Backend çağırışı
-      this.fill();
-
-    } else {
-      console.log('Form düzgün doldurulmayıb.');
+    if (this.inspectionsForm.invalid) {
+      this.inspectionsForm.markAllAsTouched();
+      this.notify.warning('Məcburi sahələr seçilməyib', { message: 'Müəssisəni seçin.' });
+      return;
     }
+
+    const formData = this.inspectionsForm.value;
+    const startDate = this.datePipe.transform(formData.dateRange?.start, 'yyyy-MM-dd');
+    const endDate = this.datePipe.transform(formData.dateRange?.end, 'yyyy-MM-dd');
+    setFilter(this._tableState.filter, 'startDate', startDate);
+    setFilter(this._tableState.filter, 'endDate', endDate);
+    setFilter(this._tableState.filter, 'locationCode', formData.locationCode);
+    setFilter(this._tableState.filter, 'firmId', formData.firmId);
+    // Yeni axtarış ilk səhifədən başlasın
+    this._tableState.paginator.page = 0;
+    if (this.paginator) this.paginator.pageIndex = 0;
+
+    this.fill();
   }
 
 
   private fill() {
     this.isLoading = true;
-    // this._tableState.paginator.page = 0;
     this._tableState.paginator.size = Number(this.pageSize);
     if (!this._tableState.filter) {
       this._tableState.filter = {};
@@ -230,10 +231,13 @@ export class InspectionsListComponent implements AfterViewInit {
     this._tableState.searchTerm = this.searchTerm;
     this._tableService.fill(this._tableState).pipe(
       finalize(() => this.isLoading = false)
-    ).subscribe((response) => {
-      this._tableState.paginator.total = response.data?.total || 0;
-      this.dataSource = response.data?.items || [];
-      this.allDataCount = response.data?.total || 0;
+    ).subscribe({
+      next: (response) => {
+        this._tableState.paginator.total = response.data?.total || 0;
+        this.dataSource = response.data?.items || [];
+        this.allDataCount = response.data?.total || 0;
+      },
+      error: (error) => this.notify.error(apiErrorMessage(error, 'Yoxlamalar yüklənmədi')),
     });
   }
 

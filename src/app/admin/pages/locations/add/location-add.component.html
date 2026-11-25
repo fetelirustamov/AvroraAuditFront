@@ -4,7 +4,7 @@
             <div class="header-container">
                 <mat-card-title>{{ data?.mode === 'edit' ? 'Mağaza Redaktə Et' : 'Yeni Mağaza' }}</mat-card-title>
                 <div class="top-actions">
-                    <button mat-flat-button color="primary" type="button" (click)="submit()">
+                    <button mat-flat-button color="primary" type="button" (click)="submit()" [disabled]="isSaving">
                         {{ data?.mode === 'edit' ? 'Yadda Saxla' : 'Təsdiqlə' }}
                     </button>
                     <button mat-stroked-button color="warn" type="button" (click)="cancel()">İmtina</button>

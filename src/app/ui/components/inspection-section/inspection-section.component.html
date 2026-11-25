@@ -110,13 +110,12 @@
 
                                                     <!-- Bəli / Xeyr -->
                                                     <ng-container *ngIf="element.questionTypeID === 1">
-                                                        <span class="answer-badge"
-                                                            [class.answer-badge--yes]="isYes(element)"
-                                                            [class.answer-badge--no]="!isYes(element)">
+                                                        @let answer = yesNoAnswer(element);
+                                                        <span class="answer-badge" [ngClass]="'answer-badge--' + answer">
                                                             <span class="material-symbols-outlined">
-                                                                {{ isYes(element) ? 'check_circle' : 'cancel' }}
+                                                                {{ answer === 'yes' ? 'check_circle' : answer === 'no' ? 'cancel' : 'remove' }}
                                                             </span>
-                                                            {{ isYes(element) ? 'Bəli' : 'Xeyr' }}
+                                                            {{ answer === 'yes' ? 'Bəli' : answer === 'no' ? 'Xeyr' : 'Cavab yoxdur' }}
                                                         </span>
                                                     </ng-container>
 

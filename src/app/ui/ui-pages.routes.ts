@@ -89,10 +89,6 @@ export const uiPageRoutes: Routes = [
                 }
             },
             {
-                path: 'approve',
-                loadComponent: () => import('./plans/plans-approve/plans-approve.component').then(m => m.PlansApproveComponent),
-            },
-            {
                 path: 'actions',
                 loadComponent: () => import('./plans/plan-actions/plan-actions.component').then(m => m.PlanActionsComponent),
                 data: {

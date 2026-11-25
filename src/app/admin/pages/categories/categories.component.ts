@@ -195,8 +195,8 @@ export class CategoriesComponent implements OnInit, OnChanges, AfterViewInit {
     this.confirmDialog.confirm({
       title: 'Kateqoriya silinsin?',
       message: `"${row.categoryName}" kateqoriyasını silmək istədiyinizə əminsiniz?`,
-      confirmText: 'Bəli, sil',
-      cancelText: 'Ləğv et'
+      confirmText: 'Sil',
+      tone: 'danger'
     })
       .subscribe(confirmed => {
         if (!confirmed) return;

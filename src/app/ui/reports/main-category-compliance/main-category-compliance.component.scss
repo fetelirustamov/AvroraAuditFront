@@ -11,6 +11,13 @@
     --page-accent-to: #5DD87A;
 }
 
+// Axtarışdan əvvəl və bütün sətirlər yüklənərkən ixrac bağlıdır
+.export-btn:disabled {
+    opacity: .5;
+    cursor: not-allowed;
+    transform: none;
+}
+
 // Yaşıl vurğuya uyğun yerli tonlar
 $accent-tint: #F8FFF8;
 $accent-tint-strong: #E8F9E3;

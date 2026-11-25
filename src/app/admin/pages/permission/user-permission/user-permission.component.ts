@@ -19,6 +19,7 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { AuditLoadingOverlayComponent } from '../../../../ui/components/audit-loading-overlay/audit-loading-overlay.component';
 import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dialog.service';
 import { NotificationService } from '../../../../shared/services/notification.service';
+import { apiErrorMessage } from '../../../../shared/utils/api-error';
 import { UserService } from '../../../services/user.service';
 import { UserDetail } from '../../../models/user.model';
 import { AdminBreadcrumbComponent } from '../../../shared/breadcrumb/admin-breadcrumb.component';
@@ -196,20 +197,18 @@ export class UserPermissionComponent implements OnInit, AfterViewInit {
 
   deleteUser(user: UserPermission) {
     this.confirmDialog.confirm({
-      title: 'İstifadəçi silinsin?',
+      title: 'İstifadəçi passiv edilsin?',
       message: `"${user.userName}" istifadəçisi passiv ediləcək: sistemə daxil ola bilməyəcək, tarixçəsi qalacaq.`,
-      confirmText: 'Bəli, sil',
-      cancelText: 'Ləğv et'
+      confirmText: 'Passiv et',
+      tone: 'danger'
     }).subscribe(confirmed => {
       if (!confirmed) return;
       this.userService.deleteUser(user.id).subscribe({
         next: () => {
-          this.notify.success('İstifadəçi silindi');
+          this.notify.success('İstifadəçi passiv edildi');
           this.loadUsers();
         },
-        error: () => {
-          this.notify.error('İstifadəçi silinmədi', { message: 'Serverlə əlaqədə xəta baş verdi. Zəhmət olmasa yenidən cəhd edin.' });
-        }
+        error: (e) => this.notify.error(apiErrorMessage(e, 'İstifadəçi passiv edilmədi'))
       });
     });
   }

@@ -6,7 +6,9 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { finalize } from 'rxjs';
 import { NotificationService } from '../../../../shared/services/notification.service';
+import { apiErrorMessage } from '../../../../shared/utils/api-error';
 import { Router } from '@angular/router';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { SectionService } from '../../../services/section.service';
@@ -35,6 +37,7 @@ export class CategoryAddComponent implements OnInit {
 
     pageTitle = 'Yeni Kateqoriya';
     isEditMode = false;
+    isSaving = false;
 
     constructor(
         private fb: FormBuilder,
@@ -59,10 +62,13 @@ export class CategoryAddComponent implements OnInit {
             // "Audit Strukturu" səhifəsindən firma konteksti ilə açılıb - yalnız həmin firmanın şöbələri
             this.sections = dialogData.sections;
         } else {
-            this.sectionService.list().subscribe(response => {
-                if (response.success) {
-                    this.sections = response.data;
-                }
+            this.sectionService.list().subscribe({
+                next: response => {
+                    if (response.success) {
+                        this.sections = response.data;
+                    }
+                },
+                error: e => this.notify.error(apiErrorMessage(e, 'Şöbələr yüklənmədi'))
             });
         }
 
@@ -80,6 +86,7 @@ export class CategoryAddComponent implements OnInit {
     }
 
     submit(): void {
+        if (this.isSaving) return;
         if (this.form.invalid) {
             this.form.markAllAsTouched();
             this.notify.warning('Forma tamamlanmayıb', { message: 'Zəhmət olmasa tələb olunan sahələri doldurun.' });
@@ -87,27 +94,38 @@ export class CategoryAddComponent implements OnInit {
         }
         const payload = this.form.getRawValue();
 
+        this.isSaving = true;
         if (this.isEditMode && (this.data as any)?.item?.id) {
             const id = (this.data as any).item.id as number;
-            this.categoryService.updateCategory({ ...payload, id }).subscribe(res => {
-                this.notify.success('Kateqoriya uğurla redaktə edildi');
-                if (this.dialogRef) {
-                    this.dialogRef.close({ updated: true, data: res });
-                } else {
-                    this.router.navigate(['/admin/categories']);
-                }
-            });
+            this.categoryService.updateCategory({ ...payload, id })
+                .pipe(finalize(() => this.isSaving = false))
+                .subscribe({
+                    next: res => {
+                        this.notify.success('Kateqoriya uğurla redaktə edildi');
+                        if (this.dialogRef) {
+                            this.dialogRef.close({ updated: true, data: res });
+                        } else {
+                            this.router.navigate(['/admin/categories']);
+                        }
+                    },
+                    error: e => this.notify.error(apiErrorMessage(e, 'Kateqoriya redaktə edilmədi'))
+                });
             return;
         }
 
-        this.categoryService.createCategory(payload).subscribe(res => {
-            this.notify.success('Kateqoriya uğurla əlavə edildi');
-            if (this.dialogRef) {
-                this.dialogRef.close({ created: true, data: res });
-            } else {
-                this.router.navigate(['/admin/categories']);
-            }
-        });
+        this.categoryService.createCategory(payload)
+            .pipe(finalize(() => this.isSaving = false))
+            .subscribe({
+                next: res => {
+                    this.notify.success('Kateqoriya uğurla əlavə edildi');
+                    if (this.dialogRef) {
+                        this.dialogRef.close({ created: true, data: res });
+                    } else {
+                        this.router.navigate(['/admin/categories']);
+                    }
+                },
+                error: e => this.notify.error(apiErrorMessage(e, 'Kateqoriya əlavə edilmədi'))
+            });
     }
 
     cancel(): void {

@@ -9,7 +9,8 @@ import { apiErrorMessage } from '../../../../shared/utils/api-error';
 import { DisruptionService } from '../../disruption.service';
 import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
 import { SelectionModel } from '@angular/cdk/collections';
-import { finalize } from 'rxjs';
+import { catchError, EMPTY, finalize, of, switchMap } from 'rxjs';
+import { ACCEPTED_IMAGE_TYPES } from '../../../../shared/utils/upload-types';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatTableModule } from '@angular/material/table';
@@ -85,6 +86,7 @@ export class DisruptionMiddleDetailsComponent implements AfterViewInit {
   private disruptionApproveList: DisruptionApproveDto[] = [];
   MediaType = MediaType;
   Module = Module;
+  readonly acceptedImageTypes = ACCEPTED_IMAGE_TYPES;
   editForm!: FormGroup;
   isEditDialogOpen = false;
   selectedDisruption: DisruptionDto | null = null;
@@ -151,7 +153,7 @@ export class DisruptionMiddleDetailsComponent implements AfterViewInit {
       sectionName: [{ value: '', disabled: true }, Validators.required],
       disruptionCategoryName: [{ value: '', disabled: true }, Validators.required],
       disruptionReasonId: ['', Validators.required],
-      deadline: ['', Validators.required],
+      deadline: ['', [Validators.required, Validators.min(1)]],
       description: ['', Validators.required],
       files: [[]]
     });
@@ -225,10 +227,13 @@ export class DisruptionMiddleDetailsComponent implements AfterViewInit {
         this.isLoading = false;
         // this.cdr.detectChanges();
       })
-    ).subscribe((response) => {
-      this._tableState.paginator.total = response.data?.total || 0;
-      this.dataSource = response.data?.items || [];
-      this.allDataCount = response.data?.total || 0;
+    ).subscribe({
+      next: (response) => {
+        this._tableState.paginator.total = response.data?.total || 0;
+        this.dataSource = response.data?.items || [];
+        this.allDataCount = response.data?.total || 0;
+      },
+      error: (error) => this.notify.error(apiErrorMessage(error, 'Uyğunsuzluqlar yüklənmədi'))
     });
   }
 
@@ -296,7 +301,8 @@ export class DisruptionMiddleDetailsComponent implements AfterViewInit {
         if (response.success && response.data) {
           this.editForm.patchValue({ deadline: response.data.deadline ?? '' });
         }
-      }
+      },
+      error: (error) => this.notify.error(apiErrorMessage(error, 'Son tarix yüklənmədi'))
     });
 
     this.isEditDialogOpen = true;
@@ -311,8 +317,8 @@ export class DisruptionMiddleDetailsComponent implements AfterViewInit {
         }
       },
       error: (error) => {
-        console.error('Error loading reasons:', error);
         this.reasons = [];
+        this.notify.error(apiErrorMessage(error, 'Səbəblər yüklənmədi'));
       }
     });
   }
@@ -324,45 +330,55 @@ export class DisruptionMiddleDetailsComponent implements AfterViewInit {
   }
 
   onEditSubmit() {
-    const files: File[] = this.editForm.get('files')?.value || [];
-    if (this.editForm.valid && this.selectedDisruption) {
-      const updatedDisruption: Disruption = {
-        id: this.selectedDisruption.disruptionId,
-        inspectorId: this.selectedDisruption.inspectorId,
-        inspectionPlanId: this.selectedDisruption.inspectionPlanId,
-        sectionId: this.selectedDisruption.sectionId,
-        severityId: 0,
-        disruptionReasonId: this.editForm.value.disruptionReasonId,
-        createdDate: this.selectedDisruption.createdDate,
-        description: this.editForm.value.description,
-        deadline: this.editForm.value.deadline ?? null,
-        questionId: null,
-        localId: ''
-      };
-
-      this.disruptionService.updateDisruption(updatedDisruption).subscribe({
-        next: (response: { success: boolean }) => {
-          if (response.success) {
-            if (files.length > 0) {
-              this.attachmentService.uploadAttachment(
-                Module.Disruption,
-                MediaType.Image,
-                this.selectedDisruption!.disruptionId,
-                files
-              ).subscribe({
-                next: () => this.notify.success('Şəkil uğurla yükləndi'),
-                error: () => this.notify.error('Şəkil yüklənmədi')
-              });
-            }
-            this.notify.success('Uyğunsuzluq yeniləndi');
-            this.closeEditDialog();
-            this.fill();
-          }
-        },
-        error: () => {
-          this.notify.error('Xəta baş verdi');
-        }
-      });
+    if (this.isSaving) return;
+    if (this.editForm.invalid || !this.selectedDisruption) {
+      this.editForm.markAllAsTouched();
+      return;
     }
+
+    const files: File[] = this.editForm.get('files')?.value || [];
+    const disruptionId = this.selectedDisruption.disruptionId;
+    const updatedDisruption: Disruption = {
+      id: disruptionId,
+      inspectorId: this.selectedDisruption.inspectorId,
+      inspectionPlanId: this.selectedDisruption.inspectionPlanId,
+      sectionId: this.selectedDisruption.sectionId,
+      severityId: 0,
+      disruptionReasonId: this.editForm.value.disruptionReasonId,
+      createdDate: this.selectedDisruption.createdDate,
+      description: this.editForm.value.description,
+      deadline: this.editForm.value.deadline ?? null,
+      questionId: null,
+      localId: ''
+    };
+
+    // Əvvəl şəkil, sonra cavab: şəkil yüklənməsə cavab göndərilmir
+    const upload$ = files.length > 0
+      ? this.attachmentService.uploadAttachment(Module.Disruption, MediaType.Image, disruptionId, files).pipe(
+          catchError(error => {
+            this.notify.error(apiErrorMessage(error, 'Şəkil yüklənmədi, dəyişiklik saxlanmadı'));
+            return EMPTY;
+          })
+        )
+      : of(null);
+
+    this.isSaving = true;
+    upload$.pipe(
+      switchMap(() => this.disruptionService.updateDisruption(updatedDisruption).pipe(
+        catchError(error => {
+          this.notify.error(apiErrorMessage(error, 'Uyğunsuzluq yenilənmədi'));
+          return EMPTY;
+        })
+      )),
+      finalize(() => (this.isSaving = false))
+    ).subscribe((response: { success: boolean; message?: string }) => {
+      if (!response.success) {
+        this.notify.error(response.message || 'Uyğunsuzluq yenilənmədi');
+        return;
+      }
+      this.notify.success('Uyğunsuzluq yeniləndi');
+      this.closeEditDialog();
+      this.fill();
+    });
   }
 }

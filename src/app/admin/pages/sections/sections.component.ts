@@ -21,6 +21,7 @@ import { ConfirmDialogService } from '../../shared/confirm-dialog/confirm-dialog
 import { AdminBreadcrumbComponent } from '../../shared/breadcrumb/admin-breadcrumb.component';
 import { AuditLoadingOverlayComponent } from '../../../ui/components/audit-loading-overlay/audit-loading-overlay.component';
 import { NotificationService } from '../../../shared/services/notification.service';
+import { apiErrorMessage } from '../../../shared/utils/api-error';
 
 type SectionRow = SectionDto;
 
@@ -119,10 +120,13 @@ export class SectionsComponent implements OnInit, OnChanges, AfterViewInit {
   }
 
   private loadFirms() {
-    this.firmService.getAllFirms().subscribe(response => {
-      if (response.success) {
-        this.firms = response.data as FirmDto[];
-      }
+    this.firmService.getAllFirms().subscribe({
+      next: response => {
+        if (response.success) {
+          this.firms = response.data as FirmDto[];
+        }
+      },
+      error: e => this.notify.error(apiErrorMessage(e, 'Firmalar yüklənmədi'))
     });
   }
 
@@ -181,8 +185,8 @@ export class SectionsComponent implements OnInit, OnChanges, AfterViewInit {
       .confirm({
         title: 'Şöbə silinsin?',
         message: `"${row.sectionName}" şöbəsini silmək istədiyinizə əminsiniz?`,
-        confirmText: 'Bəli, sil',
-        cancelText: 'Ləğv et'
+        confirmText: 'Sil',
+        tone: 'danger'
       })
       .subscribe(confirmed => {
         if (!confirmed) return;

@@ -26,6 +26,8 @@ import { FileUploadModule } from '@iplab/ngx-file-upload';
 import { AuthService } from '../../../auth/auth.service';
 import { AuditLoadingOverlayComponent } from '../../components/audit-loading-overlay/audit-loading-overlay.component';
 import { setFilter } from '../../../shared/utils/table-filter';
+import { NotificationService } from '../../../shared/services/notification.service';
+import { apiErrorMessage } from '../../../shared/utils/api-error';
 
 @Component({
   selector: 'app-disruption-middle',
@@ -65,7 +67,8 @@ export class DisruptionMiddleComponent {
     private _tableService: TableService,
     private datePipe: DatePipe,
     private router: Router,
-    private authService: AuthService) {
+    private authService: AuthService,
+    private notify: NotificationService) {
 
     const userInfo = this.authService.getUserInfo();
     // Admin/HeadInspector bütün müfəttişlərin həm müfəttiş onayı gözləyən (0), həm də onaylanmış (1) uyğunsuzluqlarını görür
@@ -103,15 +106,17 @@ export class DisruptionMiddleComponent {
   }
 
   getFirms() {
-    this.inspectionsService.getFirms().subscribe((response) => {
-      this.firms = response.data;
+    this.inspectionsService.getFirms().subscribe({
+      next: (response) => this.firms = response.data,
+      error: (error) => this.notify.error(apiErrorMessage(error, 'Müəssisələr yüklənmədi'))
     });
   }
 
 
   getLocations(firmId: number) {
-    this.inspectionsService.getLocationByFirmId(firmId).subscribe((response) => {
-      this.locations = response.data;
+    this.inspectionsService.getLocationByFirmId(firmId).subscribe({
+      next: (response) => this.locations = response.data,
+      error: (error) => this.notify.error(apiErrorMessage(error, 'Lokasiyalar yüklənmədi'))
     });
   }
 
@@ -119,44 +124,33 @@ export class DisruptionMiddleComponent {
     this.getLocations(selectedFirmId);
   }
 
-  onSelectLocation(selectedLocationId: number) {
-    console.log(selectedLocationId);
-
-  }
   toggleClass() {
     this.classApplied = !this.classApplied;
   }
 
   onFormSubmit() {
-
-    const firmId = this.inspectionsForm.value.firmId;
-    if (this.inspectionsForm.valid) {
-
-      this.isLoading = true;
-      console.log(this.inspectionsForm.value);
-      const formData = this.inspectionsForm.value;
-      const locationCode = formData.locationCode;
-      const startDate = this.datePipe.transform(formData.dateRange?.start, 'yyyy-MM-dd');
-      const endDate = this.datePipe.transform(formData.dateRange?.end, 'yyyy-MM-dd');
-      setFilter(this._tableState.filter, 'startDate', startDate);
-      setFilter(this._tableState.filter, 'endDate', endDate);
-      setFilter(this._tableState.filter, 'locationCode', locationCode);
-      setFilter(this._tableState.filter, 'firmId', firmId);
-      // Yeni axtarış ilk səhifədən başlasın
-      this._tableState.paginator.page = 0;
-      if (this.paginator) this.paginator.pageIndex = 0;
-      // Backend çağırışı
-      this.fill();
-    } else {
+    if (this.inspectionsForm.invalid) {
+      this.inspectionsForm.markAllAsTouched();
+      this.notify.warning('Müəssisə seçin');
       return;
-      console.log('Form düzgün doldurulmayıb.');
     }
+
+    const formData = this.inspectionsForm.value;
+    const startDate = this.datePipe.transform(formData.dateRange?.start, 'yyyy-MM-dd');
+    const endDate = this.datePipe.transform(formData.dateRange?.end, 'yyyy-MM-dd');
+    setFilter(this._tableState.filter, 'startDate', startDate);
+    setFilter(this._tableState.filter, 'endDate', endDate);
+    setFilter(this._tableState.filter, 'locationCode', formData.locationCode);
+    setFilter(this._tableState.filter, 'firmId', formData.firmId);
+    // Yeni axtarış ilk səhifədən başlasın
+    this._tableState.paginator.page = 0;
+    if (this.paginator) this.paginator.pageIndex = 0;
+    this.fill();
   }
 
 
   private fill() {
     this.isLoading = true;
-    // this._tableState.paginator.page = 0;
     this._tableState.paginator.size = Number(this.pageSize);
     if (!this._tableState.filter) {
       this._tableState.filter = {};
@@ -164,10 +158,13 @@ export class DisruptionMiddleComponent {
     this._tableState.searchTerm = this.searchTerm;
     this._tableService.fill(this._tableState).pipe(
       finalize(() => this.isLoading = false)
-    ).subscribe((response) => {
-      this._tableState.paginator.total = response.data?.total || 0;
-      this.dataSource = response.data?.items || [];
-      this.allDataCount = response.data?.total || 0;
+    ).subscribe({
+      next: (response) => {
+        this._tableState.paginator.total = response.data?.total || 0;
+        this.dataSource = response.data?.items || [];
+        this.allDataCount = response.data?.total || 0;
+      },
+      error: (error) => this.notify.error(apiErrorMessage(error, 'Planlar yüklənmədi'))
     });
   }
 

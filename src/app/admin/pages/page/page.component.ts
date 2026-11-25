@@ -11,7 +11,9 @@ import { MatSortModule, MatSort } from '@angular/material/sort';
 import { MatPaginatorModule, MatPaginator } from '@angular/material/paginator';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { finalize } from 'rxjs';
 import { NotificationService } from '../../../shared/services/notification.service';
+import { apiErrorMessage } from '../../../shared/utils/api-error';
 import { AuditLoadingOverlayComponent } from '../../../ui/components/audit-loading-overlay/audit-loading-overlay.component';
 import { MatChipsModule } from '@angular/material/chips';
 import { PageService } from '../../services/page.service';
@@ -53,6 +55,7 @@ export class PageComponent implements OnInit, AfterViewInit {
   rows: PageDto[] = [];
   isLoading = false;
   isEditMode = false;
+  isSaving = false;
   editingId: number | null = null;
   searchTerm = '';
 
@@ -116,27 +119,33 @@ export class PageComponent implements OnInit, AfterViewInit {
       return;
     }
 
+    // Redaktədə açar disabled-dir, getRawValue onu yenə də (dəyişməmiş) göndərir
     const { name, key } = this.form.getRawValue();
     const payload = { name, key, status: 1 };
 
+    this.isSaving = true;
     if (this.isEditMode && this.editingId !== null) {
-      this.pageService.update(this.editingId, { ...payload, id: this.editingId }).subscribe({
-        next: () => {
-          this.notify.success('Səhifə uğurla yeniləndi');
-          this.resetForm();
-          this.load();
-        },
-        error: () => this.notify.error('Yeniləmə zamanı xəta baş verdi')
-      });
+      this.pageService.update(this.editingId, { ...payload, id: this.editingId })
+        .pipe(finalize(() => this.isSaving = false))
+        .subscribe({
+          next: () => {
+            this.notify.success('Səhifə uğurla yeniləndi');
+            this.resetForm();
+            this.load();
+          },
+          error: (e) => this.notify.error(apiErrorMessage(e, 'Yeniləmə zamanı xəta baş verdi'))
+        });
     } else {
-      this.pageService.create(payload).subscribe({
-        next: () => {
-          this.notify.success('Səhifə uğurla əlavə edildi');
-          this.resetForm();
-          this.load();
-        },
-        error: () => this.notify.error('Əlavə etmə zamanı xəta baş verdi')
-      });
+      this.pageService.create(payload)
+        .pipe(finalize(() => this.isSaving = false))
+        .subscribe({
+          next: () => {
+            this.notify.success('Səhifə uğurla əlavə edildi');
+            this.resetForm();
+            this.load();
+          },
+          error: (e) => this.notify.error(apiErrorMessage(e, 'Əlavə etmə zamanı xəta baş verdi'))
+        });
     }
   }
 
@@ -144,29 +153,33 @@ export class PageComponent implements OnInit, AfterViewInit {
     this.isEditMode = true;
     this.editingId = row.id;
     this.form.patchValue({ name: row.name, key: row.key });
+    // Açar route-dakı pageKey və rol icazələri ilə bağlıdır: dəyişsə səhifə hamıdan gizlənir
+    this.form.get('key')!.disable();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   remove(row: PageDto): void {
     this.confirmDialog.confirm({
       title: 'Səhifə silinsin?',
-      message: `"${row.name}" səhifəsini silmək istədiyinizə əminsiniz?`,
-      confirmText: 'Bəli, sil',
-      cancelText: 'Ləğv et'
+      message: `"${row.name}" (${row.key}) səhifəsi silinəcək. Bu səhifəyə icazəsi olan hər kəsin menyusundan itəcək.`,
+      confirmText: 'Sil',
+      tone: 'danger'
     }).subscribe(confirmed => {
       if (!confirmed) return;
       this.pageService.delete(row.id).subscribe({
         next: () => {
           this.notify.success('Səhifə uğurla silindi');
+          if (this.editingId === row.id) this.resetForm();
           this.load();
         },
-        error: () => this.notify.error('Silmə zamanı xəta baş verdi')
+        error: (e) => this.notify.error(apiErrorMessage(e, 'Silmə zamanı xəta baş verdi'))
       });
     });
   }
 
   resetForm(): void {
     this.form.reset();
+    this.form.get('key')!.enable();
     this.isEditMode = false;
     this.editingId = null;
   }

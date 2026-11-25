@@ -18,15 +18,19 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import listPlugin from '@fullcalendar/list';
 import { NotificationService } from '../../../shared/services/notification.service';
 import { isoDateAddDays, toBakuDisplay, toBakuWallClock } from '../../../shared/utils/date.util';
+import { PLAN_STATUS_LABELS, planStatusLabel } from '../../../shared/utils/plan-status';
 import { TableState } from '../../../models/table-state.model';
 import { AuditLoadingOverlayComponent } from '../../components/audit-loading-overlay/audit-loading-overlay.component';
 import { TableService } from '../../services/table.service';
 import { PlanDetails } from '../plan.model';
 
+/** `color` zolaq/nöqtə/kənar xətti, `tint` açıq fon, `text` həmin fonda oxunan tünd mətn rəngidir. */
 interface PlanStatusOption {
   value: number;
   label: string;
   color: string;
+  tint: string;
+  text: string;
 }
 
 /** Bir günün status bölgüsü — ay görünüşündəki xülasə çipini qidalandırır. */
@@ -44,12 +48,15 @@ export interface DayPlanRow {
   inspectorsName: string;
   statusLabel: string;
   statusColor: string;
+  statusTextColor: string;
   timeRange: string;
 }
 
 /** Bir sorğuda gətirilən maksimum plan sayı — bundan çoxu üçün istifadəçiyə xəbərdarlıq göstərilir. */
 const MAX_ROWS = 1000;
 const FALLBACK_COLOR = '#6B7280';
+const FALLBACK_TINT = '#F3F4F6';
+const FALLBACK_TEXT = '#374151';
 
 // Chrome-un ICU məlumatında Azərbaycan ay/gün adları yoxdur (Intl('az') "2026 M09" verir),
 // ona görə təqvimdə görünən bütün tarix mətnləri bu cədvəllərdən formatlanır.
@@ -121,9 +128,12 @@ export class PlanCalendarComponent implements AfterViewInit, OnDestroy {
 
   /** Həm status filtrini, həm legend-i idarə edir. Kodlar DB-də real olan dəyərlərdir. */
   readonly planStatuses: PlanStatusOption[] = [
-    { value: 1, label: 'Təsdiq gözləyənlər', color: '#F59E0B' },
-    { value: 2, label: 'Təsdiq olunmuşlar', color: '#10B981' },
-    { value: -1, label: 'Rədd olunmuşlar', color: '#EF4444' },
+    { value: 1, label: PLAN_STATUS_LABELS[1], color: '#F59E0B', tint: '#FEF3C7', text: '#92400E' },
+    { value: 2, label: PLAN_STATUS_LABELS[2], color: '#10B981', tint: '#D1FAE5', text: '#065F46' },
+    { value: 3, label: PLAN_STATUS_LABELS[3], color: '#3B82F6', tint: '#DBEAFE', text: '#1E40AF' },
+    { value: 4, label: PLAN_STATUS_LABELS[4], color: '#8B5CF6', tint: '#EDE9FE', text: '#5B21B6' },
+    { value: 5, label: PLAN_STATUS_LABELS[5], color: '#64748B', tint: '#F1F5F9', text: '#334155' },
+    { value: -1, label: PLAN_STATUS_LABELS[-1], color: '#EF4444', tint: '#FEE2E2', text: '#991B1B' },
   ];
 
   calendarForm!: FormGroup;
@@ -249,14 +259,15 @@ export class PlanCalendarComponent implements AfterViewInit, OnDestroy {
       info.el.style.margin = '0';
       return;
     }
-    const color = info.event.backgroundColor || FALLBACK_COLOR;
-    info.el.style.backgroundColor = color;
-    info.el.style.borderColor = color;
-    info.el.style.color = 'white';
+    // Tünd mətn açıq fonda, status rəngi isə sol xətdə — ağ mətn kəhrəba/yaşıl fonda oxunmur.
+    const status = this.statusOption(Number(info.event.extendedProps['status']));
+    info.el.style.border = 'none';
+    info.el.style.borderLeft = `3px solid ${status.color}`;
+    info.el.style.backgroundColor = status.tint;
+    info.el.style.color = status.text;
     info.el.style.fontSize = '12px';
     info.el.style.padding = '2px 7px';
     info.el.style.borderRadius = '5px';
-    info.el.style.border = 'none';
   };
 
   // Stabil obyekt: `ngDoCheck` hər dəyişiklik dövründə açarları referansla müqayisə
@@ -333,12 +344,16 @@ export class PlanCalendarComponent implements AfterViewInit, OnDestroy {
     this.plansByDay.clear();
   }
 
-  statusLabel(status: number): string {
-    return this.planStatuses.find((option) => option.value === status)?.label ?? 'Bilinmir';
-  }
-
-  statusColor(status: number): string {
-    return this.planStatuses.find((option) => option.value === status)?.color ?? FALLBACK_COLOR;
+  private statusOption(status: number): PlanStatusOption {
+    return (
+      this.planStatuses.find((option) => option.value === status) ?? {
+        value: status,
+        label: planStatusLabel(status),
+        color: FALLBACK_COLOR,
+        tint: FALLBACK_TINT,
+        text: FALLBACK_TEXT,
+      }
+    );
   }
 
   changeCalView(view: string): void {
@@ -503,18 +518,20 @@ export class PlanCalendarComponent implements AfterViewInit, OnDestroy {
   }
 
   private toPlanEvent(plan: PlanDetails): EventInput {
-    const color = this.statusColor(plan.status);
+    const status = this.statusOption(plan.status);
 
     return {
       id: String(plan.id),
       title: plan.locationName || `Kod ${plan.locationCode}`,
       start: toBakuWallClock(plan.startDate) ?? undefined,
       end: toBakuWallClock(plan.endDate) ?? undefined,
-      backgroundColor: color,
-      borderColor: color,
+      // Siyahı görünüşünün nöqtəsi bu rəngləri götürür.
+      backgroundColor: status.color,
+      borderColor: status.color,
       extendedProps: {
         locationCode: plan.locationCode,
-        statusLabel: this.statusLabel(plan.status),
+        status: plan.status,
+        statusLabel: status.label,
       },
     };
   }
@@ -531,14 +548,16 @@ export class PlanCalendarComponent implements AfterViewInit, OnDestroy {
       .map((plan) => {
         const from = toBakuDisplay(plan.startDate)?.slice(-5) ?? '—';
         const to = toBakuDisplay(plan.endDate)?.slice(-5) ?? '—';
+        const status = this.statusOption(plan.status);
 
         return {
           id: plan.id,
           locationName: plan.locationName || `Kod ${plan.locationCode}`,
           locationCode: plan.locationCode,
           inspectorsName: plan.inspectorsName || 'Müfəttiş təyin edilməyib',
-          statusLabel: this.statusLabel(plan.status),
-          statusColor: this.statusColor(plan.status),
+          statusLabel: status.label,
+          statusColor: status.color,
+          statusTextColor: status.text,
           timeRange: `${from} – ${to}`,
         };
       });

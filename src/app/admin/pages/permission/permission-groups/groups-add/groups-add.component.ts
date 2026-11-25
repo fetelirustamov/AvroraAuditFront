@@ -16,7 +16,8 @@ import { PageService } from '../../../../services/page.service';
 import { RoleService } from '../../../../services/role.service';
 import { PageDto } from '../../../../models/page.model';
 import { RolePage, RolePageDetail, RoleCreateDto, RoleUpdateDto } from '../../../../models/role.model';
-import { forkJoin } from 'rxjs';
+import { finalize, forkJoin } from 'rxjs';
+import { apiErrorMessage } from '../../../../../shared/utils/api-error';
 
 @Component({
   selector: 'app-groups-add',
@@ -42,6 +43,7 @@ export class GroupsAddComponent implements OnInit {
   isEditMode = false;
   isViewMode = false;
   isLoading = false;
+  isSaving = false;
   pages: PageDto[] = [];
   private editId: number | null = null;
 
@@ -120,9 +122,8 @@ export class GroupsAddComponent implements OnInit {
         this.isLoading = false;
       },
       error: (err) => {
-        console.error('[GroupsAdd] xəta:', err);
         this.isLoading = false;
-        this.notify.error('Məlumatlar yüklənmədi');
+        this.notify.error(apiErrorMessage(err, 'Məlumatlar yüklənmədi'));
       }
     });
   }
@@ -158,6 +159,7 @@ export class GroupsAddComponent implements OnInit {
   }
 
   save(): void {
+    if (this.isSaving) return;
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       this.notify.warning('Forma tamamlanmayıb', { message: 'Zəhmət olmasa tələb olunan sahələri doldurun.' });
@@ -174,20 +176,23 @@ export class GroupsAddComponent implements OnInit {
       delete: r.delete ? 1 : 0
     }));
 
+    this.isSaving = true;
     if (this.isEditMode && this.editId) {
       const payload: RoleUpdateDto = {
         name: raw.name,
         description: raw.description,
         rolePages
       };
-      this.roleService.updateRole(this.editId, payload).subscribe({
-        next: () => {
-          this.notify.success('Qrup uğurla yeniləndi');
-          this.router.navigate(['/admin/permissions/permission-groups']);
-        },
-        // 409: sistem qrupunun (Admin, Inspector, HeadInspector) adı dəyişdirilə bilməz
-        error: (err) => this.notify.error('Qrup yenilənmədi', { message: err?.error?.message || 'Yeniləmə zamanı xəta baş verdi' })
-      });
+      this.roleService.updateRole(this.editId, payload)
+        .pipe(finalize(() => this.isSaving = false))
+        .subscribe({
+          next: () => {
+            this.notify.success('Qrup uğurla yeniləndi');
+            this.router.navigate(['/admin/permissions/permission-groups']);
+          },
+          // 409: sistem qrupunun (Admin, Inspector, HeadInspector) adı dəyişdirilə bilməz
+          error: (err) => this.notify.error(apiErrorMessage(err, 'Qrup yenilənmədi'))
+        });
     } else {
       const payload: RoleCreateDto = {
         name: raw.name,
@@ -195,13 +200,15 @@ export class GroupsAddComponent implements OnInit {
         status: 1,
         rolePages
       };
-      this.roleService.createRole(payload).subscribe({
-        next: () => {
-          this.notify.success('Qrup uğurla yaradıldı');
-          this.router.navigate(['/admin/permissions/permission-groups']);
-        },
-        error: () => this.notify.error('Yaratma zamanı xəta baş verdi')
-      });
+      this.roleService.createRole(payload)
+        .pipe(finalize(() => this.isSaving = false))
+        .subscribe({
+          next: () => {
+            this.notify.success('Qrup uğurla yaradıldı');
+            this.router.navigate(['/admin/permissions/permission-groups']);
+          },
+          error: (err) => this.notify.error(apiErrorMessage(err, 'Qrup yaradılmadı'))
+        });
     }
   }
 

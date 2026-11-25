@@ -114,9 +114,11 @@ export class PlanActionsComponent {
 
 
   getFirms() {
-
-    this.inspectionService.getFirms().subscribe((response) => {
-      this.firms = response.data;
+    this.inspectionService.getFirms().subscribe({
+      next: (response) => {
+        this.firms = response.data;
+      },
+      error: (error) => this.notify.error(apiErrorMessage(error, 'Müəssisə siyahısı yüklənmədi')),
     });
   }
 
@@ -134,37 +136,27 @@ export class PlanActionsComponent {
     });
   }
 
-  Search() {
-
-  }
-
-
   onSearch() {
-    if (this.planForm.valid) {
-      this.isLoading = true;
-      const formData = this.planForm.value;
-
-      const firmId = formData.firmId;
-      this.status = formData.status;
-      const startDate = this.datePipe.transform(formData.dateRange?.start, 'yyyy-MM-dd');
-      const endDate = this.datePipe.transform(formData.dateRange?.end, 'yyyy-MM-dd');
-
-      setFilter(this._tableState.filter, 'startDate', startDate);
-      setFilter(this._tableState.filter, 'status', this.status);
-
-      setFilter(this._tableState.filter, 'endDate', endDate);
-
-      setFilter(this._tableState.filter, 'firmId', firmId);
-      // Yeni axtarış ilk səhifədən başlasın
-      this._tableState.paginator.page = 0;
-      if (this.paginator) this.paginator.pageIndex = 0;
-
-      // Backend çağırışı
-      this.fill();
-
-    } else {
-      console.log('Form düzgün doldurulmayıb.');
+    if (this.planForm.invalid) {
+      this.planForm.markAllAsTouched();
+      this.notify.warning('Məcburi sahələr seçilməyib', { message: 'Müəssisə və statusu seçin.' });
+      return;
     }
+
+    const formData = this.planForm.value;
+    this.status = formData.status;
+    const startDate = this.datePipe.transform(formData.dateRange?.start, 'yyyy-MM-dd');
+    const endDate = this.datePipe.transform(formData.dateRange?.end, 'yyyy-MM-dd');
+
+    setFilter(this._tableState.filter, 'startDate', startDate);
+    setFilter(this._tableState.filter, 'status', this.status);
+    setFilter(this._tableState.filter, 'endDate', endDate);
+    setFilter(this._tableState.filter, 'firmId', formData.firmId);
+    // Yeni axtarış ilk səhifədən başlasın
+    this._tableState.paginator.page = 0;
+    if (this.paginator) this.paginator.pageIndex = 0;
+
+    this.fill();
   }
 
 
@@ -178,12 +170,15 @@ export class PlanActionsComponent {
 
     this._tableService.fill(this._tableState).pipe(
       finalize(() => this.isLoading = false)
-    ).subscribe((response) => {
-      this._tableState.paginator.total = response.data?.total || 0;
-      this.dataSource = response.data?.items || [];
-      // Toplu əməliyyat yalnız ekranda görünən sətirlərə tətbiq olunsun
-      this.selection.clear();
-      this.allDataCount = response.data?.total || 0;
+    ).subscribe({
+      next: (response) => {
+        this._tableState.paginator.total = response.data?.total || 0;
+        this.dataSource = response.data?.items || [];
+        // Toplu əməliyyat yalnız ekranda görünən sətirlərə tətbiq olunsun
+        this.selection.clear();
+        this.allDataCount = response.data?.total || 0;
+      },
+      error: (error) => this.notify.error(apiErrorMessage(error, 'Planlar yüklənmədi')),
     });
   }
 

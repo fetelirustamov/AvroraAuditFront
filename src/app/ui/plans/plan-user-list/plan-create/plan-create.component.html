@@ -31,11 +31,11 @@
                     <div class="col-md-2">
                         <mat-form-field>
                             <mat-label>Tarix</mat-label>
-                            <input matInput [matDatepicker]="picker" formControlName="date" required>
+                            <input matInput [matDatepicker]="picker" [min]="minDate" formControlName="date" required>
                             <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
                             <mat-datepicker #picker></mat-datepicker>
                             <mat-error *ngIf="panel.get('date')?.invalid && panel.get('date')?.touched">
-                                Tarix tələb olunur
+                                {{ panel.get('date')?.hasError('matDatepickerMin') ? 'Keçmiş tarix seçilə bilməz' : 'Tarix tələb olunur' }}
                             </mat-error>
                         </mat-form-field>
                     </div>
@@ -68,7 +68,8 @@
 
                     <!-- Remove Button -->
                     <div class="col-md-1">
-                        <button type="button" mat-stroked-button class="text-soft-danger" (click)="removePanel(i)">
+                        <button type="button" mat-stroked-button class="text-soft-danger" (click)="removePanel(i)"
+                            [disabled]="panels.length <= 1" aria-label="Sətri sil" title="Sətri sil">
                             <span class="material-symbols-outlined">close</span>
                         </button>
                     </div>

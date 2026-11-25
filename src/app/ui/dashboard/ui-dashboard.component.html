@@ -120,8 +120,20 @@
     </div>
 </div>
 
-<!-- Boş vəziyyət -->
-<div class="table-card" *ngIf="hasLoaded && isEmpty">
+<!-- Yükləmə xətası: "məlumat yoxdur" kimi göstərilməsin -->
+<div class="table-card" *ngIf="loadError">
+    <div class="empty-state" role="alert">
+        <span class="material-symbols-outlined empty-icon">error</span>
+        <p>{{ loadError }}</p>
+        <button type="button" class="reset-btn empty-action" (click)="onSearch()" [disabled]="isLoading">
+            <span class="material-symbols-outlined">refresh</span>
+            Yenidən cəhd et
+        </button>
+    </div>
+</div>
+
+<!-- Boş vəziyyət: yalnız sorğu uğurlu olub və data yoxdursa -->
+<div class="table-card" *ngIf="hasLoaded && !loadError && isEmpty">
     <div class="empty-state" role="status">
         <span class="material-symbols-outlined empty-icon">query_stats</span>
         <p>Seçilmiş dövr və filtrlərə uyğun yoxlama tapılmadı</p>

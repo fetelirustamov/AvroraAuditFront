@@ -27,6 +27,7 @@ import { PlanApprove } from '../../plans/plan.model';
 import { PlanService } from '../../plans/plan.service';
 import { AuditLoadingOverlayComponent } from '../../components/audit-loading-overlay/audit-loading-overlay.component';
 import { InspectionApproveCacheService } from './inspection-approve-cache.service';
+import { setFilter } from '../../../shared/utils/table-filter';
 
 
 @Component({
@@ -123,9 +124,11 @@ export class InspectionApproveComponent {
 
 
   getFirms() {
-
-    this.inspectionService.getFirms().subscribe((response) => {
-      this.firms = response.data;
+    this.inspectionService.getFirms().subscribe({
+      next: (response) => {
+        this.firms = response.data;
+      },
+      error: (error) => this.notify.error(apiErrorMessage(error, 'Müəssisə siyahısı yüklənmədi')),
     });
   }
 
@@ -154,32 +157,24 @@ export class InspectionApproveComponent {
 
 
   onSearch() {
-    if (this.planForm.valid) {
-      this.isLoading = true;
-      const formData = this.planForm.value;
-
-      const firmId = formData.firmId;
-      const startDate = this.datePipe.transform(formData.dateRange?.start, 'yyyy-MM-dd');
-      const endDate = this.datePipe.transform(formData.dateRange?.end, 'yyyy-MM-dd');
-
-      if (startDate != null) {
-        this._tableState.filter['startDate'] = startDate;
-      }
-
-      if (endDate != null) {
-        this._tableState.filter['endDate'] = endDate;
-      }
-
-      if (firmId != null) {
-        this._tableState.filter['firmId'] = firmId.toString();
-      }
-
-      // Backend çağırışı
-      this.fill();
-
-    } else {
-      console.log('Form düzgün doldurulmayıb.');
+    if (this.planForm.invalid) {
+      this.planForm.markAllAsTouched();
+      this.notify.warning('Məcburi sahələr seçilməyib', { message: 'Müəssisəni seçin.' });
+      return;
     }
+
+    const formData = this.planForm.value;
+    const startDate = this.datePipe.transform(formData.dateRange?.start, 'yyyy-MM-dd');
+    const endDate = this.datePipe.transform(formData.dateRange?.end, 'yyyy-MM-dd');
+
+    setFilter(this._tableState.filter, 'startDate', startDate);
+    setFilter(this._tableState.filter, 'endDate', endDate);
+    setFilter(this._tableState.filter, 'firmId', formData.firmId);
+    // Yeni axtarış ilk səhifədən başlasın
+    this._tableState.paginator.page = 0;
+    if (this.paginator) this.paginator.pageIndex = 0;
+
+    this.fill();
   }
 
 
@@ -193,20 +188,23 @@ export class InspectionApproveComponent {
 
     this._tableService.fill(this._tableState).pipe(
       finalize(() => this.isLoading = false)
-    ).subscribe((response) => {
-      const items = response.data?.items || [];
-      // Son sətir təsdiqlənib/rədd edilibsə boş qalan səhifədən bir əvvəlkinə keç
-      if (items.length === 0 && this._tableState.paginator.page > 0) {
-        this._tableState.paginator.page--;
-        if (this.paginator) this.paginator.pageIndex = this._tableState.paginator.page;
-        this.fill();
-        return;
-      }
-      this._tableState.paginator.total = response.data?.total || 0;
-      this.dataSource = items;
-      // Toplu əməliyyat yalnız ekranda görünən sətirlərə tətbiq olunsun
-      this.selection.clear();
-      this.allDataCount = response.data?.total || 0;
+    ).subscribe({
+      next: (response) => {
+        const items = response.data?.items || [];
+        // Son sətir təsdiqlənib/rədd edilibsə boş qalan səhifədən bir əvvəlkinə keç
+        if (items.length === 0 && this._tableState.paginator.page > 0) {
+          this._tableState.paginator.page--;
+          if (this.paginator) this.paginator.pageIndex = this._tableState.paginator.page;
+          this.fill();
+          return;
+        }
+        this._tableState.paginator.total = response.data?.total || 0;
+        this.dataSource = items;
+        // Toplu əməliyyat yalnız ekranda görünən sətirlərə tətbiq olunsun
+        this.selection.clear();
+        this.allDataCount = response.data?.total || 0;
+      },
+      error: (error) => this.notify.error(apiErrorMessage(error, 'Yoxlamalar yüklənmədi')),
     });
   }
 

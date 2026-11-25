@@ -115,6 +115,12 @@
         background: $danger-soft;
         color: $danger;
     }
+
+    &--none {
+        background: #f1f3f7;
+        color: #5b6170;
+        font-weight: 500;
+    }
 }
 
 .answer-chips {

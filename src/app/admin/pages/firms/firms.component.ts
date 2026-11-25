@@ -132,8 +132,8 @@ export class FirmsComponent implements OnInit, AfterViewInit {
       .confirm({
         title: 'Firma silinsin?',
         message: `"${row.name}" firmasını silmək istədiyinizə əminsiniz? Planları və hesabatları qalır, firma siyahılardan çıxır.`,
-        confirmText: 'Bəli, sil',
-        cancelText: 'Ləğv et'
+        confirmText: 'Sil',
+        tone: 'danger'
       })
       .subscribe(confirmed => {
         if (!confirmed) return;

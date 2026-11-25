@@ -674,8 +674,9 @@ export class UserAddComponent implements OnInit {
             this.confirmDialog.confirm({
                 title: 'Dəyişikliklər saxlanılmayacaq',
                 message: 'Dəyişikliklər saxlanılmayacaq. Davam etmək istəyirsiniz?',
-                confirmText: 'Bəli, davam et',
-                cancelText: 'Ləğv et'
+                confirmText: 'Dəyişiklikləri at',
+                cancelText: 'Redaktəyə qayıt',
+                tone: 'danger'
             }).subscribe(confirmed => {
                 if (confirmed) {
                     this.router.navigate(['/admin/permissions/user-permission']);

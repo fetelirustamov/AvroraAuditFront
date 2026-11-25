@@ -9,6 +9,8 @@ export interface ConfirmDialogData {
   message: string;
   confirmText?: string;
   cancelText?: string;
+  /** `danger`: geri qaytarılmayan əməliyyat (silmə, passiv etmə), təsdiq düyməsi qırmızı olur. */
+  tone?: 'danger' | 'default';
 }
 
 @Component({
