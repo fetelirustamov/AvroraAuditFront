@@ -64,7 +64,8 @@ npx ng build --configuration production # dist/avrora-audit, bundle limiti 2.5 M
 - Mətnlər `docs/design/glossary.md`-yə uyğun olmalıdır: Firma, Mağaza, Şöbə, Parol, təsdiq; cümlə registri.
 - Təkrarlanan səhifə blokları `src/_design-system.scss`-dədir (`.kpi-*`, `.table-card`, `.table-sticky`). Yeni səhifədə bunları sıfırdan yazma.
   - KPI kartı süzülmüş siyahıya aparırsa, `<a class="kpi-card is-link">` + `.kpi-go` oxu işlət. KPI ikonu yalnız həddi olan göstəricidə `tone-success|warning|danger` alır.
-  - Yenidən yükləmə xətti: kartın içində `.list-progress`, bloklar arasında `.page-progress`. Komponentdə öz progress sinfini yazma.
+  - Yenidən yükləmə xətti: kartın içində `.list-progress` (cədvəl tərpənməsin deyə `.progress-slot` içində), bloklar arasında `.page-progress`. Komponentdə öz progress sinfini yazma.
+- Plan statusunu dəyişən siyahılar (Əməliyyatlar, Yoxlanılmış, Yoxlama təsdiqi) bir komponentdir: `ui/plans/plan-status-table`. Fərqlər `plan-status-page.ts`-dədir (statuslar, keçidlər, mətnlər) və route-un `data.statusPage`-i ilə verilir. Yeni keçid və ya ekran üçün oraya konfiqurasiya əlavə et, komponenti kopyalama. Firma ixtiyaridir: server sorğunu istifadəçinin firmalarına salır.
 - Uyğunluq faizinin həddləri (85/70) yalnız `shared/utils/compliance.ts`-dədir. Şablonda `value | complianceTone` pipe-ı işlət, faizi rəngləyən yerdə `<app-compliance-legend />` göstər. Həddi rəqəmlə yazma.
 - Ortaq komponentlər (`shared/`), öz variantını yazma:
   - başlıq: `<app-page-header>`. Ad route-un `data.menu.title`-ından gəlir, düymələr `headerActions` ilə ötürülür. `.report-page-header` köhnəlib;

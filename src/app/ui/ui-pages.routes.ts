@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { RoleGuard } from '../auth/guards/role.guard';
+import { INSPECTION_APPROVE_PAGE, PLAN_ACTIONS_PAGE, PLAN_CHECKED_PAGE } from './plans/plan-status-table/plan-status-page';
 
 // Hər səhifə `loadComponent` ilə ayrıca yüklənir.
 // Əvvəl bu fayl 25 komponenti statik import edirdi, ona görə build hamısını —
@@ -80,8 +81,9 @@ export const uiPageRoutes: Routes = [
             },
             {
                 path: 'checked',
-                loadComponent: () => import('./plans/plan-checked/plan-checked.component').then(m => m.PlanCheckedComponent),
+                loadComponent: () => import('./plans/plan-status-table/plan-status-table.component').then(m => m.PlanStatusTableComponent),
                 data: {
+                    statusPage: PLAN_CHECKED_PAGE,
                     menu: {
                         area: 'app', section: 'İş axını', order: 12,
                         group: 'Planlama', groupIcon: 'edit_calendar', groupOrder: 10,
@@ -91,8 +93,9 @@ export const uiPageRoutes: Routes = [
             },
             {
                 path: 'actions',
-                loadComponent: () => import('./plans/plan-actions/plan-actions.component').then(m => m.PlanActionsComponent),
+                loadComponent: () => import('./plans/plan-status-table/plan-status-table.component').then(m => m.PlanStatusTableComponent),
                 data: {
+                    statusPage: PLAN_ACTIONS_PAGE,
                     menu: {
                         area: 'app', section: 'İş axını', order: 11,
                         group: 'Planlama', groupIcon: 'edit_calendar', groupOrder: 10,
@@ -148,8 +151,9 @@ export const uiPageRoutes: Routes = [
             },
             {
                 path: 'approve',
-                loadComponent: () => import('./inspections/inspection-approve/inspection-approve.component').then(m => m.InspectionApproveComponent),
+                loadComponent: () => import('./plans/plan-status-table/plan-status-table.component').then(m => m.PlanStatusTableComponent),
                 data: {
+                    statusPage: INSPECTION_APPROVE_PAGE,
                     menu: {
                         area: 'app', section: 'İş axını', order: 21,
                         group: 'Yoxlama', groupIcon: 'fact_check', groupOrder: 20,

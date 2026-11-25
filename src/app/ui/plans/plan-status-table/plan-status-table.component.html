@@ -1,4 +1,4 @@
-<app-page-header subtitle="Planları təsdiqləyin və ya rədd edin" />
+<app-page-header [subtitle]="page.subtitle" />
 
 <div class="g-filter-card">
     <div class="g-filter-header">
@@ -8,31 +8,34 @@
     <form [formGroup]="form" (ngSubmit)="onSearch()">
         <div class="g-filter-grid">
             <div class="g-filter-field">
-                <label class="g-field-label" id="plan-actions-firm">
+                <label class="g-field-label" id="plan-status-firm">
                     <span class="material-symbols-outlined" aria-hidden="true">business</span>
-                    Firma <span class="text-danger">*</span>
+                    Firma
                 </label>
                 <mat-form-field appearance="outline" class="g-modern-field">
-                    <mat-select formControlName="firmId" aria-labelledby="plan-actions-firm">
+                    <mat-select formControlName="firmId" placeholder="Hamısı" aria-labelledby="plan-status-firm">
+                        <mat-option [value]="null">Hamısı</mat-option>
                         @for (firm of firms; track firm.id) {
                             <mat-option [value]="firm.id">{{ firm.name }}</mat-option>
                         }
                     </mat-select>
                 </mat-form-field>
             </div>
-            <div class="g-filter-field">
-                <label class="g-field-label" id="plan-actions-status">
-                    <span class="material-symbols-outlined" aria-hidden="true">info</span>
-                    Status <span class="text-danger">*</span>
-                </label>
-                <mat-form-field appearance="outline" class="g-modern-field">
-                    <mat-select formControlName="status" aria-labelledby="plan-actions-status">
-                        @for (option of statusOptions; track option.value) {
-                            <mat-option [value]="option.value">{{ option.label }}</mat-option>
-                        }
-                    </mat-select>
-                </mat-form-field>
-            </div>
+            @if (hasStatusFilter) {
+                <div class="g-filter-field">
+                    <label class="g-field-label" id="plan-status-status">
+                        <span class="material-symbols-outlined" aria-hidden="true">info</span>
+                        Status
+                    </label>
+                    <mat-form-field appearance="outline" class="g-modern-field">
+                        <mat-select formControlName="status" aria-labelledby="plan-status-status">
+                            @for (status of page.statuses; track status) {
+                                <mat-option [value]="status">{{ statusLabel(status) }}</mat-option>
+                            }
+                        </mat-select>
+                    </mat-form-field>
+                </div>
+            }
             <div class="g-filter-field-wide">
                 <label class="g-field-label">
                     <span class="material-symbols-outlined" aria-hidden="true">date_range</span>
@@ -40,8 +43,8 @@
                 </label>
                 <mat-form-field appearance="outline" class="g-modern-field" formGroupName="dateRange">
                     <mat-date-range-input [rangePicker]="picker">
-                        <input matStartDate formControlName="start" placeholder="Başlanğıc">
-                        <input matEndDate formControlName="end" placeholder="Son">
+                        <input matStartDate formControlName="start" placeholder="Başlanğıc" aria-label="Başlanğıc tarixi">
+                        <input matEndDate formControlName="end" placeholder="Son" aria-label="Son tarix">
                     </mat-date-range-input>
                     <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
                     <mat-date-range-picker #picker></mat-date-range-picker>
@@ -52,6 +55,10 @@
                     <span class="material-symbols-outlined" aria-hidden="true">search</span>
                     Axtar
                 </button>
+                <button type="button" class="g-secondary-btn" (click)="clearFilters()" [disabled]="!hasActiveFilters">
+                    <span class="material-symbols-outlined" aria-hidden="true">filter_alt_off</span>
+                    Təmizlə
+                </button>
             </div>
         </div>
     </form>
@@ -60,27 +67,22 @@
 <section class="table-card" [attr.aria-busy]="isLoading">
     <div class="table-card-header">
         <div class="table-info">
-            <span class="material-symbols-outlined table-info-icon" aria-hidden="true">event_list</span>
-            <span class="table-title">Planlar</span>
-            @if (searched) {
+            <span class="material-symbols-outlined table-info-icon" aria-hidden="true">{{ page.tableIcon }}</span>
+            <span class="table-title">{{ page.tableTitle }}</span>
+            @if (hasLoaded) {
                 <span class="result-badge">{{ total }} qeyd</span>
             }
         </div>
-        @if (searched && rows.length) {
+        @if (rows.length && transitions.length) {
             <div class="bulk-actions">
-                @if (canApproveSelected) {
-                    <button type="button" class="g-approve-btn" (click)="approveSelected()"
-                        [disabled]="isSaving || !selection.hasValue()">
-                        <span class="material-symbols-outlined" aria-hidden="true">{{ approveAction.icon }}</span>
-                        {{ approveAction.label }}
-                        @if (selection.hasValue()) { ({{ selection.selected.length }}) }
-                    </button>
-                }
-                @if (canRejectSelected) {
-                    <button type="button" class="g-reject-btn" (click)="rejectSelected()"
-                        [disabled]="isSaving || !selection.hasValue()">
-                        <span class="material-symbols-outlined" aria-hidden="true">{{ rejectAction.icon }}</span>
-                        {{ rejectAction.label }}
+                @for (t of transitions; track t.action.key) {
+                    <button type="button" (click)="apply(t, selection.selected)"
+                        [class.g-approve-btn]="t.action.tone === 'success'"
+                        [class.g-reject-btn]="t.action.tone === 'danger'"
+                        [class.g-secondary-btn]="t.action.tone !== 'success' && t.action.tone !== 'danger'"
+                        [disabled]="isSaving || !canApplyToSelection(t)">
+                        <span class="material-symbols-outlined" aria-hidden="true">{{ t.action.icon }}</span>
+                        {{ t.action.label }}
                         @if (selection.hasValue()) { ({{ selection.selected.length }}) }
                     </button>
                 }
@@ -88,23 +90,20 @@
         }
     </div>
 
-    <div class="table-progress">
+    <div class="progress-slot">
         @if (isLoading) {
-            <mat-progress-bar mode="indeterminate" aria-label="Planlar yüklənir" />
+            <mat-progress-bar mode="indeterminate" class="list-progress" [attr.aria-label]="page.noun + ' yüklənir'" />
         }
     </div>
 
     @if (loadError) {
         <app-list-state state="error" [errorMessage]="loadError" (retry)="load()" />
-    } @else if (!searched) {
-        @if (!isLoading) {
-            <app-list-state state="idle" message="Firma və status seçib «Axtar» düyməsini basın" />
-        }
-    } @else if (!rows.length) {
-        <app-list-state state="empty" />
-    } @else {
+    } @else if (hasLoaded && !rows.length) {
+        <app-list-state state="empty" [message]="page.emptyMessage" />
+    } @else if (rows.length) {
         <div class="table-sticky">
-            <table mat-table [dataSource]="rows" class="modern-table">
+            <table mat-table [dataSource]="rows" class="modern-table"
+                matSort [matSortActive]="sortActive" [matSortDirection]="sortDirection" (matSortChange)="onSort($event)">
 
                 <ng-container matColumnDef="select">
                     <th mat-header-cell *matHeaderCellDef>
@@ -121,28 +120,33 @@
                     </td>
                 </ng-container>
 
-                <ng-container matColumnDef="inspectorsName">
-                    <th mat-header-cell *matHeaderCellDef>Müfəttiş</th>
-                    <td mat-cell *matCellDef="let row">{{ row.inspectorsName }}</td>
+                <ng-container matColumnDef="firmName">
+                    <th mat-header-cell *matHeaderCellDef>Firma</th>
+                    <td mat-cell *matCellDef="let row">{{ row.firmName }}</td>
                 </ng-container>
 
                 <ng-container matColumnDef="locationCode">
-                    <th mat-header-cell *matHeaderCellDef>Mağaza kodu</th>
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header="locationCode">Mağaza kodu</th>
                     <td mat-cell *matCellDef="let row" class="mono">{{ row.locationCode }}</td>
                 </ng-container>
 
                 <ng-container matColumnDef="locationName">
-                    <th mat-header-cell *matHeaderCellDef>Mağaza</th>
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header="locationName">Mağaza</th>
                     <td mat-cell *matCellDef="let row">{{ row.locationName }}</td>
                 </ng-container>
 
+                <ng-container matColumnDef="inspectorsName">
+                    <th mat-header-cell *matHeaderCellDef>Müfəttiş</th>
+                    <td mat-cell *matCellDef="let row">{{ row.inspectorsName || '—' }}</td>
+                </ng-container>
+
                 <ng-container matColumnDef="startDate">
-                    <th mat-header-cell *matHeaderCellDef>Başlama tarixi</th>
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header="startTime">Başlama tarixi</th>
                     <td mat-cell *matCellDef="let row" class="num">{{ row.startDate | appDate:'datetime' }}</td>
                 </ng-container>
 
                 <ng-container matColumnDef="endDate">
-                    <th mat-header-cell *matHeaderCellDef>Bitmə tarixi</th>
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header="endTime">Bitmə tarixi</th>
                     <td mat-cell *matCellDef="let row" class="num">{{ row.endDate | appDate:'datetime' }}</td>
                 </ng-container>
 
@@ -155,18 +159,19 @@
                     <th mat-header-cell *matHeaderCellDef>Əməliyyatlar</th>
                     <td mat-cell *matCellDef="let row">
                         <div class="action-buttons">
-                            @if (canApprove(row)) {
-                                <button type="button" class="action-btn approve-btn" (click)="approve(row)"
-                                    [disabled]="isSaving" [matTooltip]="approveAction.label"
-                                    [attr.aria-label]="approveAction.label + ': ' + storeLabel(row)">
-                                    <span class="material-symbols-outlined" aria-hidden="true">{{ approveAction.icon }}</span>
+                            @if (page.showDetails) {
+                                <button type="button" class="action-btn" (click)="openDetails(row)"
+                                    matTooltip="Bax" [attr.aria-label]="'Bax: ' + storeLabel(row)">
+                                    <span class="material-symbols-outlined" aria-hidden="true">visibility</span>
                                 </button>
                             }
-                            @if (canReject(row)) {
-                                <button type="button" class="action-btn reject-btn" (click)="reject(row)"
-                                    [disabled]="isSaving" [matTooltip]="rejectAction.label"
-                                    [attr.aria-label]="rejectAction.label + ': ' + storeLabel(row)">
-                                    <span class="material-symbols-outlined" aria-hidden="true">{{ rejectAction.icon }}</span>
+                            @for (t of rowTransitions(row); track t.action.key) {
+                                <button type="button" class="action-btn" (click)="apply(t, [row])"
+                                    [class.approve-btn]="t.action.tone === 'success'"
+                                    [class.reject-btn]="t.action.tone === 'danger'"
+                                    [disabled]="isSaving" [matTooltip]="t.action.label"
+                                    [attr.aria-label]="t.action.label + ': ' + storeLabel(row)">
+                                    <span class="material-symbols-outlined" aria-hidden="true">{{ t.action.icon }}</span>
                                 </button>
                             }
                         </div>
@@ -180,7 +185,7 @@
         </div>
     }
 
-    @if (searched && total > 0) {
+    @if (hasLoaded && total > 0) {
         <mat-paginator [length]="total" [pageIndex]="pageIndex" [pageSize]="pageSize" [pageSizeOptions]="pageSizes"
             [disabled]="isLoading" showFirstLastButtons (page)="onPage($event)" />
     }

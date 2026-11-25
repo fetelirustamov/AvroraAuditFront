@@ -193,9 +193,16 @@
 >   - `.list-progress` / `.page-progress` qlobaldır.
 >   - KPI linki (`a.kpi-card.is-link`), `<app-compliance-legend>` və `complianceTone` pipe əlavə edildi.
 >
+> - **Onay ekranları (2), 2026-11-25:**
+>   - "Əməliyyatlar", "Yoxlanılmış" və "Yoxlama təsdiqi" artıq bir komponentdir (`ui/plans/plan-status-table`, konfiqurasiya `plan-status-page.ts`-də). `plans-approve` Mərhələ 0-da silinmişdi.
+>   - Firma ixtiyaridir, səhifə açılan kimi növbə yüklənir. Firma seçilməyəndə "Firma" sütunu görünür.
+>   - Sıralama serverdə aparılır və URL-də saxlanır. "Təmizlə" düyməsi var.
+>   - Toplu düymə yalnız seçilmiş sətirlərin hamısına uyğun olanda aktivdir. Server qeydlərin bir hissəsini dəyişibsə, xəbərdarlıq çıxır.
+>   - "Yoxlanılmış"dan da yoxlama detalı açılır, geri linki həmin siyahıya qayıdır.
+>   - Bal və uyğunsuzluq sayı sütunları hələ yoxdur: `inspectionPlans/getDetails` onları qaytarmır.
+>
 > **Qalanlar:**
-> - **Onay ekranları (2):** `plans-approve`, `plan-actions`, `plan-checked` və `inspection-approve` bir komponentdə birləşdirilməlidir.
->   - `plan-actions` firma seçmədən yüklənmir. Əsas səhifənin "Təsdiq gözləyən planlar" linki statusu doldurur, firmanı isə istifadəçi seçir.
+> - **Onay ekranları (2):** bal və uyğunsuzluq sayı sütunları. Backend-də `getDetails`-ə sahə əlavə etmək lazımdır.
 > - **Müfəttiş təsdiqi (4):** firmasız öz növbəsi. Backend endpoint-i lazımdır.
 > - **İzləmə (5):**
 >   - `stageSince` üzrə sıralama. Backend `DisruptionRepository.GetTracking`-ə bir `orderBy` açarı lazımdır.

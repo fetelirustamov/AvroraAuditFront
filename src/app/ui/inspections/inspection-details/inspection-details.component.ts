@@ -30,6 +30,7 @@ const RETURNED_TO_MOBILE = 2;
 
 const DEFAULT_LIST = '/inspections';
 const APPROVE_LIST = '/inspections/approve';
+const CHECKED_LIST = '/plans/checked';
 
 @Component({
   selector: 'app-inspection-details',
@@ -161,12 +162,14 @@ export class InspectionDetailsComponent implements OnInit {
 
   /** Yalnız yoxlama siyahılarına qayıdış qəbul olunur: URL-dən gələn başqa ünvana keçid yoxdur. */
   private setBackLink(returnUrl: string | null): void {
-    if (!returnUrl || !returnUrl.startsWith(DEFAULT_LIST) || returnUrl.startsWith(`${DEFAULT_LIST}/details`)) {
+    if (!returnUrl || returnUrl.startsWith(`${DEFAULT_LIST}/details`)) return;
+    if (returnUrl.startsWith(APPROVE_LIST)) {
+      this.backLabel = 'Təsdiq siyahısına qayıt';
+    } else if (returnUrl.startsWith(CHECKED_LIST)) {
+      this.backLabel = 'Yoxlanılmışlara qayıt';
+    } else if (!returnUrl.startsWith(DEFAULT_LIST)) {
       return;
     }
     this.backLink = this.router.parseUrl(returnUrl);
-    if (returnUrl.startsWith(APPROVE_LIST)) {
-      this.backLabel = 'Təsdiq siyahısına qayıt';
-    }
   }
 }

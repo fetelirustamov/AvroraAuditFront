@@ -176,6 +176,11 @@ a.kpi-card.is-link {
     margin-bottom: var(--space-3);
 }
 
+// Kartın içində sabit yer: xətt çıxıb-gedəndə cədvəl tərpənmir
+.progress-slot {
+    height: 3px;
+}
+
 // ── Cədvəl kartı ────────────────────────────────────────────────────────────
 .table-card {
     overflow: hidden;
