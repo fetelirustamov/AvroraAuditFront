@@ -4,7 +4,8 @@
 //  Paylaşılan dizayn qatının token-ləri üzərinə tikilib (_design-system.scss).
 // ════════════════════════════════════════════════════════════════════════════
 
-.ls-page { padding: 20px 20px 64px; max-width: 1320px; margin: 0 auto; }
+// Kənar boşluğu və en çərçivədən (shell) gəlir: digər admin səhifələri ilə eyni xətdən başlayır
+.ls-page { padding-bottom: 64px; }
 
 .panel-card {
     display: flex;
@@ -609,7 +610,7 @@
     .detail-card { position: static; }
 }
 @media (max-width: 768px) {
-    .ls-page { padding: 14px 12px 48px; }
+    .ls-page { padding-bottom: 48px; }
     .tpl-actions { flex-direction: column; }
     .tree-card { max-height: 420px; }
 }

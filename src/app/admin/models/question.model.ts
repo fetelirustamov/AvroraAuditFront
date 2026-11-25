@@ -1,16 +1,20 @@
 
-/** Backend QuestionTypeID — baza və API yalnız 1..5 qəbul edir */
+/**
+ * Backend QuestionTypeID — baza və API yalnız 1..5 qəbul edir.
+ * Bazadakı adlar (QuestionTypes): 1 Bəli/Xeyr, 2 RadioButton, 3 CheckBox, 4 FreeText, 5 ComboBox.
+ * İnterfeysdə Azərbaycan dilində göstərilir.
+ */
 export const QUESTION_TYPES = [
     { id: 1, label: 'Bəli/Xeyr' },
-    { id: 2, label: 'RadioButton' },
-    { id: 3, label: 'CheckBox' },
-    { id: 4, label: 'FreeText' },
-    { id: 5, label: 'ComboBox' }
+    { id: 2, label: 'Tək seçim' },
+    { id: 3, label: 'Çox seçim' },
+    { id: 4, label: 'Sərbəst mətn' },
+    { id: 5, label: 'Açılan siyahı' }
 ] as const;
 
 export type QuestionTypeId = typeof QUESTION_TYPES[number]['id'];
 
-/** Cavab variantı tələb edən tiplər: RadioButton, CheckBox, ComboBox */
+/** Cavab variantı tələb edən tiplər: tək seçim, çox seçim, açılan siyahı */
 export const ANSWER_QUESTION_TYPE_IDS: readonly QuestionTypeId[] = [2, 3, 5];
 
 /** İstənilən dəyəri 1..5 id-yə normalize edir; kənar dəyər (0, NULL, kənar rəqəm) üçün null */

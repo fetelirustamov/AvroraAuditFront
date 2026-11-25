@@ -107,9 +107,14 @@ export class DashboardChartsService {
                 axisTicks: { show: false },
                 axisBorder: { show: false }
             },
+            // Mağaza sayı tam ədəddir: oxda 0,5 kimi kəsrlər çıxmasın
             yaxis: {
-                labels: { style: { colors: c.textMuted, fontSize: '12px' } },
-                allowDecimals: false
+                min: 0,
+                tickAmount: Math.min(5, Math.max(1, ...series.flatMap(s => s.data))),
+                labels: {
+                    style: { colors: c.textMuted, fontSize: '12px' },
+                    formatter: (val: number) => String(Math.round(val))
+                }
             },
             legend: { show: false },
             tooltip: { theme: 'light', shared: true, intersect: false }

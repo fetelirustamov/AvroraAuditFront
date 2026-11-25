@@ -53,14 +53,15 @@ describe('LocationStructureComponent', () => {
     flushHierarchy(structures);
   }
 
-  /** loadHierarchy-nin üç sorğusunu cavablandırır (həm ilk yükləmə, həm idxaldan sonrakı yeniləmə). */
+  /** loadHierarchy-nin dörd sorğusunu cavablandırır (həm ilk yükləmə, həm idxaldan sonrakı yeniləmə). */
   function flushHierarchy(structures: unknown[]) {
     const ok = (data: unknown[]) => ({ success: true, message: '', data });
     httpMock.expectOne(`${environment.apiUrl}/locations`).flush(ok([
-      { id: 1, firmId: 1, locationCode: '4336' },
-      { id: 2, firmId: 1, locationCode: '4337' },
-      { id: 3, firmId: 2, locationCode: '9999' }
+      { id: 1, firmId: 1, locationCode: '4336', regionID: 1 },
+      { id: 2, firmId: 1, locationCode: '4337', regionID: 1 },
+      { id: 3, firmId: 2, locationCode: '9999', regionID: 2 }
     ]));
+    httpMock.expectOne(`${environment.apiUrl}/locations/regions/1`).flush(ok([{ id: 1, regionName: 'Bakı' }]));
     httpMock.expectOne(`${environment.apiUrl}/users/firm/1`).flush(ok([
       { id: 1, userCode: 200456 },
       { id: 2, userCode: 200458 },

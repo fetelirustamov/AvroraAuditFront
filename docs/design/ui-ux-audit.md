@@ -212,6 +212,23 @@
 >   - Təsdiq yalnız yoxlaması yekunlaşmış planda verilir. Bunun üçün API izləmə detalına `planStatus` qaytarır.
 >   - Mağaza zənciri mərhələlərində (cavab, zəncir təsdiqi) paneldə əməliyyat yoxdur: onlar cavab ekranlarında aparılır.
 >
+> - **Admin paneli (10), 2026-11-25:** bütün 15 admin route-u saxta API ilə brauzerdə gəzildi. Düzəldilənlər:
+>   - **Admin əsas səhifəsi:**
+>     - hər qrafik iki dəfə çəkilirdi;
+>     - mağaza sayı oxunda kəsrlər (0,5) çıxırdı;
+>     - "rol" sözü "icazə qrupu" ilə əvəz edildi.
+>   - **Admin sahələri:** köhnə `.admin-input-design` qaydası hər sahəyə 20px alt boşluq verirdi. Filtr düyməsi sahədən aşağı düşürdü, kartların altı boş qalırdı. Boşluğu artıq forma şəbəkəsi verir.
+>   - **Dialoq düymələri:** "Ləğv et" ilə "Yadda saxla" bir-birinə yapışırdı.
+>   - **Yer tutucu mətnlər** yazılmış dəyər kimi qara görünürdü (`--text-faint`).
+>   - **Sual tipləri** ingiliscə idi (RadioButton, CheckBox, FreeText, ComboBox). İndi: Tək seçim, Çox seçim, Sərbəst mətn, Açılan siyahı.
+>   - **Ərazi bağlantıları:**
+>     - bölgə yerinə ünvan göstərilirdi, çünki API bölgə adını qaytarmır;
+>     - səhifənin öz kənar boşluğu vardı;
+>     - firmada olmayan zəncir üzvü "İşçi (kod)" adlanırdı.
+>   - **Mağazalar** cədvəlinə "Bölgə" sütunu əlavə olundu, filtr "Region" yox "Bölgə" adlanır.
+>   - **İcazə qrupları:** üzv sayı sütunu var və istifadəçilər siyahısına link olur. İstifadəçisi olan qrupun "Sil" düyməsi bağlıdır.
+>   - **Yoxlanmayıb:** real data. 5-ci sual tipinin mənası (bax CLAUDE.md) bazada yoxlanmalıdır.
+>
 > **Mərhələ 3-də ekran işi qalmadı.**
 > - **Yoxlanmayıb:** yeni summaries SQL-i lokal AUDITDB-də xətasız işləyir, amma baza boşdur. Real rəqəmlər VPN ilə və ya deploy-dan sonra yoxlanmalıdır.
 > - **Əsas səhifə (1):** dövr KPI-larının siyahıya linki yoxdur. İzləmənin süzgəcləri "açıq" tərifi ilə tam üst-üstə düşmür.

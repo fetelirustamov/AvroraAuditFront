@@ -442,10 +442,11 @@ button {
 }
 
 /* Admin Input Design - Matching Locations Advanced Search */
+// Sahələr arası boşluğu forma şəbəkəsi verir (`.form-grid` gap, admin/shared/_admin.scss): sahənin öz
+// alt boşluğu yoxdur, yoxsa kartın altı boş qalır və filtr düyməsi sahədən aşağı düşür
 .admin-input-design {
     .mat-mdc-form-field {
         width: 100%;
-        margin-bottom: 20px;
     }
 
     .main-label {
@@ -462,7 +463,6 @@ button {
     mat-form-field {
         display: grid;
         gap: 10px !important;
-        padding-bottom: 5px !important;
     }
 
     .mat-mdc-form-field {
@@ -799,6 +799,16 @@ button.mat-mdc-button-base {
     flex: 1.4;
     min-width: 220px;
     max-width: 340px;
+}
+
+// Yer tutucu yazılmış dəyərdən seçilməlidir: açıq ton və adi qalınlıq (`--text-faint` məhz bunun üçündür)
+.g-modern-field {
+    input::placeholder,
+    textarea::placeholder {
+        color: var(--text-faint);
+        font-weight: 400;
+        opacity: 1;
+    }
 }
 
 .g-filter-actions {

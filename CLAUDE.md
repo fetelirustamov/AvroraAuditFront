@@ -14,7 +14,9 @@ npx ng build --configuration production # dist/avrora-audit, bundle limiti 2.5 M
 
 - JWT claim adları qısadır: `Id`, `Name`, `Surname`, `Email`, `Role`. `Role` vergüllə birləşdirilmiş sətirdir. `auth.service.ts` məhz bu adları oxuyur.
 - API cavabları camelCase gəlir (`success`, `message`, `data`, `items`, `total`). İstisna xəta cavabıdır, o PascalCase-dir: `{ StatusCode, Message, Details }`.
-- `Location.locationCode` API-dən **string** gəlir (model `number` desə də). `Structure.locationCode` isə int-dir. Müqayisədə həmişə `Number(...)` işlət, yoxsa `"4335" !== 4335` olur.
+- `Location.locationCode` API-dən **string** gəlir (model `number` desə də). `Structure.locationCode` isə int-dir. Müqayisədə həmişə `Number(...)` işlət, yoxsa `"4335" !== 4335` olur. `mat-option [value]`-da da kodu rəqəmə çevir (`+location.locationCode`), yoxsa URL-dən gələn rəqəmlə seçim boş qalır.
+- `GET /locations` bölgənin yalnız id-sini qaytarır (`regionID`), adını yox. Bölgə adı `GET /locations/regions/{firmId}`-dən alınır.
+- Sual tipi (`QuestionTypeID`) 5: admin forması onu cavab variantlı tip sayır (bazada adı ComboBox), yoxlama detalı isə ilk versiyadan bəri onu dəyər kimi göstərir. Bazadakı `QuestionTypes` ilə yoxlanmayıb, birini dəyişməzdən əvvəl yoxla.
 
 ## Domen dəyərləri
 

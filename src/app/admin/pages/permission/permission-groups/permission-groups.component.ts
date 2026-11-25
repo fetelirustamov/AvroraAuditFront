@@ -17,6 +17,7 @@ import { ListStateComponent } from '../../../../shared/components/list-state/lis
 import { apiErrorMessage } from '../../../../shared/utils/api-error';
 import { queryString } from '../../../../shared/utils/query-state';
 import { RoleService } from '../../../services/role.service';
+import { UserService } from '../../../services/user.service';
 import { RoleDto } from '../../../models/role.model';
 import { TableUrlState } from '../../../shared/table-url-state';
 
@@ -42,6 +43,7 @@ import { TableUrlState } from '../../../shared/table-url-state';
 export class PermissionGroupsComponent implements OnInit, AfterViewInit {
   private readonly confirmDialog = inject(ConfirmDialogService);
   private readonly roleService = inject(RoleService);
+  private readonly userService = inject(UserService);
   private readonly notify = inject(NotificationService);
   private readonly route = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);
@@ -49,7 +51,13 @@ export class PermissionGroupsComponent implements OnInit, AfterViewInit {
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
 
-  readonly displayedColumns = ['name', 'description', 'actions'];
+  readonly displayedColumns = ['name', 'description', 'members', 'actions'];
+  /** Qrup adı → istifadəçi sayı (`users/userdetails`-in roleName sahəsindən); yüklənməyibsə null */
+  memberCounts: Map<string, number> | null = null;
+
+  members(row: RoleDto): number | null {
+    return this.memberCounts ? (this.memberCounts.get(row.name) ?? 0) : null;
+  }
   readonly dataSource = new MatTableDataSource<RoleDto>([]);
   readonly urlState = new TableUrlState(inject(Router), this.route);
   readonly searchControl = new FormControl(queryString(this.route.snapshot.queryParamMap, 'q') ?? '', { nonNullable: true });
@@ -88,6 +96,18 @@ export class PermissionGroupsComponent implements OnInit, AfterViewInit {
         },
         error: err => this.loadError = apiErrorMessage(err, 'İcazə qrupları yüklənmədi')
       });
+    this.userService.getUserDetails().subscribe({
+      next: res => {
+        const counts = new Map<string, number>();
+        for (const u of (Array.isArray(res?.data) ? res.data : []) as { roleName?: string }[]) {
+          const name = u.roleName?.trim();
+          if (name) counts.set(name, (counts.get(name) ?? 0) + 1);
+        }
+        this.memberCounts = counts;
+      },
+      // Say əlavə məlumatdır: alınmasa sütun "—" göstərir
+      error: () => this.memberCounts = null,
+    });
   }
 
   remove(row: RoleDto): void {

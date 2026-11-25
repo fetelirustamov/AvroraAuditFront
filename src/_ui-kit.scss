@@ -1227,6 +1227,8 @@ input {
     .mat-mdc-dialog-actions {
         padding: 20px 25px;
         border-top: 1px solid var(--border);
+        // Öz düymə siniflərimiz (g-*-btn) Material-ın düymələr arası boşluğunu almır
+        gap: var(--space-2);
     }
     .mat-mdc-dialog-title {
         margin-bottom: 0;

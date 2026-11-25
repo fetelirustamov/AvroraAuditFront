@@ -71,7 +71,7 @@ export class LocationAddComponent implements OnInit {
     readonly form = inject(FormBuilder).group({
         firmId: [this.data.firmId as number | null, Validators.required],
         // Region məcburi deyil: region təyin olunmamış mağazalar da yaradıla bilər
-        regionId: [toNullableNumber(this.item?.regionId ?? this.item?.RegionId ?? this.item?.regionID)],
+        regionId: [toNullableNumber(this.item?.regionID)],
         // Kod sistemin açarıdır (planlar, zəncir, şöbələr): məcburi, unikal, redaktədə dəyişmir
         locationCode: [
             { value: toNullableNumber(this.item?.locationCode), disabled: this.isEdit },

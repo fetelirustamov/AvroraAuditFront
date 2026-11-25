@@ -30,10 +30,8 @@ interface RegionOption {
   name: string;
 }
 
-/** API region ID-ni üç fərqli adla qaytara bilir. */
 function regionIdOf(location: LocationDto): number | null {
-  const id = location.regionId ?? location.RegionId ?? location.regionID;
-  return id == null ? null : Number(id);
+  return location.regionID == null ? null : Number(location.regionID);
 }
 
 /** "Audit strukturu" səhifəsinin "Mağazalar" tabı: seçilmiş firmanın mağazaları. */
@@ -67,7 +65,13 @@ export class LocationsComponent implements OnInit, OnChanges, AfterViewInit {
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
 
-  readonly displayedColumns = ['locationCode', 'locationName', 'contactNumber', 'coordinates', 'actions'];
+  readonly displayedColumns = ['locationCode', 'locationName', 'region', 'contactNumber', 'coordinates', 'actions'];
+
+  /** Bölgənin adı firmanın bölgə siyahısından: `GET /locations` yalnız regionID qaytarır */
+  regionName(location: LocationDto): string {
+    const id = regionIdOf(location);
+    return this.regions.find(r => r.id === id)?.name ?? '—';
+  }
   readonly dataSource = new MatTableDataSource<LocationDto>([]);
   readonly urlState = new TableUrlState(inject(Router), this.route, KEYS.page);
   readonly searchControl = new FormControl(queryString(this.route.snapshot.queryParamMap, KEYS.search) ?? '', { nonNullable: true });

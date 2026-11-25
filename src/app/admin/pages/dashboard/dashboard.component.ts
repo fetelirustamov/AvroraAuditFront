@@ -169,7 +169,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
         },
         {
           label: 'İcazə qrupları',
-          desc: 'Rol və icazə konfiqurasiyası',
+          desc: 'Kimin hansı səhifəni görəcəyi',
           icon: 'verified_user',
           count: `${roleRows.length} qrup`,
           route: '/admin/permissions/permission-groups'
@@ -199,10 +199,10 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
         { label: 'Səhifələr', value: pageRows.length, icon: 'description' }
       ];
 
-      // Donut: rola görə istifadəçi bölgüsü
+      // Donut: icazə qrupuna görə istifadəçi bölgüsü
       const roleCounts = new Map<string, number>();
       for (const u of users) {
-        const roleName = u.roleName?.trim() || 'Rolsuz';
+        const roleName = u.roleName?.trim() || 'Qrupsuz';
         roleCounts.set(roleName, (roleCounts.get(roleName) ?? 0) + 1);
       }
       this.chartData.userRoles = {
@@ -228,10 +228,17 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     });
   }
 
+  /**
+   * Görünüş və data hazır olanda bir dəfə çəkilir. Hər ikisi bu metodu çağırır; qrafik kitabxanası
+   * asinxron yükləndiyi üçün ikinci çağırış birincinin qrafikini silə bilmirdi və hər qrafik iki dəfə çıxırdı.
+   */
   private tryLoadCharts(): void {
-    if (!this.viewReady || !this.dataReady) return;
+    if (!this.viewReady || !this.dataReady || this.chartsRequested) return;
+    this.chartsRequested = true;
     this.loadCharts();
   }
+
+  private chartsRequested = false;
 
   private async loadCharts() {
     if (!isPlatformBrowser(this.platformId)) return;

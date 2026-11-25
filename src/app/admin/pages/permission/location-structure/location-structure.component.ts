@@ -37,6 +37,12 @@ import { PageHeaderComponent } from '../../../../shared/components/page-header/p
  */
 const SYSTEM_ACCOUNT_EMAIL_DOMAIN = '@audit.com';
 
+/**
+ * Zəncirdə olan, amma bu firmanın istifadəçi siyahısında tapılmayan şəxs (firmadan çıxarılıb
+ * və ya firmaya təyin olunmayıb). Kodu ağacda yanında göstərilir.
+ */
+const UNKNOWN_PERSON = 'Firmada olmayan istifadəçi';
+
 /** Ziddiyyətli rəhbər namizədi (neçə mağazada bu şəxs rəhbər kimi çıxır). */
 interface SupervisorVote {
   parentCode: number;
@@ -137,6 +143,8 @@ export class LocationStructureComponent implements OnInit {
   firmLocations: LocationDto[] = [];   // seçilmiş firmanın bütün mağazaları
   private userByCode = new Map<number, UserDto>();
   private locByCode = new Map<number, LocationDto>();
+  /** regionID → bölgə adı (firmanın bölgə siyahısından) */
+  private regionNameById = new Map<number, string>();
   private networkStoreCodes = new Set<number>();
   /** userCode → ziddiyyətli rəhbərlər (ağacda yalnız biri görünür). */
   private parentConflicts = new Map<number, SupervisorVote[]>();
@@ -243,9 +251,13 @@ export class LocationStructureComponent implements OnInit {
       locations: this.locationService.list().pipe(catchError(() => of(null))),
       users: this.userService.getUsersByFirm(firmId).pipe(catchError(() => of(null))),
       structures: this.structureService.list().pipe(catchError(() => of(null))),
+      // `GET /locations` bölgə adını qaytarmır (yalnız RegionID): ad firmanın bölgə siyahısından gəlir
+      regions: this.locationService.getRegionsByFirmId(firmId).pipe(catchError(() => of(null))),
     }).subscribe({
       next: (res: any) => {
         const locations = this.extractArray<LocationDto>(res.locations).filter(l => l.firmId === firmId);
+        this.regionNameById = new Map(this.extractArray<any>(res.regions)
+          .map(r => [Number(r.id ?? r.regionId ?? r.regionID), String(r.regionName ?? r.name ?? '')] as [number, string]));
         this.allUsers = this.extractArray<UserDto>(res.users);
         const structures = this.extractArray<StructureDto>(res.structures);
 
@@ -318,7 +330,7 @@ export class LocationStructureComponent implements OnInit {
         const u = this.userByCode.get(userCode);
         n = {
           userCode,
-          name: u ? this.getUserFullName(u) : `İşçi (${userCode})`,
+          name: u ? this.getUserFullName(u) : UNKNOWN_PERSON,
           code: u ? this.getUserCode(u) : String(userCode),
           level: pos,
           roleLabel: this.roleLabel(pos),
@@ -370,7 +382,7 @@ export class LocationStructureComponent implements OnInit {
               count,
               name: this.userByCode.get(parentCode)
                 ? this.getUserFullName(this.userByCode.get(parentCode)!)
-                : `İşçi (${parentCode})`,
+                : `${UNKNOWN_PERSON} (${parentCode})`,
             })));
         }
       }
@@ -412,7 +424,7 @@ export class LocationStructureComponent implements OnInit {
   private storeName(code: number): string { return this.locByCode.get(code)?.locationName ?? `Mağaza ${code}`; }
   private storeRegion(code: number): string {
     const l = this.locByCode.get(code);
-    return (l?.RegionName || l?.locationAddress || '').trim() || 'Region təyin edilməyib';
+    return this.regionNameById.get(Number(l?.regionID))?.trim() || 'Bölgə təyin edilməyib';
   }
 
   private extractArray<T>(response: any): T[] {
@@ -625,7 +637,7 @@ export class LocationStructureComponent implements OnInit {
           structureId: s.id,
           userCode: s.userCode,
           level: i + 1,
-          name: u ? this.getUserFullName(u) : `İşçi (${s.userCode})`,
+          name: u ? this.getUserFullName(u) : UNKNOWN_PERSON,
           code: u ? this.getUserCode(u) : String(s.userCode ?? ''),
           roleLabel: this.roleLabel(i + 1),
           status: s.status ?? 1,
@@ -939,7 +951,7 @@ export class LocationStructureComponent implements OnInit {
 
   private personLabel(userCode: number): string {
     const u = this.userByCode.get(userCode);
-    return u ? `${this.getUserFullName(u)} (${userCode})` : `İşçi (${userCode})`;
+    return `${u ? this.getUserFullName(u) : UNKNOWN_PERSON} (${userCode})`;
   }
 
   private submitChains(plan: ImportPlan): void {

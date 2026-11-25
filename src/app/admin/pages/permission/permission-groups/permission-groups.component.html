@@ -39,6 +39,21 @@
                 <td mat-cell *matCellDef="let row"><span class="clamp-2">{{ row.description || '—' }}</span></td>
             </ng-container>
 
+            <ng-container matColumnDef="members">
+                <th mat-header-cell *matHeaderCellDef>İstifadəçilər</th>
+                <td mat-cell *matCellDef="let row">
+                    @let count = members(row);
+                    @if (count === null) {
+                        <span class="muted">—</span>
+                    } @else if (count > 0) {
+                        <a class="members-link" routerLink="/admin/permissions/user-permission" [queryParams]="{ q: row.name }"
+                            [attr.aria-label]="row.name + ' qrupunun istifadəçilərinə bax: ' + count">{{ count }}</a>
+                    } @else {
+                        <span class="muted">0</span>
+                    }
+                </td>
+            </ng-container>
+
             <ng-container matColumnDef="actions">
                 <th mat-header-cell *matHeaderCellDef>Əməliyyatlar</th>
                 <td mat-cell *matCellDef="let row">
@@ -51,8 +66,10 @@
                             matTooltip="Redaktə et" aria-label="Redaktə et">
                             <span class="material-symbols-outlined" aria-hidden="true">edit</span>
                         </a>
-                        <button type="button" class="action-btn delete-btn" (click)="remove(row)"
-                            matTooltip="Sil" aria-label="Sil">
+                        <!-- İstifadəçisi olan qrupu server silmir: düymə əvvəlcədən bağlıdır və səbəbini deyir -->
+                        @let inUse = (members(row) ?? 0) > 0;
+                        <button type="button" class="action-btn delete-btn" (click)="remove(row)" [disabled]="inUse"
+                            [matTooltip]="inUse ? 'İstifadəçisi olan qrup silinmir' : 'Sil'" aria-label="Sil">
                             <span class="material-symbols-outlined" aria-hidden="true">delete</span>
                         </button>
                     </div>
