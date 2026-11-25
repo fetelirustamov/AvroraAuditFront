@@ -2,6 +2,8 @@
 export class PlanApprove {
     planId!: number;
     status!: number;
+    /** Rədd və geri qaytarmanın səbəbi (server `StatusChangeLogs`-a yazır). */
+    reason?: string;
 }
 
 

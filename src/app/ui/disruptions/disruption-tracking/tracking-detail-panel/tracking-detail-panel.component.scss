@@ -111,6 +111,10 @@
 @keyframes spin { to { transform: rotate(360deg); } }
 
 // Kimdədir — panelin əsas cavabı, ona görə ən iri element budur
+.status-reason-block {
+    margin-bottom: 18px;
+}
+
 .holder-card {
     display: flex;
     flex-direction: column;

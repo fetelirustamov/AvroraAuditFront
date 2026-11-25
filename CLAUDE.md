@@ -66,6 +66,7 @@ npx ng build --configuration production # dist/avrora-audit, bundle limiti 2.5 M
 - Ortaq komponentlər (`shared/`), öz variantını yazma:
   - başlıq: `<app-page-header>`. Ad route-un `data.menu.title`-ından gəlir, düymələr `headerActions` ilə ötürülür. `.report-page-header` köhnəlib;
   - status: `<app-status-chip [planStatus]>` / `[disruptionStatus]`. Etiket və ton yalnız `shared/status/status-meta.ts`-dədir. Status düymələrinin feli, ikonu və dialoq mətni `status-actions.ts`-dədir (`STATUS_ACTIONS`, `statusActionConfirm`);
+  - rədd/geri qaytarma səbəbi: `<app-status-reason subject="plan|disruption" [change]>` (`shared/status/status-reason.component.ts`). Rədd və geri qaytarma əməliyyatları səbəb tələb edir, səbəb status sorğusunun `reason` sahəsində gedir;
   - siyahının boş/xəta halı: `<app-list-state state="idle|empty|error" (retry)>`.
 - Təsdiq tələb edən əməliyyat `ConfirmDialogService.confirm()` ilə soruşulur (`shared/components/confirm-dialog`). Təsir olunan qeydləri `items`-də, səbəbi `reason`-da ver. `undefined` ləğv deməkdir. Əl ilə popup yazma.
 - Bildiriş yalnız `NotificationService` ilədir. Müddəti növ təyin edir: xəta bağlanana qədər qalır, xəbərdarlıq 8 s, qalanı 4 s.

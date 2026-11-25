@@ -5,6 +5,8 @@ import { finalize } from 'rxjs';
 import { ListStateComponent } from '../../../../shared/components/list-state/list-state.component';
 import { AppDatePipe } from '../../../../shared/pipes/app-date.pipe';
 import { StatusChipComponent } from '../../../../shared/status/status-chip.component';
+import { StatusChange, StatusReasonComponent } from '../../../../shared/status/status-reason.component';
+import { DisruptionService } from '../../disruption.service';
 import { apiErrorMessage } from '../../../../shared/utils/api-error';
 import { MediaComponent } from '../../../components/media/media.component';
 import { MediaType, Module } from '../../../components/media/media-type.enum';
@@ -20,12 +22,13 @@ import { DisruptionTrackingService } from '../disruption-tracking.service';
 @Component({
     selector: 'app-tracking-detail-panel',
     standalone: true,
-    imports: [CdkTrapFocus, AppDatePipe, StatusChipComponent, ListStateComponent, MediaComponent],
+    imports: [CdkTrapFocus, AppDatePipe, StatusChipComponent, StatusReasonComponent, ListStateComponent, MediaComponent],
     templateUrl: './tracking-detail-panel.component.html',
     styleUrl: './tracking-detail-panel.component.scss',
 })
 export class TrackingDetailPanelComponent implements OnChanges {
     private readonly trackingService = inject(DisruptionTrackingService);
+    private readonly disruptionService = inject(DisruptionService);
     private readonly dialog = inject(MatDialog);
 
     readonly disruptionId = input<number | null>(null);
@@ -40,6 +43,8 @@ export class TrackingDetailPanelComponent implements OnChanges {
     holder: Holder | null = null;
     stageAge: string | null = null;
     overdue: string | null = null;
+    /** Son rədd / müfəttişə qaytarma səbəbi (yoxdursa null). */
+    statusReason: StatusChange | null = null;
     isLoading = false;
     loadError: string | null = null;
 
@@ -65,6 +70,13 @@ export class TrackingDetailPanelComponent implements OnChanges {
         this.isLoading = true;
         this.loadError = null;
         this.detail = null;
+        this.statusReason = null;
+        this.disruptionService.getStatusReasons([id]).subscribe({
+            // Panel başqa uyğunsuzluğa keçibsə köhnə cavab yazılmasın
+            next: res => { if (this.disruptionId() === id) { this.statusReason = res.data?.[0] ?? null; } },
+            // Səbəb əlavə məlumatdır: icazə və ya şəbəkə xətasında panel onsuz göstərilir
+            error: () => { this.statusReason = null; },
+        });
         this.trackingService.detail(id)
             .pipe(finalize(() => { this.isLoading = false; }))
             .subscribe({

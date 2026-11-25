@@ -18,6 +18,7 @@ import { AppDatePipe } from '../../../../shared/pipes/app-date.pipe';
 import { NotificationService } from '../../../../shared/services/notification.service';
 import { STATUS_ACTIONS, StatusAction, statusActionConfirm } from '../../../../shared/status/status-actions';
 import { StatusChipComponent } from '../../../../shared/status/status-chip.component';
+import { StatusChange, StatusReasonComponent } from '../../../../shared/status/status-reason.component';
 import { apiErrorMessage } from '../../../../shared/utils/api-error';
 import { queryNumber, writeQueryState } from '../../../../shared/utils/query-state';
 import { MediaType, Module } from '../../../components/media/media-type.enum';
@@ -42,6 +43,7 @@ const STATUS_INSPECTOR = 0;
   selector: 'app-disruption-middle-details',
   standalone: true,
   imports: [
+    StatusReasonComponent,
     MatTableModule, MatPaginatorModule, MatCheckboxModule, MatProgressBarModule, MatTooltipModule,
     PageHeaderComponent, ListStateComponent, StatusChipComponent, AppDatePipe, MediaComponent,
   ],
@@ -64,8 +66,7 @@ export class DisruptionMiddleDetailsComponent implements OnInit {
   readonly pageSizeOptions = PAGE_SIZES;
 
   readonly approveAction = STATUS_ACTIONS.approve;
-  // Serverin status endpoint-ində səbəb sahəsi yoxdur: dialoq səbəb soruşmur
-  readonly rejectAction: StatusAction = { ...STATUS_ACTIONS.reject, requiresReason: false };
+  readonly rejectAction = STATUS_ACTIONS.reject;
   readonly returnAction = STATUS_ACTIONS.returnToInspector;
 
   /** HeadInspector və Admin: 0 və 1-ləri görür, müfəttişə qaytara bilir */
@@ -84,6 +85,8 @@ export class DisruptionMiddleDetailsComponent implements OnInit {
 
   planId: number | null = null;
   rows: DisruptionDto[] = [];
+  /** disruptionId → son rədd / müfəttişə qaytarma səbəbi (səbəbsizlər yoxdur). */
+  reasons = new Map<number, StatusChange>();
   total = 0;
   pageIndex = 0;
   pageSize = PAGE_SIZES[0];
@@ -154,11 +157,26 @@ export class DisruptionMiddleDetailsComponent implements OnInit {
         this.rows = response.data?.items ?? [];
         this.total = response.data?.total ?? 0;
         this.selection.clear();
+        this.loadReasons();
         const first = this.rows[0];
         if (first) this.store = { code: first.locationCode, name: first.locationName };
       },
       error: error => this.loadError = apiErrorMessage(error, 'Uyğunsuzluqlar yüklənmədi'),
     });
+  }
+
+  /** Səhifədəki sətirlərin səbəbləri bir sorğu ilə gəlir. Müfəttiş qaytarılanın niyəsini burada görür. */
+  private loadReasons(): void {
+    this.reasons = new Map();
+    const ids = this.rows.map(r => r.disruptionId);
+    if (!ids.length) return;
+    this.disruptionService.getStatusReasons(ids)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: response => (this.reasons = new Map((response.data ?? []).map(c => [c.refId, c]))),
+        // Səbəb əlavə məlumatdır: alınmasa cədvəl onsuz göstərilir
+        error: () => (this.reasons = new Map()),
+      });
   }
 
   isAllSelected(): boolean {
@@ -197,26 +215,28 @@ export class DisruptionMiddleDetailsComponent implements OnInit {
   }
 
   reject(rows: DisruptionDto[]): void {
-    this.confirmThen(this.rejectAction, rows, () =>
-      this.submitStatuses(rows, () => STATUS_REJECTED, 'Uyğunsuzluq rədd edildi'));
+    this.confirmThen(this.rejectAction, rows, reason =>
+      this.submitStatuses(rows, () => STATUS_REJECTED, 'Uyğunsuzluq rədd edildi', reason));
   }
 
   returnToInspector(rows: DisruptionDto[]): void {
-    this.confirmThen(this.returnAction, rows, () =>
-      this.submitStatuses(rows, () => STATUS_INSPECTOR, 'Uyğunsuzluq müfəttişə qaytarıldı'));
+    this.confirmThen(this.returnAction, rows, reason =>
+      this.submitStatuses(rows, () => STATUS_INSPECTOR, 'Uyğunsuzluq müfəttişə qaytarıldı', reason));
   }
 
-  private confirmThen(action: StatusAction, rows: DisruptionDto[], run: () => void): void {
+  private confirmThen(action: StatusAction, rows: DisruptionDto[], run: (reason?: string) => void): void {
     if (!rows.length) {
       this.notify.warning('Heç bir uyğunsuzluq seçilməyib');
       return;
     }
     this.confirmDialog.confirm(statusActionConfirm(action, rows.length, rows.map(r => this.itemLabel(r))))
       .pipe(filter(Boolean), takeUntilDestroyed(this.destroyRef))
-      .subscribe(run);
+      .subscribe(result => run(result.reason));
   }
 
-  private submitStatuses(rows: DisruptionDto[], statusOf: (row: DisruptionDto) => number, successMessage: string): void {
+  private submitStatuses(
+    rows: DisruptionDto[], statusOf: (row: DisruptionDto) => number, successMessage: string, reason?: string,
+  ): void {
     if (!rows.length) {
       this.notify.warning('Heç bir uyğunsuzluq seçilməyib');
       return;
@@ -227,6 +247,7 @@ export class DisruptionMiddleDetailsComponent implements OnInit {
       const approve = new DisruptionApproveDto();
       approve.disruptionId.push(row.disruptionId);
       approve.status = statusOf(row);
+      approve.reason = reason;
       return approve;
     });
 

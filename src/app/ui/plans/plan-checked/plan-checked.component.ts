@@ -189,13 +189,13 @@ export class PlanCheckedComponent implements OnInit, OnDestroy {
     if (rows.length === 0) return;
     this.confirmDialog.confirm(statusActionConfirm(this.reopenAction, rows.length, rows.map(planStoreLabel)))
       .subscribe(result => {
-        if (result) this.submit(rows);
+        if (result) this.submit(rows, result.reason);
       });
   }
 
-  private submit(rows: InspectionPlan[]): void {
+  private submit(rows: InspectionPlan[], reason?: string): void {
     if (this.isSaving) return;
-    const items = rows.map(row => ({ planId: row.id, status: REOPENED }) as PlanApprove);
+    const items = rows.map(row => ({ planId: row.id, status: REOPENED, reason }) as PlanApprove);
 
     this.isSaving = true;
     this.planService.aprovePlan(items)

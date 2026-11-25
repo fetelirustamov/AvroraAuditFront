@@ -4,7 +4,8 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { User } from './user.model';
 import { InspectionPlan } from '../inspections/InpectionPlan.model';
-import { RequestResponse } from '../../models/table-state.model';
+import { RequestResponse, RequestResponseOne } from '../../models/table-state.model';
+import { StatusChange } from '../../shared/status/status-reason.component';
 import { PlanApprove } from './plan.model';
 
 @Injectable({
@@ -42,6 +43,11 @@ export class PlanService {
 
     return this.http.post<any>(url, planApproveList, config);
 
+  }
+
+  /** Planın səbəbi yazılmış son status dəyişikliyi (rədd, mobilə qaytarma, yenidən açma); yoxdursa `data: null`. */
+  getStatusReason(planId: number): Observable<RequestResponseOne<StatusChange | null>> {
+    return this.http.get<RequestResponseOne<StatusChange | null>>(`${this.API_URL}/inspectionPlans/statusReason/${planId}`);
   }
 
 }

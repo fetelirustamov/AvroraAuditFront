@@ -1,6 +1,8 @@
 export class DisruptionApproveDto {
     status!: number;
     disruptionId: number[] = [];
+    /** Rədd və müfəttişə qaytarmanın səbəbi (server `StatusChangeLogs`-a yazır). */
+    reason?: string;
 }
 
 export class DisruptionDto {

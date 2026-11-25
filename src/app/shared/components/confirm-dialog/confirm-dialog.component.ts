@@ -12,6 +12,8 @@ export interface ConfirmReasonOptions {
     label?: string;
     /** Minimal simvol sayı (boşluqlar sayılmır). Sahənin altında sayğac göstərilir. */
     minLength?: number;
+    /** Maksimal simvol sayı: sahə bundan artıq yazmağa imkan vermir. */
+    maxLength?: number;
 }
 
 export interface ConfirmOptions {

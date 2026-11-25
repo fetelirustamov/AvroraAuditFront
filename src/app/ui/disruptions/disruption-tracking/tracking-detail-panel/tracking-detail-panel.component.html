@@ -59,6 +59,10 @@
                     }
                 </section>
 
+                @if (statusReason) {
+                    <app-status-reason class="status-reason-block" subject="disruption" [change]="statusReason" />
+                }
+
                 <!-- Ümumi məlumat -->
                 <section class="panel-section">
                     <h3 class="section-title">Ümumi məlumat</h3>

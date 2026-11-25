@@ -208,13 +208,13 @@ export class InspectionApproveComponent implements OnInit, OnDestroy {
     if (rows.length === 0) return;
     this.confirmDialog.confirm(statusActionConfirm(action, rows.length, rows.map(planStoreLabel)))
       .subscribe(result => {
-        if (result) this.submit(rows, status);
+        if (result) this.submit(rows, status, result.reason);
       });
   }
 
-  private submit(rows: InspectionPlan[], status: number): void {
+  private submit(rows: InspectionPlan[], status: number, reason?: string): void {
     if (this.isSaving) return;
-    const items = rows.map(row => ({ planId: row.id, status }) as PlanApprove);
+    const items = rows.map(row => ({ planId: row.id, status, reason }) as PlanApprove);
 
     this.isSaving = true;
     this.planService.aprovePlan(items)

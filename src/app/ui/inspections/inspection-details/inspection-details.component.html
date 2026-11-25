@@ -24,6 +24,10 @@
 } @else {
     <app-plan-info-section [planId]="planId" (planInfoLoaded)="onPlanInfoLoaded($event)" />
 
+    @if (statusReason) {
+        <app-status-reason class="status-reason-block" subject="plan" [change]="statusReason" />
+    }
+
     <section class="table-card details-tabs">
         <mat-tab-group mat-stretch-tabs="false" animationDuration="0ms">
             <mat-tab label="Checklist">

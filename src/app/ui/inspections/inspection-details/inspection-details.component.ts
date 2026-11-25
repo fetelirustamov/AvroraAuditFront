@@ -19,6 +19,7 @@ import { PageHeaderComponent } from '../../../shared/components/page-header/page
 import { ListStateComponent } from '../../../shared/components/list-state/list-state.component';
 import { StatusChipComponent } from '../../../shared/status/status-chip.component';
 import { STATUS_ACTIONS, statusActionConfirm } from '../../../shared/status/status-actions';
+import { StatusChange, StatusReasonComponent } from '../../../shared/status/status-reason.component';
 import { apiErrorMessage } from '../../../shared/utils/api-error';
 import { queryNumber, queryString } from '../../../shared/utils/query-state';
 
@@ -35,7 +36,7 @@ const APPROVE_LIST = '/inspections/approve';
   standalone: true,
   imports: [
     MatTabsModule, InspectionSectionComponent, DiruptionSectionComponent, PlanInfoSectionComponent,
-    PageHeaderComponent, ListStateComponent, StatusChipComponent,
+    PageHeaderComponent, ListStateComponent, StatusChipComponent, StatusReasonComponent,
   ],
   templateUrl: './inspection-details.component.html',
   styleUrl: './inspection-details.component.scss'
@@ -57,6 +58,8 @@ export class InspectionDetailsComponent implements OnInit {
   /** `app-diruption-section` planı `{ id }` obyekti kimi gözləyir. */
   disruptionPlan: { id: number } | null = null;
   planInfo: PlanInfo | null = null;
+  /** Son rədd / mobilə qaytarma səbəbi (yoxdursa null). */
+  statusReason: StatusChange | null = null;
 
   /** Geri linki: gəldiyi siyahının filtrli URL-i (query `returnUrl`). */
   backLink: UrlTree = this.router.parseUrl(DEFAULT_LIST);
@@ -80,6 +83,7 @@ export class InspectionDetailsComponent implements OnInit {
     if (this.planId == null) return;
     this.disruptionPlan = { id: this.planId };
     this.loadSections();
+    this.loadStatusReason(this.planId);
   }
 
   get title(): string {
@@ -110,6 +114,14 @@ export class InspectionDetailsComponent implements OnInit {
     });
   }
 
+  private loadStatusReason(planId: number): void {
+    this.planService.getStatusReason(planId).subscribe({
+      next: (response) => (this.statusReason = response.data ?? null),
+      // Səbəb əlavə məlumatdır: alınmasa səhifə onsuz göstərilir
+      error: () => (this.statusReason = null),
+    });
+  }
+
   onPlanInfoLoaded(info: PlanInfo): void {
     this.planInfo = info;
     this.canDecide = info.status === AWAITING_APPROVAL && this.permissions.canShow('inspection-approve');
@@ -123,13 +135,13 @@ export class InspectionDetailsComponent implements OnInit {
     const items = this.planInfo ? [planStoreLabel(this.planInfo)] : [];
     this.confirmDialog.confirm(statusActionConfirm(this.returnAction, 1, items))
       .subscribe(result => {
-        if (result) this.submit(RETURNED_TO_MOBILE);
+        if (result) this.submit(RETURNED_TO_MOBILE, result.reason);
       });
   }
 
-  private submit(status: number): void {
+  private submit(status: number, reason?: string): void {
     if (this.isSaving || this.planId == null) return;
-    const item: PlanApprove = { planId: this.planId, status };
+    const item: PlanApprove = { planId: this.planId, status, reason };
     this.isSaving = true;
     this.planService.aprovePlan([item])
       .pipe(finalize(() => (this.isSaving = false)))

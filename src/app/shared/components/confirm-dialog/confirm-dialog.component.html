@@ -22,7 +22,8 @@
     @if (data.reason; as reason) {
         <mat-form-field appearance="outline" class="g-modern-field confirm-reason">
             <mat-label>{{ reason.label || 'Səbəb' }}</mat-label>
-            <textarea matInput rows="3" [formControl]="reasonControl" [required]="reason.required"></textarea>
+            <textarea matInput rows="3" [formControl]="reasonControl" [required]="reason.required"
+                      [attr.maxlength]="reason.maxLength ?? null"></textarea>
             <!-- Hər @if-də bir kök element: mat-form-field məzmunu selektorla yerləşdirir -->
             @if (reason.minLength) {
                 <mat-hint>Ən azı {{ reason.minLength }} simvol</mat-hint>

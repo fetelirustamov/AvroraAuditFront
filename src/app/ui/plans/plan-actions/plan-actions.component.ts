@@ -67,8 +67,7 @@ export class PlanActionsComponent implements OnInit, OnDestroy {
   readonly statusOptions = [PENDING, APPROVED, REJECTED].map(value => ({ value, label: PLAN_STATUS_LABELS[value] }));
 
   readonly approveAction = STATUS_ACTIONS.approve;
-  /** Planın status endpoint-ində səbəb sahəsi yoxdur: səbəb soruşulmur. */
-  readonly rejectAction: StatusAction = { ...STATUS_ACTIONS.reject, requiresReason: false };
+  readonly rejectAction = STATUS_ACTIONS.reject;
 
   readonly form = new FormGroup({
     firmId: new FormControl<number | null>(null, Validators.required),
@@ -235,13 +234,13 @@ export class PlanActionsComponent implements OnInit, OnDestroy {
     if (rows.length === 0) return;
     this.confirmDialog.confirm(statusActionConfirm(action, rows.length, rows.map(planStoreLabel)))
       .subscribe(result => {
-        if (result) this.submit(rows, status);
+        if (result) this.submit(rows, status, result.reason);
       });
   }
 
-  private submit(rows: InspectionPlan[], status: number): void {
+  private submit(rows: InspectionPlan[], status: number, reason?: string): void {
     if (this.isSaving) return;
-    const items = rows.map(row => ({ planId: row.id, status }) as PlanApprove);
+    const items = rows.map(row => ({ planId: row.id, status, reason }) as PlanApprove);
     const many = items.length > 1;
     const successMessage = status === APPROVED
       ? (many ? 'Planlar təsdiqləndi' : 'Plan təsdiqləndi')

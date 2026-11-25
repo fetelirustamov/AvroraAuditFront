@@ -19,7 +19,7 @@ export interface StatusAction {
     tone: StatusTone;
     /** `true`: əməliyyatdan əvvəl təsdiq dialoqu açılır. */
     confirm: boolean;
-    /** `true`: dialoqda səbəb məcburidir. Ekran serverin səbəb sahəsi yoxdursa spread ilə söndürür. */
+    /** `true`: dialoqda səbəb məcburidir. Səbəb statusla birlikdə serverə gedir və qeydin səhifəsində göstərilir. */
     requiresReason: boolean;
     /** Dialoq başlığı (sual formasında). */
     confirmTitle: string;
@@ -27,14 +27,14 @@ export interface StatusAction {
     confirmMessage: (count: number) => string;
 }
 
+/** Serverdəki səbəb sahəsinin uzunluğu (`StatusChangeLogs.Reason`, `StatusReason.MaxLength`). */
+export const STATUS_REASON_MAX_LENGTH = 1000;
+
 const records = (count: number): string => (count === 1 ? 'Seçilmiş qeyd' : `${count} qeyd`);
 
 /**
  * Hər əməliyyat üçün fel, ikon, ton və dialoq mətni.
- *
- * @example
- * // Səbəbi saxlanmayan ekranda rədd:
- * readonly rejectAction: StatusAction = { ...STATUS_ACTIONS.reject, requiresReason: false };
+ * Rədd və geri qaytarma səbəb tələb edir: göndərilən adam (müfəttiş, mağaza) niyəsini görməlidir.
  */
 export const STATUS_ACTIONS: Readonly<Record<StatusActionKey, StatusAction>> = {
     approve: {
@@ -63,7 +63,7 @@ export const STATUS_ACTIONS: Readonly<Record<StatusActionKey, StatusAction>> = {
         icon: 'undo',
         tone: 'neutral',
         confirm: true,
-        requiresReason: false,
+        requiresReason: true,
         confirmTitle: 'Mobilə qaytarılsın?',
         confirmMessage: count => `${records(count)} müfəttişin mobilinə geri göndəriləcək.`,
     },
@@ -73,7 +73,7 @@ export const STATUS_ACTIONS: Readonly<Record<StatusActionKey, StatusAction>> = {
         icon: 'replay',
         tone: 'neutral',
         confirm: true,
-        requiresReason: false,
+        requiresReason: true,
         confirmTitle: 'Yenidən açılsın?',
         confirmMessage: count => `${records(count)} yenidən açılacaq və müfəttişin mobilinə qayıdacaq.`,
     },
@@ -83,7 +83,7 @@ export const STATUS_ACTIONS: Readonly<Record<StatusActionKey, StatusAction>> = {
         icon: 'undo',
         tone: 'neutral',
         confirm: true,
-        requiresReason: false,
+        requiresReason: true,
         confirmTitle: 'Müfəttişə qaytarılsın?',
         confirmMessage: count => `${records(count)} müfəttişin təsdiqinə qaytarılacaq.`,
     },
@@ -107,6 +107,6 @@ export function statusActionConfirm(action: StatusAction, count: number, items?:
         confirmText: action.label,
         tone: action.tone === 'danger' ? 'danger' : 'default',
         items,
-        reason: action.requiresReason ? { required: true } : undefined,
+        reason: action.requiresReason ? { required: true, maxLength: STATUS_REASON_MAX_LENGTH } : undefined,
     };
 }
