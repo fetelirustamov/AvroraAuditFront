@@ -62,12 +62,26 @@ export const uiPageRoutes: Routes = [
     {
         path: 'reports/nonconformity-category-report',
         loadComponent: () => import('./reports/nonconformity-category-report/nonconformity-category-report.component').then(m => m.UygunsuzluqTasnifatHesabatiComponent),
+        data: {
+            menu: {
+                area: 'app', section: 'Hesabat və təhlil', order: 73,
+                group: 'Hesabatlar', groupIcon: 'bar_chart_4_bars', groupOrder: 70,
+                title: 'Uyğunsuzluq təsnifatı', pageKey: 'report-nonconformity-category'
+            }
+        }
     },
     {
+        // Datanı API yalnız Admin və baş müfəttişə verir (RolePolicies.AdminOrHeadInspector):
+        // bu səhifənin icazəsini yalnız həmin rollara verin.
         path: 'reports/inspection-plan-work',
         loadComponent: () => import('./reports/inspection-plan-work/inspection-plan-work.component').then(m => m.InspectionPlanWorkComponent),
-        canActivate: [RoleGuard],
-        data: { roles: ['Admin', 'HeadInspector'] },
+        data: {
+            menu: {
+                area: 'app', section: 'Hesabat və təhlil', order: 74,
+                group: 'Hesabatlar', groupIcon: 'bar_chart_4_bars', groupOrder: 70,
+                title: 'Yoxlama planı iş statusu', pageKey: 'report-inspection-plan-work'
+            }
+        }
     },
 
     // ── Planlama ────────────────────────────────────────────────────
