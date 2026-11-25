@@ -1,5 +1,5 @@
 <app-admin-breadcrumb title="İstifadəçilər"
-    [crumbs]="[{label: 'İstifadəçi İdarəetməsi'}, {label: 'İstifadəçilər'}]">
+    [crumbs]="[{label: 'İstifadəçi idarəetməsi'}, {label: 'İstifadəçilər'}]">
 </app-admin-breadcrumb>
 
 <!-- User Permissions Table -->
@@ -8,7 +8,7 @@
         <mat-card-title>
             <button class="add-btn" type="button" mat-flat-button color="primary" (click)="addNewUser()">
                 <i class="material-symbols-outlined">add</i>
-                Əlavə Et
+                Əlavə et
             </button>
         </mat-card-title>
         <mat-card-subtitle>
@@ -36,7 +36,7 @@
                 <!-- User Name Column — e-poçt adın altında ikinci sətirdir:
                      ayrıca sütun cədvəli genişləndirərdi, axtarış onsuz da e-poçtu tutur -->
                 <ng-container matColumnDef="userName">
-                    <th mat-header-cell *matHeaderCellDef mat-sort-header> İSTİFADƏÇİ ADI </th>
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> İstifadəçi adı </th>
                     <td mat-cell *matCellDef="let user">
                         <div class="user-name">{{user.userName}}</div>
                         <div class="user-email" *ngIf="user.email">{{user.email}}</div>
@@ -46,7 +46,7 @@
 
                 <!-- Institutions Column -->
                 <ng-container matColumnDef="institutions">
-                    <th mat-header-cell *matHeaderCellDef> MÜƏSSİSƏLƏR </th>
+                    <th mat-header-cell *matHeaderCellDef> Firmalar </th>
                     <td mat-cell *matCellDef="let user">
                         <div class="institution-tags">
                             <span class="tag institution-tag" *ngFor="let institution of user.institutions">
@@ -58,7 +58,7 @@
 
                 <!-- Groups Column -->
                 <ng-container matColumnDef="groups">
-                    <th mat-header-cell *matHeaderCellDef> QRUPLAR </th>
+                    <th mat-header-cell *matHeaderCellDef> İcazə qrupları </th>
                     <td mat-cell *matCellDef="let user">
                         <div class="group-tags">
                             <span class="tag group-tag" *ngFor="let group of user.groups">
@@ -70,7 +70,7 @@
 
                 <!-- Status Column — API: status 1 = Aktiv, 0 = Passiv -->
                 <ng-container matColumnDef="status">
-                    <th mat-header-cell *matHeaderCellDef> STATUS </th>
+                    <th mat-header-cell *matHeaderCellDef> Status </th>
                     <td mat-cell *matCellDef="let user">
                         <span class="status-badge" [class.active]="user.status === 'active'"
                             [class.passive]="user.status === 'passive'">
@@ -81,7 +81,7 @@
 
                 <!-- Actions Column -->
                 <ng-container matColumnDef="actions">
-                    <th mat-header-cell *matHeaderCellDef> ƏMƏLİYYATLAR </th>
+                    <th mat-header-cell *matHeaderCellDef> Əməliyyatlar </th>
                     <td mat-cell *matCellDef="let user">
                         <div class="action-buttons">
                             <!-- <button type="button" class="action-btn view-btn" (click)="viewUser(user)" matTooltip="Bax"
@@ -89,7 +89,7 @@
                                 <span class="material-symbols-outlined">visibility</span>
                             </button> -->
                             <button type="button" class="action-btn edit-btn" (click)="editUser(user)"
-                                matTooltip="Redaktə Et" matTooltipPosition="above">
+                                matTooltip="Redaktə et" matTooltipPosition="above">
                                 <span class="material-symbols-outlined">edit</span>
                             </button>
                             <button type="button" class="action-btn delete-btn" (click)="deleteUser(user)"
@@ -117,7 +117,7 @@
         </div>
 
         <!-- Pagination -->
-        <mat-paginator [pageSizeOptions]="[10, 25, 50, 100]" showFirstLastButtons aria-label="Select page of users"
+        <mat-paginator [pageSizeOptions]="[10, 25, 50, 100]" showFirstLastButtons aria-label="İstifadəçilər siyahısının səhifəsini seç"
             [disabled]="isLoading">
         </mat-paginator>
         <app-audit-loading-overlay *ngIf="isLoading"

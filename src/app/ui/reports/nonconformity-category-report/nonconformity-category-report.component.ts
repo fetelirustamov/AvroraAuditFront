@@ -21,6 +21,7 @@ import {
     NonconformityCategoryReportData,
     NonconformityCategoryRow,
 } from './nonconformity-category-report.model';
+import { chartColors } from '../../../shared/utils/chart-colors';
 
 /** Cədvəl sütunu → API filtr açarı */
 const COLUMN_TO_API_FILTER: Record<string, string> = {
@@ -50,9 +51,9 @@ export class UygunsuzluqTasnifatHesabatiComponent implements OnDestroy {
 
     columns = [
         { key: 'row', label: '№' },
-        { key: 'bolge', label: 'Bölgəsi' },
-        { key: 'magaza_kodu', label: 'Ərazi kodu' },
-        { key: 'magaza_adi', label: 'Ərazi adı' },
+        { key: 'bolge', label: 'Bölgə' },
+        { key: 'magaza_kodu', label: 'Mağaza kodu' },
+        { key: 'magaza_adi', label: 'Mağaza adı' },
         { key: 'sobeler', label: 'Şöbələr' },
         { key: 'uygunsuzluq_tasnifat', label: 'Uyğunsuzluq təsnifatı' },
         { key: 'say_sobe', label: 'Şöbələr üzrə uyğunsuzluq sayı' },
@@ -203,7 +204,7 @@ export class UygunsuzluqTasnifatHesabatiComponent implements OnDestroy {
                     this.dataSource.data = data.items.map((item, idx) => this.mapRow(item, start + idx + 1));
                 },
                 error: () => {
-                    this.notify.error('Hesabat yüklənmədi', { message: 'Şəbəkə və ya icazəni yoxlayın.' });
+                    this.notify.error('Hesabat yüklənmədi', { message: 'İnternet bağlantısını və ya icazəni yoxlayın.' });
                     this.resetSummary();
                 },
             });
@@ -242,9 +243,9 @@ export class UygunsuzluqTasnifatHesabatiComponent implements OnDestroy {
         this.exportWithAllRows(rows => {
             const data = rows.map(r => ({
                 '№': r.row,
-                'Bölgəsi': r.bolge,
-                'Ərazi kodu': r.magaza_kodu,
-                'Ərazi adı': r.magaza_adi,
+                'Bölgə': r.bolge,
+                'Mağaza kodu': r.magaza_kodu,
+                'Mağaza adı': r.magaza_adi,
                 'Şöbələr': r.sobeler,
                 'Uyğunsuzluq təsnifatı': r.uygunsuzluq_tasnifat,
                 'Şöbələr üzrə uyğunsuzluq sayı': r.say_sobe,
@@ -253,7 +254,7 @@ export class UygunsuzluqTasnifatHesabatiComponent implements OnDestroy {
             void this.fileExport.exportRowsToExcel(
                 data,
                 'Uyğunsuzluq təsnifatı',
-                datedFileName('uygunsuzluq-tasnifat', 'xlsx'),
+                datedFileName('uygunsuzluq-tesnifati', 'xlsx'),
             );
         });
     }
@@ -263,6 +264,8 @@ export class UygunsuzluqTasnifatHesabatiComponent implements OnDestroy {
             const labels = this.columns.map(c => c.label);
             const body = rows.map(r =>
                 this.columns.map(c => ({ text: String(r[c.key as keyof NonconformityCategoryRow] ?? ''), fontSize: 7 })));
+            // PDF-də başlıq neytraldır: rəng məna daşımır
+            const pdf = chartColors();
             const docDef = {
                 pageOrientation: 'landscape' as const,
                 content: [{
@@ -273,17 +276,17 @@ export class UygunsuzluqTasnifatHesabatiComponent implements OnDestroy {
                     },
                     layout: 'lightHorizontalLines',
                 }],
-                styles: { th: { bold: true, color: '#fff', fillColor: '#605DFF', fontSize: 8 } },
+                styles: { th: { bold: true, color: pdf.textStrong, fillColor: pdf.surfaceSubtle, fontSize: 8 } },
                 defaultStyle: { fontSize: 7 },
             };
-            void this.fileExport.exportPdf(docDef, datedFileName('uygunsuzluq-tasnifat', 'pdf'));
+            void this.fileExport.exportPdf(docDef, datedFileName('uygunsuzluq-tesnifati', 'pdf'));
         });
     }
 
     /** Export cari səhifəni deyil, filtrə uyğun bütün sətirləri götürür. */
     private exportWithAllRows(onReady: (rows: NonconformityCategoryRow[]) => void): void {
         if (!this.hasSubmittedSearch || this.allCount === 0) {
-            this.notify.error('Export üçün məlumat yoxdur', { message: 'Əvvəlcə "Axtar" düyməsini basın.' });
+            this.notify.error('İxrac üçün məlumat yoxdur', { message: 'Əvvəlcə "Axtar" düyməsini basın.' });
             return;
         }
 
@@ -301,13 +304,13 @@ export class UygunsuzluqTasnifatHesabatiComponent implements OnDestroy {
                 next: res => {
                     const rows = this.normalizeData(res?.data).items.map((item, idx) => this.mapRow(item, idx + 1));
                     if (!rows.length) {
-                        this.notify.error('Export üçün məlumat tapılmadı');
+                        this.notify.error('İxrac üçün məlumat tapılmadı');
                         return;
                     }
                     onReady(rows);
                 },
                 error: () => {
-                    this.notify.error('Export üçün məlumat yüklənmədi', { message: 'Şəbəkə və ya icazəni yoxlayın.' });
+                    this.notify.error('İxrac üçün məlumat yüklənmədi', { message: 'İnternet bağlantısını və ya icazəni yoxlayın.' });
                 },
             });
     }

@@ -1,8 +1,7 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { NgScrollbarModule } from 'ngx-scrollbar';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { RouterLink, RouterLinkActive } from '@angular/router';
-import { NgClass } from '@angular/common';
 import { ToggleService } from '../header/toggle.service';
 import { AuthService } from '../../auth/auth.service';
 import { MenuService } from '../menu/menu.service';
@@ -10,7 +9,7 @@ import { uiPageRoutes } from '../../ui/ui-pages.routes';
 
 @Component({
     selector: 'app-sidebar',
-    imports: [NgScrollbarModule, MatExpansionModule, RouterLinkActive, RouterLink, NgClass],
+    imports: [NgScrollbarModule, MatExpansionModule, RouterLinkActive, RouterLink],
     templateUrl: './sidebar.component.html',
     styleUrl: './sidebar.component.scss'
 })
@@ -19,9 +18,6 @@ export class SidebarComponent {
 
     // Menyu route ağacından (data.menu) icazəyə görə qurulur — statik HTML yoxdur.
     readonly menu = this.menuService.build('', uiPageRoutes);
-
-    // Mat Expansion
-    readonly panelOpenState = signal(false);
 
     isSidebarToggled = false;
 
@@ -34,7 +30,6 @@ export class SidebarComponent {
         });
     }
 
-    // Burger Menu Toggle
     toggle() {
         this.toggleService.toggle();
     }

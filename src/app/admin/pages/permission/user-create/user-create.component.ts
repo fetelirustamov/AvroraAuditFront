@@ -151,7 +151,7 @@ export class UserCreateComponent implements OnInit {
             },
             error: () => {
                 this.roles = [];
-                this.notify.error('Səlahiyyət qrupları yüklənə bilmədi');
+                this.notify.error('İcazə qrupları yüklənə bilmədi');
             }
         });
     }
@@ -164,7 +164,7 @@ export class UserCreateComponent implements OnInit {
     async submit(): Promise<void> {
         if (this.form.invalid) {
             this.form.markAllAsTouched();
-            this.notify.warning('Forma tamamlanmayıb', { message: 'Zəhmət olmasa tələb olunan sahələri doldurun (firma və rol daxil).' });
+            this.notify.warning('Forma tamamlanmayıb', { message: 'Zəhmət olmasa tələb olunan sahələri doldurun (firma və icazə qrupu daxil).' });
             return;
         }
 
@@ -203,7 +203,7 @@ export class UserCreateComponent implements OnInit {
                 } catch {
                     this.isSaving = false;
                     this.notify.error('İstifadəçi yaradıldı, amma firma/rol təyinatı alınmadı', {
-                        message: 'İndi "Rol və Firma Təyinatı" səhifəsindən əl ilə tamamlaya bilərsiniz.'
+                        message: 'İndi "Rol və firma təyinatı" səhifəsindən əl ilə tamamlaya bilərsiniz.'
                     });
                     if (this.dialogRef) {
                         this.dialogRef.close({ created: true, userCode: createPayload.userCode });

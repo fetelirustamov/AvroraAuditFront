@@ -1,67 +1,56 @@
-<div class="sidebar-area bg-white transition active" [ngClass]="{'active': isSidebarToggled}">
-    <div class="logo bg-white">
-        <a routerLink="/dashboard" class="d-flex align-items-center position-relative">
-            <img src="images/logo-icon.svg" class="transition position-relative" alt="AuditPro">
-            <span class="fw-bold text-black lh-1 transition position-relative">
-                <img src="images/logo-text.svg" alt="Avrora Audit" class="logo-text-img">
-            </span>
+<aside class="sidebar-area" [class.active]="isSidebarToggled">
+    <div class="sidebar-logo">
+        <a routerLink="/dashboard" class="logo-link">
+            <img src="images/logo-icon.svg" class="logo-icon" alt="Loqo">
+            <img src="images/logo-text.svg" class="logo-text" alt="">
         </a>
+        <button type="button" class="sidebar-close" (click)="toggle()" aria-label="Menyunu bağla">
+            <span class="material-symbols-outlined" aria-hidden="true">close</span>
+        </button>
     </div>
 
-    <div (click)="toggle()" class="burger-menu transition" [ngClass]="{'active': isSidebarToggled}">
-        <span class="top-bar transition d-block bg-black"></span>
-        <span class="middle-bar transition d-block bg-black"></span>
-        <span class="bottom-bar transition d-block bg-black"></span>
-    </div>
+    <ng-scrollbar visibility="hover" class="sidebar-scroll">
+        <nav class="sidebar-menu" aria-label="Menyu">
+            <mat-accordion displayMode="flat">
+                <!-- Menyu route ağacından (data.menu) icazəyə görə qurulur. Statik link yoxdur. -->
+                @for (section of menu(); track section.label) {
+                    <span class="menu-section-title">{{ section.label }}</span>
 
-    <ng-scrollbar visibility="hover">
-        <div class="sidebar-inner">
-            <div class="sidebar-menu">
-                <mat-accordion>
-                    <!-- Menyu route ağacından (data.menu) icazəyə görə qurulur. Statik link yoxdur. -->
-                    @for (section of menu(); track section.label) {
-                        <span class="sub-title d-block fw-medium text-uppercase">
-                            {{ section.label }}
-                        </span>
-
-                        @for (entry of section.entries; track $index) {
-                            @if (entry.kind === 'link') {
-                                <a [routerLink]="entry.path" class="sidebar-menu-link" routerLinkActive="active"
-                                    [routerLinkActiveOptions]="{exact: true}">
-                                    <i class="material-symbols-outlined">{{ entry.icon }}</i>
-                                    <span class="title">{{ entry.title }}</span>
-                                </a>
-                            } @else {
-                                <mat-expansion-panel (opened)="panelOpenState.set(true)"
-                                    (closed)="panelOpenState.set(false)">
-                                    <mat-expansion-panel-header>
-                                        <mat-panel-title>
-                                            <i class="material-symbols-outlined">{{ entry.icon }}</i>
-                                            <span class="title">{{ entry.title }}</span>
-                                        </mat-panel-title>
-                                    </mat-expansion-panel-header>
-                                    <ul class="sidebar-sub-menu">
-                                        @for (item of entry.items; track item.pageKey) {
-                                            <li class="sidemenu-item">
-                                                <a [routerLink]="item.path" routerLinkActive="active"
-                                                    [routerLinkActiveOptions]="{exact: true}" class="sidemenu-link">
-                                                    {{ item.title }}
-                                                </a>
-                                            </li>
-                                        }
-                                    </ul>
-                                </mat-expansion-panel>
-                            }
+                    @for (entry of section.entries; track $index) {
+                        @if (entry.kind === 'link') {
+                            <a [routerLink]="entry.path" class="sidebar-menu-link" routerLinkActive="active"
+                                [routerLinkActiveOptions]="{exact: true}">
+                                <span class="material-symbols-outlined" aria-hidden="true">{{ entry.icon }}</span>
+                                <span class="title">{{ entry.title }}</span>
+                            </a>
+                        } @else {
+                            <mat-expansion-panel>
+                                <mat-expansion-panel-header>
+                                    <mat-panel-title>
+                                        <span class="material-symbols-outlined" aria-hidden="true">{{ entry.icon }}</span>
+                                        <span class="title">{{ entry.title }}</span>
+                                    </mat-panel-title>
+                                </mat-expansion-panel-header>
+                                <ul class="sidebar-sub-menu">
+                                    @for (item of entry.items; track item.pageKey) {
+                                        <li class="sidemenu-item">
+                                            <a [routerLink]="item.path" routerLinkActive="active"
+                                                [routerLinkActiveOptions]="{exact: true}" class="sidemenu-link">
+                                                {{ item.title }}
+                                            </a>
+                                        </li>
+                                    }
+                                </ul>
+                            </mat-expansion-panel>
                         }
                     }
+                }
+            </mat-accordion>
 
-                    <button type="button" (click)="logout()" class="sidebar-menu-link sidebar-logout-btn">
-                        <i class="material-symbols-outlined">logout</i>
-                        <span class="title">Çıxış</span>
-                    </button>
-
-                </mat-accordion>
-            </div>
-        </div>
+            <button type="button" (click)="logout()" class="sidebar-menu-link sidebar-logout-btn">
+                <span class="material-symbols-outlined" aria-hidden="true">logout</span>
+                <span class="title">Çıxış</span>
+            </button>
+        </nav>
     </ng-scrollbar>
-</div>
+</aside>

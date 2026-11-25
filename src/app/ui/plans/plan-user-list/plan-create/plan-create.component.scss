@@ -3,7 +3,7 @@
 }
 
 .text-soft-danger {
-    background-color: white !important;
+    background-color: var(--surface) !important;
     border: 1px solid red !important;
     height: 36px !important;
     min-height: 36px !important;
@@ -12,7 +12,7 @@
 }
 
 .text-soft-danger:hover {
-    background-color: rgb(252, 224, 224) !important;
+    background-color: var(--danger-soft) !important;
 }
 
 .horizontalSpace {
@@ -50,19 +50,19 @@
     padding: 6px 12px;
     position: sticky;
     top: 0;
-    background: #fff;
+    background: var(--surface);
     z-index: 1;
 
     input {
         width: 100%;
         padding: 6px 8px;
-        border: 1px solid #e0e0e0;
+        border: 1px solid var(--border);
         border-radius: 4px;
         font-size: 13px;
         outline: none;
 
         &:focus {
-            border-color: #3d4fff;
+            border-color: var(--accent);
         }
     }
 }

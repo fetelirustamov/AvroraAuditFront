@@ -8,7 +8,6 @@
                     <span></span>
                     <span></span>
                 </div>
-                <span class="brand-name">AuditPro</span>
             </div>
             <h2 class="login-title mb-10">Giriş</h2>
             <p class="login-subtitle">Hesabınıza daxil olun</p>
@@ -30,7 +29,7 @@
                         type="email"
                         autocomplete="username"
                         required
-                        placeholder="admin@example.com"
+                        placeholder="ad.soyad@sirket.az"
                         aria-describedby="email-help"
                     />
                     <mat-hint id="email-help">Sistemə daxil olmaq üçün istifadə etdiyiniz e-poçt ünvanı.</mat-hint>
@@ -46,7 +45,7 @@
             <!-- Password Field -->
             <div class="form-field-group">
                 <label for="admin-password" class="field-label">
-                    Şifrə
+                    Parol
                     <span class="required-indicator">*</span>
                 </label>
                 <mat-form-field appearance="fill" class="custom-form-field">
@@ -59,14 +58,14 @@
                         autocomplete="current-password"
                         required
                         minlength="5"
-                        placeholder="Şifrənizi daxil edin"
+                        placeholder="Parolunuzu daxil edin"
                     />
                     <button
                         mat-icon-button
                         matSuffix
                         type="button"
                         (click)="hide = !hide"
-                        [attr.aria-label]="hide ? 'Şifrəni göstər' : 'Şifrəni gizlət'"
+                        [attr.aria-label]="hide ? 'Parolu göstər' : 'Parolu gizlət'"
                         [attr.aria-pressed]="!hide"
                         class="toggle-password-btn"
                     >
@@ -76,10 +75,10 @@
                     </button>
 
                     <mat-error *ngIf="form.get('password')?.hasError('required') && form.get('password')?.touched">
-                        Şifrə məcburidir.
+                        Parol məcburidir.
                     </mat-error>
                     <mat-error *ngIf="form.get('password')?.hasError('minlength') && form.get('password')?.touched">
-                        Şifrə ən azı 5 simvoldan ibarət olmalıdır.
+                        Parol ən azı 5 simvoldan ibarət olmalıdır.
                     </mat-error>
                 </mat-form-field>
             </div>
@@ -91,7 +90,7 @@
                 type="submit"
                 [disabled]="loading || form.invalid"
             >
-                <span *ngIf="!loading">Daxil ol</span>
+                <span *ngIf="!loading">Giriş et</span>
                 <span *ngIf="loading">Gözləyin...</span>
             </button>
 

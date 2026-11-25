@@ -2,9 +2,9 @@
 .modal-like {
     mat-card {
         margin-bottom: 25px;
-        background-color: #ffffff !important;
+        background-color: var(--surface) !important;
         border-radius: 12px;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        border: 1px solid var(--border);
     }
 
     .header-container {
@@ -44,7 +44,7 @@
     .field-hint {
         display: block;
         margin-top: 4px;
-        color: #FF4023;
+        color: var(--danger-text);
         font-size: 12px;
     }
 
@@ -54,24 +54,24 @@
         gap: 8px;
         margin: 0;
         padding: 12px 16px;
-        border-radius: 8px;
-        background-color: #F4F4FF;
-        color: #4B5563;
-        font-size: 13px;
+        border-radius: var(--radius-md);
+        background-color: var(--info-soft);
+        color: var(--info-text);
+        font-size: var(--fs-13);
         line-height: 1.5;
 
         i {
             font-size: 18px;
-            color: #605DFF;
+            color: var(--info-text);
             flex-shrink: 0;
         }
 
         &.form-note-warn {
-            background-color: #FFF4E5;
-            color: #92400E;
+            background-color: var(--warning-soft);
+            color: var(--warning-text);
 
             i {
-                color: #F59E0B;
+                color: var(--warning-text);
             }
         }
     }

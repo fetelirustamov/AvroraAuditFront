@@ -197,9 +197,9 @@ export class DisruptionMiddleDetailsComponent implements AfterViewInit {
 
   checkboxLabel(row?: DisruptionDto): string {
     if (!row) {
-      return `${this.isAllSelected() ? 'deselect' : 'select'} all`;
+      return this.isAllSelected() ? 'Bütün seçimləri götür' : 'Hamısını seç';
     }
-    return `${this.selection.isSelected(row) ? 'deselect' : 'select'} row ${row.id + 1}`;
+    return `${this.selection.isSelected(row) ? 'Seçimi götür' : 'Seç'}: sətir ${row.id + 1}`;
   }
 
   onSelectFirm(selectedFirmId: number) {
@@ -244,16 +244,23 @@ export class DisruptionMiddleDetailsComponent implements AfterViewInit {
   }
 
   changeDisruptionStatus(row: DisruptionDto, status: number) {
-    this.submitStatuses([row], () => status, 'Əməliyyat uğurla tamamlandı');
+    this.submitStatuses([row], () => status, this.statusMessage(status));
   }
 
   changeSelectedDisruptionStatus(status: number) {
-    this.submitStatuses(this.selection.selected, () => status, 'Əməliyyat uğurla tamamlandı');
+    this.submitStatuses(this.selection.selected, () => status, this.statusMessage(status));
   }
 
   // Seçilmiş sətirlərin statusu qarışıq ola bilər — hər sətir öz növbəti onay statusunu alır
   approveSelected() {
-    this.submitStatuses(this.selection.selected, row => this.approveStatus(row), 'Uyğunsuzluq təstiqləndi');
+    this.submitStatuses(this.selection.selected, row => this.approveStatus(row), this.statusMessage(2));
+  }
+
+  /** Bildiriş düymədəki feli təkrarlayır: -1 Rədd et, 0 Müfəttişə qaytar, qalanı Təsdiqlə */
+  private statusMessage(status: number): string {
+    if (status === -1) return 'Uyğunsuzluq rədd edildi';
+    if (status === 0) return 'Uyğunsuzluq müfəttişə qaytarıldı';
+    return 'Uyğunsuzluq təsdiqləndi';
   }
 
   private submitStatuses(rows: DisruptionDto[], statusOf: (row: DisruptionDto) => number, successMessage: string) {

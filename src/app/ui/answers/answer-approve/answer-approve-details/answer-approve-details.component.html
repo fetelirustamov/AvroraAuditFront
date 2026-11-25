@@ -35,7 +35,7 @@
                     <td mat-cell *matCellDef="let element">{{ element.sectionName }}</td>
                 </ng-container>
                 <ng-container matColumnDef="disruptionCategoryName">
-                    <th mat-header-cell *matHeaderCellDef>Kategoriya</th>
+                    <th mat-header-cell *matHeaderCellDef>Kateqoriya</th>
                     <td mat-cell *matCellDef="let element">{{ element.disruptionCategoryName }}</td>
                 </ng-container>
                 <ng-container matColumnDef="reasonName">
@@ -96,11 +96,11 @@
                     </th>
                     <td mat-cell *matCellDef="let element">
                         <div class="d-flex gap-2">
-                            <button mat-icon-button matTooltip="Təsdiq" [disabled]="isSaving"
+                            <button mat-icon-button matTooltip="Təsdiqlə" aria-label="Təsdiqlə" [disabled]="isSaving"
                                 (click)="changeDisruptionAnswerStatus(element, 1)">
                                 <span class="material-symbols-outlined approve-icon">check_circle</span>
                             </button>
-                            <button mat-icon-button matTooltip="Rədd" [disabled]="isSaving"
+                            <button mat-icon-button matTooltip="Rədd et" aria-label="Rədd et" [disabled]="isSaving"
                                 (click)="openRejectDialog(element)">
                                 <span class="material-symbols-outlined reject-icon">cancel</span>
                             </button>
@@ -168,7 +168,7 @@
         <mat-card class="border-radius d-block bg-white border-0 shadow-none">
             <mat-card-header>
                 <mat-card-title>
-                    <h5 class="mb-0">Cavab detallar</h5>
+                    <h5 class="mb-0">Cavab detalları</h5>
                 </mat-card-title>
                 <mat-card-subtitle>
                     <button mat-button (click)="closeDetailsDialog()">
@@ -189,7 +189,7 @@
                         <td mat-cell *matCellDef="let element">{{ element.sectionName }}</td>
                     </ng-container>
                     <ng-container matColumnDef="disruptionCategoryName">
-                        <th mat-header-cell *matHeaderCellDef>Kategoriya</th>
+                        <th mat-header-cell *matHeaderCellDef>Kateqoriya</th>
                         <td mat-cell *matCellDef="let element">{{ element.disruptionCategoryName }}</td>
                     </ng-container>
                     <ng-container matColumnDef="reasonName">
@@ -224,15 +224,15 @@
                         </td>
                     </ng-container>
                     <ng-container matColumnDef="answeredUser">
-                        <th mat-header-cell *matHeaderCellDef>Cavablandıran İstifadəçi</th>
+                        <th mat-header-cell *matHeaderCellDef>Cavablandıran istifadəçi</th>
                         <td mat-cell *matCellDef="let element">{{ element.answeredUser }}</td>
                     </ng-container>
                     <ng-container matColumnDef="answerNote">
-                        <th mat-header-cell *matHeaderCellDef>Cavab Açıqlama</th>
+                        <th mat-header-cell *matHeaderCellDef>Cavab açıqlaması</th>
                         <td mat-cell *matCellDef="let element">{{ element.note }}</td>
                     </ng-container>
                     <ng-container matColumnDef="answerMedia">
-                        <th mat-header-cell *matHeaderCellDef>Cavab Media</th>
+                        <th mat-header-cell *matHeaderCellDef>Cavab mediası</th>
                         <td mat-cell *matCellDef="let element">
                             <app-media #modalAnswerMediaImg [id]="element.id" [type]="MediaType.Image" [module]="Module.DisAnswer">
                                 <span class="material-symbols-outlined primary" (click)="modalAnswerMediaImg.open()" style="cursor:pointer;" media-trigger>
@@ -255,7 +255,7 @@
                         </td>
                     </ng-container>
                     <ng-container matColumnDef="answerStatus">
-                        <th mat-header-cell *matHeaderCellDef> Cavab Status </th>
+                        <th mat-header-cell *matHeaderCellDef> Cavab statusu </th>
                         <td mat-cell *matCellDef="let element">
                             <span [ngClass]="getStatusClass(element.approveStatus)">
                                 {{ getStatusText(element.approveStatus) }}

@@ -17,6 +17,7 @@ import { InspectionsService } from '../../inspections/inspections.service';
 import { Firm } from '../../inspections/firm.model';
 import { NotificationService } from '../../../shared/services/notification.service';
 import { AuditLoadingOverlayComponent } from '../../components/audit-loading-overlay/audit-loading-overlay.component';
+import { chartColors } from '../../../shared/utils/chart-colors';
 
 /** Cari səhifənin sətirləri + bütün filtrlənmiş sətirlər üzrə cəmlər (API: InspectionReportResponse) */
 interface ReportPageWithTotals {
@@ -45,8 +46,8 @@ export class YoxlamaStatistikasiComponent implements AfterViewInit, OnDestroy {
 
     storeColumns = [
         { key: 'row', label: '№' },
-        { key: 'magaza_kodu', label: 'Ərazi kodu' },
-        { key: 'magaza_adi', label: 'Ərazi adı' },
+        { key: 'magaza_kodu', label: 'Mağaza kodu' },
+        { key: 'magaza_adi', label: 'Mağaza adı' },
         { key: 'bolge', label: 'Bölgə' },
         { key: 'planli_say', label: 'Planlı yoxlama sayı' },
         { key: 'plandankanar_say', label: 'Plandankənar yoxlama sayı' },
@@ -249,7 +250,7 @@ export class YoxlamaStatistikasiComponent implements AfterViewInit, OnDestroy {
                 this.applyEmployeeResponse(employee);
             },
             error: () => {
-                this.notify.error('Hesabat sorğusu uğursuz oldu', { message: 'Şəbəkə və ya icazəni yoxlayın.' });
+                this.notify.error('Hesabat sorğusu uğursuz oldu', { message: 'İnternet bağlantısını və ya icazəni yoxlayın.' });
                 this.storeDataSource.data = [];
                 this.employeeDataSource.data = [];
                 this.storeTotal = 0;
@@ -266,7 +267,7 @@ export class YoxlamaStatistikasiComponent implements AfterViewInit, OnDestroy {
         ).subscribe({
             next: res => this.applyStoreResponse(res),
             error: () => {
-                this.notify.error('Ərazi hesabatı yüklənmədi');
+                this.notify.error('Mağaza hesabatı yüklənmədi');
                 this.storeDataSource.data = [];
                 this.storeTotal = 0;
             },
@@ -281,7 +282,7 @@ export class YoxlamaStatistikasiComponent implements AfterViewInit, OnDestroy {
         ).subscribe({
             next: res => this.applyEmployeeResponse(res),
             error: () => {
-                this.notify.error('Auditor hesabatı yüklənmədi');
+                this.notify.error('Əməkdaş hesabatı yüklənmədi');
                 this.employeeDataSource.data = [];
                 this.employeeTotal = 0;
             },
@@ -406,7 +407,7 @@ export class YoxlamaStatistikasiComponent implements AfterViewInit, OnDestroy {
         const all = await this.fetchAllRows(tab);
         const data = tab === 'store'
             ? all.map((r: any) => ({
-                '№': r.row, 'Ərazi kodu': r.magaza_kodu, 'Ərazi adı': r.magaza_adi,
+                '№': r.row, 'Mağaza kodu': r.magaza_kodu, 'Mağaza adı': r.magaza_adi,
                 'Bölgə': r.bolge, 'Planlı yoxlama sayı': r.planli_say, 'Plandankənar yoxlama sayı': r.plandankanar_say,
             }))
             : all.map((r: any) => ({
@@ -415,7 +416,7 @@ export class YoxlamaStatistikasiComponent implements AfterViewInit, OnDestroy {
             }));
         await this.fileExport.exportRowsToExcel(
             data,
-            tab === 'store' ? 'Ərazi bazında' : 'Əməkdaş bazında',
+            tab === 'store' ? 'Mağaza bazında' : 'Əməkdaş bazında',
             datedFileName(`yoxlama-statistikasi-${tab}`, 'xlsx'),
         );
     }
@@ -424,14 +425,16 @@ export class YoxlamaStatistikasiComponent implements AfterViewInit, OnDestroy {
         const isStore = tab === 'store';
         const all = await this.fetchAllRows(tab);
         const headers = isStore
-            ? ['№', 'Ərazi kodu', 'Ərazi adı', 'Bölgə', 'Planlı yoxlama sayı', 'Plandankənar yoxlama sayı']
+            ? ['№', 'Mağaza kodu', 'Mağaza adı', 'Bölgə', 'Planlı yoxlama sayı', 'Plandankənar yoxlama sayı']
             : ['№', 'İstifadəçi kodu', 'Əməkdaş adı və soyadı', 'Planlı yoxlama sayı', 'Plandankənar yoxlama sayı'];
         const rows = isStore
             ? all.map((r: any) => [r.row, r.magaza_kodu, r.magaza_adi, r.bolge, r.planli_say, r.plandankanar_say])
             : all.map((r: any) => [r.row, r.user_kodu, r.emekdas_adi, r.planli_say, r.plandankanar_say]);
+        // PDF-də başlıq neytraldır: rəng məna daşımır
+        const pdf = chartColors();
         const docDef: any = {
             content: [{ table: { headerRows: 1, body: [headers.map(h => ({ text: h, style: 'th' })), ...rows] }, layout: 'lightHorizontalLines' }],
-            styles: { th: { bold: true, color: '#fff', fillColor: '#605DFF', fontSize: 9 } },
+            styles: { th: { bold: true, color: pdf.textStrong, fillColor: pdf.surfaceSubtle, fontSize: 9 } },
             defaultStyle: { fontSize: 9 }
         };
         void this.fileExport.exportPdf(docDef, datedFileName(`yoxlama-statistikasi-${tab}`, 'pdf'));

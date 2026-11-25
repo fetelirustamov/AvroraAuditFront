@@ -4,14 +4,14 @@
         <div class="header-text">
             <h1 class="page-title">
                 <span class="material-symbols-outlined title-icon">event_available</span>
-                Aylıq Yoxlama Statistikası
+                Yoxlama statistikası
             </h1>
             <p class="page-subtitle">Planlı və plandankənar yoxlamaların aylıq statistikası</p>
         </div>
         <div class="header-actions">
             <button class="export-btn" [matMenuTriggerFor]="downloadMenu">
                 <span class="material-symbols-outlined">download</span>
-                Yüklə
+                İxrac et
                 <span class="material-symbols-outlined arrow-icon">expand_more</span>
             </button>
         </div>
@@ -31,7 +31,6 @@
 
 <!-- Filter toolbar -->
 <div class="filter-card">
-    <div class="filter-card-accent" aria-hidden="true"></div>
     <div class="filter-card-body">
         <div class="filter-card-header">
             <span class="material-symbols-outlined filter-header-icon">tune</span>
@@ -93,11 +92,11 @@
     <mat-tab-group animationDuration="200ms" class="report-tabs" [class.audit-table-muted]="loadingStore || loadingEmployee"
         (selectedIndexChange)="onTabIndexChange($event)">
 
-        <!-- TAB 1: Ərazi bazında -->
+        <!-- TAB 1: Mağaza bazında -->
         <mat-tab>
             <ng-template mat-tab-label>
                 <span class="material-symbols-outlined tab-icon">store</span>
-                Ərazi və bölgə bazında
+                Mağaza və bölgə bazında
             </ng-template>
 
             <!-- KPI Summary -->
@@ -126,7 +125,7 @@
                     </div>
                     <div class="kpi-body">
                         <div class="kpi-value">{{ storeCount }}</div>
-                        <div class="kpi-label">Ərazi sayı</div>
+                        <div class="kpi-label">Mağaza sayı</div>
                     </div>
                 </div>
             </div>
@@ -134,7 +133,7 @@
             <div class="tab-table-header">
                 <div class="table-info">
                     <span class="material-symbols-outlined table-info-icon">table_view</span>
-                    <span class="table-title">Ərazi bazında nəticələr</span>
+                    <span class="table-title">Mağaza bazında nəticələr</span>
                     <span class="result-badge">{{ storeTotal }} qeyd</span>
                 </div>
                 <button class="clear-filter-btn" *ngIf="hasStoreTableColumnFilters" (click)="clearStoreFilters()">

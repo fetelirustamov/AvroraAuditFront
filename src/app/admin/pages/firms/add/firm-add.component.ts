@@ -27,7 +27,7 @@ import { FirmDto } from '../../../models/firm.model';
 })
 export class FirmAddComponent {
     form: FormGroup;
-    pageTitle = 'Yeni Firma';
+    pageTitle = 'Yeni firma';
     isSaving = false;
     private readonly editId: number | null;
 
@@ -41,7 +41,7 @@ export class FirmAddComponent {
     ) {
         const item = data?.mode === 'edit' ? data.item : null;
         this.editId = item?.id ?? null;
-        if (item) this.pageTitle = 'Firmanı Redaktə Et';
+        if (item) this.pageTitle = 'Firmanı redaktə et';
 
         this.form = this.fb.group({
             name: [item?.name ?? '', Validators.required],

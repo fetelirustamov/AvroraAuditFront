@@ -2,70 +2,37 @@
 //
 // Səhifə başlığı, `.export-btn`, `.kpi-*`, `.table-card`, `.row-number`
 // `src/_design-system.scss`-dən gəlir. Burada yalnız bu səhifəyə xas olanlar:
-// indiqo vurğu, sütun nişanları və cədvəl tonları.
-//
-// Qeyd: əvvəl rənglər `lighten()`/`mix()` ilə hesablanırdı (Sass-da köhnəlmiş
-// funksiyalar) — hesablanmış dəyərlər indi birbaşa yazılıb və indiqo şkalasına
-// (600 → 300) uyğunlaşdırılıb.
+// sütun filtrləri, sütun nişanları və cədvəl sətirləri.
 
 @import '../report-filter-toolbar';
-
-.report-page-header {
-    --page-accent-from: #3949AB; // indigo 600
-    --page-accent-to: #7986CB;   // indigo 300
-
-    .page-subtitle {
-        color: rgba(255, 255, 255, .78);
-    }
-}
-
-// İndiqo cədvəl tonları
-$table-header-bg: #E8EAF6;
-$row-hover: #F5F6FB;
-$row-hover-alt: #F9FAFD;
-
-.kpi-icon {
-    &.total-icon {
-        background: var(--primarySoft);
-        color: var(--primaryColor);
-    }
-    &.score-icon {
-        background: var(--successSoft);
-        color: var(--successColor);
-    }
-    &.warn-icon {
-        background: var(--warningSoft);
-        color: var(--warningStrong);
-    }
-}
 
 .clear-filter-btn {
     display: flex;
     align-items: center;
     gap: 6px;
     padding: 6px 14px;
-    border: 1px solid rgba(255, 64, 35, .2);
+    border: 1px solid var(--border-strong);
     border-radius: var(--radius-sm);
-    background: var(--dangerSoft);
-    color: var(--dangerColor);
-    font-size: 12px;
-    font-weight: 600;
+    background: var(--surface);
+    color: var(--text);
+    font-size: var(--fs-12);
+    font-weight: 500;
     cursor: pointer;
-    transition: background .2s;
+    transition: background var(--transition);
 
     .material-symbols-outlined {
         font-size: 16px;
+        color: var(--text-muted);
     }
     &:hover {
-        background: var(--dangerColor);
-        color: var(--whiteColor);
+        background: var(--surface-muted);
     }
 }
 
 :host ::ng-deep .filter-row th.filter-header-cell {
     background: var(--surface);
     padding: 6px 8px;
-    border-bottom: 2px solid var(--borderColor);
+    border-bottom: 1px solid var(--border);
 }
 
 .filter-input-wrap {
@@ -73,19 +40,18 @@ $row-hover-alt: #F9FAFD;
     align-items: center;
     gap: 4px;
     padding: 4px 8px;
-    border: 1px solid var(--borderColor);
+    border: 1px solid var(--border);
     border-radius: var(--radius-sm);
-    background: var(--surface-muted);
-    transition: border-color .2s;
+    background: var(--surface);
+    transition: border-color var(--transition);
 
     &:focus-within {
-        border-color: var(--primaryColor);
-        box-shadow: 0 0 0 3px rgba(96, 93, 255, .1);
+        border-color: var(--accent);
     }
     .filter-input-icon {
         flex-shrink: 0;
         font-size: 14px;
-        color: var(--text-muted);
+        color: var(--text-faint);
     }
     .filter-input {
         width: 100%;
@@ -93,45 +59,39 @@ $row-hover-alt: #F9FAFD;
         border: none;
         outline: none;
         background: transparent;
-        font-size: 12px;
+        font-size: var(--fs-12);
         color: var(--text-strong);
 
         &::placeholder {
-            color: var(--text-muted);
+            color: var(--text-faint);
         }
     }
 }
 
 // ── Cədvəl sətirləri ────────────────────────────────────────────────────────
 :host ::ng-deep .data-header-row th.data-header-cell {
-    background: $table-header-bg;
-    color: var(--bodyColor);
-    font-size: 11.5px;
-    font-weight: 700;
+    background: var(--surface-muted);
+    color: var(--text-muted);
+    font-size: var(--fs-12);
+    font-weight: 600;
     text-align: center;
     padding: 10px 12px;
-    border-bottom: 2px solid var(--borderColor);
+    border-bottom: 1px solid var(--border);
 }
 :host ::ng-deep .data-row {
     height: 46px;
 
     td.mat-mdc-cell {
         padding: 8px 12px;
-        border-bottom: 1px solid var(--borderColor);
+        border-bottom: 1px solid var(--border);
         text-align: center;
     }
     &:hover td.mat-mdc-cell {
-        background: $row-hover;
+        background: var(--surface-muted);
     }
     &:last-child td.mat-mdc-cell {
         border-bottom: none;
     }
-}
-:host ::ng-deep .data-row:nth-child(even) td.mat-mdc-cell {
-    background: var(--surface-muted);
-}
-:host ::ng-deep .data-row:nth-child(even):hover td.mat-mdc-cell {
-    background: $row-hover-alt;
 }
 
 // ── Sütun nişanları ─────────────────────────────────────────────────────────
@@ -145,36 +105,25 @@ $row-hover-alt: #F9FAFD;
 .sobe-badge,
 .tasnifat-badge {
     display: inline-block;
-    padding: 3px 10px;
-    border-radius: 6px;
-    font-size: 11.5px;
-    font-weight: 600;
+    padding: 2px var(--space-2);
+    border-radius: var(--radius-sm);
+    background: var(--surface-subtle);
+    color: var(--text);
+    font-size: var(--fs-12);
+    font-weight: 500;
 }
 .code-badge {
-    background: #EEF2FF;
-    color: #4B5DA8;
-    font-weight: 700;
-}
-.region-badge {
-    background: var(--infoSoft);
-    color: #1565C0;
-}
-.sobe-badge {
-    background: #E0F2F1;
-    color: #00695C;
-}
-.tasnifat-badge {
-    background: #F3E5F5;
-    color: #7B1FA2;
+    font-family: var(--font-mono);
 }
 
 .count-num {
-    font-weight: 700;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
     color: var(--text-strong);
-    font-size: 13px;
+    font-size: var(--fs-13);
 
     &.alt {
-        color: #5D4037;
+        color: var(--text-muted);
     }
 }
 
@@ -190,27 +139,21 @@ $row-hover-alt: #F9FAFD;
 
 :host ::ng-deep .modern-paginator {
     background: var(--surface);
-    color: var(--bodyColor);
-    font-size: 13px;
+    color: var(--text-muted);
+    font-size: var(--fs-13);
 }
 :host ::ng-deep .mat-mdc-menu-panel {
     border-radius: var(--radius-sm) !important;
     min-width: 160px !important;
 }
 :host ::ng-deep .mat-mdc-menu-item {
-    font-size: 13px;
+    font-size: var(--fs-13);
 
     &:hover {
-        background: var(--primarySoft);
-        color: var(--primaryColor);
+        background: var(--surface-muted);
     }
 }
 .menu-icon {
     font-size: 18px;
-}
-.excel-icon {
-    color: #1D6F42;
-}
-.pdf-icon {
-    color: var(--dangerColor);
+    color: var(--text-muted);
 }

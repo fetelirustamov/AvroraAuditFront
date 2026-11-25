@@ -39,8 +39,8 @@ export class PlanActionsComponent {
   displayedColumns: string[] = ['select', 'inspectorsName', 'locationCode', 'locationName', 'startDate', 'endDate', 'action'];
   statusOptions = [
     { label: 'Təsdiq gözləyənlər', value: 1 },
-    { label: 'Təsdiq olunmuşlar', value: 2 },
-    { label: 'Rədd olunmuşlar', value: -1 }
+    { label: 'Təsdiqlənmişlər', value: 2 },
+    { label: 'Rədd edilmişlər', value: -1 }
   ];
 
   public dataSource: InspectionPlan[] = [];  // Düzəldildi
@@ -96,9 +96,9 @@ export class PlanActionsComponent {
 
   checkboxLabel(row?: InspectionPlan): string {
     if (!row) {
-      return `${this.isAllSelected() ? 'deselect' : 'select'} all`;
+      return this.isAllSelected() ? 'Bütün seçimləri götür' : 'Hamısını seç';
     }
-    return `${this.selection.isSelected(row) ? 'deselect' : 'select'} row ${row.id + 1}`;
+    return `${this.selection.isSelected(row) ? 'Seçimi götür' : 'Seç'}: sətir ${row.id + 1}`;
   }
 
   toggleAllRows() {
@@ -118,7 +118,7 @@ export class PlanActionsComponent {
       next: (response) => {
         this.firms = response.data;
       },
-      error: (error) => this.notify.error(apiErrorMessage(error, 'Müəssisə siyahısı yüklənmədi')),
+      error: (error) => this.notify.error(apiErrorMessage(error, 'Firma siyahısı yüklənmədi')),
     });
   }
 
@@ -139,7 +139,7 @@ export class PlanActionsComponent {
   onSearch() {
     if (this.planForm.invalid) {
       this.planForm.markAllAsTouched();
-      this.notify.warning('Məcburi sahələr seçilməyib', { message: 'Müəssisə və statusu seçin.' });
+      this.notify.warning('Məcburi sahələr seçilməyib', { message: 'Firmanı və statusu seçin.' });
       return;
     }
 
@@ -196,7 +196,7 @@ export class PlanActionsComponent {
     const item = new PlanApprove();
     item.planId = row.id;
     item.status = status;
-    this.submitStatuses([item], 'Əməliyyat uğurla tamamlandı');
+    this.submitStatuses([item], status === 2 ? 'Plan təsdiqləndi' : 'Plan rədd edildi');
   }
 
   changeSelectedPlanStatus(status: number) {
@@ -210,7 +210,7 @@ export class PlanActionsComponent {
       this.notify.warning('Heç bir plan seçilməyib');
       return;
     }
-    this.submitStatuses(items, status === 2 ? 'Planlar təsdiqləndi' : 'Planlar ləğv edildi');
+    this.submitStatuses(items, status === 2 ? 'Planlar təsdiqləndi' : 'Planlar rədd edildi');
   }
 
   private submitStatuses(items: PlanApprove[], successMessage: string): void {

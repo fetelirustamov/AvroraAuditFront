@@ -59,7 +59,7 @@
                         }
                     } @else {
                         <span class="holder-name">{{ stageMeta(h.stageCode).label }}</span>
-                        <span class="holder-role">Gözləyən onay yoxdur</span>
+                        <span class="holder-role">Gözləyən təsdiq yoxdur</span>
                     }
                 </section>
 
@@ -71,7 +71,7 @@
                         <div><dt>Plan</dt><dd>#{{ h.inspectionPlanId }}
                             @if (h.planStartDate) { <small>{{ date(h.planStartDate) | date:'dd.MM.yyyy':tz }}</small> }
                         </dd></div>
-                        <div><dt>Bölmə</dt><dd>{{ h.sectionName || '—' }}</dd></div>
+                        <div><dt>Şöbə</dt><dd>{{ h.sectionName || '—' }}</dd></div>
                         <div><dt>Kateqoriya</dt><dd>{{ h.disruptionCategoryName || '—' }}</dd></div>
                         <div><dt>Müfəttiş</dt><dd>{{ h.inspectorName || '—' }}</dd></div>
                         <div><dt>Yaradılma</dt><dd>{{ date(h.createdDate) | date:'dd.MM.yyyy HH:mm':tz }}</dd></div>
@@ -118,9 +118,9 @@
                     }
                 </section>
 
-                <!-- Onay axını -->
+                <!-- Təsdiq axını -->
                 <section class="panel-section">
-                    <h3 class="section-title">Onay axını</h3>
+                    <h3 class="section-title">Təsdiq axını</h3>
                     <ol class="timeline">
                         @for (node of timeline; track $index) {
                             <li class="tl-node" [attr.data-state]="node.state">

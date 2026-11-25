@@ -108,7 +108,7 @@ export class DisruptionMiddleComponent {
   getFirms() {
     this.inspectionsService.getFirms().subscribe({
       next: (response) => this.firms = response.data,
-      error: (error) => this.notify.error(apiErrorMessage(error, 'Müəssisələr yüklənmədi'))
+      error: (error) => this.notify.error(apiErrorMessage(error, 'Firmalar yüklənmədi'))
     });
   }
 
@@ -116,7 +116,7 @@ export class DisruptionMiddleComponent {
   getLocations(firmId: number) {
     this.inspectionsService.getLocationByFirmId(firmId).subscribe({
       next: (response) => this.locations = response.data,
-      error: (error) => this.notify.error(apiErrorMessage(error, 'Lokasiyalar yüklənmədi'))
+      error: (error) => this.notify.error(apiErrorMessage(error, 'Mağazalar yüklənmədi'))
     });
   }
 
@@ -131,7 +131,7 @@ export class DisruptionMiddleComponent {
   onFormSubmit() {
     if (this.inspectionsForm.invalid) {
       this.inspectionsForm.markAllAsTouched();
-      this.notify.warning('Müəssisə seçin');
+      this.notify.warning('Firma seçin');
       return;
     }
 

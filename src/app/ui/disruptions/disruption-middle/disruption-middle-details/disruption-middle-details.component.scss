@@ -1,9 +1,9 @@
 .cancel {
-    color: red !important;
+    color: var(--danger-text) !important;
 }
 
 .primary {
-    color: #6178fa !important;
+    color: var(--accent) !important;
 }
 
 .spaceBetween {
@@ -13,19 +13,19 @@
 // Action icons colors
 .material-symbols-outlined {
     &.approve-icon {
-        color: #4CAF50 !important; // Green
+        color: var(--success-text) !important;
     }
 
     &.reject-icon {
-        color: #f44336 !important; // Red
+        color: var(--danger-text) !important;
     }
 
     &.edit-icon {
-        color: #2196F3 !important; // Blue
+        color: var(--text-muted) !important;
     }
 
     &.back-icon {
-        color: #FF9800 !important; // Orange
+        color: var(--text-muted) !important;
     }
 }
 
@@ -82,7 +82,7 @@ app-disruption-middle-details {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    background: #fff !important;
+    background: var(--surface) !important;
     border-radius: 12px;
     z-index: 1000;
     width: 90%;
@@ -97,7 +97,7 @@ app-disruption-middle-details {
         justify-content: space-between;
         padding: 24px 24px 0 24px;
         margin-bottom: 0;
-        background: #fff;
+        background: var(--surface);
         border-top-left-radius: 12px;
         border-top-right-radius: 12px;
 
@@ -105,20 +105,20 @@ app-disruption-middle-details {
             flex: 1;
             text-align: center;
             font-size: 1.5rem;
-            color: #333;
+            color: var(--text);
             font-weight: 600;
             margin-left: -40px; // x iconunun yerini kompensasiya etmək üçün
         }
 
         .close-button {
             margin-left: auto;
-            color: #888;
+            color: var(--text-muted);
         }
     }
 
     mat-card-content {
         padding: 24px;
-        background: #fff;
+        background: var(--surface);
         border-bottom-left-radius: 12px;
         border-bottom-right-radius: 12px;
 

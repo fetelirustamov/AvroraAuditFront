@@ -109,9 +109,9 @@ export class InspectionApproveComponent {
 
   checkboxLabel(row?: InspectionPlan): string {
     if (!row) {
-      return `${this.isAllSelected() ? 'deselect' : 'select'} all`;
+      return this.isAllSelected() ? 'Bütün seçimləri götür' : 'Hamısını seç';
     }
-    return `${this.selection.isSelected(row) ? 'deselect' : 'select'} row ${row.id + 1}`;
+    return `${this.selection.isSelected(row) ? 'Seçimi götür' : 'Seç'}: sətir ${row.id + 1}`;
   }
 
   toggleAllRows() {
@@ -128,7 +128,7 @@ export class InspectionApproveComponent {
       next: (response) => {
         this.firms = response.data;
       },
-      error: (error) => this.notify.error(apiErrorMessage(error, 'Müəssisə siyahısı yüklənmədi')),
+      error: (error) => this.notify.error(apiErrorMessage(error, 'Firma siyahısı yüklənmədi')),
     });
   }
 
@@ -159,7 +159,7 @@ export class InspectionApproveComponent {
   onSearch() {
     if (this.planForm.invalid) {
       this.planForm.markAllAsTouched();
-      this.notify.warning('Məcburi sahələr seçilməyib', { message: 'Müəssisəni seçin.' });
+      this.notify.warning('Məcburi sahələr seçilməyib', { message: 'Firmanı seçin.' });
       return;
     }
 
@@ -259,7 +259,8 @@ export class InspectionApproveComponent {
       .subscribe({
         next: (data) => {
           if (data.success) {
-            this.notify.success('Əməliyyat uğurla tamamlandı');
+            // Bildiriş düymədəki feli təkrarlayır: 4 Təsdiqlə, 2 Mobilə qaytar
+            this.notify.success(items[0]?.status === 4 ? 'Yoxlama təsdiqləndi' : 'Yoxlama mobilə qaytarıldı');
           }
           this.selection.clear();
           this.fill();

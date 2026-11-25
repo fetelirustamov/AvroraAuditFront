@@ -101,9 +101,9 @@ export class PlanUserListComponent {
 
   checkboxLabel(row?: InspectorRow): string {
     if (!row) {
-      return `${this.isAllSelected() ? 'deselect' : 'select'} all`;
+      return this.isAllSelected() ? 'Bütün seçimləri götür' : 'Hamısını seç';
     }
-    return `${this.selection.isSelected(row) ? 'deselect' : 'select'} ${row.customer.name}`;
+    return `${this.selection.isSelected(row) ? 'Seçimi götür' : 'Seç'}: ${row.customer.name}`;
   }
 
   toggleAllRows(): void {
@@ -121,7 +121,7 @@ export class PlanUserListComponent {
         this.firms = response.data ?? [];
       },
       error: () => {
-        this.notify.error('Müəssisə siyahısı yüklənmədi');
+        this.notify.error('Firma siyahısı yüklənmədi');
       },
     });
   }
@@ -160,8 +160,8 @@ export class PlanUserListComponent {
 
   onPlanClick(): void {
     if (this.selection.selected.length === 0) {
-      this.notify.warning('Heç bir istifadəçi seçilməyib!', {
-        message: 'Zəhmət olmasa ən azı bir istifadəçi seçin.',
+      this.notify.warning('Heç bir müfəttiş seçilməyib', {
+        message: 'Zəhmət olmasa ən azı bir müfəttiş seçin.',
       });
       return;
     }

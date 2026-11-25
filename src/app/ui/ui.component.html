@@ -1,8 +1,7 @@
-<div>
+<div class="app-shell">
     <app-sidebar />
-    <div class="main-content transition d-flex flex-column" [ngClass]="{'active': isSidebarToggled}">
+    <div class="main-content" [class.active]="isSidebarToggled">
         <app-header />
         <router-outlet />
-        <div class="flex-grow-1"></div>
     </div>
 </div>

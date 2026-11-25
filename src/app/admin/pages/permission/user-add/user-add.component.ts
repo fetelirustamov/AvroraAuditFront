@@ -124,14 +124,14 @@ export class UserAddComponent implements OnInit {
 
     get userAddCrumbs(): { label: string }[] {
         return [
-            { label: 'İstifadəçi İdarəetməsi' },
-            { label: 'Rol və Firma Təyinatı' },
+            { label: 'İstifadəçi idarəetməsi' },
+            { label: 'Rol və firma təyinatı' },
             { label: this.isEditMode ? 'Redaktə' : 'Yeni' }
         ];
     }
 
     get saveButtonLabel(): string {
-        return this.isSaving ? 'Saxlanılır...' : (this.isEditMode ? 'Yadda saxla' : 'Əlavə Et');
+        return this.isSaving ? 'Saxlanılır...' : (this.isEditMode ? 'Yadda saxla' : 'Əlavə et');
     }
 
     /** Kimlik sahələrinin qrupu — yalnız redaktə rejimində aktivdir */
@@ -609,17 +609,17 @@ export class UserAddComponent implements OnInit {
         const selectedUserObj = selected as User;
 
         if (!formValue.selectedPermissionGroup) {
-            this.showMessage('Səlahiyyət qrupu seçilməlidir', 'error');
+            this.showMessage('İcazə qrupu seçilməlidir', 'error');
             return;
         }
         if (formValue.userStatus && (!formValue.selectedMarket || formValue.selectedMarket.length === 0)) {
-            this.showMessage('Aktiv istifadəçi üçün market təyin edilməlidir', 'error');
+            this.showMessage('Aktiv istifadəçi üçün firma təyin edilməlidir', 'error');
             return;
         }
 
         const payload = this.buildAssignmentsPayload(formValue);
         if (!payload) {
-            this.showMessage('Müəssisə və ya qrup seçimi düzgün deyil — bütün seçimlər siyahı ilə uyğun olmalıdır', 'error');
+            this.showMessage('Firma və ya icazə qrupu seçimi düzgün deyil — bütün seçimlər siyahı ilə uyğun olmalıdır', 'error');
             return;
         }
 
@@ -636,7 +636,7 @@ export class UserAddComponent implements OnInit {
                 // beləliklə uğursuz yadda saxlama yarımçıq dəyişiklik qoymur.
                 await firstValueFrom(this.userService.updateUserProfile(userCode, this.buildProfilePayload()));
                 await firstValueFrom(this.userService.updateUserAssignments(userCode, payload));
-                this.showMessage('İstifadəçinin məlumatları və səlahiyyətləri yeniləndi', 'success');
+                this.showMessage('İstifadəçinin məlumatları və icazələri yeniləndi', 'success');
                 setTimeout(() => {
                     this.router.navigate(['/admin/permissions/user-permission']);
                 }, 800);

@@ -1,46 +1,35 @@
 // Ortaq filtr paneli — bütün hesabat səhifələrində eyni görünüş.
 //
-// Əvvəl bu partial çağıran səhifədən 12 SCSS dəyişəni ($primary, $border,
-// $text-primary, …) tələb edirdi — məhz buna görə hər hesabat faylı bütün
-// token blokunu yenidən elan etməli olurdu. Artıq `_design-system.scss`-dəki
-// qlobal CSS dəyişənlərini işlədir, ona görə heç bir ön şərt yoxdur:
+// Yalnız `_tokens.scss`-dəki CSS dəyişənlərini işlədir, ön şərt yoxdur:
 //     @import '../report-filter-toolbar';
+// Görünüş `styles.scss`-dəki qlobal `.g-filter-card` / `.g-search-btn` ilə eynidir:
+// düz səth, nazik xətt, vurğu yalnız əsas düymədə və fokusda.
 
 .filter-card {
     position: relative;
     display: flex;
-    margin-bottom: 20px;
-    border-radius: var(--radius-md);
+    margin-bottom: var(--space-5);
+    border-radius: var(--radius-lg);
     overflow: hidden;
     background: var(--surface);
-    border: 1px solid var(--borderColor);
-    box-shadow: var(--shadow-sm), 0 0 0 1px rgba(96, 93, 255, 0.04);
-}
-
-.filter-card-accent {
-    flex: 0 0 4px;
-    background: linear-gradient(180deg, var(--primaryColor) 0%, var(--primaryDark) 100%);
+    border: 1px solid var(--border);
 }
 
 .filter-card-body {
     flex: 1;
     min-width: 0;
     padding: 18px 22px 20px;
-    background: linear-gradient(165deg, rgba(96, 93, 255, 0.03) 0%, transparent 42%);
 }
 
 .filter-card-header {
     display: flex;
     align-items: flex-start;
-    gap: 12px;
+    gap: var(--space-3);
     margin-bottom: 18px;
 
     .filter-header-icon {
-        font-size: 22px;
-        color: var(--primaryColor);
-        background: var(--primarySoft);
-        border-radius: 10px;
-        padding: 6px;
+        font-size: 20px;
+        color: var(--text-muted);
     }
 
     .filter-header-text {
@@ -51,16 +40,14 @@
     }
 
     .filter-header-title {
-        font-size: 14px;
-        font-weight: 700;
+        font-size: var(--fs-14);
+        font-weight: 600;
         color: var(--text-strong);
-        letter-spacing: 0.02em;
     }
 
     .filter-header-hint {
-        font-size: 12px;
+        font-size: var(--fs-12);
         color: var(--text-muted);
-        font-weight: 500;
         line-height: 1.35;
     }
 }
@@ -102,17 +89,14 @@
     .field-label {
         display: inline-flex;
         align-items: center;
-        gap: 6px;
-        font-size: 11px;
-        font-weight: 700;
-        color: var(--bodyColor);
-        text-transform: uppercase;
-        letter-spacing: 0.55px;
+        gap: var(--space-1);
+        font-size: var(--fs-12);
+        font-weight: 500;
+        color: var(--text-muted);
 
         .label-icon {
-            font-size: 15px;
-            color: var(--primaryColor);
-            opacity: 0.9;
+            font-size: 14px;
+            color: var(--text-faint);
         }
     }
 }
@@ -142,30 +126,29 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
+    gap: var(--space-2);
     min-height: 46px;
     padding: 0 26px;
-    background: linear-gradient(135deg, var(--primaryColor) 0%, var(--primaryDark) 100%);
-    color: var(--whiteColor);
-    border: none;
-    border-radius: 12px;
-    font-size: 13px;
-    font-weight: 600;
+    background: var(--accent);
+    color: var(--on-accent);
+    border: 1px solid var(--accent);
+    border-radius: var(--radius-md);
+    font-size: var(--fs-13);
+    font-weight: 500;
     cursor: pointer;
     white-space: nowrap;
-    transition: transform 0.15s ease, box-shadow 0.2s ease, filter 0.15s ease;
-    box-shadow: 0 6px 18px rgba(96, 93, 255, 0.38);
+    transition: background var(--transition), border-color var(--transition);
 
     &:hover {
-        filter: brightness(1.04);
-        transform: translateY(-1px);
-        box-shadow: 0 8px 22px rgba(96, 93, 255, 0.42);
+        background: var(--accent-hover);
+        border-color: var(--accent-hover);
     }
-    &:active {
-        transform: translateY(0);
+    &:disabled {
+        opacity: .5;
+        cursor: not-allowed;
     }
     .material-symbols-outlined {
-        font-size: 20px;
+        font-size: 18px;
     }
 }
 
@@ -173,14 +156,8 @@
     width: 100%;
 
     .mat-mdc-text-field-wrapper {
-        border-radius: 12px !important;
+        border-radius: var(--radius-md) !important;
         background: var(--surface) !important;
-        transition: box-shadow 0.2s ease, background 0.2s ease;
-        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85);
-    }
-
-    &:hover .mat-mdc-text-field-wrapper {
-        background: var(--surface-muted) !important;
     }
 
     .mat-mdc-form-field-infix {
@@ -190,37 +167,36 @@
 
     .mat-mdc-select-value,
     .mat-mdc-select-placeholder {
-        font-size: 14px;
-        font-weight: 500;
+        font-size: var(--fs-14);
         color: var(--text-strong);
     }
 
+    .mat-mdc-select-placeholder {
+        color: var(--text-faint);
+    }
+
     .mat-mdc-select-arrow svg {
-        fill: var(--bodyColor);
+        fill: var(--text-muted);
     }
 
     .mdc-notched-outline__leading {
-        border-radius: 12px 0 0 12px !important;
+        border-radius: var(--radius-md) 0 0 var(--radius-md) !important;
     }
     .mdc-notched-outline__trailing {
-        border-radius: 0 12px 12px 0 !important;
+        border-radius: 0 var(--radius-md) var(--radius-md) 0 !important;
     }
 
     .mdc-notched-outline .mdc-notched-outline__leading,
     .mdc-notched-outline .mdc-notched-outline__notch,
     .mdc-notched-outline .mdc-notched-outline__trailing {
-        border-color: var(--borderColor) !important;
-    }
-
-    &.mat-focused .mat-mdc-text-field-wrapper {
-        box-shadow: 0 0 0 3px rgba(96, 93, 255, 0.18);
+        border-color: var(--border-strong) !important;
     }
 
     &.mat-focused .mdc-notched-outline__leading,
     &.mat-focused .mdc-notched-outline__notch,
     &.mat-focused .mdc-notched-outline__trailing {
-        border-color: var(--primaryColor) !important;
-        border-width: 1.5px !important;
+        border-color: var(--accent) !important;
+        border-width: 2px !important;
     }
 
     .mat-mdc-form-field-subscript-wrapper {

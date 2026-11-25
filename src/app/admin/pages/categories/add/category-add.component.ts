@@ -35,7 +35,7 @@ export class CategoryAddComponent implements OnInit {
     form!: FormGroup;
     sections: SectionDto[] = [];
 
-    pageTitle = 'Yeni Kateqoriya';
+    pageTitle = 'Yeni kateqoriya';
     isEditMode = false;
     isSaving = false;
 
@@ -74,7 +74,7 @@ export class CategoryAddComponent implements OnInit {
 
         if (dialogData?.mode === 'edit' && dialogData?.item) {
             this.isEditMode = true;
-            this.pageTitle = 'Kateqoriyanı Redaktə Et';
+            this.pageTitle = 'Kateqoriyanı redaktə et';
             this.form.patchValue({
                 sectionId: dialogData.item.sectionId,
                 categoryName: dialogData.item.categoryName,

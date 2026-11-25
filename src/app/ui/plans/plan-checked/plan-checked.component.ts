@@ -67,9 +67,9 @@ export class PlanCheckedComponent {
 
   checkboxLabel(row?: InspectionPlan): string {
     if (!row) {
-      return `${this.isAllSelected() ? 'deselect' : 'select'} all`;
+      return this.isAllSelected() ? 'Bütün seçimləri götür' : 'Hamısını seç';
     }
-    return `${this.selection.isSelected(row) ? 'deselect' : 'select'} row ${row.id + 1}`;
+    return `${this.selection.isSelected(row) ? 'Seçimi götür' : 'Seç'}: sətir ${row.id + 1}`;
   }
 
   toggleAllRows() {
@@ -119,7 +119,7 @@ export class PlanCheckedComponent {
       next: (response) => {
         this.firms = response.data;
       },
-      error: (error) => this.notify.error(apiErrorMessage(error, 'Müəssisə siyahısı yüklənmədi')),
+      error: (error) => this.notify.error(apiErrorMessage(error, 'Firma siyahısı yüklənmədi')),
     });
   }
 
@@ -150,7 +150,7 @@ export class PlanCheckedComponent {
   onSearch() {
     if (this.planForm.invalid) {
       this.planForm.markAllAsTouched();
-      this.notify.warning('Məcburi sahələr seçilməyib', { message: 'Müəssisəni seçin.' });
+      this.notify.warning('Məcburi sahələr seçilməyib', { message: 'Firmanı seçin.' });
       return;
     }
 
@@ -240,7 +240,7 @@ export class PlanCheckedComponent {
         next: (data) => {
           const updatedCount = Number(data?.data ?? 0);
           if (data?.success && updatedCount > 0) {
-            this.notify.success('Yoxlama rədd edildi');
+            this.notify.success(updatedCount > 1 ? 'Planlar yenidən açıldı' : 'Plan yenidən açıldı');
             this.selection.clear();
             this.fill();
             return;

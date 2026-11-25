@@ -6,12 +6,12 @@
                 <span class="material-symbols-outlined title-icon">conversion_path</span>
                 Uyğunsuzluq izləmə
             </h1>
-            <p class="page-subtitle">Hər uyğunsuzluğun hansı mərhələdə olduğu və kimin onayını gözlədiyi</p>
+            <p class="page-subtitle">Hər uyğunsuzluğun hansı mərhələdə olduğu və kimin təsdiqini gözlədiyi</p>
         </div>
         <div class="header-actions">
             <button type="button" class="export-btn" (click)="exportExcel()" [disabled]="!total || isExporting">
                 <span class="material-symbols-outlined">{{ isExporting ? 'progress_activity' : 'table_chart' }}</span>
-                {{ isExporting ? 'Hazırlanır...' : 'Excel' }}
+                {{ isExporting ? 'Hazırlanır...' : 'İxrac et' }}
             </button>
         </div>
     </div>
@@ -152,7 +152,7 @@
                 <div class="g-filter-field">
                     <label class="g-field-label">
                         <span class="material-symbols-outlined">stairs</span>
-                        Onay səviyyəsi
+                        Təsdiq səviyyəsi
                     </label>
                     <mat-form-field appearance="outline" class="g-modern-field">
                         <mat-select formControlName="level" placeholder="Hamısı">
@@ -194,7 +194,7 @@
                 <div class="g-filter-field">
                     <label class="g-field-label">
                         <span class="material-symbols-outlined">view_agenda</span>
-                        Bölmə
+                        Şöbə
                     </label>
                     <mat-form-field appearance="outline" class="g-modern-field">
                         <mat-select formControlName="sectionId" [placeholder]="hasFirm ? 'Hamısı' : 'Əvvəlcə firma seçin'">

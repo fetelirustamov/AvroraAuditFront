@@ -1,4 +1,4 @@
-// User Add Component - Modern Design Styles
+// User Add Component
 
 // Main Container
 .user-add-container {
@@ -20,167 +20,47 @@
     }
 }
 
-// Breadcrumb Styling
-/* Tidy breadcrumb header overrides */
-.breadcrumb-card {
-    padding: 16px 22px;
-    border-radius: 14px;
-    background: linear-gradient(135deg, var(--primaryColor) 0%, var(--purpleColor) 100%);
-    box-shadow: 0 6px 18px rgba(96, 93, 255, 0.18);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-
-    h5 {
-        color: var(--whiteColor);
-        font-size: 1.35rem;
-        font-weight: 700;
-        letter-spacing: .2px;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        margin: 0;
-        text-shadow: none;
-
-        .material-symbols-outlined {
-            color: var(--whiteColor);
-            font-size: 22px;
-            margin-right: 0;
-        }
-    }
-
-    .breadcrumb {
-        margin: 0;
-        padding: 0;
-        display: flex;
-        align-items: center;
-        flex-wrap: wrap;
-        gap: 4px;
-        // Bootstrap-in defolt ayırıcısını söndür
-        --bs-breadcrumb-divider: '';
-
-        .breadcrumb-item {
-            display: inline-flex;
-            align-items: center;
-            color: rgba(255, 255, 255, 0.85);
-            font-size: 0.88rem;
-            font-weight: 500;
-
-            // Bootstrap-in ::before ayırıcısını tamamilə ləğv et
-            &::before {
-                display: none !important;
-            }
-
-            // Yalnız bizim öz ayırıcımız
-            &:not(:last-child)::after {
-                content: '›';
-                margin: 0 6px;
-                color: rgba(255, 255, 255, 0.5);
-                font-size: 1rem;
-                font-weight: 400;
-            }
-
-            a {
-                color: rgba(255, 255, 255, 0.9);
-                text-decoration: none;
-                display: inline-flex;
-                align-items: center;
-                gap: 5px;
-                padding: 4px 10px;
-                border-radius: 8px;
-                background: rgba(255, 255, 255, 0.13);
-                border: 1px solid rgba(255, 255, 255, 0.18);
-                transition: background 0.2s ease;
-                font-size: 0.88rem;
-                font-weight: 500;
-
-                .material-symbols-outlined,
-                i.material-symbols-outlined {
-                    font-size: 16px;
-                    line-height: 1;
-                }
-
-                &:hover {
-                    background: rgba(255, 255, 255, 0.22);
-                }
-            }
-
-            // Son element (aktiv səhifə) fərqli rəng
-            &:last-child {
-                color: rgba(255, 255, 255, 1);
-                font-weight: 600;
-            }
-        }
-    }
-}
-
 // Action Buttons
-// mat-flat-button → MDC mat-mdc-unelevated-button; Material hover “state layer”
-// açıq rəngə çevriləndə ağ mətn/ikon itir — bu qat sıfırlanır, gradient saxlanılır.
+// mat-flat-button → MDC mat-mdc-unelevated-button. Əsas əməliyyat: düz vurğu rəngi.
 .action-buttons {
     display: flex;
     justify-content: flex-end;
     gap: 15px;
     flex-wrap: wrap;
 
-    $save-gradient: linear-gradient(135deg, var(--primaryColor) 0%, var(--purpleColor) 100%);
-    $save-gradient-hover: linear-gradient(135deg, var(--purpleColor) 0%, #4f46e5 100%);
-
     button[mat-flat-button].mat-mdc-unelevated-button.mat-primary,
     .mat-mdc-unelevated-button.mat-primary[mat-flat-button] {
-        --mdc-filled-button-container-color: transparent;
+        --mdc-filled-button-container-color: var(--accent);
         --mat-filled-button-hover-state-layer-opacity: 0;
         --mat-filled-button-focus-state-layer-opacity: 0;
-        --mat-filled-button-pressed-state-layer-opacity: 0.14;
-        --mat-filled-button-pressed-state-layer-color: #fff;
 
-        background: $save-gradient !important;
-        background-image: $save-gradient !important;
-        color: #fff !important;
-        border-radius: 12px !important;
+        background: var(--accent) !important;
+        color: var(--on-accent) !important;
+        border-radius: var(--radius-md) !important;
         padding: 12px 24px !important;
-        font-weight: 600 !important;
-        font-size: 14px !important;
+        font-weight: 500 !important;
+        font-size: var(--fs-14) !important;
         min-width: 140px;
-        box-shadow: 0 4px 15px rgba(96, 93, 255, 0.3) !important;
         border: none !important;
         display: inline-flex !important;
         align-items: center !important;
         justify-content: center !important;
         gap: 8px;
-        transition: transform 0.25s ease, box-shadow 0.25s ease, filter 0.25s ease !important;
+        transition: background var(--transition) !important;
 
         .mdc-button__label,
         .material-symbols-outlined,
         .mat-icon {
-            color: #fff !important;
-        }
-
-        .mat-mdc-button-persistent-ripple::before {
-            background-color: #fff !important;
+            color: var(--on-accent) !important;
         }
 
         &:hover:not(:disabled) {
-            transform: translateY(-2px);
-            background: $save-gradient-hover !important;
-            background-image: $save-gradient-hover !important;
-            color: #fff !important;
-            box-shadow: 0 8px 25px rgba(96, 93, 255, 0.45) !important;
-            filter: brightness(1.03);
-
-            .mdc-button__label,
-            .material-symbols-outlined {
-                color: #fff !important;
-            }
+            background: var(--accent-hover) !important;
         }
 
         &:disabled {
-            opacity: 0.72;
+            opacity: .5;
             cursor: not-allowed;
-            transform: none;
-            filter: none;
-            box-shadow: none !important;
         }
 
         .material-symbols-outlined {
@@ -192,62 +72,7 @@
             margin-right: 8px;
         }
     }
-
-    // Köhnə sinif adı üçün ehtiyat (Material bəzən saxlayır)
-    .mat-flat-button:not(.mat-mdc-unelevated-button) {
-        background: $save-gradient;
-        color: var(--whiteColor);
-        border-radius: 12px;
-        padding: 12px 24px;
-        font-weight: 600;
-        font-size: 14px;
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 15px rgba(96, 93, 255, 0.3);
-        border: none;
-        min-width: 140px;
-
-        &:hover:not(:disabled) {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 25px rgba(96, 93, 255, 0.4);
-            color: var(--whiteColor);
-        }
-    }
-
-    .mat-stroked-button {
-        border: 2px solid var(--dangerColor);
-        color: var(--dangerColor);
-        border-radius: 12px;
-        padding: 12px 24px;
-        font-weight: 600;
-        font-size: 14px;
-        transition: all 0.3s ease;
-        background: transparent;
-        min-width: 140px;
-
-        &:hover:not(:disabled) {
-            background: var(--dangerColor);
-            color: var(--whiteColor);
-            transform: translateY(-3px);
-            box-shadow: 0 8px 25px rgba(220, 53, 69, 0.3);
-        }
-
-        &:disabled {
-            opacity: 0.7;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .material-symbols-outlined {
-            margin-right: 8px;
-            font-size: 18px;
-            vertical-align: middle;
-        }
-    }
 }
-
-// Card Base Styles — cleaned: rely on Angular Material defaults.
-
-// Header gradients removed — keep headers clean white via `.mat-mdc-card` rule below.
 
 // User profile styling
 .user-profile {
@@ -261,15 +86,8 @@
             width: 140px;
             height: 140px;
             object-fit: cover;
-            border: 4px solid var(--whiteColor);
+            border: 1px solid var(--border);
             border-radius: 50%;
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-            transition: all 0.3s ease;
-
-            &:hover {
-                transform: scale(1.05);
-                box-shadow: 0 12px 35px rgba(0, 0, 0, 0.2);
-            }
         }
     }
 }
@@ -280,177 +98,94 @@
         align-items: center;
         margin-bottom: 20px;
         padding: 16px 20px;
-        background: linear-gradient(135deg, var(--lightColor) 0%, #f8f9fa 100%);
-        border-radius: 12px;
-        border: 1px solid var(--borderColor);
-        transition: all 0.3s ease;
-
-        &:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-        }
+        background: var(--surface-muted);
+        border-radius: var(--radius-md);
+        border: 1px solid var(--border);
 
         .material-symbols-outlined {
-            color: var(--primaryColor);
+            color: var(--text-muted);
             margin-right: 16px;
-            font-size: 24px;
-            background: linear-gradient(135deg, var(--primaryColor) 0%, var(--purpleColor) 100%);
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
+            font-size: 22px;
         }
 
         .label {
-            font-weight: 700;
-            color: var(--blackColor);
+            font-weight: 600;
+            color: var(--text-strong);
             margin-right: 16px;
             min-width: 140px;
         }
 
         .value {
-            color: var(--bodyColor);
-            font-weight: 600;
+            color: var(--text-muted);
+            font-weight: 500;
         }
     }
 }
 
 // Selected permissions display
 .selected-permissions {
-    background: linear-gradient(135deg, var(--lightColor) 0%, #f8f9fa 100%);
+    background: var(--surface-muted);
     padding: 20px;
-    border-radius: 12px;
-    border: 1px solid var(--borderColor);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border);
     margin-top: 20px;
 
     h6 {
-        color: var(--blackColor);
-        font-weight: 700;
+        color: var(--text-strong);
+        font-weight: 600;
         margin-bottom: 15px;
-        font-size: 1.1rem;
+        font-size: var(--fs-16);
         display: flex;
         align-items: center;
         gap: 8px;
-
-        &::before {
-            content: '';
-            width: 4px;
-            height: 20px;
-            background: linear-gradient(135deg, var(--warningColor) 0%, var(--orangeColor) 100%);
-            border-radius: 2px;
-        }
     }
 
     .permission-summary {
         .permission-item {
-            background: var(--whiteColor);
+            background: var(--surface);
             padding: 12px 16px;
-            border-radius: 8px;
+            border-radius: var(--radius-md);
             margin-bottom: 10px;
-            border-left: 4px solid var(--warningColor);
-            color: var(--bodyColor);
+            border: 1px solid var(--border);
+            color: var(--text-muted);
             font-weight: 500;
-            transition: all 0.3s ease;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-
-            &:hover {
-                transform: translateX(5px);
-                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-            }
 
             &:last-child {
                 margin-bottom: 0;
             }
 
             strong {
-                color: var(--blackColor);
-                font-weight: 700;
+                color: var(--text-strong);
+                font-weight: 600;
             }
         }
     }
 }
 
-// Inline chips inside select
+// Inline chips inside select — seçilmiş dəyərlər, neytral
+:host ::ng-deep .inline-chips .mat-mdc-chip,
+:host ::ng-deep .inline-chips .mat-chip-option {
+    background-color: var(--surface-subtle) !important;
+    color: var(--text) !important;
+    border-color: transparent !important;
+}
+
+:host ::ng-deep .inline-chips .mat-mdc-chip .mdc-evolution-chip__text-label {
+    color: var(--text) !important;
+}
+
+:host ::ng-deep .inline-chips .mat-mdc-chip .mdc-evolution-chip__checkmark-path {
+    stroke: var(--text-muted) !important;
+}
+
+:host ::ng-deep .inline-chips .mat-mdc-chip mat-icon {
+    color: var(--text-muted) !important;
+}
+
 .inline-chips {
     display: inline-flex;
     gap: 8px;
     vertical-align: middle;
-
-    .mat-chip-option {
-        background: var(--primaryColor) !important;
-        color: var(--whiteColor) !important;
-        border: 1px solid var(--primaryColor) !important;
-        border-radius: 12px !important;
-        padding: 8px 14px !important;
-        font-weight: 600;
-    }
-
-    .mat-chip-option.mat-mdc-chip-selected {
-        border-color: var(--primaryColor) !important;
-        box-shadow: 0 2px 8px rgba(96, 93, 255, 0.25);
-    }
-}
-
-/* Stronger override for MDC-based chips inside select trigger */
-:host ::ng-deep .inline-chips .mat-mdc-chip,
-:host ::ng-deep .inline-chips .mat-chip-option {
-    background-color: var(--primaryColor) !important;
-    color: var(--whiteColor) !important;
-    border-color: var(--primaryColor) !important;
-}
-
-:host ::ng-deep .inline-chips .mat-mdc-chip .mdc-evolution-chip__text-label {
-    color: var(--whiteColor) !important;
-}
-
-:host ::ng-deep .inline-chips .mat-mdc-chip .mdc-evolution-chip__checkmark-path {
-    stroke: var(--whiteColor) !important;
-}
-
-:host ::ng-deep .inline-chips .mat-mdc-chip mat-icon {
-    color: var(--whiteColor) !important;
-}
-
-// Snackbar Styles
-::ng-deep {
-    .success-snackbar {
-        background: var(--successColor) !important;
-        color: var(--whiteColor) !important;
-
-        .mat-simple-snackbar-action {
-            color: var(--whiteColor) !important;
-        }
-    }
-
-    .error-snackbar {
-        background: var(--dangerColor) !important;
-        color: var(--whiteColor) !important;
-
-        .mat-simple-snackbar-action {
-            color: var(--whiteColor) !important;
-        }
-    }
-
-    .info-snackbar {
-        background: var(--infoColor) !important;
-        color: var(--whiteColor) !important;
-
-        .mat-simple-snackbar-action {
-            color: var(--whiteColor) !important;
-        }
-    }
-}
-
-// Animations
-@keyframes float {
-
-    0%,
-    100% {
-        transform: translateY(0px) rotate(0deg);
-    }
-
-    50% {
-        transform: translateY(-20px) rotate(180deg);
-    }
 }
 
 // Responsive Design
@@ -475,32 +210,10 @@
         width: 120px;
         height: 120px;
     }
-
-    .breadcrumb-card {
-        flex-direction: column;
-        align-items: flex-start;
-        padding: 14px 18px;
-        gap: 10px;
-
-        .breadcrumb {
-            flex-wrap: wrap;
-        }
-    }
-}
-
-@media (max-width: 576px) {
-    .mat-card .mat-card-header {
-        padding: 15px 20px;
-        margin: -20px -20px 20px -20px;
-    }
-
-    .mat-card .mat-card-content {
-        padding: 0 20px 20px 20px;
-    }
 }
 
 .mat-mdc-card {
-    background-color: #ffffff !important;
+    background-color: var(--surface) !important;
 }
 
 // MDC form-field normalization (inputs and selects)
@@ -513,26 +226,26 @@
         display: none !important;
     }
 
-    // Outline: light by default, primary on focus
+    // Outline: light by default, accent on focus
     .mdc-notched-outline,
     .mdc-notched-outline__leading,
     .mdc-notched-outline__notch,
     .mdc-notched-outline__trailing {
-        border-color: #E6E9EF !important;
+        border-color: var(--border-strong) !important;
     }
 
     &:hover .mdc-notched-outline,
     &:hover .mdc-notched-outline__leading,
     &:hover .mdc-notched-outline__notch,
     &:hover .mdc-notched-outline__trailing {
-        border-color: #D0D7DE !important;
+        border-color: var(--text-faint) !important;
     }
 
     &.mat-focused .mdc-notched-outline,
     &.mat-focused .mdc-notched-outline__leading,
     &.mat-focused .mdc-notched-outline__notch,
     &.mat-focused .mdc-notched-outline__trailing {
-        border-color: var(--primaryColor) !important;
+        border-color: var(--accent) !important;
         border-width: 2px !important;
     }
 
@@ -572,8 +285,8 @@
 :host ::ng-deep input.mat-mdc-input-element {
     height: 22px;
     line-height: 22px;
-    font-size: 14px;
-    color: #333;
+    font-size: var(--fs-14);
+    color: var(--text);
 }
 
 // Select trigger sizing and alignment (MDC)
@@ -588,7 +301,7 @@
     .mat-mdc-select-placeholder {
         display: flex;
         align-items: center;
-        color: #333;
+        color: var(--text);
     }
 
     .mat-mdc-select-arrow {
@@ -606,6 +319,7 @@
     align-items: center;
     justify-content: center;
 }
+
 // ── Şəxsi məlumatlar kartı (redaktə rejimi) ─────────────────────────────────
 .identity-strip {
     margin-bottom: 8px;
@@ -614,25 +328,25 @@
         display: flex;
         align-items: center;
         padding: 12px 16px;
-        background: var(--gray-50);
-        border: 1px solid var(--borderColor);
+        background: var(--surface-muted);
+        border: 1px solid var(--border);
         border-radius: var(--radius-md);
 
         .material-symbols-outlined {
-            color: var(--primaryColor);
+            color: var(--text-muted);
             margin-right: 12px;
             font-size: 22px;
         }
 
         .label {
-            font-weight: 700;
-            color: var(--blackColor);
+            font-weight: 600;
+            color: var(--text-strong);
             margin-right: 12px;
         }
 
         .value {
-            color: var(--bodyColor);
-            font-weight: 600;
+            color: var(--text-muted);
+            font-weight: 500;
         }
     }
 }
@@ -646,9 +360,9 @@
     flex-wrap: wrap;
     margin-top: 8px;
     padding: 16px 20px;
-    border: 1px dashed var(--borderColor);
+    border: 1px dashed var(--border-strong);
     border-radius: var(--radius-md);
-    background: var(--gray-50);
+    background: var(--surface-muted);
 
     .password-info {
         display: flex;
@@ -656,30 +370,30 @@
         gap: 12px;
 
         .material-symbols-outlined {
-            color: var(--warningStrong);
-            font-size: 24px;
+            color: var(--text-muted);
+            font-size: 22px;
         }
     }
 
     .password-label {
-        font-weight: 700;
-        color: var(--blackColor);
+        font-weight: 600;
+        color: var(--text-strong);
     }
 
     .password-hint {
-        font-size: 13px;
-        color: var(--gray-500);
+        font-size: var(--fs-13);
+        color: var(--text-muted);
     }
 
     .external-auth-chip {
         display: inline-flex;
         align-items: center;
         gap: 6px;
-        padding: 6px 12px;
-        border-radius: 999px;
-        background: var(--infoSoft);
-        color: var(--gray-700);
-        font-size: 13px;
+        padding: 2px var(--space-2);
+        border-radius: var(--radius-sm);
+        background: var(--info-soft);
+        color: var(--info-text);
+        font-size: var(--fs-13);
         font-weight: 600;
 
         .material-symbols-outlined {

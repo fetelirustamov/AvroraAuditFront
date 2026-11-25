@@ -18,17 +18,18 @@
 
 /* Breadcrumb actions */
 .breadcrumb .btn-back {
-    background: var(--primaryColor);
-    color: var(--whiteColor);
+    background: var(--surface);
+    color: var(--text-strong);
+    border: 1px solid var(--border-strong);
 }
 
 .breadcrumb-actions .btn-success {
-    background: var(--successColor);
-    color: var(--whiteColor);
+    background: var(--accent);
+    color: var(--on-accent);
 }
 
 .breadcrumb-actions .btn-success:hover {
-    filter: brightness(0.95);
+    background: var(--accent-hover);
 }
 
 /* Buttons spacing */
@@ -38,13 +39,12 @@
 }
 
 .action-buttons button:first-child {
-    background: var(--primaryColor);
-    color: var(--whiteColor);
+    background: var(--accent);
+    color: var(--on-accent);
 }
 
 .action-buttons button:first-child:hover {
-    background: var(--purpleColor);
-    box-shadow: 0 4px 12px rgba(96, 93, 255, .25);
+    background: var(--accent-hover);
 }
 
 .action-buttons button mat-icon,
@@ -62,25 +62,26 @@
 
 :host ::ng-deep .chips .mat-mdc-chip,
 :host ::ng-deep .chips .mat-mdc-standard-chip {
-    background-color: var(--primaryColor) !important;
-    color: var(--whiteColor) !important;
-    border-color: var(--primaryColor) !important;
-    border-radius: 10px !important;
+    background-color: var(--surface-subtle) !important;
+    color: var(--text) !important;
+    border-color: transparent !important;
+    border-radius: var(--radius-sm) !important;
 }
 
 :host ::ng-deep .chips .mat-mdc-chip .mdc-evolution-chip__text-label {
-    color: var(--whiteColor) !important;
+    color: var(--text) !important;
 }
 
 /* Card visuals */
 mat-card {
-    border-radius: 14px;
-    box-shadow: 0 6px 18px rgba(0, 0, 0, .04);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border);
+    box-shadow: none;
 }
 
 mat-card-header {
-    background: linear-gradient(135deg, var(--lightColor) 0%, #f7f7fb 100%);
-    border-bottom: 1px solid var(--borderColor);
+    background: var(--surface-muted);
+    border-bottom: 1px solid var(--border);
     margin: -16px -16px 16px -16px;
     padding: 14px 16px;
 }
@@ -113,7 +114,7 @@ mat-card-header {
     .mdc-notched-outline__notch,
     .mdc-notched-outline__trailing {
         height: 40px !important;
-        border-color: var(--borderColor) !important;
+        border-color: var(--border) !important;
     }
 
     &.mat-focused {
@@ -121,7 +122,7 @@ mat-card-header {
         .mdc-notched-outline__leading,
         .mdc-notched-outline__notch,
         .mdc-notched-outline__trailing {
-            border-color: var(--primaryColor) !important;
+            border-color: var(--accent) !important;
             border-width: 2px !important;
         }
     }
@@ -146,26 +147,26 @@ mat-card-header {
 }
 
 .permissions-table thead th {
-    background: var(--lightColor);
-    color: var(--blackColor);
+    background: var(--surface-muted);
+    color: var(--text-strong);
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: .5px;
     padding: 12px;
-    border-bottom: 2px solid var(--borderColor);
+    border-bottom: 2px solid var(--border);
 }
 
 .permissions-table tbody td {
     padding: 12px 14px;
-    border-bottom: 1px solid var(--borderColor);
+    border-bottom: 1px solid var(--border);
 }
 
 .permissions-table tbody tr:nth-child(even) {
-    background: #fafafe;
+    background: var(--surface-muted);
 }
 
 .permissions-table tbody tr:hover {
-    background: var(--lightColor);
+    background: var(--surface-muted);
 }
 
 .permissions-table th,
@@ -190,23 +191,23 @@ mat-card-header {
     width: 100%;
     border: none;
     background: transparent;
-    color: var(--blackColor);
+    color: var(--text-strong);
     padding: 0;
 }
 
 .page-cell:disabled {
-    color: var(--blackColor);
+    color: var(--text-strong);
     opacity: .95;
 }
 
 /* form-field caret */
 :host ::ng-deep .mat-mdc-form-field {
-    --mdc-outlined-text-field-caret-color: var(--primaryColor);
+    --mdc-outlined-text-field-caret-color: var(--accent);
 }
 .page-cell-label {
     display: block;
     width: 100%;
-    color: var(--blackColor);
+    color: var(--text-strong);
     font-weight: 500;
 }
 

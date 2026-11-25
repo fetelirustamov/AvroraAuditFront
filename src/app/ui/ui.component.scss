@@ -1,180 +1,47 @@
-// Main Content
-.main-content {
-    overflow: hidden;
+// ============================================================================
+//  Tətbiq çərçivəsi: sidebar + header + məzmun.
+//  AdminComponent də bu faylı styleUrls-da götürür.
+// ============================================================================
+//  `--shell-*` ölçüləri buradan sidebar və header-ə miras keçir.
+//  ≥1200px sidebar sabitdir; `.active` onu ikon zolağına yığır.
+//  <1200px sidebar üstə açılır, məzmun tam enlidir.
+// ============================================================================
+
+.app-shell {
+    --shell-sidebar-w: 248px;
+    --shell-rail-w: 72px;
+    --shell-header-h: 64px;
+
     min-height: 100vh;
+    background: var(--bg);
+}
 
-    padding: {
-        top: 95px;
-        left: 285px;
-        right: 25px;
-    }
+.main-content {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    // Enli məzmun səhifəni yana sürüşdürməsin. `clip` scroll konteyneri
+    // yaratmır, ona görə səhifələrdəki `position: sticky` işləyir.
+    overflow-x: clip;
+    padding: calc(var(--shell-header-h) + var(--space-6)) var(--space-6) var(--space-6)
+        calc(var(--shell-sidebar-w) + var(--space-6));
+    transition: padding-left var(--transition);
 
-    ;
-
-    &.active,
-    &.hide-sidebar {
-        padding-left: 125px;
-    }
-
-    &.right-sidebar {
-        padding: {
-            left: 25px;
-            right: 285px;
-        }
-
-        ;
-
-        &.active,
-        &.hide-sidebar {
-            padding-right: 125px;
-        }
+    &.active {
+        padding-left: calc(var(--shell-rail-w) + var(--space-6));
     }
 }
 
-// RTL
-::ng-deep {
+@media only screen and (max-width: 1199.98px) {
+    .main-content,
+    .main-content.active {
+        padding-left: var(--space-6);
+    }
 }
 
-/* Max width 767px */
-@media only screen and (max-width : 767px) {
-
-    // Main Content
-    .main-content {
-        padding: {
-            top: 143px;
-            left: 15px;
-            right: 15px;
-        }
-
-        ;
-
-        &.active,
-        &.hide-sidebar {
-            padding-left: 15px;
-        }
-
-        &.right-sidebar {
-            padding: {
-                left: 15px;
-                right: 15px;
-            }
-
-            ;
-
-            &.active,
-            &.hide-sidebar {
-                padding-right: 15px;
-            }
-        }
+@media only screen and (max-width: 767.98px) {
+    .main-content,
+    .main-content.active {
+        padding: calc(var(--shell-header-h) + var(--space-4)) var(--space-4) var(--space-4);
     }
-
-    // RTL
-    ::ng-deep {
-    }
-
 }
-
-/* Min width 576px to Max width 767px */
-@media only screen and (min-width : 576px) and (max-width : 767px) {}
-
-/* Min width 768px to Max width 991px */
-@media only screen and (min-width : 768px) and (max-width : 991px) {
-
-    // Main Content
-    .main-content {
-        padding: {
-            left: 25px;
-            right: 25px;
-        }
-
-        ;
-
-        &.active,
-        &.hide-sidebar {
-            padding-left: 25px;
-        }
-
-        &.right-sidebar {
-            padding-right: 25px;
-
-            &.active,
-            &.hide-sidebar {
-                padding-right: 25px;
-            }
-        }
-    }
-
-    // RTL
-    ::ng-deep {
-    }
-
-}
-
-/* Min width 992px to Max width 1199px */
-@media only screen and (min-width : 992px) and (max-width : 1199px) {
-
-    // Main Content
-    .main-content {
-        padding: {
-            left: 25px;
-            right: 25px;
-        }
-
-        ;
-
-        &.active,
-        &.hide-sidebar {
-            padding-left: 25px;
-        }
-
-        &.right-sidebar {
-            padding-right: 25px;
-
-            &.active,
-            &.hide-sidebar {
-                padding-right: 25px;
-            }
-        }
-    }
-
-    // RTL
-    ::ng-deep {
-    }
-
-}
-
-/* Min width 1200px to Max width 1399px */
-@media only screen and (min-width: 1200px) and (max-width: 1399px) {
-
-    // Main Content
-    .main-content {
-        padding-left: 265px;
-
-        &.active,
-        &.hide-sidebar {
-            padding-left: 125px;
-        }
-
-        &.right-sidebar {
-            padding-right: 265px;
-
-            &.active,
-            &.hide-sidebar {
-                padding: {
-                    right: 125px;
-                    left: 25px;
-                }
-
-                ;
-            }
-        }
-    }
-
-    // RTL
-    ::ng-deep {
-    }
-
-}
-
-/* Min width 1600px */
-@media only screen and (min-width: 1600px) {}

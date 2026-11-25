@@ -1,0 +1,101 @@
+// ============================================================================
+//  Dizayn token-ləri: tətbiqdə rəng, şrift, ölçü və boşluğun vahid mənbəyi
+// ============================================================================
+//  Məhsul neytraldır, bir neçə şəbəkəyə satılır. Müştəri brendi yalnız loqo
+//  yerindən gəlir. Rəngin işi məna daşımaqdır:
+//    - baza qrafit və isti-boz tonlardır;
+//    - vurğu (--accent) bir dənədir: əsas düymə, aktiv menyu, seçilmiş hal;
+//    - qalan rənglər yalnız statusdur (success / warning / danger / info).
+//  Bəzək üçün rəng işlətmə. Yeni rəng lazımdırsa, əvvəl burada token yarat.
+//
+//  Kontrast (WCAG AA, 4.5:1): bütün --*-text dəyərləri öz --*-soft fonunda,
+//  --text-muted isə --surface və --bg üzərində 4.5:1-dən yuxarıdır.
+//  --text-faint yalnız placeholder və deaktiv hal üçündür.
+// ============================================================================
+
+:root {
+    // ── Şrift ───────────────────────────────────────────────────────────────
+    --font-sans: "IBM Plex Sans", "Segoe UI", sans-serif;
+    --font-mono: "IBM Plex Mono", "Consolas", monospace;
+
+    // Tipoqrafiya şkalası: 12px-dən kiçik mətn yoxdur
+    --fs-12: 12px;
+    --fs-13: 13px;
+    --fs-14: 14px;
+    --fs-16: 16px;
+    --fs-20: 20px;
+    --fs-24: 24px;
+
+    // ── Boşluq (4px addım) ──────────────────────────────────────────────────
+    --space-1: 4px;
+    --space-2: 8px;
+    --space-3: 12px;
+    --space-4: 16px;
+    --space-5: 20px;
+    --space-6: 24px;
+    --space-7: 32px;
+    --space-8: 40px;
+
+    // ── Neytral şkala (isti qrafit) ─────────────────────────────────────────
+    --gray-50: #F9F8F6;
+    --gray-100: #F4F3F0;
+    --gray-200: #EBE9E4;
+    --gray-300: #DDDAD3;
+    --gray-400: #B9B5AD;
+    --gray-500: #8F8B84;
+    --gray-600: #6B6862;
+    --gray-700: #4A4843;
+    --gray-800: #2E2D2A;
+    --gray-900: #1C1B19;
+    --white: #FFFFFF;
+
+    // ── Səthlər və xətlər ───────────────────────────────────────────────────
+    --bg: var(--gray-100);
+    --surface: var(--white);
+    --surface-muted: var(--gray-50);
+    --surface-subtle: var(--gray-200);
+    --border: #E3E0DA;
+    --border-strong: var(--gray-300);
+
+    // ── Mətn ────────────────────────────────────────────────────────────────
+    --text-strong: var(--gray-900);
+    --text: #3D3B37;
+    --text-muted: var(--gray-600);
+    --text-faint: var(--gray-500);
+
+    // ── Vurğu: neft-teal ────────────────────────────────────────────────────
+    --accent: #0E6672;
+    --accent-hover: #0A4F58;
+    --accent-soft: #E2EFF1;
+    --accent-text: #0A4F58;
+    --on-accent: var(--white);
+
+    // ── Status: əsas / yumşaq fon / fon üzərində mətn ───────────────────────
+    --success: #2E7D32;
+    --success-soft: #E7F3E6;
+    --success-text: #1F6224;
+
+    --warning: #B4690E;
+    --warning-soft: #FBF0DF;
+    --warning-text: #8A4B06;
+
+    --danger: #C4321F;
+    --danger-soft: #FBE9E6;
+    --danger-text: #A1261A;
+
+    --info: #2F5D8A;
+    --info-soft: #E6EEF6;
+    --info-text: #234A70;
+
+    // ── Forma, kölgə, fokus ─────────────────────────────────────────────────
+    --radius-sm: 4px;
+    --radius-md: 6px;
+    --radius-lg: 10px;
+
+    --shadow-sm: 0 1px 2px rgba(28, 27, 25, .06);
+    --shadow-md: 0 4px 12px rgba(28, 27, 25, .08), 0 1px 3px rgba(28, 27, 25, .06);
+
+    --focus-ring: 0 0 0 2px var(--surface), 0 0 0 4px var(--accent);
+
+    --transition: .2s ease;
+}

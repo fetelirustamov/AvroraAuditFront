@@ -1,8 +1,8 @@
 // User Permission Component Styles
 .users-card {
     .mat-card-header {
-        background: var(--lightColor);
-        border-bottom: 1px solid var(--borderColor);
+        background: var(--surface-muted);
+        border-bottom: 1px solid var(--border);
         margin: -16px -16px 16px -16px;
         padding: 16px;
 
@@ -10,17 +10,15 @@
             margin: 0;
 
             .add-btn {
-                background: var(--primaryColor);
-                color: var(--whiteColor);
-                border-radius: 8px;
+                background: var(--accent);
+                color: var(--on-accent);
+                border-radius: var(--radius-md);
                 padding: 8px 16px;
                 font-weight: 500;
-                transition: all 0.3s ease;
+                transition: background var(--transition);
 
                 &:hover {
-                    background: var(--purpleColor);
-                    transform: translateY(-2px);
-                    box-shadow: 0 4px 12px rgba(96, 93, 255, 0.3);
+                    background: var(--accent-hover);
                 }
 
                 .material-symbols-outlined {
@@ -40,7 +38,7 @@
                 gap: 8px;
 
                 label {
-                    color: var(--bodyColor);
+                    color: var(--text-muted);
                     font-weight: 500;
                     margin: 0;
                 }
@@ -59,7 +57,7 @@
                     left: 12px;
                     top: 50%;
                     transform: translateY(-50%);
-                    color: var(--bodyColor);
+                    color: var(--text-muted);
                     z-index: 1;
                 }
 
@@ -67,20 +65,19 @@
                     width: 100%;
                     height: 40px;
                     padding: 8px 12px 8px 40px;
-                    border: 1px solid var(--borderColor);
+                    border: 1px solid var(--border);
                     border-radius: 8px;
                     font-size: 14px;
-                    background: var(--whiteColor);
+                    background: var(--surface);
                     transition: all 0.3s ease;
 
                     &:focus {
                         outline: none;
-                        border-color: var(--primaryColor);
-                        box-shadow: 0 0 0 3px rgba(96, 93, 255, 0.1);
+                        border-color: var(--accent);
                     }
 
                     &::placeholder {
-                        color: var(--bodyColor);
+                        color: var(--text-muted);
                         opacity: 0.7;
                     }
                 }
@@ -136,7 +133,7 @@
 // İstifadəçi adı xanası: ad + giriş e-poçtu
 .user-name {
     font-weight: 600;
-    color: var(--blackColor);
+    color: var(--text-strong);
 }
 
 .user-email {

@@ -1,5 +1,5 @@
 .not-found-area {
-    background-color: var(--whiteColor);
+    background-color: var(--surface);
     overflow-x: hidden;
     height: 100vh;
     padding: {
@@ -23,8 +23,8 @@
         border-radius: 7px;
         padding: 14px 25px;
         display: inline-block;
-        color: var(--whiteColor) !important;
-        background-color: var(--primaryColor);
+        color: var(--on-accent) !important;
+        background-color: var(--accent);
         font: {
             size: 16px;
             weight: 500;

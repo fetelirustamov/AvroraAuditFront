@@ -4,7 +4,7 @@
         <div class="header-text">
             <h1 class="page-title">
                 <span class="material-symbols-outlined title-icon">space_dashboard</span>
-                Dashboard
+                Əsas səhifə
             </h1>
             <p class="page-subtitle">Audit fəaliyyəti və uyğunsuzluqlara ümumi baxış</p>
         </div>
@@ -23,13 +23,12 @@
 
 <!-- Filtr paneli — paylaşılan `.filter-card` -->
 <div class="filter-card">
-    <div class="filter-card-accent" aria-hidden="true"></div>
     <div class="filter-card-body">
         <div class="filter-card-header">
             <span class="material-symbols-outlined filter-header-icon">tune</span>
             <div class="filter-header-text">
                 <span class="filter-header-title">Filtrlər</span>
-                <span class="filter-header-hint">Dövr, direktorluq, bölgə və ərazi seçib göstəriciləri yeniləyin</span>
+                <span class="filter-header-hint">Dövr, firma, bölgə və mağaza seçib göstəriciləri yeniləyin</span>
             </div>
         </div>
 
@@ -64,7 +63,7 @@
                 <div class="filter-field filter-field-firm">
                     <span class="field-label">
                         <span class="material-symbols-outlined label-icon">business</span>
-                        Direktorluq
+                        Firma
                     </span>
                     <mat-form-field appearance="outline" class="modern-field" subscriptSizing="dynamic">
                         <mat-select formControlName="firmId" placeholder="Hamısı">
@@ -81,7 +80,7 @@
                     </span>
                     <mat-form-field appearance="outline" class="modern-field" subscriptSizing="dynamic">
                         <mat-select formControlName="regionId"
-                                    [placeholder]="filtersForm.value.firmId ? 'Hamısı' : 'Əvvəlcə direktorluq seçin'">
+                                    [placeholder]="filtersForm.value.firmId ? 'Hamısı' : 'Əvvəlcə firma seçin'">
                             <mat-option [value]="null">Hamısı</mat-option>
                             <mat-option *ngFor="let r of regions" [value]="r.id">{{ r.regionName }}</mat-option>
                         </mat-select>
@@ -91,11 +90,11 @@
                 <div class="filter-field filter-field-firm">
                     <span class="field-label">
                         <span class="material-symbols-outlined label-icon">store</span>
-                        Ərazi
+                        Mağaza
                     </span>
                     <mat-form-field appearance="outline" class="modern-field" subscriptSizing="dynamic">
                         <mat-select formControlName="locationCode"
-                                    [placeholder]="filtersForm.value.firmId ? 'Hamısı' : 'Əvvəlcə direktorluq seçin'">
+                                    [placeholder]="filtersForm.value.firmId ? 'Hamısı' : 'Əvvəlcə firma seçin'">
                             <mat-option [value]="null">Hamısı</mat-option>
                             <mat-option *ngFor="let l of locations" [value]="l.code">
                                 {{ l.code }} — {{ l.name }}
@@ -106,8 +105,8 @@
 
                 <div class="filter-toolbar-action">
                     <button type="button" class="reset-btn" (click)="clearFilters()" [disabled]="!hasActiveFilters">
-                        <span class="material-symbols-outlined">refresh</span>
-                        Sıfırla
+                        <span class="material-symbols-outlined">filter_alt_off</span>
+                        Təmizlə
                     </button>
                     <button type="submit" class="search-btn">
                         <span class="material-symbols-outlined">search</span>
@@ -272,13 +271,13 @@
                 <span class="material-symbols-outlined panel-icon">bubble_chart</span>
                 <div>
                     <h2 class="panel-title">Risk matrisi</h2>
-                    <p class="panel-hint">Hər kürə bir ərazidir · ölçü = açıq uyğunsuzluq sayı</p>
+                    <p class="panel-hint">Hər kürə bir mağazadır · ölçü = açıq uyğunsuzluq sayı</p>
                 </div>
             </div>
         </header>
         <div class="panel-body">
             <div id="dash_risk" class="chart-area" role="img"
-                 aria-label="Ərazilərin yoxlama sayı və uyğunluq faizi üzrə risk matrisi"></div>
+                 aria-label="Mağazaların yoxlama sayı və uyğunluq faizi üzrə risk matrisi"></div>
         </div>
     </section>
 
@@ -304,8 +303,8 @@
             <div class="panel-title-group">
                 <span class="material-symbols-outlined panel-icon">leaderboard</span>
                 <div>
-                    <h2 class="panel-title">Ərazi reytinqi</h2>
-                    <p class="panel-hint">Uyğunluq faizinə görə ilk 10 ərazi</p>
+                    <h2 class="panel-title">Mağaza reytinqi</h2>
+                    <p class="panel-hint">Uyğunluq faizinə görə ilk 10 mağaza</p>
                 </div>
             </div>
             <div class="segmented">
@@ -323,7 +322,7 @@
                 <thead>
                     <tr>
                         <th>№</th>
-                        <th class="text-left">Ərazi</th>
+                        <th class="text-left">Mağaza</th>
                         <th class="text-left">Bölgə</th>
                         <th>Yoxlama</th>
                         <th>Uyğunsuzluq</th>
@@ -368,4 +367,4 @@
 
 <app-audit-loading-overlay *ngIf="isLoading"
                            title="Göstəricilər yüklənir"
-                           hint="Dashboard hazırlanır — bir neçə saniyə çəkə bilər" />
+                           hint="Əsas səhifə hazırlanır — bir neçə saniyə çəkə bilər" />

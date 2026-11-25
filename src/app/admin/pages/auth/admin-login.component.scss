@@ -1,6 +1,6 @@
 .admin-login-container {
     min-height: 100vh;
-    background: radial-gradient(circle at top, #f3f7ff 0, #f6f7f9 45%, #eef1f7 100%);
+    background: var(--bg);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -10,12 +10,10 @@
 .admin-login-card {
     max-width: 480px;
     width: 100%;
-    background: var(--whiteColor);
-    border-radius: 18px;
+    background: var(--surface);
+    border-radius: var(--radius-lg);
     padding: 40px 40px 32px;
-    box-shadow:
-        0 18px 45px rgba(15, 35, 95, 0.08),
-        0 0 0 1px rgba(15, 35, 95, 0.02);
+    border: 1px solid var(--border);
 }
 
 .login-header {
@@ -32,15 +30,14 @@
             grid-template-rows: repeat(2, 1fr);
             gap: 4px;
             padding: 10px;
-            border-radius: 16px;
-            background: linear-gradient(135deg, #5b6bff, #9b6bff);
-            box-shadow: 0 10px 24px rgba(91, 107, 255, 0.35);
+            border-radius: var(--radius-md);
+            background: var(--text-strong);
 
             span {
                 width: 10px;
                 height: 10px;
                 border-radius: 999px;
-                background: #ffffff;
+                background: var(--surface);
             }
         }
 
@@ -48,20 +45,20 @@
             font-size: 26px;
             font-weight: 700;
             letter-spacing: 0.02em;
-            color: #111827;
+            color: var(--text-strong);
         }
     }
 
     .login-title {
         font-size: 30px;
         font-weight: 700;
-        color: var(--blackColor);
+        color: var(--text-strong);
         margin: 0;
     }
 
     .login-subtitle {
         font-size: 15px;
-        color: #6b7280;
+        color: var(--text-muted);
         margin: 0;
     }
 }
@@ -75,11 +72,11 @@
             display: block;
             font-size: 14px;
             font-weight: 600;
-            color: #1A1F2E;
+            color: var(--text-strong);
             margin-bottom: 8px;
 
             .required-indicator {
-                color: #FF4023;
+                color: var(--danger-text);
                 margin-left: 4px;
             }
         }
@@ -89,10 +86,10 @@
 
             ::ng-deep {
                 .mat-mdc-text-field-wrapper {
-                    background-color: #F8F9FA !important;
+                    background-color: var(--surface-muted) !important;
                     border-radius: 12px !important;
                     transition: all 0.3s ease;
-                    border: 2px solid #E5E7EB !important;
+                    border: 2px solid var(--border) !important;
                     padding: 0 16px !important;
                 }
 
@@ -109,41 +106,41 @@
                 }
 
                 .mdc-text-field--filled .mdc-line-ripple::after {
-                    border-bottom-color: #605DFF !important;
+                    border-bottom-color: var(--accent) !important;
                     border-bottom-width: 2px !important;
                 }
 
                 .mat-mdc-form-field.mat-focused {
                     .mat-mdc-text-field-wrapper {
-                        background-color: #ffffff !important;
-                        border-color: #605DFF !important;
-                        box-shadow: 0 0 0 4px rgba(96, 93, 255, 0.1) !important;
+                        background-color: var(--surface) !important;
+                        border-color: var(--accent) !important;
+                        box-shadow: none !important;
                     }
                 }
 
                 .mat-mdc-form-field-invalid {
                     .mat-mdc-text-field-wrapper {
-                        border-color: #FF4023 !important;
-                        background-color: #FFF5F5 !important;
+                        border-color: var(--danger) !important;
+                        background-color: var(--danger-soft) !important;
                     }
                 }
 
                 .mdc-text-field__input {
                     padding: 16px 0 !important;
                     font-size: 15px !important;
-                    color: #1A1F2E !important;
+                    color: var(--text-strong) !important;
                     font-weight: 500 !important;
-                    background-color: #ffffff !important;
+                    background-color: var(--surface) !important;
                 }
 
                 // Autofill zamanı fonu ağ saxla
                 .mdc-text-field__input:-webkit-autofill,
                 .mdc-text-field__input:-webkit-autofill:hover,
                 .mdc-text-field__input:-webkit-autofill:focus {
-                    -webkit-box-shadow: 0 0 0 1000px #ffffff inset !important;
-                    box-shadow: 0 0 0 1000px #ffffff inset !important;
-                    -webkit-text-fill-color: #1A1F2E !important;
-                    caret-color: #1A1F2E !important;
+                    -webkit-box-shadow: 0 0 0 1000px var(--surface) inset !important;
+                    box-shadow: 0 0 0 1000px var(--surface) inset !important;
+                    -webkit-text-fill-color: var(--text-strong) !important;
+                    caret-color: var(--text-strong) !important;
                 }
 
                 .mat-mdc-form-field-icon-prefix {
@@ -164,11 +161,11 @@
             }
 
             .toggle-password-btn {
-                color: #64748B;
+                color: var(--text-muted);
                 transition: color 0.3s ease;
 
                 &:hover {
-                    color: #605DFF;
+                    color: var(--text-strong);
                 }
             }
         }
@@ -179,14 +176,11 @@
     height: 48px;
     font-size: 16px;
     font-weight: 600;
-    border-radius: 10px;
+    border-radius: var(--radius-md);
     text-transform: none;
-    letter-spacing: 0.02em;
-    box-shadow: 0 10px 24px rgba(39, 112, 246, 0.26);
 
     &:disabled {
-        box-shadow: none;
-        opacity: 0.7;
+        opacity: .5;
     }
 }
 
@@ -195,10 +189,10 @@
     align-items: center;
     gap: 8px;
     padding: 12px 16px;
-    background: var(--dangerColor);
-    color: var(--whiteColor);
-    border-radius: 8px;
-    font-size: 14px;
+    background: var(--danger-soft);
+    color: var(--danger-text);
+    border-radius: var(--radius-md);
+    font-size: var(--fs-14);
 
     mat-icon {
         font-size: 18px;

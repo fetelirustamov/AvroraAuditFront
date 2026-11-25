@@ -11,7 +11,7 @@
                     <!-- Location -->
                     <div class="col-md-4">
                         <mat-form-field>
-                            <mat-label>Ərazi</mat-label>
+                            <mat-label>Mağaza</mat-label>
                             <mat-select formControlName="location" required>
                                 <div class="select-search-box" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
                                     <input type="text" placeholder="Axtar..." [(ngModel)]="locationFilter"
@@ -81,11 +81,11 @@
     <!-- Buttons -->
     <div class="row ">
         <div class="col-md-6 text-start">
-            <button type="button" mat-flat-button (click)="addPanel()">Əlavə Et</button>
+            <button type="button" mat-flat-button (click)="addPanel()">Əlavə et</button>
         </div>
         <div class="col-md-6 text-end">
             <button type="submit" mat-flat-button color="primary" [disabled]="isLoading">
-                {{ isLoading ? 'Saxlanılır…' : 'Yadda Saxla' }}
+                {{ isLoading ? 'Saxlanılır…' : 'Yadda saxla' }}
             </button>
         </div>
     </div>

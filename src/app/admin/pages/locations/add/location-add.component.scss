@@ -2,9 +2,9 @@
 .modal-like {
     mat-card {
         margin-bottom: 25px;
-        background-color: #ffffff !important;
+        background-color: var(--surface) !important;
         border-radius: 12px;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        border: 1px solid var(--border);
         max-height: 100%;
         overflow: hidden;
         /* Card-da scroll-u söndürürük */
@@ -39,7 +39,7 @@
         /* Horizontal scroll-u söndürürük */
         /* Scroll bar stilləri */
         scrollbar-width: thin;
-        scrollbar-color: #c1c1c1 #f1f1f1;
+        scrollbar-color: var(--border-strong) transparent;
         /* Digər scroll-u söndürürük */
         scrollbar-width: auto;
         -ms-overflow-style: auto;
@@ -51,17 +51,17 @@
     }
 
     mat-card-content::-webkit-scrollbar-track {
-        background: #f1f1f1;
+        background: var(--surface-subtle);
         border-radius: 4px;
     }
 
     mat-card-content::-webkit-scrollbar-thumb {
-        background: #c1c1c1;
+        background: var(--border-strong);
         border-radius: 4px;
     }
 
     mat-card-content::-webkit-scrollbar-thumb:hover {
-        background: #a8a8a8;
+        background: var(--text-faint);
     }
 
     .row {
@@ -88,11 +88,11 @@
             display: block;
             font-size: 14px;
             font-weight: 600;
-            color: #1A1F2E;
+            color: var(--text-strong);
             margin-bottom: 8px;
 
             .required-indicator {
-                color: #FF4023;
+                color: var(--danger-text);
                 margin-left: 4px;
             }
         }
@@ -102,10 +102,10 @@
 
             ::ng-deep {
                 .mat-mdc-text-field-wrapper {
-                    background-color: #F8F9FA !important;
+                    background-color: var(--surface-muted) !important;
                     border-radius: 12px !important;
                     transition: all 0.3s ease;
-                    border: 2px solid #E5E7EB !important;
+                    border: 2px solid var(--border) !important;
                     padding: 0 16px !important;
                 }
 
@@ -122,39 +122,39 @@
                 }
 
                 .mdc-text-field--filled .mdc-line-ripple::after {
-                    border-bottom-color: #605DFF !important;
+                    border-bottom-color: var(--accent) !important;
                     border-bottom-width: 2px !important;
                 }
 
                 .mat-mdc-form-field.mat-focused {
                     .mat-mdc-text-field-wrapper {
-                        background-color: #ffffff !important;
-                        border-color: #605DFF !important;
-                        box-shadow: 0 0 0 4px rgba(96, 93, 255, 0.1) !important;
+                        background-color: var(--surface) !important;
+                        border-color: var(--accent) !important;
+                        box-shadow: none !important;
                     }
                 }
 
                 .mat-mdc-form-field-invalid {
                     .mat-mdc-text-field-wrapper {
-                        border-color: #FF4023 !important;
-                        background-color: #FFF5F5 !important;
+                        border-color: var(--danger) !important;
+                        background-color: var(--danger-soft) !important;
                     }
                 }
 
                 .mdc-text-field__input {
                     padding: 8px 0 !important;
                     font-size: 15px !important;
-                    color: #1A1F2E !important;
+                    color: var(--text-strong) !important;
                     font-weight: 500 !important;
-                    background-color: #ffffff !important;
+                    background-color: var(--surface) !important;
                 }
 
                 textarea.mdc-text-field__input {
                     padding: 12px 0 !important;
                     font-size: 15px !important;
-                    color: #1A1F2E !important;
+                    color: var(--text-strong) !important;
                     font-weight: 500 !important;
-                    background-color: #ffffff !important;
+                    background-color: var(--surface) !important;
                 }
 
                 .mat-mdc-form-field-icon-prefix {

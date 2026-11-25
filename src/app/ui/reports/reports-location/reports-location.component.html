@@ -4,14 +4,14 @@
         <div class="header-text">
             <h1 class="page-title">
                 <span class="material-symbols-outlined title-icon">analytics</span>
-                Aylıq Hesabat
+                Aylıq hesabat
             </h1>
-            <p class="page-subtitle">Məkan üzrə aylıq audit nəticələri</p>
+            <p class="page-subtitle">Mağaza üzrə aylıq audit nəticələri</p>
         </div>
         <div class="header-actions">
             <button class="export-btn" [matMenuTriggerFor]="downloadMenu">
                 <span class="material-symbols-outlined">download</span>
-                Yüklə
+                İxrac et
                 <span class="material-symbols-outlined arrow-icon">expand_more</span>
             </button>
         </div>
@@ -40,7 +40,7 @@
             <div class="filter-field">
                 <label class="field-label">
                     <span class="material-symbols-outlined label-icon">business</span>
-                    Müəssisə
+                    Firma
                     <span class="required-badge">*</span>
                 </label>
                 <mat-form-field appearance="outline" class="modern-field">
@@ -176,5 +176,5 @@
     </div>
     <app-audit-loading-overlay *ngIf="isLoading"
         title="Hesabat hazırlanır"
-        hint="Ərazi üzrə hesabat yüklənir…"></app-audit-loading-overlay>
+        hint="Mağaza üzrə hesabat yüklənir…"></app-audit-loading-overlay>
 </div>

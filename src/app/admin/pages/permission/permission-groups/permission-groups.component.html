@@ -1,6 +1,6 @@
 <app-admin-breadcrumb
-    title="Səlahiyyət qrupları"
-    [crumbs]="[{label: 'İstifadəçi İdarəetməsi'}, {label: 'Səlahiyyət qrupları'}]">
+    title="İcazə qrupları"
+    [crumbs]="[{label: 'İstifadəçi idarəetməsi'}, {label: 'İcazə qrupları'}]">
 </app-admin-breadcrumb>
 
 <!-- Permission Groups Table -->
@@ -79,6 +79,6 @@
         <mat-paginator [pageSizeOptions]="[10,25,50,100]" showFirstLastButtons [disabled]="isLoading"></mat-paginator>
         <app-audit-loading-overlay *ngIf="isLoading"
             title="Qruplar yüklənir"
-            hint="Səlahiyyət qrupları hazırlanır…"></app-audit-loading-overlay>
+            hint="İcazə qrupları hazırlanır…"></app-audit-loading-overlay>
     </mat-card-content>
 </mat-card>

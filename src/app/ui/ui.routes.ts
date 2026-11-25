@@ -3,6 +3,7 @@ import { UiComponent } from './ui.component';
 import { AuthGuard } from '../auth/guards/auth.guard';
 import { permissionGuard } from '../auth/guards/permission.guard';
 import { uiPageRoutes } from './ui-pages.routes';
+import { SHELL_PROVIDERS } from '../core/shell-providers';
 
 /**
  * Menyuda pageKey-i olan hər səhifə icazə ilə qorunur: menyudan gizlənən səhifə URL ilə də açılmasın.
@@ -21,6 +22,7 @@ export const uiRoutes: Routes = [
         path: '',
         component: UiComponent,
         canActivate: [AuthGuard],
+        providers: SHELL_PROVIDERS,
         children: uiPageRoutes.map(withPermission),
     },
 ];

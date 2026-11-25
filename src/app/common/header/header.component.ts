@@ -1,24 +1,24 @@
-import { Component, HostListener } from '@angular/core';
+import { Component } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
 import { MatMenuModule } from '@angular/material/menu';
-import { MatButtonModule } from '@angular/material/button';
-import { ToggleService } from './toggle.service';
-import { NgClass, NgIf } from '@angular/common';
+import { MatIconModule } from '@angular/material/icon';
 import { filter } from 'rxjs/operators';
+import { ToggleService } from './toggle.service';
 import { AuthService } from '../../auth/auth.service';
 import { UserProfileService } from '../../auth/user-profile.service';
 
+/** Sidebar bu enin altında üstə açılan paneldir (sidebar.component.scss ilə eyni) */
+export const SIDEBAR_OVERLAY_QUERY = '(max-width: 1199.98px)';
+
 @Component({
     selector: 'app-header',
-    imports: [MatButtonModule, MatMenuModule, NgClass, NgIf],
+    imports: [MatMenuModule, MatIconModule],
     templateUrl: './header.component.html',
     styleUrl: './header.component.scss'
 })
 export class HeaderComponent {
 
     isSidebarToggled = false;
-
-    isSticky = false;
 
     constructor(
         private toggleService: ToggleService,
@@ -29,30 +29,22 @@ export class HeaderComponent {
         this.toggleService.isSidebarToggled$.subscribe(isSidebarToggled => {
             this.isSidebarToggled = isSidebarToggled;
         });
-        // Naviqasiyadan sonra açıq sidebar-ı bağla
+        // Kiçik ekranda açıq panel naviqasiyadan sonra bağlanır.
+        // Masaüstündə `.active` yığılmış zolaqdır, ona toxunulmur.
         this.router.events.pipe(
             filter(event => event instanceof NavigationEnd)
         ).subscribe(() => {
-            if (this.isSidebarToggled) {
+            if (this.isSidebarToggled && window.matchMedia(SIDEBAR_OVERLAY_QUERY).matches) {
                 this.toggleService.toggle();
             }
         });
     }
 
-    // Burger Menu Toggle
     toggle() {
         this.toggleService.toggle();
-    }
-
-    // Header Sticky
-    @HostListener('window:scroll')
-    checkScroll() {
-        const scrollPosition = window.scrollY || document.documentElement.scrollTop || document.body.scrollTop || 0;
-        this.isSticky = scrollPosition >= 50;
     }
 
     logout() {
         this.authService.logout();
     }
-
 }

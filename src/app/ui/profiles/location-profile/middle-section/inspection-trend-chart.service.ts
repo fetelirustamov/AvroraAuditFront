@@ -1,6 +1,8 @@
 import { Injectable, Inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 
+import { chartColors } from '../../../../shared/utils/chart-colors';
+
 /** Qrafikin render olunduğu element */
 export const INSPECTION_TREND_CHART_ID = 'location_inspection_trend_chart';
 
@@ -23,13 +25,6 @@ export class InspectionTrendChartService {
         this.isBrowser = isPlatformBrowser(this.platformId);
     }
 
-    /** Tema dəyişənindən rəng oxu, dəyər yoxdursa ehtiyat rəngə keç */
-    private token(name: string, fallback: string): string {
-        if (!this.isBrowser) return fallback;
-        const value = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
-        return value || fallback;
-    }
-
     async loadChart(series: { name: string; data: number[] }[], categories: string[]): Promise<void> {
         if (!this.isBrowser) {
             return;
@@ -40,18 +35,15 @@ export class InspectionTrendChartService {
         }
         try {
             const ApexCharts = (await import('apexcharts')).default;
-            const border = this.token('--borderColor', '#ECEEF2');
-            const label = this.token('--bodyColor', '#64748B');
+            const c = chartColors();
+            const border = c.border;
+            const label = c.textMuted;
 
             this.chart = new ApexCharts(host, {
                 series,
-                chart: { type: 'bar', height: 430, toolbar: { show: true } },
-                colors: [
-                    this.token('--primaryColor', '#605DFF'),
-                    this.token('--secondaryColor', '#3584FC'),
-                    this.token('--successColor', '#25B003'),
-                    this.token('--dangerColor', '#FF4023'),
-                ],
+                chart: { type: 'bar', height: 430, toolbar: { show: true }, fontFamily: 'inherit' },
+                // Seriya sırası: Nəticə % (əsas → vurğu), Ümumi (neytral), Həll (success), Açıq (danger)
+                colors: [c.accent, c.neutral[2], c.success, c.danger],
                 plotOptions: { bar: { columnWidth: '50%' } },
                 grid: { show: true, borderColor: border },
                 dataLabels: { enabled: false },

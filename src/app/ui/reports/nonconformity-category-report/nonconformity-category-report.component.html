@@ -11,7 +11,7 @@
             <button type="button" class="export-btn" [matMenuTriggerFor]="downloadMenu"
                 [disabled]="!hasSubmittedSearch || !allCount || isExporting">
                 <span class="material-symbols-outlined">{{ isExporting ? 'progress_activity' : 'download' }}</span>
-                {{ isExporting ? 'Hazırlanır...' : 'Yüklə' }}
+                {{ isExporting ? 'Hazırlanır...' : 'İxrac et' }}
                 <span class="material-symbols-outlined arrow-icon">expand_more</span>
             </button>
         </div>
@@ -30,7 +30,6 @@
 </mat-menu>
 
 <div class="filter-card">
-    <div class="filter-card-accent" aria-hidden="true"></div>
     <div class="filter-card-body">
         <div class="filter-card-header">
             <span class="material-symbols-outlined filter-header-icon">tune</span>

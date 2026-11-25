@@ -56,7 +56,7 @@ export class LocationAddComponent implements OnInit {
     regions: any[] = [];
     sections: SectionDto[] = [];
     selectedSectionIds: number[] = [];
-    pageTitle = 'Yeni mağaza/location';
+    pageTitle = 'Yeni mağaza';
     isEditMode = false;
     isSaving = false;
     initialLat: number = 40.4093;
@@ -114,7 +114,7 @@ export class LocationAddComponent implements OnInit {
 
         if (data?.item) {
             this.isEditMode = true;
-            this.pageTitle = 'Mağaza/location redaktə et';
+            this.pageTitle = 'Mağazanı redaktə et';
             this.form.patchValue({
                 ...data.item,
                 regionId: this.toNullableNumber(data.item.regionId ?? data.item.RegionId ?? data.item.regionID ?? null),
@@ -324,10 +324,10 @@ export class LocationAddComponent implements OnInit {
                         this.notify.warning('Mağaza yeniləndi, lakin şöbə təyinatı saxlanılmadı');
                     } else if (assigned === null && this.selectedSectionIds.length > 0) {
                         this.notify.warning('Mağaza yeniləndi, lakin şöbə təyinatı saxlanılmadı', {
-                            message: 'Mövcud təyinatlar oxunmadı və ya "Məkan Kodu" boşdur.'
+                            message: 'Mövcud təyinatlar oxunmadı və ya "Mağaza kodu" boşdur.'
                         });
                     } else {
-                        this.notify.success('Mağaza/location uğurla redaktə edildi');
+                        this.notify.success('Mağaza uğurla redaktə edildi');
                     }
                     this.finishEdit(res);
                 },
@@ -351,10 +351,10 @@ export class LocationAddComponent implements OnInit {
                     this.notify.warning('Mağaza yaradıldı, lakin şöbələr təyin edilmədi');
                 } else if (hasSections && !codeValid) {
                     this.notify.warning('Mağaza yaradıldı, lakin şöbələr təyin edilmədi', {
-                        message: 'Şöbə təyinatı üçün "Məkan Kodu" doldurulmalıdır.'
+                        message: 'Şöbə təyinatı üçün "Mağaza kodu" doldurulmalıdır.'
                     });
                 } else {
-                    this.notify.success('Mağaza/location uğurla əlavə edildi');
+                    this.notify.success('Mağaza uğurla əlavə edildi');
                 }
                 this.finishCreate(res);
             },

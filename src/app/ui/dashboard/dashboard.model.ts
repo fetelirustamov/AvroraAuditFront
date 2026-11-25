@@ -88,14 +88,6 @@ export interface DashboardOverview {
     locations: DashboardLocation[];
 }
 
-/** InspectionPlans.Status → ekranda göstərilən ad (plan həyat dövrü) */
-export const PLAN_STATUS_LABELS: Record<number, string> = {
-    1: 'Yaradılıb',
-    2: 'Təsdiqlənib',
-    3: 'Yoxlanılıb',
-    4: 'Yekunlaşıb'
-};
-
 export const MONTH_SHORT_LABELS = [
     'Yan', 'Fev', 'Mar', 'Apr', 'May', 'İyn',
     'İyl', 'Avq', 'Sen', 'Okt', 'Noy', 'Dek'

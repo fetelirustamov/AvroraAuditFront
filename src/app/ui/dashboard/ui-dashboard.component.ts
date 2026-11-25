@@ -16,11 +16,11 @@ import { DashboardVisualsService } from './dashboard-visuals.service';
 import {
     DashboardLocation,
     DashboardOverview,
-    MONTH_SHORT_LABELS,
-    PLAN_STATUS_LABELS
+    MONTH_SHORT_LABELS
 } from './dashboard.model';
 import { DashboardService } from './dashboard.service';
 import { COMPLIANCE_FAIR, COMPLIANCE_GOOD, complianceTone } from '../../shared/utils/compliance';
+import { planStatusLabel } from '../../shared/utils/plan-status';
 
 /** `/locations/regions/{firmId}` cavabındakı bölgə */
 interface RegionOption {
@@ -40,7 +40,8 @@ interface KpiCard {
     label: string;
     hint: string;
     icon: string;
-    tone: 'primary' | 'success' | 'warning' | 'danger';
+    /** İkon yalnız həddə görə status daşıyanda rənglənir, qalanı neytraldır */
+    tone: 'neutral' | 'success' | 'warning' | 'danger';
     value: string;
     /** Əvvəlki dövrdə müqayisə bazası yoxdursa `null` */
     delta: number | null;
@@ -48,16 +49,18 @@ interface KpiCard {
     deltaUnit: '%' | 'b.';
     /** Aşağı düşmək yaxşıdırsa (açıq uyğunsuzluq) yaşıl/qırmızı tərsinə oxunur */
     lowerIsBetter: boolean;
-    sparkColor: string;
     sparkData: number[];
 }
 
-/** Risk matrisindəki zonalar — bubble seriyalarına və cədvəl nişanlarına eyni məntiq */
+/**
+ * Risk matrisindəki zonalar — bubble seriyalarına və cədvəl nişanlarına eyni məntiq.
+ * `tone` qrafik rəngini (`chartColors()`), `color` isə DOM-dakı nöqtə/zolaq rəngini verir.
+ */
 const RISK_ZONES = [
-    { key: 'low', name: `Aşağı risk (≥${COMPLIANCE_GOOD}%)`, color: '#25B003', min: COMPLIANCE_GOOD },
-    { key: 'medium', name: `Orta risk (${COMPLIANCE_FAIR}–${COMPLIANCE_GOOD}%)`, color: '#F59E0B', min: COMPLIANCE_FAIR },
-    { key: 'high', name: 'Yüksək risk (<70%)', color: '#F43F5E', min: 0 }
-];
+    { key: 'low', name: `Aşağı risk (≥${COMPLIANCE_GOOD}%)`, tone: 'success', color: 'var(--success)', min: COMPLIANCE_GOOD },
+    { key: 'medium', name: `Orta risk (${COMPLIANCE_FAIR}–${COMPLIANCE_GOOD}%)`, tone: 'warning', color: 'var(--warning)', min: COMPLIANCE_FAIR },
+    { key: 'high', name: 'Yüksək risk (<70%)', tone: 'danger', color: 'var(--danger)', min: 0 }
+] as const;
 
 /** Radar və istilik xəritəsi oxunaqlı qalsın deyə şöbə sayı məhdudlaşdırılır */
 const MAX_SECTIONS = 8;
@@ -161,7 +164,7 @@ export class UiDashboardComponent implements OnInit, OnDestroy {
                 next: res => { this.firms = res?.data ?? []; },
                 error: () => {
                     this.firms = [];
-                    this.notify.error('Direktorluq siyahısı yüklənmədi');
+                    this.notify.error('Firma siyahısı yüklənmədi');
                 }
             });
     }
@@ -198,7 +201,7 @@ export class UiDashboardComponent implements OnInit, OnDestroy {
                 error: () => {
                     this.allLocations = [];
                     this.locations = [];
-                    this.notify.error('Ərazi siyahısı yüklənmədi');
+                    this.notify.error('Mağaza siyahısı yüklənmədi');
                 }
             });
     }
@@ -272,7 +275,7 @@ export class UiDashboardComponent implements OnInit, OnDestroy {
                     this.hasLoaded = true;
                     this.kpis = [];
                     this.ranking = [];
-                    this.loadError = apiErrorMessage(error, 'Dashboard məlumatları yüklənmədi');
+                    this.loadError = apiErrorMessage(error, 'Əsas səhifənin məlumatları yüklənmədi');
                 }
             });
     }
@@ -306,12 +309,11 @@ export class UiDashboardComponent implements OnInit, OnDestroy {
                 label: 'Ümumi yoxlama',
                 hint: `${kpi.plannedInspections} planlı · ${kpi.unplannedInspections} plansız`,
                 icon: 'fact_check',
-                tone: 'primary',
+                tone: 'neutral',
                 value: String(kpi.totalInspections),
                 delta: kpi.totalInspectionsDelta,
                 deltaUnit: '%',
                 lowerIsBetter: false,
-                sparkColor: '#605DFF',
                 sparkData: trend.map(m => m.inspections)
             },
             {
@@ -319,12 +321,11 @@ export class UiDashboardComponent implements OnInit, OnDestroy {
                 label: 'Tamamlanma',
                 hint: `${kpi.completedInspections} yekunlaşmış yoxlama`,
                 icon: 'task_alt',
-                tone: 'success',
+                tone: 'neutral',
                 value: `${kpi.completionRate}%`,
                 delta: kpi.completionRateDelta,
                 deltaUnit: 'b.',
                 lowerIsBetter: false,
-                sparkColor: '#25B003',
                 sparkData: trend.map(m => m.completed)
             },
             {
@@ -332,12 +333,11 @@ export class UiDashboardComponent implements OnInit, OnDestroy {
                 label: 'Uyğunsuzluq',
                 hint: `${kpi.totalFindings} ümumi · ${kpi.openFindings} açıq`,
                 icon: 'report_problem',
-                tone: 'danger',
+                tone: 'neutral',
                 value: String(kpi.openFindings),
                 delta: kpi.openFindingsDelta,
                 deltaUnit: '%',
                 lowerIsBetter: true,
-                sparkColor: '#F43F5E',
                 sparkData: trend.map(m => m.findings)
             },
             {
@@ -345,12 +345,12 @@ export class UiDashboardComponent implements OnInit, OnDestroy {
                 label: 'Orta uyğunluq',
                 hint: 'Toplanan balın normativə nisbəti',
                 icon: 'trending_up',
-                tone: 'warning',
+                // Yeganə həddə bağlı göstərici: rəng uyğunluq zonasından gəlir
+                tone: complianceTone(kpi.averageCompliance),
                 value: `${kpi.averageCompliance}%`,
                 delta: kpi.averageComplianceDelta,
                 deltaUnit: 'b.',
                 lowerIsBetter: false,
-                sparkColor: '#F59E0B',
                 sparkData: trend.map(m => m.compliance)
             }
         ];
@@ -381,7 +381,7 @@ export class UiDashboardComponent implements OnInit, OnDestroy {
         await this.visuals.renderComplianceGauge('dash_gauge', data.kpi.averageCompliance);
 
         for (const kpi of this.kpis) {
-            await this.visuals.renderSparkline(`dash_spark_${kpi.key}`, kpi.sparkData, kpi.sparkColor);
+            await this.visuals.renderSparkline(`dash_spark_${kpi.key}`, kpi.sparkData);
         }
 
         await this.visuals.renderTrend(
@@ -465,7 +465,7 @@ export class UiDashboardComponent implements OnInit, OnDestroy {
         return RISK_ZONES
             .map(zone => ({
                 name: zone.name,
-                color: zone.color,
+                tone: zone.tone,
                 data: locations
                     .filter(l => this.riskZoneOf(l.compliance).key === zone.key)
                     .map(l => ({
@@ -483,7 +483,7 @@ export class UiDashboardComponent implements OnInit, OnDestroy {
     private buildFunnel(): { labels: string[]; values: number[] } {
         const steps = [...(this.overview?.statusFunnel ?? [])].sort((a, b) => b.count - a.count);
         return {
-            labels: steps.map(s => PLAN_STATUS_LABELS[s.status] ?? `Status ${s.status}`),
+            labels: steps.map(s => planStatusLabel(s.status)),
             values: steps.map(s => s.count)
         };
     }

@@ -13,20 +13,20 @@
 }
 
 .icon {
-  color: #f97316;
+  color: var(--warning);
   font-size: 24px;
 }
 
 .preview-message {
   margin: 0 0 16px 0;
   font-size: 14px;
-  color: #4b5563;
+  color: var(--text);
 }
 
 .preview-table-wrap {
   max-height: 360px;
   overflow-y: auto;
-  border: 1px solid var(--borderColor);
+  border: 1px solid var(--border);
   border-radius: var(--radius-sm);
 }
 
@@ -48,7 +48,7 @@
 
   td {
     padding: 8px 12px;
-    border-top: 1px solid var(--borderColor);
+    border-top: 1px solid var(--border);
     vertical-align: top;
   }
 
@@ -72,7 +72,7 @@
   margin: 16px 0 4px 0;
   font-size: 13px;
   font-weight: 700;
-  color: var(--warningText);
+  color: var(--warning-text);
 }
 
 // location-structure.component.scss-dəki .issue-list ilə eyni
@@ -88,8 +88,8 @@
     align-items: baseline;
     gap: 8px;
     padding: 6px 0;
-    font-size: 12.5px;
-    border-top: 1px solid var(--borderColor);
+    font-size: var(--fs-13);
+    border-top: 1px solid var(--border);
   }
 
   .issue-row {
@@ -98,7 +98,7 @@
     border-radius: 6px;
     background: var(--surface-subtle);
     color: var(--gray-600);
-    font-size: 11px;
+    font-size: var(--fs-12);
     font-weight: 700;
   }
 }

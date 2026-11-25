@@ -8,7 +8,7 @@
             <div class="g-filter-field">
                 <label class="g-field-label">
                     <span class="material-symbols-outlined">business</span>
-                    Müəssisə <span class="text-danger" aria-hidden="true">*</span>
+                    Firma <span class="text-danger" aria-hidden="true">*</span>
                 </label>
                 <mat-form-field appearance="outline" class="g-modern-field">
                     <mat-select formControlName="firmId" required (selectionChange)="onSelectFirm($event.value)">
@@ -19,7 +19,7 @@
             <div class="g-filter-field">
                 <label class="g-field-label">
                     <span class="material-symbols-outlined">location_on</span>
-                    Lokasiya
+                    Mağaza
                 </label>
                 <mat-form-field appearance="outline" class="g-modern-field">
                     <mat-select formControlName="locationCode">
@@ -81,7 +81,7 @@
                 <!-- Total Tickets Column -->
                 <ng-container matColumnDef="locationCode">
                     <th mat-header-cell *matHeaderCellDef>
-                        Ərazi Kodu
+                        Mağaza kodu
                     </th>
                     <td mat-cell *matCellDef="let element" class="text-body">
                         {{element.locationCode}}
@@ -91,7 +91,7 @@
                 <!-- Resolved Tickets Column -->
                 <ng-container matColumnDef="locationName">
                     <th mat-header-cell *matHeaderCellDef>
-                        Ərazi
+                        Mağaza
                     </th>
                     <td mat-cell *matCellDef="let element" class="text-body">
                         {{element.locationName}}

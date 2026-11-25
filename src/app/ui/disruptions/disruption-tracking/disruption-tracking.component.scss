@@ -36,13 +36,13 @@
         font-size: 13px;
         outline: none;
 
-        &:focus { border-color: var(--primaryColor); }
+        &:focus { border-color: var(--accent); }
     }
 }
 
 .g-secondary-btn.is-open {
-    border-color: var(--primaryColor);
-    color: var(--primaryColor);
+    border-color: var(--accent);
+    color: var(--accent);
 }
 
 .count-dot {
@@ -53,9 +53,9 @@
     height: 18px;
     padding: 0 5px;
     border-radius: 9px;
-    background: var(--primaryColor);
-    color: #fff;
-    font-size: 11px;
+    background: var(--accent);
+    color: var(--on-accent);
+    font-size: var(--fs-12);
     font-weight: 700;
 }
 
@@ -68,19 +68,19 @@
     transition: box-shadow .2s, border-color .2s, background .2s, transform .15s;
 
     &:hover { transform: translateY(-1px); }
-    &:focus-visible { outline: 2px solid var(--primaryColor); outline-offset: 2px; }
+    &:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
     &.is-active {
-        border-color: var(--primaryColor);
+        border-color: var(--accent);
         background: var(--surface);
-        box-shadow: inset 0 -3px 0 var(--primaryColor), var(--shadow-md);
+        box-shadow: inset 0 -3px 0 var(--accent), var(--shadow-md);
     }
 
-    &[data-kpi='inspector'] .kpi-icon { background: var(--warningSoft); color: var(--warningText); }
-    &[data-kpi='chain'] .kpi-icon { background: var(--infoSoft); color: #1565C0; }
-    &[data-kpi='overdue'] .kpi-icon { background: var(--dangerSoft); color: var(--dangerStrong); }
-    &[data-kpi='closed'] .kpi-icon { background: var(--successSoft); color: var(--successStrong); }
-    &[data-kpi='overdue'] .kpi-value { color: var(--dangerStrong); }
+    &[data-kpi='inspector'] .kpi-icon { background: var(--warning-soft); color: var(--warning-text); }
+    &[data-kpi='chain'] .kpi-icon { background: var(--info-soft); color: var(--info-text); }
+    &[data-kpi='overdue'] .kpi-icon { background: var(--danger-soft); color: var(--danger-text); }
+    &[data-kpi='closed'] .kpi-icon { background: var(--success-soft); color: var(--success-text); }
+    &[data-kpi='overdue'] .kpi-value { color: var(--danger-text); }
 }
 
 // ── Cədvəl ──────────────────────────────────────────────────────────────────
@@ -91,21 +91,21 @@
         transition: background .15s;
 
         &:hover { background: var(--surface-muted); }
-        &:focus-visible { outline: 2px solid var(--primaryColor); outline-offset: -2px; }
+        &:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 
         &.is-selected {
-            background: var(--primarySoft);
+            background: var(--accent-soft);
 
-            .open-icon { color: var(--primaryColor); }
+            .open-icon { color: var(--accent); }
         }
     }
 }
 
 .id-cell {
     font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
-    font-size: 12.5px;
+    font-size: var(--fs-13);
     font-weight: 700;
-    color: var(--primaryDark);
+    color: var(--accent-hover);
 }
 
 .cell-stack {
@@ -122,7 +122,7 @@
 }
 
 .cell-sub {
-    font-size: 11.5px;
+    font-size: var(--fs-12);
     color: var(--gray-500);
 }
 
@@ -136,7 +136,7 @@
     }
 }
 
-.holder-cell .cell-sub { color: var(--primaryColor); font-weight: 600; }
+.holder-cell .cell-sub { color: var(--accent); font-weight: 600; }
 
 .stage-chip {
     display: inline-flex;
@@ -151,13 +151,13 @@
     display: inline-flex;
     align-items: center;
     gap: 3px;
-    font-size: 12.5px;
+    font-size: var(--fs-13);
     white-space: nowrap;
     color: var(--gray-600);
 
     &.is-overdue {
         font-weight: 700;
-        color: var(--dangerStrong);
+        color: var(--danger-text);
         .material-symbols-outlined { font-size: 15px; }
     }
 }
@@ -175,9 +175,9 @@
     align-items: center;
     gap: 8px;
 
-    &[data-stage='RETURNED'] i[data-s='current'] { background: var(--dangerStrong); box-shadow: 0 0 0 3px var(--dangerSoft); }
-    &[data-stage='REJECTED'] i { background: var(--dangerSoft); }
-    &[data-stage='CLOSED'] .track-caption { color: var(--successStrong); }
+    &[data-stage='RETURNED'] i[data-s='current'] { background: var(--danger-text); box-shadow: 0 0 0 3px var(--danger-soft); }
+    &[data-stage='REJECTED'] i { background: var(--danger-soft); }
+    &[data-stage='CLOSED'] .track-caption { color: var(--success-text); }
 }
 
 .track-dots {
@@ -192,18 +192,18 @@
         border-radius: 3px;
         background: var(--gray-200);
 
-        &[data-s='done'] { background: var(--successStrong); }
+        &[data-s='done'] { background: var(--success-text); }
         &[data-s='current'] {
             width: 20px;
-            background: var(--primaryColor);
-            box-shadow: 0 0 0 3px var(--primarySoft);
+            background: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-soft);
         }
         &[data-s='void'] { background: var(--gray-100); }
     }
 }
 
 .track-caption {
-    font-size: 11.5px;
+    font-size: var(--fs-12);
     font-weight: 700;
     color: var(--gray-500);
     font-variant-numeric: tabular-nums;

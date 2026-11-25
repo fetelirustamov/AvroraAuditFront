@@ -2,50 +2,24 @@
 //
 // Səhifə başlığı, `.kpi-*`, `.table-card`, `.empty-state`, `.row-number`
 // `src/_design-system.scss`-dən gəlir. Burada yalnız bu səhifəyə xas olanlar:
-// üç dayaqlı indiqo qradient, tarix filtri, status nişanları və cədvəl tonları.
+// tarix filtri, status nişanları və cədvəl sətirləri.
 
 @import '../report-filter-toolbar';
 
-// Bu başlıq üç dayaqlı qradient işlədir, ona görə `background`-u özü təyin edir
-// (paylaşılan qat iki dayaq — `--page-accent-from/to` — dəstəkləyir).
-.report-page-header {
-    background: linear-gradient(135deg, #5B6CFF 0%, #8B7CFF 55%, #A78BFA 100%);
-}
-
-// İndiqo vurğu tonları
-$indigo: #5B6CFF;
-$indigo-soft: #E8EBFF;
-$accent-tint: #F5F6FF;
-$accent-tint-strong: #EEF0FF;
-
 // İxrac düyməsi burada deaktiv ola bilir
-.export-btn {
-    transition: background .2s, transform .15s, opacity .2s;
-
-    &:hover:not(:disabled) {
-        background: rgba(255, 255, 255, .28);
-        transform: translateY(-1px);
-    }
-    &:hover:disabled {
-        transform: none;
-    }
-    &:disabled {
-        opacity: .55;
-        cursor: not-allowed;
-    }
+.export-btn:disabled {
+    opacity: .5;
+    cursor: not-allowed;
 }
 
 .required-mark {
-    color: var(--dangerColor);
-    font-weight: 700;
+    color: var(--danger-text);
+    font-weight: 600;
 }
 
 :host ::ng-deep .search-btn:disabled {
     opacity: .5;
     cursor: not-allowed;
-    box-shadow: none;
-    filter: none;
-    transform: none;
 }
 
 .filter-field-date {
@@ -69,39 +43,17 @@ $accent-tint-strong: #EEF0FF;
     gap: 6px;
     min-height: 46px;
     padding: 0 18px;
-    border: 1px solid var(--borderColor);
-    border-radius: 12px;
-    background: var(--surface-muted);
-    color: var(--bodyColor);
-    font-size: 13px;
-    font-weight: 600;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    color: var(--text);
+    font-size: var(--fs-13);
+    font-weight: 500;
     cursor: pointer;
-    transition: background .2s, color .2s;
+    transition: background var(--transition);
 
     &:hover {
-        background: var(--dangerSoft);
-        color: var(--dangerColor);
-        border-color: rgba(255, 64, 35, .25);
-    }
-}
-
-// Bu səhifədə KPI kartları ağ fondadır (paylaşılan qatda boz)
-.kpi-card {
-    background: var(--surface);
-}
-
-.kpi-icon {
-    &.total-icon {
-        background: $indigo-soft;
-        color: $indigo;
-    }
-    &.processed-icon {
-        background: #DCFCE7;
-        color: #16A34A;
-    }
-    &.pending-icon {
-        background: #FEF3C7;
-        color: #D97706;
+        background: var(--surface-muted);
     }
 }
 
@@ -110,28 +62,28 @@ $accent-tint-strong: #EEF0FF;
     align-items: center;
     gap: 6px;
     padding: 6px 14px;
-    border: 1px solid rgba(255, 64, 35, .2);
+    border: 1px solid var(--border-strong);
     border-radius: var(--radius-sm);
-    background: var(--dangerSoft);
-    color: var(--dangerColor);
-    font-size: 12px;
-    font-weight: 600;
+    background: var(--surface);
+    color: var(--text);
+    font-size: var(--fs-12);
+    font-weight: 500;
     cursor: pointer;
-    transition: background .2s;
+    transition: background var(--transition);
 
     .material-symbols-outlined {
         font-size: 16px;
+        color: var(--text-muted);
     }
     &:hover {
-        background: var(--dangerColor);
-        color: var(--whiteColor);
+        background: var(--surface-muted);
     }
 }
 
 :host ::ng-deep .filter-row th.filter-header-cell {
     background: var(--surface);
     padding: 6px 8px;
-    border-bottom: 2px solid var(--borderColor);
+    border-bottom: 1px solid var(--border);
 }
 
 .filter-input-wrap {
@@ -139,18 +91,17 @@ $accent-tint-strong: #EEF0FF;
     align-items: center;
     gap: 4px;
     padding: 4px 8px;
-    border: 1px solid var(--borderColor);
+    border: 1px solid var(--border);
     border-radius: var(--radius-sm);
-    background: var(--surface-muted);
-    transition: border-color .2s;
+    background: var(--surface);
+    transition: border-color var(--transition);
 
     &:focus-within {
-        border-color: var(--primaryColor);
-        box-shadow: 0 0 0 3px rgba(96, 93, 255, .1);
+        border-color: var(--accent);
     }
     .filter-input-icon {
         font-size: 14px;
-        color: var(--text-muted);
+        color: var(--text-faint);
     }
     .filter-input {
         width: 100%;
@@ -158,11 +109,11 @@ $accent-tint-strong: #EEF0FF;
         border: none;
         outline: none;
         background: transparent;
-        font-size: 12px;
+        font-size: var(--fs-12);
         color: var(--text-strong);
 
         &::placeholder {
-            color: var(--text-muted);
+            color: var(--text-faint);
         }
     }
 }
@@ -171,7 +122,7 @@ $accent-tint-strong: #EEF0FF;
     width: 100%;
 
     .mat-mdc-text-field-wrapper {
-        border-radius: 8px !important;
+        border-radius: var(--radius-md) !important;
     }
     .mat-mdc-form-field-infix {
         padding: 6px 0 !important;
@@ -184,45 +135,40 @@ $accent-tint-strong: #EEF0FF;
 
 // ── Cədvəl sətirləri ────────────────────────────────────────────────────────
 :host ::ng-deep .data-header-row th.data-header-cell {
-    background: $indigo-soft;
-    color: var(--bodyColor);
-    font-size: 11px;
-    font-weight: 700;
+    background: var(--surface-muted);
+    color: var(--text-muted);
+    font-size: var(--fs-12);
+    font-weight: 600;
     text-align: center;
     padding: 10px 12px;
-    border-bottom: 2px solid var(--borderColor);
+    border-bottom: 1px solid var(--border);
 }
 :host ::ng-deep .data-row {
     height: 48px;
 
     td.mat-mdc-cell {
         padding: 8px 12px;
-        border-bottom: 1px solid var(--borderColor);
+        border-bottom: 1px solid var(--border);
         text-align: center;
     }
     &:hover td.mat-mdc-cell {
-        background: $accent-tint;
+        background: var(--surface-muted);
     }
     &:last-child td.mat-mdc-cell {
         border-bottom: none;
     }
 }
-:host ::ng-deep .data-row:nth-child(even) td.mat-mdc-cell {
-    background: var(--surface-muted);
-}
-:host ::ng-deep .data-row:nth-child(even):hover td.mat-mdc-cell {
-    background: $accent-tint-strong;
-}
 
 // ── Sütun məzmunu ───────────────────────────────────────────────────────────
 .code-badge {
     display: inline-block;
-    padding: 4px 10px;
-    border-radius: 6px;
-    background: #EEF2FF;
-    color: #4B5DA8;
-    font-size: 11.5px;
-    font-weight: 700;
+    padding: 2px var(--space-2);
+    border-radius: var(--radius-sm);
+    background: var(--surface-subtle);
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: var(--fs-12);
+    font-weight: 500;
 }
 
 .user-name {
@@ -231,8 +177,8 @@ $accent-tint-strong: #EEF0FF;
 }
 
 .date-text {
-    font-size: 12.5px;
-    color: var(--bodyColor);
+    font-size: var(--fs-13);
+    color: var(--text-muted);
     font-variant-numeric: tabular-nums;
 }
 
@@ -240,11 +186,10 @@ $accent-tint-strong: #EEF0FF;
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    padding: 5px 12px;
-    border-radius: 999px;
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: .02em;
+    padding: 2px var(--space-2);
+    border-radius: var(--radius-sm);
+    font-size: var(--fs-12);
+    font-weight: 600;
 
     .status-dot {
         flex-shrink: 0;
@@ -254,65 +199,52 @@ $accent-tint-strong: #EEF0FF;
     }
 
     &.processed {
-        background: linear-gradient(135deg, #DCFCE7 0%, #BBF7D0 100%);
-        color: #15803D;
-        border: 1px solid rgba(22, 163, 74, .25);
-        box-shadow: 0 2px 8px rgba(22, 163, 74, .12);
+        background: var(--success-soft);
+        color: var(--success-text);
 
         .status-dot {
-            background: #16A34A;
-            box-shadow: 0 0 0 3px rgba(22, 163, 74, .2);
+            background: var(--success);
         }
     }
 
     &.not-processed {
-        background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
-        color: #B45309;
-        border: 1px solid rgba(217, 119, 6, .25);
-        box-shadow: 0 2px 8px rgba(217, 119, 6, .12);
+        background: var(--warning-soft);
+        color: var(--warning-text);
 
         .status-dot {
-            background: #D97706;
-            box-shadow: 0 0 0 3px rgba(217, 119, 6, .2);
+            background: var(--warning);
         }
     }
 
     &.unknown {
-        background: var(--surface-muted);
-        color: var(--text-muted);
-        border: 1px solid var(--borderColor);
+        background: var(--surface-subtle);
+        color: var(--text);
 
         .status-dot {
-            background: var(--text-muted);
+            background: var(--text-faint);
         }
     }
 }
 
 :host ::ng-deep .modern-paginator {
     background: var(--surface);
-    color: var(--bodyColor);
-    font-size: 13px;
+    color: var(--text-muted);
+    font-size: var(--fs-13);
 }
 :host ::ng-deep .mat-mdc-menu-panel {
     border-radius: var(--radius-sm) !important;
     min-width: 160px !important;
 }
 :host ::ng-deep .mat-mdc-menu-item {
-    font-size: 13px;
+    font-size: var(--fs-13);
 
     &:hover {
-        background: var(--primarySoft);
-        color: var(--primaryColor);
+        background: var(--surface-muted);
     }
 }
 .menu-icon {
     font-size: 18px;
-}
-.excel-icon {
-    color: #1D6F42;
-}
-.pdf-icon {
-    color: var(--dangerColor);
+    color: var(--text-muted);
 }
 
 @media (max-width: 720px) {

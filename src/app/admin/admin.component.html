@@ -1,20 +1,7 @@
-<div class="admin-container">
-
-    <!-- Sidebar -->
+<div class="app-shell">
     <app-sidebar />
-
-    <!-- Main Content -->
-    <div class="main-content transition d-flex flex-column admin-input-design"
-        [ngClass]="{'active': isSidebarToggled}">
-
-        <!-- Header -->
+    <div class="main-content admin-input-design" [class.active]="isSidebarToggled">
         <app-header />
-
-        <!-- Main Content Area -->
-        <div class="content-wrapper">
-            <router-outlet />
-        </div>
-
-        <div class="flex-grow-1"></div>
+        <router-outlet />
     </div>
 </div>

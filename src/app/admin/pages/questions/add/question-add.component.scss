@@ -5,12 +5,12 @@
 
 // ─── Breadcrumb içi elementlər ───────────────────────────────────
 .qa-back-btn {
-    background: var(--lightColor, #f4f5f8) !important;
-    border-radius: 8px !important;
-    color: var(--bodyColor, #555) !important;
+    background: var(--surface-muted) !important;
+    border-radius: var(--radius-md) !important;
+    color: var(--text-muted) !important;
     width: 36px; height: 36px;
     flex-shrink: 0;
-    &:hover { background: #e8eaf0 !important; }
+    &:hover { background: var(--surface-subtle) !important; }
 }
 
 // ① Mode badge — system status
@@ -18,17 +18,18 @@
     display: inline-flex;
     align-items: center;
     gap: 4px;
-    font-size: 11px;
+    font-size: var(--fs-12);
     font-weight: 600;
     padding: 3px 10px;
-    border-radius: 20px;
+    border-radius: var(--radius-sm);
     width: fit-content;
 
     i { font-size: 13px; }
 
-    &--add  { background: #e8f5e9; color: #2e7d32; }
-    &--edit { background: #fff3e0; color: #e65100; }
-    &--view { background: #e3f2fd; color: #1565c0; }
+    // Rejim status deyil: əlavə/baxış neytral, redaktə seçilmiş hal kimi vurğulu
+    &--add  { background: var(--surface-subtle); color: var(--text); }
+    &--edit { background: var(--accent-soft); color: var(--accent-text); }
+    &--view { background: var(--surface-subtle); color: var(--text); }
 }
 
 // ─── Action Buttons ──────────────────────────────────────────────
@@ -45,61 +46,51 @@
 
 .qa-btn-cancel {
     border-radius: 8px !important;
-    color: #666 !important;
-    border-color: #ddd !important;
+    color: var(--text-muted) !important;
+    border-color: var(--border-strong) !important;
     height: 40px;
-    &:hover { background: #fafafa !important; }
+    &:hover { background: var(--surface-muted) !important; }
 }
 
 .qa-btn-add-answer {
     border-radius: 8px !important;
     height: 36px;
-    font-size: 13px !important;
+    font-size: var(--fs-13) !important;
     i { font-size: 18px; }
 }
 
 // ─── Cards ──────────────────────────────────────────────────────
 .qa-card {
     border-radius: 12px !important;
-    box-shadow: 0 1px 6px rgba(0,0,0,.07) !important;
-    border: 1px solid #e8eaf2 !important;
+    box-shadow: none !important;
+    border: 1px solid var(--border) !important;
     overflow: hidden;
-    background: #fff !important;
+    background: var(--surface) !important;
 
     &__header {
         display: flex;
         align-items: center;
         gap: 10px;
         padding: 12px 20px;
-        background: #f5f5ff;
-        border-bottom: 1px solid #e8eaf2;
-        border-left: 4px solid var(--primaryColor, #605dff);
-
-        &--answers {
-            background: #f5f5ff;
-            border-bottom-color: #e8eaf2;
-            border-left-color: var(--primaryColor, #605dff);
-        }
+        background: var(--surface-muted);
+        border-bottom: 1px solid var(--border);
     }
 
     &__icon {
         font-size: 20px;
-        color: var(--primaryColor, #605dff);
-
-        &--question { color: var(--primaryColor, #605dff); }
-        &--answers  { color: var(--primaryColor, #605dff); }
+        color: var(--text-muted);
     }
 
     &__title {
         font-size: 14px;
         font-weight: 600;
-        color: #2d3748;
+        color: var(--text-strong);
         margin: 0;
     }
 
     &__body {
         padding: 20px;
-        background: #fff;
+        background: var(--surface);
 
         // admin-input-design-in son form-group-u margin-siz olsun
         .form-group:last-child { margin-bottom: 0; }
@@ -108,14 +99,14 @@
 
 // ─── Required & Labels ───────────────────────────────────────────
 .qa-required {
-    color: #e53e3e;
+    color: var(--danger-text);
     margin-left: 3px;
     cursor: default;
 }
 
 .qa-label-info {
     font-size: 14px !important;
-    color: #aaa;
+    color: var(--text-muted);
     vertical-align: middle;
     cursor: help;
     margin-left: 4px;
@@ -126,15 +117,15 @@
     display: flex;
     align-items: center;
     gap: 4px;
-    font-size: 12px;
-    color: var(--primaryColor, #605dff);
+    font-size: var(--fs-12);
+    color: var(--text-muted);
     margin-top: 2px;
 
-    i { font-size: 13px; }
+    i { font-size: 14px; }
 }
 
 .qa-hint-inline {
-    color: #aaa;
+    color: var(--text-muted);
     cursor: help;
     i { font-size: 16px; vertical-align: middle; }
 }
@@ -153,11 +144,12 @@
     align-items: center;
     justify-content: center;
     min-width: 22px; height: 22px;
-    background: var(--primaryColor, #605dff);
-    color: #fff;
-    border-radius: 12px;
-    font-size: 11px;
-    font-weight: 700;
+    background: var(--surface-subtle);
+    color: var(--text);
+    border-radius: var(--radius-sm);
+    font-size: var(--fs-12);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
     padding: 0 6px;
 }
 
@@ -167,13 +159,11 @@
     align-items: center;
     gap: 12px;
     padding: 6px 20px 6px 20px;
-    background: #f5f5ff;
-    border-bottom: 1px solid #e8eaf2;
-    font-size: 11px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: .4px;
-    color: #999;
+    background: var(--surface-muted);
+    border-bottom: 1px solid var(--border);
+    font-size: var(--fs-12);
+    font-weight: 600;
+    color: var(--text-muted);
 
     &__num   { width: 32px; flex-shrink: 0; text-align: center; }
     &__text  { flex: 1; }
@@ -187,11 +177,11 @@
     align-items: center;
     gap: 12px;
     padding: 4px 20px;
-    border-bottom: 1px solid #f3f4f6;
+    border-bottom: 1px solid var(--border);
     transition: background .15s;
     min-height: 52px;
 
-    &:hover { background: #fafbff; }
+    &:hover { background: var(--surface-muted); }
     &--last { border-bottom: none; }
 }
 
@@ -206,10 +196,11 @@
     width: 28px; height: 28px;
     min-width: 28px;
     border-radius: 50%;
-    background: var(--primaryColor, #605dff);
-    color: #fff;
-    font-size: 12px;
-    font-weight: 700;
+    background: var(--surface-subtle);
+    color: var(--text-muted);
+    font-size: var(--fs-12);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -223,8 +214,8 @@
 .qa-answer-del {
     flex-shrink: 0;
     align-self: center;
-    color: #e53e3e !important;
-    &:hover { background: #fff5f5 !important; }
+    color: var(--danger-text) !important;
+    &:hover { background: var(--danger-soft) !important; }
 }
 
 // ─── Empty State ─────────────────────────────────────────────────
@@ -234,11 +225,11 @@
     align-items: center;
     justify-content: center;
     padding: 40px 20px;
-    color: #b0bec5;
+    color: var(--text-muted);
     text-align: center;
 
-    i { font-size: 48px; opacity: .4; margin-bottom: 12px; }
-    p { font-size: 14px; font-weight: 500; margin: 0 0 4px; color: #888; }
+    i { font-size: 44px; color: var(--text-faint); margin-bottom: 12px; }
+    p { font-size: var(--fs-14); font-weight: 500; margin: 0 0 4px; color: var(--text-muted); }
     small { font-size: 12px; }
 }
 
@@ -249,11 +240,10 @@
     gap: 6px;
     margin: 12px 20px;
     padding: 10px 14px;
-    background: #fff8e1;
-    border: 1px solid #ffe082;
-    border-radius: 8px;
-    font-size: 13px;
-    color: #f57f17;
+    background: var(--warning-soft);
+    border-radius: var(--radius-md);
+    font-size: var(--fs-13);
+    color: var(--warning-text);
 
     i { font-size: 16px; }
 }

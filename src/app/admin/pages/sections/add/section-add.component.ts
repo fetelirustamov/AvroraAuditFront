@@ -35,7 +35,7 @@ export class SectionAddComponent implements OnInit {
     form!: FormGroup;
     firms: FirmDto[] = [];
 
-    pageTitle = 'Yeni Şöbə';
+    pageTitle = 'Yeni şöbə';
     isEditMode = false;
     isSaving = false;
 
@@ -61,7 +61,7 @@ export class SectionAddComponent implements OnInit {
         const dialogData: any = this.data as any;
         if (dialogData?.mode === 'edit' && dialogData?.item) {
             this.isEditMode = true;
-            this.pageTitle = 'Şöbəni Redaktə Et';
+            this.pageTitle = 'Şöbəni redaktə et';
             this.form.patchValue({
                 firmId: dialogData.item.firmId,
                 sectionName: dialogData.item.sectionName,

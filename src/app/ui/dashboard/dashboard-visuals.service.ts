@@ -2,36 +2,25 @@ import { Inject, Injectable, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 
 import { MONTH_SHORT_LABELS } from './dashboard.model';
+import { chartColors } from '../../shared/utils/chart-colors';
+import { complianceTone } from '../../shared/utils/compliance';
+
+/** Risk zonasının qrafik rəngi — `ChartColors`-dakı status açarı */
+export type RiskTone = 'success' | 'warning' | 'danger';
 
 /**
  * Dashboard qrafikləri. ApexCharts dinamik `import()` ilə yüklənir — səhifə
  * açılmayana qədər paketə düşmür. Admin panelindəki `DashboardChartsService`
- * ayrıca qalır: orada sabit element ID-ləri və köhnə stil var, burada isə
- * element referansı ötürülür və palitra vahiddir.
+ * ayrıca qalır: orada sabit element ID-ləri var, burada isə element
+ * referansı ötürülür.
+ *
+ * Rənglər `chartColors()` ilə token-lərdən oxunur: mənasız seriya vurğu və ya
+ * neytral, uyğunluq/risk isə status rəngidir.
  */
 @Injectable()
 export class DashboardVisualsService {
     private readonly isBrowser: boolean;
     private charts: any[] = [];
-
-    /** Vahid palitra — bütün qrafiklərdə eyni məna, eyni rəng */
-    private readonly palette = {
-        primary: '#605DFF',
-        teal: '#0EA5A4',
-        amber: '#F59E0B',
-        rose: '#F43F5E',
-        violet: '#8B5CF6',
-        sky: '#3584FC',
-        emerald: '#25B003',
-        grid: '#F1F5F9',
-        label: '#94A3B8'
-    };
-
-    /** Kateqoriyalı qrafiklərdə (treemap, funnel) növbə ilə işlədilir */
-    private readonly categorical = [
-        '#605DFF', '#0EA5A4', '#F59E0B', '#F43F5E',
-        '#8B5CF6', '#3584FC', '#25B003', '#EC4899'
-    ];
 
     constructor(@Inject(PLATFORM_ID) platformId: any) {
         this.isBrowser = isPlatformBrowser(platformId);
@@ -47,37 +36,32 @@ export class DashboardVisualsService {
     // ── Uyğunluq indeksi (radial gauge) ──────────────────────────────────────
 
     async renderComplianceGauge(elementId: string, value: number): Promise<void> {
+        if (!this.isBrowser) { return; }
+        const c = chartColors();
+        const percent = Math.max(0, Math.min(100, Math.round(value)));
         await this.render(elementId, {
-            series: [Math.max(0, Math.min(100, Math.round(value)))],
-            chart: { type: 'radialBar', height: 260, sparkline: { enabled: true } },
+            series: [percent],
+            chart: { type: 'radialBar', height: 260, sparkline: { enabled: true }, fontFamily: 'inherit' },
             plotOptions: {
                 radialBar: {
                     startAngle: -135,
                     endAngle: 135,
                     hollow: { size: '62%' },
-                    track: { background: '#EEF0FF', strokeWidth: '100%' },
+                    track: { background: c.surfaceSubtle, strokeWidth: '100%' },
                     dataLabels: {
-                        name: { offsetY: 24, color: this.palette.label, fontSize: '12px' },
+                        name: { offsetY: 24, color: c.textMuted, fontSize: '12px' },
                         value: {
                             offsetY: -16,
                             fontSize: '34px',
-                            fontWeight: 700,
-                            color: '#1E2533',
+                            fontWeight: 600,
+                            color: c.textStrong,
                             formatter: (val: number) => `${val}%`
                         }
                     }
                 }
             },
-            fill: {
-                type: 'gradient',
-                gradient: {
-                    shade: 'light',
-                    type: 'horizontal',
-                    gradientToColors: [this.palette.teal],
-                    stops: [0, 100]
-                }
-            },
-            colors: [this.palette.primary],
+            // Göstərici həddə bağlıdır: rəng risk zonasından gəlir
+            colors: [c[complianceTone(percent)]],
             stroke: { lineCap: 'round' },
             labels: ['Uyğunluq indeksi']
         });
@@ -85,16 +69,15 @@ export class DashboardVisualsService {
 
     // ── KPI kartlarındakı mini qrafik ────────────────────────────────────────
 
-    async renderSparkline(elementId: string, data: number[], color: string): Promise<void> {
+    async renderSparkline(elementId: string, data: number[]): Promise<void> {
+        if (!this.isBrowser) { return; }
+        const c = chartColors();
         await this.render(elementId, {
             series: [{ data }],
             chart: { type: 'area', height: 44, sparkline: { enabled: true } },
             stroke: { curve: 'smooth', width: 2 },
-            fill: {
-                type: 'gradient',
-                gradient: { shadeIntensity: 1, opacityFrom: 0.35, opacityTo: 0, stops: [0, 100] }
-            },
-            colors: [color],
+            fill: { type: 'solid', opacity: 0.08 },
+            colors: [c.accent],
             tooltip: { enabled: false }
         });
     }
@@ -107,6 +90,8 @@ export class DashboardVisualsService {
         findings: number[],
         compliance: number[]
     ): Promise<void> {
+        if (!this.isBrowser) { return; }
+        const c = chartColors();
         await this.render(elementId, {
             series: [
                 { name: 'Yoxlama', type: 'column', data: inspections },
@@ -120,23 +105,24 @@ export class DashboardVisualsService {
                 toolbar: { show: false },
                 fontFamily: 'inherit'
             },
-            colors: [this.palette.primary, this.palette.rose, this.palette.teal],
-            stroke: { width: [0, 0, 3], curve: 'smooth' },
-            plotOptions: { bar: { columnWidth: '52%', borderRadius: 5 } },
-            fill: { opacity: [0.9, 0.75, 1] },
-            markers: { size: [0, 0, 4], strokeWidth: 2, hover: { size: 6 } },
+            // Sayların mənası yoxdur → neytral; əsas göstərici (uyğunluq) → vurğu
+            colors: [c.neutral[2], c.neutral[0], c.accent],
+            stroke: { width: [0, 0, 2], curve: 'smooth' },
+            plotOptions: { bar: { columnWidth: '52%', borderRadius: 4 } },
+            fill: { opacity: [1, 1, 1] },
+            markers: { size: [0, 0, 4], strokeWidth: 2, strokeColors: c.surface, hover: { size: 6 } },
             dataLabels: { enabled: false },
             xaxis: {
                 categories: MONTH_SHORT_LABELS,
                 axisBorder: { show: false },
                 axisTicks: { show: false },
-                labels: { style: { colors: this.palette.label, fontSize: '11px' } }
+                labels: { style: { colors: c.textMuted, fontSize: '12px' } }
             },
             yaxis: [
                 {
                     seriesName: 'Yoxlama',
-                    title: { text: 'Say', style: { color: this.palette.label, fontWeight: 500 } },
-                    labels: { style: { colors: this.palette.label } }
+                    title: { text: 'Say', style: { color: c.textMuted, fontWeight: 500 } },
+                    labels: { style: { colors: c.textMuted } }
                 },
                 { seriesName: 'Yoxlama', show: false },
                 {
@@ -144,15 +130,15 @@ export class DashboardVisualsService {
                     seriesName: 'Uyğunluq (%)',
                     min: 0,
                     max: 100,
-                    title: { text: 'Uyğunluq (%)', style: { color: this.palette.label, fontWeight: 500 } },
+                    title: { text: 'Uyğunluq (%)', style: { color: c.textMuted, fontWeight: 500 } },
                     labels: {
-                        style: { colors: this.palette.label },
+                        style: { colors: c.textMuted },
                         formatter: (val: number) => `${Math.round(val)}%`
                     }
                 }
             ],
-            grid: { borderColor: this.palette.grid, strokeDashArray: 4 },
-            legend: { position: 'top', horizontalAlign: 'right', markers: { radius: 4 } },
+            grid: { borderColor: c.border, strokeDashArray: 4 },
+            legend: { position: 'top', horizontalAlign: 'right', labels: { colors: c.text }, markers: { radius: 4 } },
             tooltip: { shared: true, intersect: false }
         });
     }
@@ -165,20 +151,22 @@ export class DashboardVisualsService {
         current: number[],
         previous: number[]
     ): Promise<void> {
+        if (!this.isBrowser) { return; }
+        const c = chartColors();
         await this.render(elementId, {
             series: [
                 { name: 'Cari dövr', data: current },
                 { name: 'Əvvəlki dövr', data: previous }
             ],
             chart: { type: 'radar', height: 340, toolbar: { show: false }, fontFamily: 'inherit' },
-            colors: [this.palette.primary, this.palette.amber],
+            colors: [c.accent, c.neutral[1]],
             stroke: { width: 2 },
-            fill: { opacity: [0.25, 0.12] },
+            fill: { opacity: [0.2, 0.08] },
             markers: { size: 3 },
-            xaxis: { categories: sections, labels: { style: { colors: sections.map(() => this.palette.label), fontSize: '11px' } } },
+            xaxis: { categories: sections, labels: { style: { colors: sections.map(() => c.textMuted), fontSize: '12px' } } },
             yaxis: { min: 0, max: 100, tickAmount: 4, labels: { formatter: (val: number) => `${Math.round(val)}%` } },
-            plotOptions: { radar: { polygons: { strokeColors: this.palette.grid, connectorColors: this.palette.grid } } },
-            legend: { position: 'top', horizontalAlign: 'right', markers: { radius: 4 } },
+            plotOptions: { radar: { polygons: { strokeColors: c.border, connectorColors: c.border } } },
+            legend: { position: 'top', horizontalAlign: 'right', labels: { colors: c.text }, markers: { radius: 4 } },
             tooltip: { y: { formatter: (val: number) => `${val}%` } }
         });
     }
@@ -193,18 +181,20 @@ export class DashboardVisualsService {
         current: number[],
         previous: number[]
     ): Promise<void> {
+        if (!this.isBrowser) { return; }
+        const c = chartColors();
         await this.render(elementId, {
             series: [
                 { name: 'Cari dövr', data: current },
                 { name: 'Əvvəlki dövr', data: previous }
             ],
             chart: { type: 'bar', height: 340, toolbar: { show: false }, fontFamily: 'inherit' },
-            colors: [this.palette.primary, this.palette.amber],
-            plotOptions: { bar: { horizontal: true, barHeight: '46%', borderRadius: 5 } },
+            colors: [c.accent, c.neutral[2]],
+            plotOptions: { bar: { horizontal: true, barHeight: '46%', borderRadius: 4 } },
             dataLabels: {
                 enabled: true,
                 formatter: (val: number) => `${val}%`,
-                style: { fontSize: '11px', fontWeight: 700 },
+                style: { fontSize: '12px', fontWeight: 600, colors: [c.text] },
                 offsetX: 26
             },
             xaxis: {
@@ -214,13 +204,13 @@ export class DashboardVisualsService {
                 axisBorder: { show: false },
                 axisTicks: { show: false },
                 labels: {
-                    style: { colors: this.palette.label, fontSize: '11px' },
+                    style: { colors: c.textMuted, fontSize: '12px' },
                     formatter: (val: string) => `${Math.round(Number(val))}%`
                 }
             },
-            yaxis: { labels: { style: { colors: this.palette.label, fontSize: '12px' } } },
-            grid: { borderColor: this.palette.grid, strokeDashArray: 4 },
-            legend: { position: 'top', horizontalAlign: 'right', markers: { radius: 4 } },
+            yaxis: { labels: { style: { colors: c.textMuted, fontSize: '12px' } } },
+            grid: { borderColor: c.border, strokeDashArray: 4 },
+            legend: { position: 'top', horizontalAlign: 'right', labels: { colors: c.text }, markers: { radius: 4 } },
             tooltip: { y: { formatter: (val: number) => `${val}%` } }
         });
     }
@@ -228,15 +218,19 @@ export class DashboardVisualsService {
     // ── Uyğunsuzluq kateqoriyaları (treemap) ─────────────────────────────────
 
     async renderCategoryTreemap(elementId: string, items: { name: string; value: number }[]): Promise<void> {
+        if (!this.isBrowser) { return; }
+        const c = chartColors();
         await this.render(elementId, {
             series: [{ data: items.map(i => ({ x: i.name, y: i.value })) }],
             chart: { type: 'treemap', height: 340, toolbar: { show: false }, fontFamily: 'inherit' },
-            colors: this.categorical,
-            plotOptions: { treemap: { distributed: true, enableShades: false, borderRadius: 6 } },
+            // Kateqoriyanın özünün mənası yoxdur: tək ton, sahə ölçünü verir
+            colors: [c.neutral[0]],
+            plotOptions: { treemap: { enableShades: true, shadeIntensity: 0.35, borderRadius: 4 } },
+            stroke: { width: 2, colors: [c.surface] },
             legend: { show: false },
             dataLabels: {
                 enabled: true,
-                style: { fontSize: '12px', fontWeight: 600 },
+                style: { fontSize: '12px', fontWeight: 600, colors: [c.surface] },
                 formatter: (text: string, op: any) => [text, op.value]
             },
             tooltip: { y: { formatter: (val: number) => `${val} uyğunsuzluq` } }
@@ -249,6 +243,8 @@ export class DashboardVisualsService {
         elementId: string,
         series: { name: string; data: { x: string; y: number }[] }[]
     ): Promise<void> {
+        if (!this.isBrowser) { return; }
+        const c = chartColors();
         await this.render(elementId, {
             series,
             chart: {
@@ -258,31 +254,31 @@ export class DashboardVisualsService {
                 fontFamily: 'inherit'
             },
             dataLabels: { enabled: false },
-            colors: [this.palette.primary],
             plotOptions: {
                 heatmap: {
-                    radius: 6,
+                    radius: 4,
                     enableShades: false,
+                    // Uyğunsuzluq sayı: çox olduqca status ağırlaşır
                     colorScale: {
                         ranges: [
-                            { from: 0, to: 0, color: '#F1F5F9', name: 'yoxdur' },
-                            { from: 1, to: 3, color: '#DCFCE7', name: '1–3' },
-                            { from: 4, to: 8, color: '#FEF3C7', name: '4–8' },
-                            { from: 9, to: 15, color: '#FED7AA', name: '9–15' },
-                            { from: 16, to: 999999, color: '#FECACA', name: '16+' }
+                            { from: 0, to: 0, color: c.surfaceSubtle, name: 'yoxdur' },
+                            { from: 1, to: 3, color: c.successSoft, name: '1–3' },
+                            { from: 4, to: 8, color: c.warningSoft, name: '4–8' },
+                            { from: 9, to: 15, color: c.dangerSoft, name: '9–15' },
+                            { from: 16, to: 999999, color: c.danger, name: '16+' }
                         ]
                     }
                 }
             },
-            stroke: { width: 3, colors: ['#FFFFFF'] },
+            stroke: { width: 3, colors: [c.surface] },
             xaxis: {
                 type: 'category',
                 axisBorder: { show: false },
                 axisTicks: { show: false },
-                labels: { style: { colors: this.palette.label, fontSize: '11px' } }
+                labels: { style: { colors: c.textMuted, fontSize: '12px' } }
             },
-            yaxis: { labels: { style: { colors: this.palette.label, fontSize: '11px' } } },
-            legend: { position: 'top', horizontalAlign: 'right', fontSize: '11px' },
+            yaxis: { labels: { style: { colors: c.textMuted, fontSize: '12px' } } },
+            legend: { position: 'top', horizontalAlign: 'right', fontSize: '12px', labels: { colors: c.text } },
             tooltip: { y: { formatter: (val: number) => `${val} uyğunsuzluq` } }
         });
     }
@@ -291,8 +287,10 @@ export class DashboardVisualsService {
 
     async renderRiskMatrix(
         elementId: string,
-        series: { name: string; color: string; data: { x: number; y: number; z: number; label: string }[] }[]
+        series: { name: string; tone: RiskTone; data: { x: number; y: number; z: number; label: string }[] }[]
     ): Promise<void> {
+        if (!this.isBrowser) { return; }
+        const c = chartColors();
         // Ox son həddində qalan kürə yarıya qədər kəsilir — ona görə oxa
         // ehtiyat sahə verilir, qrafik sahəsi isə `grid.padding` ilə daraldılır.
         const xValues = series.flatMap(s => s.data.map(p => p.x));
@@ -308,19 +306,20 @@ export class DashboardVisualsService {
                 fontFamily: 'inherit',
                 zoom: { enabled: false }
             },
-            colors: series.map(s => s.color),
+            colors: series.map(s => c[s.tone]),
             fill: { opacity: 0.75 },
+            stroke: { width: 2, colors: [c.surface] },
             dataLabels: { enabled: false },
             plotOptions: { bubble: { minBubbleRadius: 6, maxBubbleRadius: 34 } },
             xaxis: {
-                title: { text: 'Yoxlama sayı', style: { color: this.palette.label, fontWeight: 500 } },
+                title: { text: 'Yoxlama sayı', style: { color: c.textMuted, fontWeight: 500 } },
                 min: 0,
                 max: xMax,
                 tickAmount: Math.min(6, xMax),
                 axisBorder: { show: false },
                 axisTicks: { show: false },
                 labels: {
-                    style: { colors: this.palette.label },
+                    style: { colors: c.textMuted },
                     formatter: (val: string) => `${Math.round(Number(val))}`
                 }
             },
@@ -332,19 +331,19 @@ export class DashboardVisualsService {
                 min: -20,
                 max: 120,
                 tickAmount: 7,
-                title: { text: 'Uyğunluq (%)', style: { color: this.palette.label, fontWeight: 500 } },
+                title: { text: 'Uyğunluq (%)', style: { color: c.textMuted, fontWeight: 500 } },
                 labels: {
-                    style: { colors: this.palette.label },
+                    style: { colors: c.textMuted },
                     formatter: (val: number) => (val < 0 || val > 100 ? '' : `${Math.round(val)}%`)
                 }
             },
             grid: {
-                borderColor: this.palette.grid,
+                borderColor: c.border,
                 strokeDashArray: 4,
                 // 0% və ya maksimum nöqtədəki kürələr sahədən kənara çıxmasın
                 padding: { top: 12, right: 28, bottom: 12, left: 12 }
             },
-            legend: { position: 'top', horizontalAlign: 'right', markers: { radius: 4 } },
+            legend: { position: 'top', horizontalAlign: 'right', labels: { colors: c.text }, markers: { radius: 4 } },
             tooltip: {
                 custom: ({ seriesIndex, dataPointIndex }: any) => {
                     const point = series[seriesIndex]?.data[dataPointIndex];
@@ -364,31 +363,33 @@ export class DashboardVisualsService {
     // ── Plan həyat dövrü (funnel görünüşlü üfüqi sütun) ──────────────────────
 
     async renderStatusFunnel(elementId: string, labels: string[], values: number[]): Promise<void> {
+        if (!this.isBrowser) { return; }
+        const c = chartColors();
         await this.render(elementId, {
             series: [{ name: 'Plan', data: values }],
             chart: { type: 'bar', height: 280, toolbar: { show: false }, fontFamily: 'inherit' },
             plotOptions: {
                 bar: {
                     horizontal: true,
-                    distributed: true,
                     barHeight: '62%',
-                    borderRadius: 6,
+                    borderRadius: 4,
                     dataLabels: { position: 'center' }
                 }
             },
-            colors: this.categorical,
+            // Tək ölçü (say) — mərhələlər uzunluqla müqayisə olunur, rənglə yox
+            colors: [c.accent],
             dataLabels: {
                 enabled: true,
-                style: { fontSize: '12px', fontWeight: 700, colors: ['#FFFFFF'] }
+                style: { fontSize: '12px', fontWeight: 600, colors: [c.surface] }
             },
             xaxis: {
                 categories: labels,
                 axisBorder: { show: false },
                 axisTicks: { show: false },
-                labels: { style: { colors: this.palette.label, fontSize: '11px' } }
+                labels: { style: { colors: c.textMuted, fontSize: '12px' } }
             },
-            yaxis: { labels: { style: { colors: this.palette.label, fontSize: '12px' } } },
-            grid: { borderColor: this.palette.grid, strokeDashArray: 4, xaxis: { lines: { show: true } } },
+            yaxis: { labels: { style: { colors: c.textMuted, fontSize: '12px' } } },
+            grid: { borderColor: c.border, strokeDashArray: 4, xaxis: { lines: { show: true } } },
             legend: { show: false },
             tooltip: { y: { formatter: (val: number) => `${val} plan` } }
         });

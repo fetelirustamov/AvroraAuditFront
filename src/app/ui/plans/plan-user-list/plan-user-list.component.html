@@ -7,7 +7,7 @@
         <div class="g-filter-field">
             <label class="g-field-label">
                 <span class="material-symbols-outlined">business</span>
-                Müəssisə
+                Firma
             </label>
             <mat-form-field appearance="outline" class="g-modern-field">
                 <mat-select (selectionChange)="onSelectFirm($event.value)">
@@ -23,10 +23,11 @@
                 Müfəttiş axtarışı
             </label>
             <mat-form-field appearance="outline" class="g-modern-field">
-                <input matInput placeholder="Ad, email və ya sicil no" [value]="searchTerm"
+                <input matInput placeholder="Ad, e-poçt və ya sicil nömrəsi" [value]="searchTerm"
                     (input)="onUserSearch($any($event.target).value)"
                     [disabled]="!selectedFirmId || isLoadingUsers" />
-                <button mat-icon-button matSuffix type="button" *ngIf="searchTerm" (click)="onUserSearch('')">
+                <button mat-icon-button matSuffix type="button" *ngIf="searchTerm" (click)="onUserSearch('')"
+                    aria-label="Axtarışı təmizlə">
                     <span class="material-symbols-outlined">close</span>
                 </button>
             </mat-form-field>
@@ -59,7 +60,7 @@
             </div>
             <div *ngIf="!isLoadingUsers && !selectedFirmId" class="plan-user-empty">
                 <span class="material-symbols-outlined plan-user-empty__icon">business</span>
-                Müfəttişləri görmək üçün müəssisə seçin
+                Müfəttişləri görmək üçün firma seçin
             </div>
             <div *ngIf="!isLoadingUsers && selectedFirmId && dataSource.filteredData.length === 0"
                 class="plan-user-empty">
@@ -87,7 +88,7 @@
                     </ng-container>
 
                     <ng-container matColumnDef="userCode">
-                        <th mat-header-cell *matHeaderCellDef class="col-sicil">Sicil No</th>
+                        <th mat-header-cell *matHeaderCellDef class="col-sicil">Sicil nömrəsi</th>
                         <td mat-cell *matCellDef="let element" class="col-sicil">
                             <span class="sicil-badge">{{ element.userCode }}</span>
                         </td>
@@ -103,7 +104,7 @@
                     </ng-container>
 
                     <ng-container matColumnDef="email">
-                        <th mat-header-cell *matHeaderCellDef class="col-email">Email</th>
+                        <th mat-header-cell *matHeaderCellDef class="col-email">E-poçt</th>
                         <td mat-cell *matCellDef="let element" class="col-email text-body">
                             {{ element.email }}
                         </td>

@@ -25,7 +25,7 @@
 
 .firm-context-hint {
     margin: 0;
-    color: var(--bodyColor, #64748b);
+    color: var(--text-muted);
     font-size: 13px;
 }
 
@@ -35,7 +35,7 @@
     align-items: center;
     justify-content: center;
     padding: 60px 20px;
-    color: var(--bodyColor, #64748b);
+    color: var(--text-muted);
     text-align: center;
 
     .material-symbols-outlined {

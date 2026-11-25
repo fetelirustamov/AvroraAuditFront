@@ -10,7 +10,7 @@ button span.text-center {
 }
 
 .cancel {
-    color: red !important;
+    color: var(--danger-text) !important;
 
 }
 
@@ -30,19 +30,19 @@ button span.text-center {
 .material-symbols-outlined {
     &.approve-icon {
 
-        color: #4CAF50 !important; // Green
+        color: var(--success-text) !important;
     }
 
     &.reject-icon {
-        color: #f44336 !important; // Red
+        color: var(--danger-text) !important;
     }
 
     &.edit-icon {
-        color: #2196F3 !important; // Blue
+        color: var(--text-muted) !important;
     }
 
     &.back-icon {
-        color: #FF9800 !important; // Orange
+        color: var(--text-muted) !important;
     }
 }
 

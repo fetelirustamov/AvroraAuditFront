@@ -9,10 +9,10 @@ export const adminPageRoutes: Routes = [
         path: 'dashboard',
         component: DashboardComponent,
         data: {
-            title: 'Admin Dashboard',
+            title: 'Əsas səhifə',
             menu: {
-                area: 'admin', section: 'ƏSAS', order: 0,
-                title: 'Dashboard', icon: 'dashboard', pageKey: 'admin-dashboard'
+                area: 'admin', section: 'Əsas', order: 0,
+                title: 'Əsas səhifə', icon: 'dashboard', pageKey: 'admin-dashboard'
             }
         }
     },
@@ -30,8 +30,8 @@ export const adminPageRoutes: Routes = [
                 data: {
                     title: 'Ərazi Bağlantıları',
                     menu: {
-                        area: 'admin', section: 'İSTİFADƏÇİ İDARƏETMƏSİ', order: 13,
-                        group: 'İstifadəçilər və İcazələr', groupIcon: 'inbox_text_person', groupOrder: 10,
+                        area: 'admin', section: 'İstifadəçi idarəetməsi', order: 13,
+                        group: 'İstifadəçilər və icazələr', groupIcon: 'inbox_text_person', groupOrder: 10,
                         title: 'Ərazi Bağlantıları', pageKey: 'location-structure'
                     }
                 }
@@ -43,8 +43,8 @@ export const adminPageRoutes: Routes = [
                 data: {
                     title: 'İstifadəçilər',
                     menu: {
-                        area: 'admin', section: 'İSTİFADƏÇİ İDARƏETMƏSİ', order: 10,
-                        group: 'İstifadəçilər və İcazələr', groupIcon: 'inbox_text_person', groupOrder: 10,
+                        area: 'admin', section: 'İstifadəçi idarəetməsi', order: 10,
+                        group: 'İstifadəçilər və icazələr', groupIcon: 'inbox_text_person', groupOrder: 10,
                         title: 'İstifadəçilər', pageKey: 'users'
                     }
                 }
@@ -54,11 +54,11 @@ export const adminPageRoutes: Routes = [
                 loadComponent: () => import('./pages/permission/permission-groups/permission-groups.component')
                     .then(m => m.PermissionGroupsComponent),
                 data: {
-                    title: 'Səlahiyyət qrupları',
+                    title: 'İcazə qrupları',
                     menu: {
-                        area: 'admin', section: 'İSTİFADƏÇİ İDARƏETMƏSİ', order: 12,
-                        group: 'İstifadəçilər və İcazələr', groupIcon: 'inbox_text_person', groupOrder: 10,
-                        title: 'Səlahiyyət qrupları', pageKey: 'permission-groups'
+                        area: 'admin', section: 'İstifadəçi idarəetməsi', order: 12,
+                        group: 'İstifadəçilər və icazələr', groupIcon: 'inbox_text_person', groupOrder: 10,
+                        title: 'İcazə qrupları', pageKey: 'permission-groups'
                     }
                 }
             },
@@ -85,11 +85,11 @@ export const adminPageRoutes: Routes = [
                 loadComponent: () => import('./pages/permission/user-add/user-add.component')
                     .then(m => m.UserAddComponent),
                 data: {
-                    title: 'İstifadəçi səlahiyyətləri',
+                    title: 'Rol və firma təyinatı',
                     menu: {
-                        area: 'admin', section: 'İSTİFADƏÇİ İDARƏETMƏSİ', order: 11,
-                        group: 'İstifadəçilər və İcazələr', groupIcon: 'inbox_text_person', groupOrder: 10,
-                        title: 'Rol və Firma Təyinatı', pageKey: 'user-roles'
+                        area: 'admin', section: 'İstifadəçi idarəetməsi', order: 11,
+                        group: 'İstifadəçilər və icazələr', groupIcon: 'inbox_text_person', groupOrder: 10,
+                        title: 'Rol və firma təyinatı', pageKey: 'user-roles'
                     }
                 }
             },
@@ -108,8 +108,8 @@ export const adminPageRoutes: Routes = [
         data: {
             title: 'Suallar',
             menu: {
-                area: 'admin', section: 'SİSTEM PARAMETRLƏRİ', order: 21,
-                group: 'Əsas Məlumatlar', groupIcon: 'settings', groupOrder: 20,
+                area: 'admin', section: 'Sistem parametrləri', order: 21,
+                group: 'Əsas məlumatlar', groupIcon: 'settings', groupOrder: 20,
                 title: 'Suallar', pageKey: 'questions'
             }
         }
@@ -118,7 +118,7 @@ export const adminPageRoutes: Routes = [
         path: 'questions/add',
         loadComponent: () => import('./pages/questions/add/question-add.component')
             .then(m => m.QuestionAddComponent),
-        data: { title: 'Yeni Sual' }
+        data: { title: 'Yeni sual' }
     },
     {
         path: 'questions/edit/:id',
@@ -137,11 +137,11 @@ export const adminPageRoutes: Routes = [
         loadComponent: () => import('./pages/master-data/master-data.component')
             .then(m => m.MasterDataComponent),
         data: {
-            title: 'Audit Strukturu',
+            title: 'Audit strukturu',
             menu: {
-                area: 'admin', section: 'SİSTEM PARAMETRLƏRİ', order: 20,
-                group: 'Əsas Məlumatlar', groupIcon: 'settings', groupOrder: 20,
-                title: 'Audit Strukturu', pageKey: 'master-data'
+                area: 'admin', section: 'Sistem parametrləri', order: 20,
+                group: 'Əsas məlumatlar', groupIcon: 'settings', groupOrder: 20,
+                title: 'Audit strukturu', pageKey: 'master-data'
             }
         }
     },
@@ -167,8 +167,8 @@ export const adminPageRoutes: Routes = [
         data: {
             title: 'Səhifələr',
             menu: {
-                area: 'admin', section: 'SİSTEM PARAMETRLƏRİ', order: 23,
-                group: 'Əsas Məlumatlar', groupIcon: 'settings', groupOrder: 20,
+                area: 'admin', section: 'Sistem parametrləri', order: 23,
+                group: 'Əsas məlumatlar', groupIcon: 'settings', groupOrder: 20,
                 title: 'Səhifələr', pageKey: 'pages'
             }
         }
@@ -180,8 +180,8 @@ export const adminPageRoutes: Routes = [
         data: {
             title: 'Firmalar',
             menu: {
-                area: 'admin', section: 'SİSTEM PARAMETRLƏRİ', order: 22,
-                group: 'Əsas Məlumatlar', groupIcon: 'settings', groupOrder: 20,
+                area: 'admin', section: 'Sistem parametrləri', order: 22,
+                group: 'Əsas məlumatlar', groupIcon: 'settings', groupOrder: 20,
                 title: 'Firmalar', pageKey: 'firms'
             }
         }

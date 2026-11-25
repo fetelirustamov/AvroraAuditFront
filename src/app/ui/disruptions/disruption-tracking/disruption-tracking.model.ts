@@ -18,13 +18,13 @@ export interface StageMeta {
 }
 
 export const STAGE_META: Record<StageCode, StageMeta> = {
-    INSPECTOR: { label: 'Müfəttiş onayında', icon: 'person_search', tone: 'is-warning' },
-    HEAD_INSPECTOR: { label: 'Baş müfəttiş onayında', icon: 'supervisor_account', tone: 'is-warning' },
-    STORE_ANSWER: { label: 'Mağaza cavabında', icon: 'storefront', tone: 'is-info' },
-    CHAIN_APPROVAL: { label: 'Zəncir onayında', icon: 'account_tree', tone: 'is-info' },
-    RETURNED: { label: 'Geri qaytarılıb', icon: 'undo', tone: 'is-danger' },
+    INSPECTOR: { label: 'Müfəttişin təsdiqində', icon: 'person_search', tone: 'is-warning' },
+    HEAD_INSPECTOR: { label: 'Baş müfəttişin təsdiqində', icon: 'supervisor_account', tone: 'is-warning' },
+    STORE_ANSWER: { label: 'Mağazanın cavabında', icon: 'storefront', tone: 'is-info' },
+    CHAIN_APPROVAL: { label: 'Zəncirin təsdiqində', icon: 'account_tree', tone: 'is-info' },
+    RETURNED: { label: 'Qaytarılıb, yenidən cavab gözləyir', icon: 'undo', tone: 'is-danger' },
     CLOSED: { label: 'Bağlanıb', icon: 'task_alt', tone: 'is-success' },
-    NO_CHAIN: { label: 'Onay zənciri yoxdur', icon: 'link_off', tone: 'is-neutral' },
+    NO_CHAIN: { label: 'Təsdiq zənciri yoxdur', icon: 'link_off', tone: 'is-neutral' },
     REJECTED: { label: 'Rədd edilib', icon: 'block', tone: 'is-danger' },
     UNKNOWN: { label: 'Naməlum', icon: 'help', tone: 'is-neutral' },
 };
@@ -154,7 +154,7 @@ export function currentHolder(item: DisruptionTrackingItem): Holder | null {
         case 'RETURNED':
             return {
                 name: item.currentApprovers || 'Təyin edilməyib',
-                role: item.currentLevel ? `${item.currentLevel}-ci onay · ${levelRoleLabel(item.currentLevel)}` : '',
+                role: item.currentLevel ? `${item.currentLevel}-ci təsdiq · ${levelRoleLabel(item.currentLevel)}` : '',
             };
         default:
             return null;
@@ -263,7 +263,7 @@ export function buildTimeline(detail: DisruptionTrackingDetail): TimelineNode[] 
             date: h.createdDate,
         },
         {
-            title: 'Müfəttiş onayı',
+            title: 'Müfəttişin təsdiqi',
             subtitle: 'Müfəttiş öz qeydini təsdiqləyir',
             state: phaseA(1, 0),
             assignees: [h.inspectorName],
@@ -271,7 +271,7 @@ export function buildTimeline(detail: DisruptionTrackingDetail): TimelineNode[] 
             date: null,
         },
         {
-            title: 'Baş müfəttiş onayı',
+            title: 'Baş müfəttişin təsdiqi',
             subtitle: 'Yekun təsdiqdən sonra mağaza zənciri başlayır',
             state: phaseA(2, 1),
             assignees: ['Baş müfəttiş'],
@@ -314,7 +314,7 @@ export function buildTimeline(detail: DisruptionTrackingDetail): TimelineNode[] 
         }
 
         nodes.push({
-            title: `${level}-ci onay`,
+            title: `${level}-ci təsdiq`,
             subtitle: levelRoleLabel(level) + (level === 1 ? ' — mağazanın cavabı' : ''),
             state,
             assignees: current.length
@@ -327,15 +327,15 @@ export function buildTimeline(detail: DisruptionTrackingDetail): TimelineNode[] 
 
     if (h.stageCode === 'NO_CHAIN') {
         nodes.push({
-            title: 'Onay zənciri yoxdur',
-            subtitle: 'Mağaza üçün Ərazi Bağlantılarında zəncir təyin edilməyib',
+            title: 'Təsdiq zənciri yoxdur',
+            subtitle: 'Mağaza üçün "Ərazi Bağlantıları" səhifəsində zəncir təyin edilməyib',
             state: 'skipped', assignees: [], entries: [], date: null,
         });
     }
 
     nodes.push({
         title: 'Bağlandı',
-        subtitle: 'Bütün onaylar tamamlanıb',
+        subtitle: 'Bütün təsdiqlər tamamlanıb',
         state: closed ? 'done' : 'pending',
         assignees: [], entries: [],
         date: closed ? events.filter(e => e.actionType === 'CONFIRMED').slice(-1)[0]?.changedDate ?? null : null,

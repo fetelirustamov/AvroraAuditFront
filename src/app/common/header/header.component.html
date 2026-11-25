@@ -1,43 +1,31 @@
-<div class="header-area bg-white border-bottom-radius transition"
-    [ngClass]="{'active': isSidebarToggled, 'sticky': isSticky}">
-    <div class="d-md-flex align-items-center justify-content-between">
-        <div class="header-left-side d-flex align-items-center">
-            <button type="button" class="burger-menu transition position-relative lh-1" (click)="toggle()"
-                aria-label="Menyunu aç/bağla">
-                <i class="material-symbols-outlined">menu</i>
-            </button>
-        </div>
-        <ul class="header-right-side d-flex align-items-center m-0 p-0 list-unstyled">
-            <li>
-                <button mat-button [matMenuTriggerFor]="profileMenu" class="profile-menu-btn">
-                    <img [src]="profile.avatarDataUrl" class="rounded-circle" alt="">
-                    <span class="fw-semibold text-black">
-                        {{ profile.triggerLabel }}
-                    </span>
-                </button>
-                <mat-menu class="profile-menu-dropdown" #profileMenu="matMenu" xPosition="before">
-                    <div class="admin d-flex align-items-center">
-                        <img [src]="profile.avatarDataUrl" class="rounded-circle" alt="">
-                        <div>
-                            <span class="d-block text-black fw-medium">
-                                {{ profile.fullName }}
-                            </span>
-                            <span class="d-block" *ngIf="profile.roleLine">
-                                {{ profile.roleLine }}
-                            </span>
-                        </div>
-                    </div>
-                    <div class="border-top"></div>
-                    <ul class="list p-0 mt-0 mb-0 list-unstyled">
-                        <li>
-                            <button type="button" (click)="logout()" class="d-block position-relative w-100 text-start">
-                                <i class="material-symbols-outlined">logout</i>
-                                Çıxış
-                            </button>
-                        </li>
-                    </ul>
-                </mat-menu>
-            </li>
-        </ul>
+<header class="header-area" [class.active]="isSidebarToggled">
+    <div class="header-start">
+        <button type="button" class="header-icon-btn" (click)="toggle()" aria-label="Menyu">
+            <span class="material-symbols-outlined" aria-hidden="true">menu</span>
+        </button>
     </div>
-</div>
+
+    <div class="header-end">
+        <button type="button" class="profile-trigger" [matMenuTriggerFor]="profileMenu"
+            [attr.aria-label]="'Profil: ' + profile.fullName">
+            <span class="shell-avatar" aria-hidden="true">{{ profile.initials }}</span>
+            <span class="profile-name">{{ profile.triggerLabel }}</span>
+            <span class="material-symbols-outlined caret" aria-hidden="true">expand_more</span>
+        </button>
+        <mat-menu #profileMenu="matMenu" class="profile-menu-dropdown" xPosition="before">
+            <div class="profile-card">
+                <span class="shell-avatar" aria-hidden="true">{{ profile.initials }}</span>
+                <div class="profile-card-text">
+                    <span class="profile-card-name">{{ profile.fullName }}</span>
+                    @if (profile.roleLine) {
+                        <span class="profile-card-role">{{ profile.roleLine }}</span>
+                    }
+                </div>
+            </div>
+            <button mat-menu-item type="button" (click)="logout()">
+                <mat-icon>logout</mat-icon>
+                <span>Çıxış</span>
+            </button>
+        </mat-menu>
+    </div>
+</header>

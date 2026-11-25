@@ -6,11 +6,11 @@
         </span>
         <button type="button" class="g-approve-btn" (click)="decide(APPROVED)" [disabled]="isSaving">
             <span class="material-symbols-outlined">check_circle</span>
-            Təsdiq
+            Təsdiqlə
         </button>
         <button type="button" class="g-reject-btn" (click)="decide(RETURNED_TO_MOBILE)" [disabled]="isSaving">
-            <span class="material-symbols-outlined">cancel</span>
-            Rədd
+            <span class="material-symbols-outlined">undo</span>
+            Mobilə qaytar
         </button>
     </div>
     <button mat-stroked-button color="primary" (click)="goBack()" class="back-btn">

@@ -1,11 +1,11 @@
 // Tam ekran media baxışı — tünd səth `.media-viewer-backdrop`-dan gəlir (styles.scss)
 :host {
-    --mv-fg: rgb(255 255 255 / .92);
-    --mv-fg-muted: rgb(255 255 255 / .6);
-    --mv-fg-faint: rgb(255 255 255 / .28);
-    --mv-control: rgb(255 255 255 / .08);
-    --mv-control-hover: rgb(255 255 255 / .16);
-    --mv-line: rgb(255 255 255 / .12);
+    --mv-fg: color-mix(in srgb, var(--white) 92%, transparent);
+    --mv-fg-muted: color-mix(in srgb, var(--white) 60%, transparent);
+    --mv-fg-faint: color-mix(in srgb, var(--white) 28%, transparent);
+    --mv-control: color-mix(in srgb, var(--white) 8%, transparent);
+    --mv-control-hover: color-mix(in srgb, var(--white) 16%, transparent);
+    --mv-line: color-mix(in srgb, var(--white) 12%, transparent);
     --mv-glass: color-mix(in srgb, var(--gray-900) 60%, transparent);
     --mv-glass-strong: color-mix(in srgb, var(--gray-900) 85%, transparent);
     --mv-gutter: 24px;
@@ -48,7 +48,7 @@
     padding: 2px 8px;
     border-radius: 20px;
     background: var(--mv-control);
-    font-size: 12.5px;
+    font-size: var(--fs-13);
     font-weight: 600;
     font-variant-numeric: tabular-nums;
     color: var(--mv-fg);
@@ -56,7 +56,7 @@
 
 .mv-name {
     overflow: hidden;
-    font-size: 12.5px;
+    font-size: var(--fs-13);
     color: var(--mv-fg-muted);
     white-space: nowrap;
     text-overflow: ellipsis;
@@ -97,7 +97,7 @@
 
     &:hover:not(:disabled) {
         background: var(--mv-control-hover);
-        color: #fff;
+        color: var(--white);
     }
 
     &:disabled {
@@ -106,7 +106,7 @@
     }
 
     &:focus-visible {
-        outline: 2px solid var(--primaryColor);
+        outline: 2px solid var(--accent);
         outline-offset: 1px;
     }
 }
@@ -166,7 +166,7 @@
     left: 50%;
     max-width: none;
     border-radius: 4px;
-    box-shadow: 0 12px 48px rgb(0 0 0 / .45);
+    box-shadow: 0 12px 48px color-mix(in srgb, var(--gray-900) 45%, transparent);
     opacity: 0;
     pointer-events: none;
     transition: opacity .15s ease, width .18s ease, height .18s ease, transform .18s ease;
@@ -194,8 +194,8 @@
     max-width: 100%;
     max-height: 100%;
     border-radius: var(--radius-md);
-    background: #000;
-    box-shadow: 0 12px 48px rgb(0 0 0 / .45);
+    background: var(--gray-900);
+    box-shadow: 0 12px 48px color-mix(in srgb, var(--gray-900) 45%, transparent);
 }
 
 // ── Sənəd siyahısı ──────────────────────────────────────────────────────────
@@ -230,7 +230,7 @@
     flex: 1;
     min-width: 0;
     overflow: hidden;
-    font-size: 13.5px;
+    font-size: var(--fs-14);
     white-space: nowrap;
     text-overflow: ellipsis;
 }
@@ -239,7 +239,7 @@
     padding: 2px 7px;
     border-radius: 6px;
     background: var(--mv-control);
-    font-size: 11px;
+    font-size: var(--fs-12);
     font-weight: 700;
     letter-spacing: .04em;
     text-transform: uppercase;
@@ -283,7 +283,7 @@
     }
 
     &:focus-visible {
-        outline: 2px solid var(--primaryColor);
+        outline: 2px solid var(--accent);
         outline-offset: 2px;
     }
 }
@@ -341,7 +341,7 @@
 
     &.is-active {
         opacity: 1;
-        outline-color: var(--primaryColor);
+        outline-color: var(--accent);
     }
 
     &:focus-visible {
@@ -354,7 +354,7 @@
     position: absolute;
     right: 5px;
     bottom: 3px;
-    font-size: 11px;
+    font-size: var(--fs-12);
     font-weight: 700;
     color: var(--mv-fg-muted);
 }

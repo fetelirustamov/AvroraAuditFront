@@ -6,7 +6,7 @@
 export const PLAN_STATUS_LABELS: Record<number, string> = {
     1: 'Təsdiq gözləyir',
     2: 'Təsdiqlənib',
-    3: 'Yoxlanılıb',
+    3: 'Yoxlama təsdiq gözləyir',
     4: 'Yekunlaşıb',
     5: 'Vaxtı bitib',
     [-1]: 'Rədd edilib',

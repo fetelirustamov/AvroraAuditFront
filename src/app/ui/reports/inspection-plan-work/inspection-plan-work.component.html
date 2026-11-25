@@ -4,7 +4,7 @@
         <div class="header-text">
             <h1 class="page-title">
                 <span class="material-symbols-outlined title-icon">assignment_turned_in</span>
-                Yoxlama Planı İş Statusu
+                Yoxlama planı iş statusu
             </h1>
             <p class="page-subtitle">Mağaza və istifadəçi üzrə plan işlərinin işlənmə vəziyyəti</p>
         </div>
@@ -12,7 +12,7 @@
             <button class="export-btn" [matMenuTriggerFor]="downloadMenu"
                 [disabled]="!hasSubmittedSearch || !allCount || isExporting">
                 <span class="material-symbols-outlined">{{ isExporting ? 'progress_activity' : 'download' }}</span>
-                {{ isExporting ? 'Hazırlanır...' : 'Yüklə' }}
+                {{ isExporting ? 'Hazırlanır...' : 'İxrac et' }}
                 <span class="material-symbols-outlined arrow-icon">expand_more</span>
             </button>
         </div>
@@ -32,7 +32,6 @@
 
 <!-- Filter toolbar -->
 <div class="filter-card">
-    <div class="filter-card-accent" aria-hidden="true"></div>
     <div class="filter-card-body">
         <div class="filter-card-header">
             <span class="material-symbols-outlined filter-header-icon">tune</span>

@@ -2,12 +2,12 @@
     <mat-card>
         <mat-card-header>
             <div class="header-container">
-                <mat-card-title>{{ data?.mode === 'edit' ? 'Mağaza Redaktə Et' : 'Yeni Mağaza' }}</mat-card-title>
+                <mat-card-title>{{ data?.mode === 'edit' ? 'Mağazanı redaktə et' : 'Yeni mağaza' }}</mat-card-title>
                 <div class="top-actions">
                     <button mat-flat-button color="primary" type="button" (click)="submit()" [disabled]="isSaving">
-                        {{ data?.mode === 'edit' ? 'Yadda Saxla' : 'Təsdiqlə' }}
+                        Yadda saxla
                     </button>
-                    <button mat-stroked-button color="warn" type="button" (click)="cancel()">İmtina</button>
+                    <button mat-stroked-button color="warn" type="button" (click)="cancel()">Ləğv et</button>
                 </div>
             </div>
         </mat-card-header>
@@ -62,11 +62,11 @@
                 <div class="col-md-4 col-sm-6 col-12">
                     <div class="form-group">
                         <label class="main-label">
-                            Məkan Adı
+                            Mağaza adı
                             <span class="text-danger">*</span>
                         </label>
                         <mat-form-field class="w-100">
-                            <input matInput formControlName="locationName" required placeholder="Mağaza / məkan adı" />
+                            <input matInput formControlName="locationName" required placeholder="Mağaza adı" />
                             <mat-error
                                 *ngIf="form.get('locationName')?.hasError('required') && form.get('locationName')?.touched">
                                 Ad tələb olunur
@@ -78,7 +78,7 @@
                 <div class="col-md-4 col-sm-6 col-12">
                     <div class="form-group">
                         <label class="main-label">
-                            Məkan Kodu
+                            Mağaza kodu
                         </label>
                         <mat-form-field class="w-100">
                             <input matInput formControlName="locationCode" placeholder="Kod" [readonly]="isEditMode" />
@@ -101,7 +101,7 @@
                 <div class="col-md-4 col-sm-6 col-12">
                     <div class="form-group">
                         <label class="main-label">
-                            Əlaqə Nömrəsi
+                            Əlaqə nömrəsi
                         </label>
                         <mat-form-field class="w-100">
                             <input matInput formControlName="contactNumber" placeholder="050 xxx xx xx" />
@@ -116,10 +116,10 @@
                 <div class="col-md-4 col-sm-6 col-12 after-map">
                     <div class="form-group">
                         <label class="main-label">
-                            Latitude
+                            Enlik
                         </label>
                         <mat-form-field class="w-100">
-                            <input matInput formControlName="latitude" placeholder="Enlik (auto)" />
+                            <input matInput formControlName="latitude" placeholder="Xəritədən seçin" />
                         </mat-form-field>
                     </div>
                 </div>
@@ -127,10 +127,10 @@
                 <div class="col-md-4 col-sm-6 col-12 after-map">
                     <div class="form-group">
                         <label class="main-label">
-                            Longitude
+                            Uzunluq
                         </label>
                         <mat-form-field class="w-100">
-                            <input matInput formControlName="longitude" placeholder="Uzunluq (auto)" />
+                            <input matInput formControlName="longitude" placeholder="Xəritədən seçin" />
                         </mat-form-field>
                     </div>
                 </div>

@@ -1,6 +1,8 @@
+// Ləğv et yalnız pəncərəni bağlayır — dağıdıcı deyil, neytraldır
 .cancel {
-    background-color: red !important;
-    color: white !important;
+    background-color: var(--surface) !important;
+    color: var(--text-strong) !important;
+    border: 1px solid var(--border-strong) !important;
 }
 
 .truncate-cell {
@@ -12,12 +14,12 @@
 }
 
 .primary {
-    color: white !important;
-    background-color: #6178fa !important;
+    color: var(--on-accent) !important;
+    background-color: var(--accent) !important;
 }
 
 .media {
-    color: #6178fa !important;
+    color: var(--accent) !important;
 }
 
 .spaceBetween {
@@ -38,19 +40,19 @@ button span.text-center {
 // Action icons colors
 .material-symbols-outlined {
     &.approve-icon {
-        color: #4CAF50 !important; // Green
+        color: var(--success-text) !important;
     }
 
     &.reject-icon {
-        color: #f44336 !important; // Red
+        color: var(--danger-text) !important;
     }
 
     &.edit-icon {
-        color: #2196F3 !important; // Blue
+        color: var(--text-muted) !important;
     }
 
     &.back-icon {
-        color: #FF9800 !important; // Orange
+        color: var(--text-muted) !important;
     }
 }
 
@@ -153,7 +155,7 @@ button span.text-center {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    background: #fff !important;
+    background: var(--surface) !important;
     border-radius: 12px;
     z-index: 1000;
     width: 90%;
@@ -168,7 +170,7 @@ button span.text-center {
         justify-content: space-between;
         padding: 24px 24px 0 24px;
         margin-bottom: 0;
-        background: #fff;
+        background: var(--surface);
         border-top-left-radius: 12px;
         border-top-right-radius: 12px;
 
@@ -176,20 +178,20 @@ button span.text-center {
             flex: 1;
             text-align: center;
             font-size: 1.5rem;
-            color: #333;
+            color: var(--text);
             font-weight: 600;
             margin-left: -40px; // x iconunun yerini kompensasiya etmək üçün
         }
 
         .close-button {
             margin-left: auto;
-            color: #888;
+            color: var(--text-muted);
         }
     }
 
     mat-card-content {
         padding: 24px;
-        background: #fff;
+        background: var(--surface);
         border-bottom-left-radius: 12px;
         border-bottom-right-radius: 12px;
 
@@ -243,8 +245,8 @@ button span.text-center {
         position: sticky;
         top: 0;
         z-index: 10;
-        background-color: #f5f5f5;
-        border-bottom: 2px solid #e0e0e0;
+        background-color: var(--surface-subtle);
+        border-bottom: 2px solid var(--border);
     }
 
     // Ensure table takes full width
@@ -255,17 +257,17 @@ button span.text-center {
 
     // Ensure header cells have proper styling
     th.mat-header-cell {
-        background-color: #f5f5f5;
+        background-color: var(--surface-subtle);
         font-weight: 600;
-        color: #333;
+        color: var(--text);
         padding: 12px 8px;
-        border-bottom: 2px solid #e0e0e0;
+        border-bottom: 2px solid var(--border);
     }
 
     // Ensure data cells have proper styling
     td.mat-cell {
         padding: 12px 8px;
-        border-bottom: 1px solid #e0e0e0;
+        border-bottom: 1px solid var(--border);
     }
 
     // Custom scrollbar styling
@@ -274,29 +276,29 @@ button span.text-center {
     }
 
     &::-webkit-scrollbar-track {
-        background: #f1f1f1;
+        background: var(--surface-subtle);
         border-radius: 4px;
     }
 
     &::-webkit-scrollbar-thumb {
-        background: #c1c1c1;
+        background: var(--border-strong);
         border-radius: 4px;
     }
 
     &::-webkit-scrollbar-thumb:hover {
-        background: #a8a8a8;
+        background: var(--text-faint);
     }
 
     // Firefox scrollbar styling
     scrollbar-width: thin;
-    scrollbar-color: #c1c1c1 #f1f1f1;
+    scrollbar-color: var(--border-strong) transparent;
 
     tr.answer-row--returned td.mat-cell {
-        background-color: rgba(255, 152, 0, 0.06);
+        background-color: var(--warning-soft);
     }
 
     tr.answer-row--returned td.mat-cell:first-of-type {
-        border-left: 3px solid #ff9800;
+        border-left: 3px solid var(--warning);
         padding-left: 9px;
     }
 }
@@ -305,12 +307,11 @@ button span.text-center {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    padding: 5px 11px 5px 8px;
-    border-radius: 999px;
-    font-size: 12px;
+    padding: 2px var(--space-2) 2px 6px;
+    border-radius: var(--radius-sm);
+    font-size: var(--fs-12);
     font-weight: 600;
     line-height: 1.25;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 
 .status-chip__icon {
@@ -320,23 +321,13 @@ button span.text-center {
 }
 
 .status-chip--first {
-    background: linear-gradient(180deg, rgba(76, 175, 80, 0.14) 0%, rgba(76, 175, 80, 0.08) 100%);
-    color: #1b5e20;
-    border: 1px solid rgba(76, 175, 80, 0.35);
-
-    .status-chip__icon {
-        color: #2e7d32;
-    }
+    background: var(--success-soft);
+    color: var(--success-text);
 }
 
 .status-chip--returned {
-    background: linear-gradient(180deg, rgba(255, 152, 0, 0.2) 0%, rgba(255, 152, 0, 0.1) 100%);
-    color: #bf360c;
-    border: 1px solid rgba(255, 152, 0, 0.45);
-
-    .status-chip__icon {
-        color: #ef6c00;
-    }
+    background: var(--warning-soft);
+    color: var(--warning-text);
 }
 
 .return-reason-cell {
@@ -357,13 +348,13 @@ button span.text-center {
     align-items: flex-start;
     padding: 12px 14px;
     margin-bottom: 16px;
-    border-radius: 10px;
-    border: 1px solid rgba(255, 152, 0, 0.45);
-    background: linear-gradient(135deg, rgba(255, 243, 224, 0.95) 0%, rgba(255, 255, 255, 0.98) 100%);
+    border-radius: var(--radius-md);
+    background: var(--warning-soft);
+    color: var(--warning-text);
 }
 
 .returned-banner__icon {
-    color: #ef6c00;
+    color: var(--warning-text);
     font-size: 22px;
     flex-shrink: 0;
 }

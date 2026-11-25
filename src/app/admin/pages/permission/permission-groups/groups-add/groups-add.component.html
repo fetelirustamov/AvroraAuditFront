@@ -9,8 +9,8 @@
             <button *ngIf="isViewMode" class="btn-back" mat-flat-button color="primary" type="button"
                 (click)="goBack()">Geri</button>
             <button *ngIf="isEditMode" mat-flat-button class="btn-success" (click)="save()"
-                [disabled]="form.invalid || isLoading || isSaving">Düzəliş Et</button>
-            <button *ngIf="isEditMode" mat-stroked-button color="warn" type="button" (click)="cancel()">İmtina</button>
+                [disabled]="form.invalid || isLoading || isSaving">Yadda saxla</button>
+            <button *ngIf="isEditMode" mat-stroked-button color="warn" type="button" (click)="cancel()">Ləğv et</button>
         </div>
     </div>
 
@@ -21,11 +21,11 @@
     <div class="d-flex gap-3 mb-20 action-buttons" *ngIf="!isEditMode && !isViewMode">
         <button mat-flat-button color="primary" (click)="save()" [disabled]="form.invalid || isLoading || isSaving">
             <i class="material-symbols-outlined">save</i>
-            Əlavə Et
+            Əlavə et
         </button>
         <button mat-stroked-button color="warn" type="button" (click)="cancel()">
             <i class="material-symbols-outlined">close</i>
-            İmtina
+            Ləğv et
         </button>
     </div>
 
@@ -58,48 +58,48 @@
 
     <mat-card class="mb-25 border-radius d-block bg-white border-0 shadow-none">
         <mat-card-header>
-            <mat-card-title>Səlahiyyətlər</mat-card-title>
+            <mat-card-title>İcazələr</mat-card-title>
         </mat-card-header>
         <mat-card-content>
             <div class="table-responsive">
                 <table class="permissions-table">
                     <thead>
                         <tr>
-                            <th>ŞƏHİFƏ</th>
+                            <th>Səhifə</th>
                             <th>
                                 <div class="col-header-with-select-all">
-                                    <span>OXUMA</span>
+                                    <span>Oxuma</span>
                                     <mat-checkbox color="primary" [disabled]="isViewMode"
                                         [checked]="isAllChecked('show')"
                                         (change)="toggleAllColumn('show', $event.checked)"
-                                        matTooltip="Hamısını seç/ləğv et"></mat-checkbox>
+                                        matTooltip="Hamısını seç / seçimi götür"></mat-checkbox>
                                 </div>
                             </th>
                             <th>
                                 <div class="col-header-with-select-all">
-                                    <span>YARATMA</span>
+                                    <span>Yaratma</span>
                                     <mat-checkbox color="primary" [disabled]="isViewMode"
                                         [checked]="isAllChecked('add')"
                                         (change)="toggleAllColumn('add', $event.checked)"
-                                        matTooltip="Hamısını seç/ləğv et"></mat-checkbox>
+                                        matTooltip="Hamısını seç / seçimi götür"></mat-checkbox>
                                 </div>
                             </th>
                             <th>
                                 <div class="col-header-with-select-all">
-                                    <span>DƏYİŞMƏ</span>
+                                    <span>Dəyişmə</span>
                                     <mat-checkbox color="primary" [disabled]="isViewMode"
                                         [checked]="isAllChecked('edit')"
                                         (change)="toggleAllColumn('edit', $event.checked)"
-                                        matTooltip="Hamısını seç/ləğv et"></mat-checkbox>
+                                        matTooltip="Hamısını seç / seçimi götür"></mat-checkbox>
                                 </div>
                             </th>
                             <th>
                                 <div class="col-header-with-select-all">
-                                    <span>SİLMƏ</span>
+                                    <span>Silmə</span>
                                     <mat-checkbox color="primary" [disabled]="isViewMode"
                                         [checked]="isAllChecked('delete')"
                                         (change)="toggleAllColumn('delete', $event.checked)"
-                                        matTooltip="Hamısını seç/ləğv et"></mat-checkbox>
+                                        matTooltip="Hamısını seç / seçimi götür"></mat-checkbox>
                                 </div>
                             </th>
                         </tr>

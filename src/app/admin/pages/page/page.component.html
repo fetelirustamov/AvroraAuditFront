@@ -1,6 +1,6 @@
 <app-admin-breadcrumb
     title="Səhifələr"
-    [crumbs]="[{label: 'Sistem Parametrləri'}, {label: 'Səhifələr'}]">
+    [crumbs]="[{label: 'Sistem parametrləri'}, {label: 'Səhifələr'}]">
 </app-admin-breadcrumb>
 
 <!-- Add / Edit Form Card -->
@@ -11,7 +11,7 @@
                 <i class="material-symbols-outlined">{{ isEditMode ? 'edit_note' : 'add_circle' }}</i>
             </div>
             <div class="form-header-text">
-                <h6 class="mb-0">{{ isEditMode ? 'Səhifəni Redaktə Et' : 'Yeni Səhifə Əlavə Et' }}</h6>
+                <h6 class="mb-0">{{ isEditMode ? 'Səhifəni redaktə et' : 'Yeni səhifə' }}</h6>
                 <p class="mb-0">{{ isEditMode ? 'Aşağıdakı məlumatları dəyişdirərək yeniləyin' : 'Sahələri dolduraraq yeni səhifə əlavə edin' }}</p>
             </div>
         </div>
@@ -20,7 +20,7 @@
             <div class="form-row">
                 <div class="form-col">
                     <label class="field-label">
-                        Səhifə Adı <span class="required">*</span>
+                        Səhifə adı <span class="required">*</span>
                     </label>
                     <mat-form-field appearance="outline" class="w-100">
                         <mat-icon matPrefix class="prefix-icon">article</mat-icon>
@@ -58,7 +58,7 @@
                 <div class="form-actions">
                     <button type="submit" mat-flat-button class="submit-btn" [class.edit-btn]="isEditMode" [disabled]="isSaving">
                         <i class="material-symbols-outlined">{{ isEditMode ? 'save' : 'add' }}</i>
-                        {{ isEditMode ? 'Yadda Saxla' : 'Əlavə Et' }}
+                        {{ isEditMode ? 'Yadda saxla' : 'Əlavə et' }}
                     </button>
                     @if (isEditMode) {
                         <button type="button" mat-stroked-button class="cancel-btn" (click)="resetForm()">
@@ -81,7 +81,7 @@
                 <div class="table-title-left">
                     <i class="material-symbols-outlined title-icon">list_alt</i>
                     <div>
-                        <span class="title-text">Səhifələrin Siyahısı</span>
+                        <span class="title-text">Səhifələrin siyahısı</span>
                         <span class="record-count">{{ dataSource.filteredData.length }} qeyd</span>
                     </div>
                 </div>
@@ -108,7 +108,7 @@
 
                 <!-- Index Column -->
                 <ng-container matColumnDef="index">
-                    <th mat-header-cell *matHeaderCellDef mat-sort-header class="col-index">SIRA</th>
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header class="col-index">Sıra</th>
                     <td mat-cell *matCellDef="let row; let i = index" class="col-index">
                         <span class="row-number">{{ i + 1 }}</span>
                     </td>
@@ -116,7 +116,7 @@
 
                 <!-- Name Column -->
                 <ng-container matColumnDef="name">
-                    <th mat-header-cell *matHeaderCellDef mat-sort-header>SƏHİFƏ ADI</th>
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header>Səhifə adı</th>
                     <td mat-cell *matCellDef="let row">
                         <div class="name-cell">
                             <span class="page-icon">
@@ -129,7 +129,7 @@
 
                 <!-- Key Column -->
                 <ng-container matColumnDef="key">
-                    <th mat-header-cell *matHeaderCellDef mat-sort-header>AÇAR</th>
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header>Açar</th>
                     <td mat-cell *matCellDef="let row">
                         <code class="key-badge">{{ row.key }}</code>
                     </td>
@@ -137,7 +137,7 @@
 
                 <!-- Status Column -->
                 <ng-container matColumnDef="status">
-                    <th mat-header-cell *matHeaderCellDef mat-sort-header>STATUS</th>
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
                     <td mat-cell *matCellDef="let row">
                         <span class="status-chip" [class.active]="row.status === 1" [class.inactive]="row.status !== 1">
                             <i class="material-symbols-outlined">{{ row.status === 1 ? 'check_circle' : 'cancel' }}</i>
@@ -148,10 +148,10 @@
 
                 <!-- Actions Column -->
                 <ng-container matColumnDef="actions">
-                    <th mat-header-cell *matHeaderCellDef class="col-actions">ƏMƏLİYYATLAR</th>
+                    <th mat-header-cell *matHeaderCellDef class="col-actions">Əməliyyatlar</th>
                     <td mat-cell *matCellDef="let row" class="col-actions">
                         <div class="action-buttons">
-                            <button mat-icon-button class="btn-edit" (click)="edit(row)" matTooltip="Redaktə Et" matTooltipPosition="above">
+                            <button mat-icon-button class="btn-edit" (click)="edit(row)" matTooltip="Redaktə et" matTooltipPosition="above">
                                 <i class="material-symbols-outlined">edit</i>
                             </button>
                             <button mat-icon-button class="btn-delete" (click)="remove(row)" matTooltip="Sil" matTooltipPosition="above">

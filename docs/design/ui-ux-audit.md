@@ -74,6 +74,27 @@
 
 ## Mərhələ 1 — Bünövrə (görünüş burada dəyişir)
 
+> **Status (2026-11-25): tamamlandı.**
+>
+> - **Token-lər** `src/_tokens.scss`-də yaradıldı. Köhnə adlar 1409 yerdə əvəz olundu. Əhatədəki 935 birbaşa rəng token-ə keçdi.
+> - **Material teması** `mat.theme()` + `theme-overrides` ilə token-lərdən qurulur. `azure-blue` çıxarıldı.
+> - **Şrift:** IBM Plex yerli yüklənir, `ə` hərfi yoxlanıb.
+> - **Fokus** klaviatura ilə gəzəndə görünür (`:focus-visible`).
+> - **Form xətaları** artıq bütün tətbiqdə görünür. Əvvəl qlobal qayda onları gizlədirdi.
+> - **İkonlar:** tək dəst Material Symbols-dur. Remixicon və owl-carousel paketləri silindi.
+> - **Şablon qalıqları:**
+>   - `_ui-kit.scss` 5226 sətirdən 1901-ə, `_utilities.scss` 1702 sətirdən 402-yə endi.
+>   - Header və sidebar SCSS-i 4 dəfədən çox kiçildi. Admin shell ortaq stillərə keçdi.
+>   - `public/images`-dən istifadə olunmayan 429 fayl (96.8 MB) silindi.
+> - **Terminlər:** `docs/design/glossary.md` yazıldı və mətnlərə tətbiq olundu. Müştəri adları mətnlərdən çıxarıldı.
+> - **Yolüstü düzəlişlər:**
+>   - `main.ts` `app.config.ts`-i işlətmirdi, Azərbaycanca paginator mətnləri tətbiq olunmurdu.
+>   - Girişdə Enter işləmirdi.
+>   - Admin axtarışında Enter səhifəni yeniləyirdi.
+>   - Desktop-da yığılmış sidebar hər keçiddə açılırdı.
+> - **Başlanğıc bundle** 648 kB-dan 525 kB-a düşdü.
+> - **Yoxlanmayanlar:** real data ilə ekranlar (VPN lazımdır). Altı plan statusu dörd status rənginə bölünür: 3 tünd boz, 5 açıq boz göstərilir.
+
 1. **Tək token faylı.** `src/styles/_tokens.scss` yaradılır, yalnız kebab-case CSS dəyişənləri ilə:
    - `--color-text*`;
    - `--surface-*`;

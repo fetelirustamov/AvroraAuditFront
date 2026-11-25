@@ -11,20 +11,19 @@
     // flex-wrap vacibdir: 3 düymə dar ekranda sətrə sığmır, .report-page-header isə
     // overflow:hidden olduğuna görə sarılmasa görünmədən kəsilirdi.
     .header-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 10px; }
-    .export-btn.ghost { background: rgba(255, 255, 255, .12); border-color: rgba(255, 255, 255, .28); }
-    // Səhifə səviyyəli əsas əməliyyat — gradient başlıq üzərində dolu ağ CTA
+    // Səhifə səviyyəli əsas əməliyyat — vurğu rəngində dolu düymə
     .export-btn.solid {
-        background: var(--whiteColor); color: var(--primaryColor);
-        border-color: transparent; font-weight: 700;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, .12);
-        &:hover { background: rgba(255, 255, 255, .92); }
+        background: var(--accent); color: var(--on-accent);
+        border-color: var(--accent);
+        .material-symbols-outlined { color: var(--on-accent); }
+        &:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
     }
 }
 
 .panel-card {
     display: flex;
     flex-direction: column;
-    border: 1px solid var(--borderColor);
+    border: 1px solid var(--border);
     border-radius: var(--radius-md);
     background: var(--surface);
     box-shadow: var(--shadow-sm);
@@ -36,18 +35,18 @@
     justify-content: space-between;
     gap: 10px;
     padding: 13px 18px;
-    border-bottom: 1px solid var(--borderColor);
+    border-bottom: 1px solid var(--border);
     background: var(--surface-muted);
     .panel-head-title {
         display: flex; align-items: center; gap: 9px;
         font-size: 14px; font-weight: 700; color: var(--text-strong);
-        .material-symbols-outlined { font-size: 20px; color: var(--primaryColor); }
+        .material-symbols-outlined { font-size: 20px; color: var(--text-muted); }
     }
 }
 .count-badge {
-    padding: 2px 10px; border-radius: 20px;
-    background: var(--primarySoft); color: var(--primaryColor);
-    font-size: 12px; font-weight: 700;
+    padding: 2px 8px; border-radius: var(--radius-sm);
+    background: var(--surface-subtle); color: var(--text);
+    font-size: var(--fs-12); font-weight: 600; font-variant-numeric: tabular-nums;
 }
 
 // Ağac panelinin sağ tərəfi — aç/yığ nəzarətləri + say nişanı.
@@ -59,14 +58,14 @@
 .tool-btn {
     display: inline-flex; align-items: center; gap: 5px;
     min-height: 30px; padding: 4px 10px;
-    border: 1px solid var(--borderColor); border-radius: var(--radius-sm);
+    border: 1px solid var(--border); border-radius: var(--radius-sm);
     background: var(--surface); color: var(--gray-600);
     font-family: inherit; font-size: 12px; font-weight: 600; white-space: nowrap;
     cursor: pointer; transition: border-color .15s, color .15s, background .15s;
 
     .material-symbols-outlined { font-size: 17px; }
-    &:hover { border-color: var(--primaryColor); color: var(--primaryColor); background: var(--primarySoft); }
-    &:focus-visible { outline: 2px solid var(--primaryColor); outline-offset: 1px; }
+    &:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+    &:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 }
 
 // Toolbar proyektin ortaq .g-filter-* sistemindən istifadə edir (styles.scss).
@@ -80,33 +79,33 @@
 .stat-chip {
     display: inline-flex; align-items: center; gap: 6px;
     padding: 6px 12px; border-radius: 20px;
-    background: var(--surface); border: 1px solid var(--borderColor);
-    font-size: 12.5px; font-weight: 600; color: var(--bodyColor);
-    b { font-size: 13.5px; font-weight: 800; color: var(--text-strong); }
-    &.is-accent { background: var(--primarySoft); border-color: transparent; color: var(--primaryColor); b { color: var(--primaryColor); } }
-    &.is-danger { background: var(--dangerSoft); border-color: transparent; color: var(--dangerStrong); b { color: var(--dangerStrong); } }
+    background: var(--surface); border: 1px solid var(--border);
+    font-size: var(--fs-13); font-weight: 600; color: var(--text-muted);
+    b { font-size: var(--fs-14); font-weight: 800; color: var(--text-strong); }
+    &.is-accent { background: var(--accent-soft); border-color: transparent; color: var(--accent); b { color: var(--accent); } }
+    &.is-danger { background: var(--danger-soft); border-color: transparent; color: var(--danger-text); b { color: var(--danger-text); } }
 }
 .help-link {
     display: inline-flex; align-items: center; gap: 5px; margin-left: auto;
-    border: none; background: transparent; color: var(--primaryColor);
-    font-size: 12.5px; font-weight: 600; font-family: inherit; cursor: pointer;
+    border: none; background: transparent; color: var(--accent);
+    font-size: var(--fs-13); font-weight: 600; font-family: inherit; cursor: pointer;
     .material-symbols-outlined { font-size: 17px; }
     &:hover { text-decoration: underline; }
 }
 .scope-note {
     display: flex; align-items: center; gap: 8px;
     margin-bottom: 14px; padding: 11px 14px;
-    border: 1px solid var(--borderColor); border-left: 3px solid var(--warningStrong);
-    border-radius: var(--radius-sm); background: var(--warningSoft);
-    font-size: 12.5px; font-weight: 600; color: var(--warningText);
+    border: 1px solid var(--border); border-left: 3px solid var(--warning);
+    border-radius: var(--radius-sm); background: var(--warning-soft);
+    font-size: var(--fs-13); font-weight: 600; color: var(--warning-text);
     .material-symbols-outlined { font-size: 18px; }
 }
 
 .help-note {
     margin-bottom: 14px; padding: 14px 16px;
-    border: 1px solid var(--borderColor); border-left: 3px solid var(--primaryColor);
-    border-radius: var(--radius-sm); background: var(--primarySoft);
-    font-size: 12.5px; line-height: 1.55; color: var(--gray-700);
+    border: 1px solid var(--border); border-left: 3px solid var(--accent);
+    border-radius: var(--radius-sm); background: var(--accent-soft);
+    font-size: var(--fs-13); line-height: 1.55; color: var(--gray-700);
     b { color: var(--text-strong); font-weight: 700; }
 }
 
@@ -138,16 +137,16 @@
     transition: background .12s;
 
     &:hover { background: var(--surface-muted); }
-    &.selected { background: var(--primarySoft); box-shadow: inset 2px 0 0 var(--primaryColor); }
+    &.selected { background: var(--accent-soft); box-shadow: inset 2px 0 0 var(--accent); }
     &.territory .node-name { font-weight: 500; }
-    // Görünən xəbərdarlıq konturu: --dangerSoft fon çalarıdır, ağ üzərində praktiki
+    // Görünən xəbərdarlıq konturu: --danger-soft fon çalarıdır, ağ üzərində praktiki
     // olaraq görünmürdü (≈1.05:1). Sərhəd üçün güclü rəngin şəffaf variantı.
     &.orphan {
         width: 100%; flex: none;
-        border: 1px solid color-mix(in srgb, var(--dangerStrong) 35%, transparent);
+        border: 1px solid color-mix(in srgb, var(--danger-text) 35%, transparent);
         margin-top: 6px;
     }
-    &:focus-visible { outline: 2px solid var(--primaryColor); outline-offset: -2px; }
+    &:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 }
 .twisty {
     flex-shrink: 0; width: 24px; height: 24px; padding: 0;
@@ -156,31 +155,31 @@
     border-radius: 4px; cursor: pointer;
     .material-symbols-outlined { font-size: 20px; transition: transform .18s; &.open { transform: rotate(90deg); } }
     &:hover { background: var(--surface-subtle); color: var(--text-strong); }
-    &:focus-visible { outline: 2px solid var(--primaryColor); outline-offset: 1px; }
+    &:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
     &.hidden { visibility: hidden; }
 }
 
 // Rol nişanı — mərtəbəyə görə rəng
 .node-role {
     flex-shrink: 0; padding: 2px 9px; border-radius: 6px;
-    font-size: 11px; font-weight: 700; white-space: nowrap;
+    font-size: var(--fs-12); font-weight: 700; white-space: nowrap;
     background: var(--surface-subtle); color: var(--gray-600);
-    &[data-level="3"] { background: var(--primarySoft); color: var(--primaryColor); }
-    &[data-level="2"] { background: var(--successTint); color: var(--successTintText); }
+    &[data-level="3"] { background: var(--accent-soft); color: var(--accent); }
+    &[data-level="2"] { background: var(--success-soft); color: var(--success-text); }
     &[data-level="1"] { background: var(--surface-subtle); color: var(--gray-600); }
-    &.warn { background: var(--dangerSoft); color: var(--dangerStrong); }
-    &.sm { padding: 1px 7px; font-size: 10px; }
+    &.warn { background: var(--danger-soft); color: var(--danger-text); }
+    &.sm { padding: 1px 7px; font-size: var(--fs-12); }
 }
 .node-name {
-    font-size: 13.5px; font-weight: 600; color: var(--text-strong);
+    font-size: var(--fs-14); font-weight: 600; color: var(--text-strong);
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.node-code { font-size: 11.5px; color: var(--gray-400); white-space: nowrap; }
+.node-code { font-size: var(--fs-12); color: var(--gray-400); white-space: nowrap; }
 .node-badge {
     flex-shrink: 0; margin-left: auto; padding: 2px 9px; border-radius: 20px;
-    font-size: 10.5px; font-weight: 700; white-space: nowrap;
-    &.people { background: var(--successTint); color: var(--successTintText); }
-    &.terr   { background: var(--primarySoft); color: var(--primaryColor); }
+    font-size: var(--fs-12); font-weight: 700; white-space: nowrap;
+    &.people { background: var(--success-soft); color: var(--success-text); }
+    &.terr   { background: var(--accent-soft); color: var(--accent); }
     &.region { background: var(--surface-subtle); color: var(--gray-500); font-weight: 600; }
 }
 
@@ -189,18 +188,18 @@
     display: inline-flex; align-items: center; justify-content: center;
     border-radius: 7px; background: var(--surface-subtle); color: var(--gray-500);
     .material-symbols-outlined { font-size: 16px; }
-    &.lg { width: 46px; height: 46px; border-radius: var(--radius-sm); background: var(--primarySoft); color: var(--primaryColor); .material-symbols-outlined { font-size: 24px; } }
+    &.lg { width: 46px; height: 46px; border-radius: var(--radius-sm); background: var(--accent-soft); color: var(--accent); .material-symbols-outlined { font-size: 24px; } }
 }
 
 // ── Orphan bölməsi ───────────────────────────────────────────────────────────
 .orphan-block {
-    border-top: 1px solid var(--borderColor); background: var(--surface-muted); padding: 12px 14px;
+    border-top: 1px solid var(--border); background: var(--surface-muted); padding: 12px 14px;
     .orphan-head {
         display: flex; align-items: center; gap: 7px;
-        font-size: 13px; font-weight: 700; color: var(--dangerStrong);
+        font-size: 13px; font-weight: 700; color: var(--danger-text);
         .material-symbols-outlined { font-size: 19px; }
     }
-    .orphan-hint { margin: 6px 0 8px; font-size: 11.5px; color: var(--bodyColor); }
+    .orphan-hint { margin: 6px 0 8px; font-size: var(--fs-12); color: var(--text-muted); }
     .tree-row.orphan { background: var(--surface); }
 }
 
@@ -211,36 +210,36 @@
 .detail-empty {
     display: flex; flex-direction: column; align-items: center; justify-content: center;
     flex: 1; padding: 60px 28px; text-align: center; color: var(--text-muted);
-    .material-symbols-outlined { font-size: 46px; opacity: .5; margin-bottom: 12px; color: var(--primaryColor); }
-    p { margin: 0; font-size: 13.5px; max-width: 300px; }
+    .material-symbols-outlined { font-size: 44px; margin-bottom: 12px; color: var(--text-faint); }
+    p { margin: 0; font-size: var(--fs-14); max-width: 300px; }
     // (Boş vəziyyətdəki CTA düyməsi yoxdur — ona aid ölü qaydalar silindi.)
 }
 
 .detail-head {
     display: flex; align-items: center; gap: 12px;
-    padding: 16px 18px; border-bottom: 1px solid var(--borderColor);
+    padding: 16px 18px; border-bottom: 1px solid var(--border);
     .detail-id { flex: 1; min-width: 0; }
     .detail-name { font-size: 15px; font-weight: 700; color: var(--text-strong); }
     .detail-sub { display: flex; align-items: center; gap: 8px; margin-top: 3px; }
-    .detail-code { font-size: 12px; color: var(--bodyColor); }
+    .detail-code { font-size: 12px; color: var(--text-muted); }
 }
 
 .detail-metrics {
-    display: flex; flex-wrap: wrap; gap: 10px; padding: 14px 18px; border-bottom: 1px solid var(--borderColor);
+    display: flex; flex-wrap: wrap; gap: 10px; padding: 14px 18px; border-bottom: 1px solid var(--border);
     .metric {
         flex: 1 1 140px; display: flex; align-items: center; gap: 8px;
         padding: 10px 14px; border-radius: var(--radius-sm); background: var(--surface-muted);
-        font-size: 12.5px; color: var(--bodyColor);
+        font-size: var(--fs-13); color: var(--text-muted);
         b { font-size: 16px; font-weight: 800; color: var(--text-strong); }
-        .material-symbols-outlined { font-size: 20px; color: var(--primaryColor); }
+        .material-symbols-outlined { font-size: 20px; color: var(--text-muted); }
     }
 }
 
 .detail-section {
     padding: 14px 18px;
-    &:not(:last-child) { border-bottom: 1px solid var(--borderColor); }
+    &:not(:last-child) { border-bottom: 1px solid var(--border); }
     .detail-section-title {
-        font-size: 11px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase;
+        font-size: var(--fs-12); font-weight: 700; letter-spacing: .5px; text-transform: uppercase;
         color: var(--gray-400); margin-bottom: 10px;
     }
 }
@@ -248,10 +247,10 @@
 .list-row {
     display: flex; align-items: center; gap: 11px; width: 100%;
     padding: 9px 12px; margin-bottom: 6px;
-    border: 1px solid var(--borderColor); border-radius: var(--radius-sm);
+    border: 1px solid var(--border); border-radius: var(--radius-sm);
     background: var(--surface); cursor: pointer; font-family: inherit; text-align: left;
     transition: border-color .15s, background .15s;
-    &:hover { border-color: var(--primaryColor); background: var(--primarySoft); }
+    &:hover { border-color: var(--accent); background: var(--accent-soft); }
     .list-meta { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
     .go { font-size: 18px; color: var(--gray-400); }
 }
@@ -259,18 +258,18 @@
 // ── Redaktə sətirləri ────────────────────────────────────────────────────────
 .edit-row {
     display: flex; flex-wrap: wrap; align-items: center; gap: 11px; padding: 8px 10px; margin-bottom: 8px;
-    border: 1px solid var(--borderColor); border-radius: var(--radius-sm); background: var(--surface-muted);
+    border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface-muted);
     .step-node {
         flex-shrink: 0; width: 26px; height: 26px;
         display: flex; align-items: center; justify-content: center; border-radius: 50%;
-        background: var(--primaryColor); color: var(--whiteColor); font-size: 12px; font-weight: 800;
+        background: var(--surface-subtle); color: var(--text); font-size: var(--fs-12); font-weight: 600;
     }
     .edit-meta { flex: 1 1 120px; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
     .edit-actions { display: flex; gap: 2px; flex-shrink: 0; margin-left: auto; }
 }
 .edit-empty {
     padding: 14px; border: 1px dashed var(--gray-300); border-radius: var(--radius-sm);
-    font-size: 12.5px; color: var(--bodyColor); text-align: center; margin-bottom: 12px;
+    font-size: var(--fs-13); color: var(--text-muted); text-align: center; margin-bottom: 12px;
 }
 // Ortaq .g-filter-grid patterni üzərində qurulub (styles.scss) — düymə
 // .g-filter-actions xanasında alt kənardan hizalanır, sabit hündürlük YOXDUR
@@ -286,33 +285,33 @@
 .tree-model-note {
     display: flex; align-items: flex-start; gap: 8px;
     margin: 0; padding: 10px 14px;
-    border-bottom: 1px solid var(--borderColor); background: var(--surface-muted);
-    font-size: 11.5px; line-height: 1.5; color: var(--bodyColor);
+    border-bottom: 1px solid var(--border); background: var(--surface-muted);
+    font-size: var(--fs-12); line-height: 1.5; color: var(--text-muted);
     b { color: var(--text-strong); font-weight: 700; }
-    .material-symbols-outlined { font-size: 16px; color: var(--primaryColor); flex-shrink: 0; margin-top: 1px; }
+    .material-symbols-outlined { font-size: 16px; color: var(--accent); flex-shrink: 0; margin-top: 1px; }
 }
 .model-note {
     display: flex; align-items: flex-start; gap: 8px;
     margin: 0 0 10px; padding: 9px 12px;
-    border-radius: var(--radius-sm); background: var(--primarySoft);
-    font-size: 11.5px; line-height: 1.5; color: var(--gray-700);
-    .material-symbols-outlined { font-size: 16px; color: var(--primaryColor); flex-shrink: 0; margin-top: 1px; }
+    border-radius: var(--radius-sm); background: var(--accent-soft);
+    font-size: var(--fs-12); line-height: 1.5; color: var(--gray-700);
+    .material-symbols-outlined { font-size: 16px; color: var(--accent); flex-shrink: 0; margin-top: 1px; }
 }
 
 // Rəhbər ziddiyyəti xəbərdarlığı
 .conflict-note {
     margin: 14px 18px 0; padding: 12px 14px;
-    border: 1px solid color-mix(in srgb, var(--warningStrong) 35%, transparent);
-    border-left: 3px solid var(--warningStrong);
-    border-radius: var(--radius-sm); background: var(--warningSoft);
+    border: 1px solid color-mix(in srgb, var(--warning) 35%, transparent);
+    border-left: 3px solid var(--warning);
+    border-radius: var(--radius-sm); background: var(--warning-soft);
     .conflict-head {
         display: flex; align-items: center; gap: 7px;
-        font-size: 12.5px; font-weight: 700; color: var(--warningText);
+        font-size: var(--fs-13); font-weight: 700; color: var(--warning-text);
         .material-symbols-outlined { font-size: 18px; }
     }
-    p { margin: 6px 0 6px; font-size: 11.5px; color: var(--gray-700); }
+    p { margin: 6px 0 6px; font-size: var(--fs-12); color: var(--gray-700); }
     ul { margin: 0; padding-left: 18px; }
-    li { font-size: 11.5px; color: var(--gray-700); line-height: 1.6; }
+    li { font-size: var(--fs-12); color: var(--gray-700); line-height: 1.6; }
     b { color: var(--text-strong); }
 }
 
@@ -329,9 +328,9 @@
 .next-level {
     padding: 2px 10px; border-radius: 20px;
     background: var(--surface-subtle); color: var(--gray-600);
-    font-size: 11px; font-weight: 700; white-space: nowrap;
-    &[data-level="3"] { background: var(--primarySoft); color: var(--primaryColor); }
-    &[data-level="2"] { background: var(--successTint); color: var(--successTintText); }
+    font-size: var(--fs-12); font-weight: 700; white-space: nowrap;
+    &[data-level="3"] { background: var(--accent-soft); color: var(--accent); }
+    &[data-level="2"] { background: var(--success-soft); color: var(--success-text); }
 }
 
 .user-picker {
@@ -341,11 +340,11 @@
     &::-webkit-scrollbar-thumb { background: var(--gray-300); border-radius: 8px; }
 
     .picker-row.selected {
-        border-color: var(--primaryColor);
-        background: var(--primarySoft);
-        box-shadow: inset 2px 0 0 var(--primaryColor);
+        border-color: var(--accent);
+        background: var(--accent-soft);
+        box-shadow: inset 2px 0 0 var(--accent);
     }
-    .picker-row .go { color: var(--primaryColor); }
+    .picker-row .go { color: var(--accent); }
     .no-position { color: var(--gray-400); font-style: italic; }
     .mini-empty { padding: 26px 12px; }
 }
@@ -353,8 +352,8 @@
 // Sistem hesabı nişanı — gizlədilmir, sadəcə fərqləndirilir və sona sıralanır
 .sys-badge {
     flex-shrink: 0; padding: 2px 9px; border-radius: 20px;
-    background: var(--warningSoft); color: var(--warningText);
-    font-size: 10px; font-weight: 700; white-space: nowrap;
+    background: var(--warning-soft); color: var(--warning-text);
+    font-size: var(--fs-12); font-weight: 700; white-space: nowrap;
 }
 
 .add-confirm { width: 100%; justify-content: center; margin-top: 12px; }
@@ -368,32 +367,32 @@
     .material-symbols-outlined { font-size: 18px; }
     &:hover { background: var(--surface-subtle); color: var(--text-strong); }
 }
-.new-hint { margin: 14px 0 0; font-size: 12px; line-height: 1.5; color: var(--bodyColor); }
+.new-hint { margin: 14px 0 0; font-size: 12px; line-height: 1.5; color: var(--text-muted); }
 
 // Mağaza seçicisinin "Hamısı / Boş / Bağlı" filtri
 .picker-filter {
     display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px;
     button {
         padding: 5px 11px; border-radius: 20px; cursor: pointer;
-        border: 1px solid var(--borderColor); background: var(--surface);
+        border: 1px solid var(--border); background: var(--surface);
         color: var(--gray-600); font-family: inherit; font-size: 12px; font-weight: 600;
         transition: border-color .15s, color .15s, background .15s;
-        &:hover { border-color: var(--primaryColor); color: var(--primaryColor); }
-        &.on { background: var(--primarySoft); border-color: transparent; color: var(--primaryColor); }
-        &:focus-visible { outline: 2px solid var(--primaryColor); outline-offset: 1px; }
+        &:hover { border-color: var(--accent); color: var(--accent); }
+        &.on { background: var(--accent-soft); border-color: transparent; color: var(--accent); }
+        &:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
     }
 }
 .picker-note {
     display: flex; align-items: flex-start; gap: 8px; margin-top: 10px; padding: 10px 12px;
-    border-radius: var(--radius-sm); background: var(--warningSoft); color: var(--warningText);
+    border-radius: var(--radius-sm); background: var(--warning-soft); color: var(--warning-text);
     font-size: 12px; font-weight: 600; line-height: 1.45;
     .material-symbols-outlined { font-size: 17px; flex-shrink: 0; }
 }
 // "Mövcud zəncir" nişanı — yeni qurmaqla redaktəni ayırd edir
 .mode-tag {
     padding: 2px 9px; border-radius: 20px;
-    background: var(--warningSoft); color: var(--warningText);
-    font-size: 10.5px; font-weight: 700; white-space: nowrap;
+    background: var(--warning-soft); color: var(--warning-text);
+    font-size: var(--fs-12); font-weight: 700; white-space: nowrap;
 }
 
 .store-picker {
@@ -410,10 +409,10 @@
 .picker-row {
     display: flex; align-items: center; gap: 11px; width: 100%;
     padding: 9px 12px;
-    border: 1px solid var(--borderColor); border-radius: var(--radius-sm);
+    border: 1px solid var(--border); border-radius: var(--radius-sm);
     background: var(--surface); cursor: pointer; font-family: inherit; text-align: left;
     transition: border-color .15s, background .15s;
-    &:hover { border-color: var(--primaryColor); background: var(--primarySoft); }
+    &:hover { border-color: var(--accent); background: var(--accent-soft); }
     .list-meta { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
     .go { font-size: 18px; color: var(--gray-400); }
 }
@@ -422,24 +421,24 @@
 // mətn tamamilə stilsiz görünürdü və [class.on] fərqi görünmürdü.
 .link-badge {
     flex-shrink: 0; padding: 2px 9px; border-radius: 20px;
-    font-size: 10.5px; font-weight: 700; white-space: nowrap;
+    font-size: var(--fs-12); font-weight: 700; white-space: nowrap;
     background: var(--surface-subtle); color: var(--gray-500);
-    &.on { background: var(--successTint); color: var(--successTintText); }
+    &.on { background: var(--success-soft); color: var(--success-text); }
 }
 
 // ── Avatarlar ────────────────────────────────────────────────────────────────
 .avatar {
     flex-shrink: 0; display: flex; align-items: center; justify-content: center;
-    border-radius: 50%; background: var(--primarySoft); color: var(--primaryColor);
+    border-radius: 50%; background: var(--accent-soft); color: var(--accent);
     font-weight: 700; letter-spacing: .3px;
-    &.sm { width: 30px; height: 30px; font-size: 11px; }
+    &.sm { width: 30px; height: 30px; font-size: var(--fs-12); }
     &.lg { width: 46px; height: 46px; font-size: 15px; }
-    &.warn { background: var(--dangerSoft); color: var(--dangerStrong); }
+    &.warn { background: var(--danger-soft); color: var(--danger-text); }
 }
 
 .mini-spinner {
-    width: 16px; height: 16px; border: 2px solid var(--primarySoft);
-    border-top-color: var(--primaryColor); border-radius: 50%; animation: spin .7s linear infinite;
+    width: 16px; height: 16px; border: 2px solid var(--accent-soft);
+    border-top-color: var(--accent); border-radius: 50%; animation: spin .7s linear infinite;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
@@ -447,7 +446,7 @@
     display: flex; flex-direction: column; align-items: center; justify-content: center;
     padding: 48px 16px; text-align: center; color: var(--text-muted);
     .material-symbols-outlined { font-size: 40px; opacity: .5; margin-bottom: 8px; }
-    p { margin: 0; font-size: 13.5px; font-weight: 600; color: var(--bodyColor); }
+    p { margin: 0; font-size: var(--fs-14); font-weight: 600; color: var(--text-muted); }
     small { margin-top: 6px; font-size: 12px; max-width: 340px; line-height: 1.5; }
 }
 
@@ -461,37 +460,36 @@
     width: 100%; font-family: inherit;
     padding: 40px 24px; border: 2px dashed var(--gray-300); border-radius: var(--radius-md);
     background: var(--surface-muted); cursor: pointer; transition: border-color .2s, background .2s, transform .15s;
-    &:hover:not(:disabled), &.dragover { border-color: var(--primaryColor); background: var(--primarySoft); }
+    &:hover:not(:disabled), &.dragover { border-color: var(--accent); background: var(--accent-soft); }
     &.dragover { transform: scale(1.01); }
-    &:focus-visible { outline: 2px solid var(--primaryColor); outline-offset: 2px; }
+    &:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
     &:disabled { opacity: .6; cursor: progress; }
 
-    .dz-icon { font-size: 44px; color: var(--primaryColor); margin-bottom: 10px; }
+    .dz-icon { font-size: 44px; color: var(--text-faint); margin-bottom: 10px; }
     .dz-title { font-size: 15px; font-weight: 700; color: var(--text-strong); margin-bottom: 4px; }
-    .dz-hint { font-size: 12.5px; color: var(--bodyColor); margin-bottom: 16px; }
+    .dz-hint { font-size: var(--fs-13); color: var(--text-muted); margin-bottom: 16px; }
     // Düymə görünüşlü etiket — artıq saxta düymə deyil, sadəcə vizual nişandır
     .dz-btn {
         display: inline-flex; align-items: center; gap: 8px;
         padding: 11px 22px; border-radius: var(--radius-sm);
-        background: linear-gradient(135deg, var(--primaryColor), var(--primaryDark));
-        color: var(--whiteColor); font-size: 13px; font-weight: 600;
-        box-shadow: 0 4px 12px rgba(96, 93, 255, .32);
+        background: var(--accent);
+        color: var(--on-accent); font-size: var(--fs-13); font-weight: 500;
         .material-symbols-outlined { font-size: 18px; }
     }
 }
 .tpl-actions { display: flex; gap: 10px; margin-top: 16px; }
 .upload-progress {
-    margin-top: 16px; padding: 14px 16px; border: 1px solid var(--borderColor); border-radius: var(--radius-sm); background: var(--surface);
-    span { display: block; margin-bottom: 10px; font-size: 12.5px; font-weight: 600; color: var(--text-strong); }
+    margin-top: 16px; padding: 14px 16px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface);
+    span { display: block; margin-bottom: 10px; font-size: var(--fs-13); font-weight: 600; color: var(--text-strong); }
 }
 .guide-list {
     list-style: none; margin: 0; padding: 14px 18px;
-    li { display: flex; align-items: flex-start; gap: 10px; padding: 8px 0; font-size: 13px; color: var(--bodyColor); line-height: 1.45; b { color: var(--text-strong); font-weight: 600; } }
-    .g-num { flex-shrink: 0; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: var(--primarySoft); color: var(--primaryColor); font-size: 11px; font-weight: 700; margin-top: 1px; }
+    li { display: flex; align-items: flex-start; gap: 10px; padding: 8px 0; font-size: 13px; color: var(--text-muted); line-height: 1.45; b { color: var(--text-strong); font-weight: 600; } }
+    .g-num { flex-shrink: 0; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: var(--accent-soft); color: var(--accent); font-size: var(--fs-12); font-weight: 700; margin-top: 1px; }
 }
 .guide-warn {
     display: flex; align-items: center; gap: 8px; margin: 0 18px 18px; padding: 11px 14px;
-    border-radius: var(--radius-sm); background: var(--warningSoft); color: var(--warningText); font-size: 12.5px; font-weight: 600;
+    border-radius: var(--radius-sm); background: var(--warning-soft); color: var(--warning-text); font-size: var(--fs-13); font-weight: 600;
     .material-symbols-outlined { font-size: 18px; }
 }
 .result-stats {
@@ -499,24 +497,24 @@
     .stat {
         display: flex; align-items: center; gap: 7px; padding: 8px 14px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600;
         b { font-size: 15px; font-weight: 800; } .material-symbols-outlined { font-size: 18px; }
-        &.success { background: var(--successSoft); color: var(--successStrong); }
-        &.warning { background: var(--warningSoft); color: var(--warningText); }
-        &.error { background: var(--dangerSoft); color: var(--dangerStrong); }
+        &.success { background: var(--success-soft); color: var(--success-text); }
+        &.warning { background: var(--warning-soft); color: var(--warning-text); }
+        &.error { background: var(--danger-soft); color: var(--danger-text); }
     }
 }
 .issue-list {
     list-style: none; margin: 0; padding: 4px 18px 18px; max-height: 260px; overflow-y: auto;
-    li { display: flex; align-items: baseline; gap: 8px; padding: 7px 0; font-size: 12.5px; color: var(--bodyColor); border-top: 1px solid var(--borderColor); }
-    .issue-row { flex-shrink: 0; padding: 1px 8px; border-radius: 6px; background: var(--surface-subtle); color: var(--gray-600); font-size: 11px; font-weight: 700; }
+    li { display: flex; align-items: baseline; gap: 8px; padding: 7px 0; font-size: var(--fs-13); color: var(--text-muted); border-top: 1px solid var(--border); }
+    .issue-row { flex-shrink: 0; padding: 1px 8px; border-radius: 6px; background: var(--surface-subtle); color: var(--gray-600); font-size: var(--fs-12); font-weight: 700; }
 }
 
 // ── Gate ─────────────────────────────────────────────────────────────────────
 .gate-card {
     display: flex; flex-direction: column; align-items: center; text-align: center;
-    padding: 54px 24px; border: 1.5px dashed var(--borderColor); border-radius: var(--radius-lg); background: var(--surface-muted);
-    > .material-symbols-outlined { font-size: 46px; color: var(--primaryColor); opacity: .7; margin-bottom: 12px; }
+    padding: 54px 24px; border: 1.5px dashed var(--border); border-radius: var(--radius-lg); background: var(--surface-muted);
+    > .material-symbols-outlined { font-size: 46px; color: var(--accent); opacity: .7; margin-bottom: 12px; }
     h3 { margin: 0 0 6px; font-size: 16px; font-weight: 700; color: var(--text-strong); }
-    p { margin: 0; font-size: 13px; color: var(--bodyColor); max-width: 460px; }
+    p { margin: 0; font-size: 13px; color: var(--text-muted); max-width: 460px; }
 }
 
 // ── Düymələr ─────────────────────────────────────────────────────────────────
@@ -534,33 +532,33 @@
     > .material-symbols-outlined { position: absolute; left: 12px; font-size: 18px; color: var(--gray-400); pointer-events: none; }
     input {
         width: 100%; height: 44px; padding: 0 40px 0 38px;
-        border: 1px solid var(--borderColor); border-radius: var(--radius-sm);
-        background: var(--surface-muted); font-size: 13.5px; color: var(--text-strong); font-family: inherit;
+        border: 1px solid var(--border); border-radius: var(--radius-sm);
+        background: var(--surface-muted); font-size: var(--fs-14); color: var(--text-strong); font-family: inherit;
         &::placeholder { color: var(--gray-400); }
-        &:focus { outline: none; border-color: var(--primaryColor); background: var(--surface); }
+        &:focus { outline: none; border-color: var(--accent); background: var(--surface); }
     }
 }
 
 .icon-btn {
     display: inline-flex; align-items: center; justify-content: center; width: 38px; height: 38px;
-    border: 1px solid var(--borderColor); border-radius: var(--radius-sm); background: var(--surface); color: var(--gray-500); cursor: pointer;
+    border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface); color: var(--gray-500); cursor: pointer;
     transition: background .15s, color .15s, border-color .15s;
     .material-symbols-outlined { font-size: 20px; }
     &:hover:not(:disabled) { background: var(--surface-muted); color: var(--text-strong); }
     &:disabled { opacity: .4; cursor: not-allowed; }
-    &:focus-visible { outline: 2px solid var(--primaryColor); outline-offset: 1px; }
+    &:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
     &.xs {
         width: 32px; height: 32px; border-color: transparent; background: transparent;
         .material-symbols-outlined { font-size: 18px; }
         &:hover:not(:disabled) { background: var(--surface-subtle); }
-        &.danger:hover:not(:disabled) { background: var(--dangerSoft); color: var(--dangerColor); }
+        &.danger:hover:not(:disabled) { background: var(--danger-soft); color: var(--danger); }
     }
 }
 
 // ── g-modern-field əlavələri (Axtarış prefiksi + təmizlə düyməsi + font) ──────
 // Sahələrin baseline/hündürlüyü qlobal .g-modern-field-dən gəlir (styles.scss).
 :host ::ng-deep .g-modern-field {
-    .mat-mdc-select-value, input.mat-mdc-input-element { font-size: 13.5px; color: var(--text-strong); }
+    .mat-mdc-select-value, input.mat-mdc-input-element { font-size: var(--fs-14); color: var(--text-strong); }
     input.mat-mdc-input-element::placeholder { color: var(--gray-400); }
 
     .field-pre { font-size: 18px; color: var(--gray-400); margin-right: 4px; }
@@ -572,7 +570,7 @@
         &:hover { background: var(--surface-subtle); color: var(--text-strong); }
     }
 }
-:host ::ng-deep .modern-menu .menu-icon { margin-right: 10px; font-size: 19px; color: var(--primaryColor); vertical-align: middle; }
+:host ::ng-deep .modern-menu .menu-icon { margin-right: 10px; font-size: 19px; color: var(--accent); vertical-align: middle; }
 
 // ── "Əlavə et" sətrindəki sahə: DƏQİQ 40px ──────────────────────────────────
 // Material sahə elementinin daxilində/altında öz boşluğunu saxlayır (subscript
@@ -642,13 +640,13 @@
 
 // Ziddiyyət nişanları (stat çipi + ağac sətri)
 .stat-chip.is-warn {
-    background: var(--warningSoft); border-color: transparent; color: var(--warningText);
-    b { color: var(--warningText); }
+    background: var(--warning-soft); border-color: transparent; color: var(--warning-text);
+    b { color: var(--warning-text); }
 }
 .node-badge.conflict {
     display: inline-flex; align-items: center; justify-content: center;
     min-width: 18px; height: 18px; margin-left: 4px; padding: 0 5px;
-    background: var(--warningSoft); color: var(--warningText); font-size: 11px;
+    background: var(--warning-soft); color: var(--warning-text); font-size: var(--fs-12);
 }
 // Zəncir sətrindəki pillə nişanı sağa dayansın
 .list-row .node-role.sm { margin-left: auto; flex-shrink: 0; }

@@ -1,9 +1,9 @@
 .cancel {
-    color: red !important;
+    color: var(--danger-text) !important;
 }
 
 .primary {
-    color: #6178fa !important;
+    color: var(--accent) !important;
 }
 
 button .material-symbols-outlined {
@@ -18,7 +18,7 @@ button span.text-center {
 }
 
 .cancel {
-    color: red !important;
+    color: var(--danger-text) !important;
 }
 
 .spaceBetween {

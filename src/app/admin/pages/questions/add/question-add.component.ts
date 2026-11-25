@@ -139,7 +139,7 @@ export class QuestionAddComponent implements OnInit {
         return payload;
     }
 
-    pageTitle = 'Yeni Sual Yaradın';
+    pageTitle = 'Yeni sual';
     editMode = false;
     viewMode = false;
     isSaving = false;
@@ -181,9 +181,9 @@ export class QuestionAddComponent implements OnInit {
         this.editMode = !!this.id && !this.viewMode;
 
         if (this.viewMode) {
-            this.pageTitle = 'Suala baxış';
+            this.pageTitle = 'Sual detalları';
         } else if (this.editMode) {
-            this.pageTitle = 'Sualı redaktə edin';
+            this.pageTitle = 'Sual redaktəsi';
         }
 
         this.categoryService.getAllCategories().subscribe({

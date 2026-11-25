@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit, AfterViewInit, Inject, PLATFORM_ID } from
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
-import { forkJoin, of, Subscription } from 'rxjs';
+import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { DashboardChartsService } from './dashboard-charts.service';
 import { UserService } from '../../services/user.service';
@@ -21,8 +21,6 @@ interface KpiCard {
   label: string;
   value: number;
   icon: string;
-  color: string;
-  bgColor: string;
   route: string;
 }
 
@@ -30,8 +28,6 @@ interface QuickAction {
   label: string;
   desc: string;
   icon: string;
-  color: string;
-  bgColor: string;
   count: string;
   route: string;
 }
@@ -40,8 +36,6 @@ interface SystemElement {
   label: string;
   value: number;
   icon: string;
-  color: string;
-  bgColor: string;
 }
 
 // Chrome-un ICU məlumatında Azərbaycan ay adları yoxdur (DatePipe 'az' locale-i ilə
@@ -67,8 +61,6 @@ function extractArray<T>(response: any): T[] {
   styleUrl: './dashboard.component.scss'
 })
 export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
-  private themeSubscription?: Subscription;
-  private mutationObserver?: MutationObserver;
   private viewReady = false;
   private dataReady = false;
 
@@ -111,17 +103,6 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
   ) { }
 
   ngOnInit() {
-    if (isPlatformBrowser(this.platformId)) {
-      this.mutationObserver = new MutationObserver(() => {
-        clearTimeout((this as any)._themeTimeout);
-        (this as any)._themeTimeout = setTimeout(() => this.tryLoadCharts(), 200);
-      });
-      this.mutationObserver.observe(document.body, {
-        attributes: true,
-        attributeFilter: ['class']
-      });
-    }
-
     this.loadStats();
   }
 
@@ -160,70 +141,54 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
           label: 'İstifadəçilər',
           value: this.totalUsers,
           icon: 'group',
-          color: '#6366F1',
-          bgColor: 'rgba(99,102,241,0.1)',
           route: '/admin/permissions/user-permission'
         },
         {
           label: 'Mağazalar',
           value: locationRows.length,
           icon: 'store',
-          color: '#22C55E',
-          bgColor: 'rgba(34,197,94,0.1)',
           route: '/admin/master-data'
         },
         {
-          label: 'Suallar Bankı',
+          label: 'Suallar',
           value: questionRows.length,
           icon: 'quiz',
-          color: '#F59E0B',
-          bgColor: 'rgba(245,158,11,0.1)',
           route: '/admin/questions'
         },
         {
-          label: 'İzin Qrupları',
+          label: 'İcazə qrupları',
           value: roleRows.length,
           icon: 'shield',
-          color: '#A78BFA',
-          bgColor: 'rgba(167,139,250,0.1)',
           route: '/admin/permissions/permission-groups'
         }
       ];
 
       this.quickActions = [
         {
-          label: 'Audit Strukturu',
+          label: 'Audit strukturu',
           desc: 'Firma, mağaza, şöbə və kateqoriya idarəetməsi',
           icon: 'store',
-          color: '#6366F1',
-          bgColor: 'rgba(99,102,241,0.1)',
           count: `${locationRows.length} mağaza`,
           route: '/admin/master-data'
         },
         {
           label: 'İstifadəçilər',
-          desc: 'İstifadəçi hüquqları',
+          desc: 'İstifadəçilər və onların icazələri',
           icon: 'manage_accounts',
-          color: '#22C55E',
-          bgColor: 'rgba(34,197,94,0.1)',
           count: `${this.totalUsers} istifadəçi`,
           route: '/admin/permissions/user-permission'
         },
         {
-          label: 'Səlahiyyət qrupları',
+          label: 'İcazə qrupları',
           desc: 'Rol və icazə konfiqurasiyası',
           icon: 'verified_user',
-          color: '#A78BFA',
-          bgColor: 'rgba(167,139,250,0.1)',
           count: `${roleRows.length} qrup`,
           route: '/admin/permissions/permission-groups'
         },
         {
-          label: 'Suallar Bankı',
+          label: 'Suallar',
           desc: 'Yoxlama suallarının idarəsi',
           icon: 'quiz',
-          color: '#F59E0B',
-          bgColor: 'rgba(245,158,11,0.1)',
           count: `${questionRows.length} sual`,
           route: '/admin/questions'
         },
@@ -231,20 +196,18 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
           label: 'Firmalar',
           desc: 'Firma qeydiyyatı',
           icon: 'domain',
-          color: '#EF4444',
-          bgColor: 'rgba(239,68,68,0.1)',
           count: `${firmRows.length} firma`,
           route: '/admin/firms'
         }
       ];
 
       this.systemElements = [
-        { label: 'Firmalar', value: firmRows.length, icon: 'domain', color: '#EF4444', bgColor: 'rgba(239,68,68,0.1)' },
-        { label: 'Mağazalar', value: locationRows.length, icon: 'store', color: '#6366F1', bgColor: 'rgba(99,102,241,0.1)' },
-        { label: 'Şöbələr', value: sectionRows.length, icon: 'apartment', color: '#A78BFA', bgColor: 'rgba(167,139,250,0.1)' },
-        { label: 'Kateqoriyalar', value: categoryRows.length, icon: 'category', color: '#F59E0B', bgColor: 'rgba(245,158,11,0.1)' },
-        { label: 'Suallar', value: questionRows.length, icon: 'quiz', color: '#22C55E', bgColor: 'rgba(34,197,94,0.1)' },
-        { label: 'Səhifələr', value: pageRows.length, icon: 'description', color: '#0EA5E9', bgColor: 'rgba(14,165,233,0.1)' }
+        { label: 'Firmalar', value: firmRows.length, icon: 'domain' },
+        { label: 'Mağazalar', value: locationRows.length, icon: 'store' },
+        { label: 'Şöbələr', value: sectionRows.length, icon: 'apartment' },
+        { label: 'Kateqoriyalar', value: categoryRows.length, icon: 'category' },
+        { label: 'Suallar', value: questionRows.length, icon: 'quiz' },
+        { label: 'Səhifələr', value: pageRows.length, icon: 'description' }
       ];
 
       // Donut: rola görə istifadəçi bölgüsü
@@ -305,9 +268,6 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.themeSubscription?.unsubscribe();
-    this.mutationObserver?.disconnect();
-    clearTimeout((this as any)._themeTimeout);
     this.charts.destroyAll();
   }
 }

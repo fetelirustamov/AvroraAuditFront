@@ -2,30 +2,16 @@
 //
 // Səhifə başlığı, `.export-btn`, `.kpi-card`, `.table-card`, `.empty-state`
 // `src/_design-system.scss`-dən gəlir. Burada yalnız bu səhifəyə xas olanlar:
-// mavi vurğu, tab-lar, cədvəl tonları və sütun nişanları.
+// tab-lar, sütun filtrləri, cədvəl sətirləri və sütun nişanları.
 
 @import '../report-filter-toolbar';
 
-.report-page-header {
-    --page-accent-from: #4F8EF7;
-    --page-accent-to: #7C73FF;
-}
-
-// Mavi-bənövşəyi vurğuya uyğun yerli tonlar
-$accent-tint: #F8F9FF;
-$accent-tint-strong: #EEEFFE;
-
-.loading-bar-wrapper {
-    border-radius: var(--radius-sm);
-    overflow: hidden;
-    margin-bottom: 16px;
-}
 :host ::ng-deep .modern-progress {
     .mdc-linear-progress__bar-inner {
-        border-color: var(--primaryColor);
+        border-color: var(--accent);
     }
     .mdc-linear-progress__buffer-bar {
-        background: var(--primarySoft);
+        background: var(--accent-soft);
     }
 }
 
@@ -33,21 +19,21 @@ $accent-tint-strong: #EEEFFE;
 :host ::ng-deep .report-tabs {
     .mat-mdc-tab-header {
         background: var(--surface);
-        border-bottom: 2px solid var(--borderColor);
+        border-bottom: 1px solid var(--border);
     }
     .mat-mdc-tab {
         min-width: 180px;
-        font-size: 13px;
+        font-size: var(--fs-13);
         font-weight: 600;
-        color: var(--bodyColor);
+        color: var(--text-muted);
 
         &.mdc-tab--active {
-            color: var(--primaryColor);
+            color: var(--accent-text);
         }
     }
     .mdc-tab-indicator__content--underline {
-        border-color: var(--primaryColor);
-        border-top-width: 3px;
+        border-color: var(--accent);
+        border-top-width: 2px;
     }
     .mat-mdc-tab-body-content {
         overflow: hidden;
@@ -66,48 +52,33 @@ $accent-tint-strong: #EEEFFE;
     margin-bottom: 0;
 }
 
-.kpi-icon {
-    &.plan-icon {
-        background: var(--primarySoft);
-        color: var(--primaryColor);
-    }
-    &.extra-icon {
-        background: var(--warningSoft);
-        color: var(--warningStrong);
-    }
-    &.store-icon {
-        background: var(--successSoft);
-        color: var(--successColor);
-    }
-}
-
 .clear-filter-btn {
     display: flex;
     align-items: center;
     gap: 6px;
     padding: 6px 14px;
-    border: 1px solid rgba(255, 64, 35, .2);
+    border: 1px solid var(--border-strong);
     border-radius: var(--radius-sm);
-    background: var(--dangerSoft);
-    color: var(--dangerColor);
-    font-size: 12px;
-    font-weight: 600;
+    background: var(--surface);
+    color: var(--text);
+    font-size: var(--fs-12);
+    font-weight: 500;
     cursor: pointer;
-    transition: background .2s;
+    transition: background var(--transition);
 
     .material-symbols-outlined {
         font-size: 16px;
+        color: var(--text-muted);
     }
     &:hover {
-        background: var(--dangerColor);
-        color: var(--whiteColor);
+        background: var(--surface-muted);
     }
 }
 
 :host ::ng-deep .filter-row th.filter-header-cell {
     background: var(--surface);
     padding: 6px 8px;
-    border-bottom: 2px solid var(--borderColor);
+    border-bottom: 1px solid var(--border);
 }
 
 .filter-input-wrap {
@@ -115,18 +86,17 @@ $accent-tint-strong: #EEEFFE;
     align-items: center;
     gap: 4px;
     padding: 4px 8px;
-    border: 1px solid var(--borderColor);
+    border: 1px solid var(--border);
     border-radius: var(--radius-sm);
-    background: var(--surface-muted);
-    transition: border-color .2s;
+    background: var(--surface);
+    transition: border-color var(--transition);
 
     &:focus-within {
-        border-color: var(--primaryColor);
-        box-shadow: 0 0 0 3px rgba(96, 93, 255, .1);
+        border-color: var(--accent);
     }
     .filter-input-icon {
         font-size: 14px;
-        color: var(--text-muted);
+        color: var(--text-faint);
     }
     .filter-input {
         width: 100%;
@@ -134,11 +104,11 @@ $accent-tint-strong: #EEEFFE;
         border: none;
         outline: none;
         background: transparent;
-        font-size: 12px;
+        font-size: var(--fs-12);
         color: var(--text-strong);
 
         &::placeholder {
-            color: var(--text-muted);
+            color: var(--text-faint);
         }
     }
 }
@@ -151,7 +121,7 @@ $accent-tint-strong: #EEEFFE;
     gap: 12px;
     padding: 16px 20px;
     margin-top: 16px;
-    border-bottom: 1px solid var(--borderColor);
+    border-bottom: 1px solid var(--border);
 
     .table-info {
         display: flex;
@@ -160,55 +130,49 @@ $accent-tint-strong: #EEEFFE;
     }
     .table-info-icon {
         font-size: 20px;
-        color: var(--primaryColor);
+        color: var(--text-muted);
     }
     .table-title {
-        font-size: 14px;
+        font-size: var(--fs-14);
         font-weight: 600;
         color: var(--text-strong);
     }
     .result-badge {
-        padding: 2px 10px;
-        border-radius: 20px;
-        background: var(--primarySoft);
-        color: var(--primaryColor);
-        font-size: 11px;
-        font-weight: 700;
+        padding: 2px var(--space-2);
+        border-radius: var(--radius-sm);
+        background: var(--surface-subtle);
+        color: var(--text);
+        font-size: var(--fs-12);
+        font-weight: 600;
+        font-variant-numeric: tabular-nums;
     }
 }
 
 // ── Cədvəl sətirləri ────────────────────────────────────────────────────────
 :host ::ng-deep .data-header-row th.data-header-cell {
-    background: $accent-tint;
-    color: var(--bodyColor);
-    font-size: 11.5px;
-    font-weight: 700;
+    background: var(--surface-muted);
+    color: var(--text-muted);
+    font-size: var(--fs-12);
+    font-weight: 600;
     text-align: center;
     padding: 10px 14px;
-    border-bottom: 2px solid var(--borderColor);
-    letter-spacing: .3px;
+    border-bottom: 1px solid var(--border);
 }
 :host ::ng-deep .data-row {
     height: 46px;
-    transition: background .15s;
+    transition: background var(--transition);
 
     td.mat-mdc-cell {
         padding: 8px 14px;
-        border-bottom: 1px solid var(--borderColor);
+        border-bottom: 1px solid var(--border);
         text-align: center;
     }
     &:hover td.mat-mdc-cell {
-        background: $accent-tint;
+        background: var(--surface-muted);
     }
     &:last-child td.mat-mdc-cell {
         border-bottom: none;
     }
-}
-:host ::ng-deep .data-row:nth-child(even) td.mat-mdc-cell {
-    background: var(--surface-muted);
-}
-:host ::ng-deep .data-row:nth-child(even):hover td.mat-mdc-cell {
-    background: $accent-tint-strong;
 }
 
 // ── Sütun nişanları ─────────────────────────────────────────────────────────
@@ -220,70 +184,54 @@ $accent-tint-strong: #EEEFFE;
 .code-badge,
 .region-badge {
     display: inline-block;
-    padding: 3px 10px;
-    border-radius: 6px;
-    font-size: 11.5px;
-    font-weight: 600;
+    padding: 2px var(--space-2);
+    border-radius: var(--radius-sm);
+    background: var(--surface-subtle);
+    color: var(--text);
+    font-size: var(--fs-12);
+    font-weight: 500;
 }
 .code-badge {
-    background: #EEF2FF;
-    color: #4B5DA8;
-    font-weight: 700;
-    letter-spacing: .4px;
-}
-.region-badge {
-    background: var(--infoSoft);
-    color: #1565C0;
+    font-family: var(--font-mono);
 }
 
+// Planlı / plansız sayı: məna sütun başlığındadır, rəngdə yox
 .count-chip {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     min-width: 36px;
-    height: 26px;
-    padding: 0 10px;
-    border-radius: 20px;
-    font-size: 13px;
-    font-weight: 700;
-
-    &.plan {
-        background: var(--primarySoft);
-        color: var(--primaryColor);
-    }
-    &.extra {
-        background: var(--warningSoft);
-        color: #C46A00;
-    }
+    height: 24px;
+    padding: 0 var(--space-2);
+    border-radius: var(--radius-sm);
+    background: var(--surface-subtle);
+    color: var(--text-strong);
+    font-size: var(--fs-13);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
 }
 
 :host ::ng-deep .modern-paginator {
     background: var(--surface);
-    color: var(--bodyColor);
-    font-size: 13px;
-    border-top: 1px solid var(--borderColor);
+    color: var(--text-muted);
+    font-size: var(--fs-13);
+    border-top: 1px solid var(--border);
 }
 :host ::ng-deep .mat-mdc-menu-panel {
     border-radius: var(--radius-sm) !important;
-    box-shadow: 0 8px 32px rgba(96, 93, 255, .14) !important;
+    box-shadow: var(--shadow-md) !important;
     min-width: 160px !important;
 }
 :host ::ng-deep .mat-mdc-menu-item {
-    font-size: 13px;
+    font-size: var(--fs-13);
     font-weight: 500;
     color: var(--text-strong);
 
     &:hover {
-        background: var(--primarySoft);
-        color: var(--primaryColor);
+        background: var(--surface-muted);
     }
 }
 .menu-icon {
     font-size: 18px;
-}
-.excel-icon {
-    color: #1D6F42;
-}
-.pdf-icon {
-    color: var(--dangerColor);
+    color: var(--text-muted);
 }

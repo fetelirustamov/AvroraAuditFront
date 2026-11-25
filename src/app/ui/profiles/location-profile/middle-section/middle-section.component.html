@@ -8,14 +8,10 @@
                     <div class="store-avatar">
                         <span class="material-symbols-outlined">storefront</span>
                     </div>
-                    <button mat-button [matMenuTriggerFor]="storeMenu" class="store-menu-btn">
-                        <i class="ri-more-fill"></i>
-                    </button>
-                    <mat-menu #storeMenu="matMenu" xPosition="before"></mat-menu>
                 </div>
 
                 <div class="store-body">
-                    <h4 class="store-name">{{ profile?.locationName || 'Lokasiya seçin' }}</h4>
+                    <h4 class="store-name">{{ profile?.locationName || 'Mağaza seçin' }}</h4>
                     <p class="store-email" *ngIf="profile">
                         <span class="material-symbols-outlined">tag</span>
                         Kod: {{ profile.locationCode }}

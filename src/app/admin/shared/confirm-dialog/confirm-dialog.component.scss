@@ -13,14 +13,14 @@
 }
 
 .icon {
-  color: #f97316;
+  color: var(--warning);
   font-size: 24px;
 }
 
 .confirm-message {
   margin: 0 0 24px 0;
   font-size: 14px;
-  color: #4b5563;
+  color: var(--text);
 }
 
 .confirm-actions {

@@ -14,7 +14,7 @@ export const uiPageRoutes: Routes = [
         data: {
             menu: {
                 area: 'app', section: 'Əsas', order: 0,
-                title: 'Əsas Səhifə', icon: 'home', pageKey: 'dashboard'
+                title: 'Əsas səhifə', icon: 'home', pageKey: 'dashboard'
             }
         }
     },
@@ -53,7 +53,7 @@ export const uiPageRoutes: Routes = [
             menu: {
                 area: 'app', section: 'Hesabat və təhlil', order: 72,
                 group: 'Hesabatlar', groupIcon: 'bar_chart_4_bars', groupOrder: 70,
-                title: 'Şöbələr puanlaması', pageKey: 'report-branch-scoring'
+                title: 'Şöbə qiymətləndirməsi', pageKey: 'report-branch-scoring'
             }
         }
     },
@@ -266,7 +266,7 @@ export const uiPageRoutes: Routes = [
         data: {
             menu: {
                 area: 'app', section: 'Hesabat və təhlil', order: 60,
-                title: 'Ərazi profili', icon: 'account_box', pageKey: 'location-profile'
+                title: 'Mağaza profili', icon: 'account_box', pageKey: 'location-profile'
             }
         }
     },

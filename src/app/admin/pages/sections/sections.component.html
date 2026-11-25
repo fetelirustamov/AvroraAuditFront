@@ -1,4 +1,4 @@
-<app-admin-breadcrumb *ngIf="showBreadcrumb" title="Şöbələr" [crumbs]="[{label: 'Sistem Parametrləri'}, {label: 'Şöbələr'}]">
+<app-admin-breadcrumb *ngIf="showBreadcrumb" title="Şöbələr" [crumbs]="[{label: 'Sistem parametrləri'}, {label: 'Şöbələr'}]">
 </app-admin-breadcrumb>
 
 <mat-card class="sections-card mb-25 border-radius d-block bg-white border-0 shadow-none">
@@ -7,7 +7,7 @@
             <div class="sections-toolbar">
                 <button class="add-btn" type="button" mat-flat-button color="primary" (click)="add()">
                     <i class="material-symbols-outlined">add</i>
-                    Yeni Şöbə
+                    Yeni şöbə
                 </button>
 
                 <mat-form-field class="firm-filter" *ngIf="firmId == null">
@@ -32,16 +32,16 @@
 
                 <!-- Section Name -->
                 <ng-container matColumnDef="sectionName">
-                    <th mat-header-cell *matHeaderCellDef mat-sort-header> SEKSİYA ADI </th>
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> Şöbə adı </th>
                     <td mat-cell *matCellDef="let r"> {{r.sectionName}} </td>
                 </ng-container>
 
                 <!-- Actions -->
                 <ng-container matColumnDef="actions">
-                    <th mat-header-cell *matHeaderCellDef> ƏMƏLİYYATLAR </th>
+                    <th mat-header-cell *matHeaderCellDef> Əməliyyatlar </th>
                     <td mat-cell *matCellDef="let r">
                         <div class="action-buttons">
-                            <button type="button" class="action-btn edit-btn" (click)="edit(r)" matTooltip="Redaktə Et"
+                            <button type="button" class="action-btn edit-btn" (click)="edit(r)" matTooltip="Redaktə et"
                                 matTooltipPosition="above">
                                 <span class="material-symbols-outlined">edit</span>
                             </button>

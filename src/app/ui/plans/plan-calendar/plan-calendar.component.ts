@@ -54,9 +54,10 @@ export interface DayPlanRow {
 
 /** Bir sorğuda gətirilən maksimum plan sayı — bundan çoxu üçün istifadəçiyə xəbərdarlıq göstərilir. */
 const MAX_ROWS = 1000;
-const FALLBACK_COLOR = '#6B7280';
-const FALLBACK_TINT = '#F3F4F6';
-const FALLBACK_TEXT = '#374151';
+// Rənglər DOM-un inline stilinə yazılır, ona görə birbaşa token-dir (`var(--…)`).
+const FALLBACK_COLOR = 'var(--gray-300)';
+const FALLBACK_TINT = 'var(--surface-subtle)';
+const FALLBACK_TEXT = 'var(--text-muted)';
 
 // Chrome-un ICU məlumatında Azərbaycan ay/gün adları yoxdur (Intl('az') "2026 M09" verir),
 // ona görə təqvimdə görünən bütün tarix mətnləri bu cədvəllərdən formatlanır.
@@ -126,14 +127,18 @@ function azDayLabel(iso: string): string {
 export class PlanCalendarComponent implements AfterViewInit, OnDestroy {
   @ViewChild('calendar') calendarComponent?: FullCalendarComponent;
 
-  /** Həm status filtrini, həm legend-i idarə edir. Kodlar DB-də real olan dəyərlərdir. */
+  /**
+   * Həm status filtrini, həm legend-i idarə edir. Kodlar DB-də real olan dəyərlərdir.
+   * Status rəngi mənadır: gözləyir → warning, mobildə icrada → info, yekun → success,
+   * rədd → danger. Keçid statusu (3) və vaxtı bitmiş (5) neytral şkalanın iki ayrı tonundadır.
+   */
   readonly planStatuses: PlanStatusOption[] = [
-    { value: 1, label: PLAN_STATUS_LABELS[1], color: '#F59E0B', tint: '#FEF3C7', text: '#92400E' },
-    { value: 2, label: PLAN_STATUS_LABELS[2], color: '#10B981', tint: '#D1FAE5', text: '#065F46' },
-    { value: 3, label: PLAN_STATUS_LABELS[3], color: '#3B82F6', tint: '#DBEAFE', text: '#1E40AF' },
-    { value: 4, label: PLAN_STATUS_LABELS[4], color: '#8B5CF6', tint: '#EDE9FE', text: '#5B21B6' },
-    { value: 5, label: PLAN_STATUS_LABELS[5], color: '#64748B', tint: '#F1F5F9', text: '#334155' },
-    { value: -1, label: PLAN_STATUS_LABELS[-1], color: '#EF4444', tint: '#FEE2E2', text: '#991B1B' },
+    { value: 1, label: PLAN_STATUS_LABELS[1], color: 'var(--warning)', tint: 'var(--warning-soft)', text: 'var(--warning-text)' },
+    { value: 2, label: PLAN_STATUS_LABELS[2], color: 'var(--info)', tint: 'var(--info-soft)', text: 'var(--info-text)' },
+    { value: 3, label: PLAN_STATUS_LABELS[3], color: 'var(--gray-700)', tint: 'var(--surface-subtle)', text: 'var(--text)' },
+    { value: 4, label: PLAN_STATUS_LABELS[4], color: 'var(--success)', tint: 'var(--success-soft)', text: 'var(--success-text)' },
+    { value: 5, label: PLAN_STATUS_LABELS[5], color: 'var(--gray-400)', tint: 'var(--surface-subtle)', text: 'var(--text-muted)' },
+    { value: -1, label: PLAN_STATUS_LABELS[-1], color: 'var(--danger)', tint: 'var(--danger-soft)', text: 'var(--danger-text)' },
   ];
 
   calendarForm!: FormGroup;

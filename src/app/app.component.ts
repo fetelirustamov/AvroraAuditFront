@@ -10,7 +10,7 @@ import { RouterOutlet, Router, Event, NavigationEnd } from '@angular/router';
     styleUrls: ['./app.component.scss']
 })
 export class AppComponent {
-    title = 'Audit Sistemi';
+    title = 'Audit sistemi';
 
     constructor(
         private router: Router,

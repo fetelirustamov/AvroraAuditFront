@@ -17,6 +17,7 @@ import { AuditLoadingOverlayComponent } from '../../components/audit-loading-ove
 import { TableState } from '../../../models/table-state.model';
 import { apiErrorMessage } from '../../../shared/utils/api-error';
 import { weightedPercent } from '../../../shared/utils/compliance';
+import { chartColors } from '../../../shared/utils/chart-colors';
 
 const COLUMN_TO_API_FILTER: Record<string, string> = {
     esas_tasnifat: 'categoryName',
@@ -45,12 +46,12 @@ export class EsasTasnifatUygunluguComponent {
 
     columns = [
         { key: 'row', label: '№' },
-        { key: 'esas_tasnifat', label: 'Əsas tasnifat' },
-        { key: 'magaza_kodu', label: 'Ərazi kodu' },
-        { key: 'magaza_adi', label: 'Ərazi adı' },
-        { key: 'bolge', label: 'Bölgəsi' },
+        { key: 'esas_tasnifat', label: 'Əsas təsnifat' },
+        { key: 'magaza_kodu', label: 'Mağaza kodu' },
+        { key: 'magaza_adi', label: 'Mağaza adı' },
+        { key: 'bolge', label: 'Bölgə' },
         { key: 'faktiki_bal', label: 'Faktiki toplanan bal' },
-        { key: 'agirlig_bal_cemi', label: 'Tasnifat üzrə ağırlıq balın cəmi' },
+        { key: 'agirlig_bal_cemi', label: 'Təsnifat üzrə ağırlıq balın cəmi' },
         { key: 'faiz_nisbeti', label: 'Faiz nisbəti (%)' },
     ];
     displayedColumns = this.columns.map(c => c.key);
@@ -247,28 +248,30 @@ export class EsasTasnifatUygunluguComponent {
     exportExcel(): void {
         if (!this.allRows) { return; }
         const data = this.allRows.map((r: any) => ({
-            '№': r.row, 'Əsas tasnifat': r.esas_tasnifat, 'Ərazi kodu': r.magaza_kodu,
-            'Ərazi adı': r.magaza_adi, 'Bölgəsi': r.bolge,
+            '№': r.row, 'Əsas təsnifat': r.esas_tasnifat, 'Mağaza kodu': r.magaza_kodu,
+            'Mağaza adı': r.magaza_adi, 'Bölgə': r.bolge,
             'Ağırlıq balın cəmi': r.agirlig_bal_cemi, 'Faktiki toplanan bal': r.faktiki_bal,
             'Faiz nisbəti (%)': r.faiz_nisbeti,
         }));
         void this.fileExport.exportRowsToExcel(
             data,
-            'Əsas Tasnifat',
-            datedFileName('esas-tasnifat-uygunlugu', 'xlsx'),
+            'Əsas təsnifat',
+            datedFileName('esas-tesnifat-uygunlugu', 'xlsx'),
         );
     }
 
     exportPdf(): void {
         if (!this.allRows) { return; }
-        const headers = ['№', 'Əsas tasnifat', 'Ərazi kodu', 'Ərazi adı', 'Bölgəsi', 'Ağırlıq balı', 'Faktiki bal', 'Faiz (%)'];
+        const headers = ['№', 'Əsas təsnifat', 'Mağaza kodu', 'Mağaza adı', 'Bölgə', 'Ağırlıq balı', 'Faktiki bal', 'Faiz (%)'];
         const rows = this.allRows.map((r: any) => [r.row, r.esas_tasnifat, r.magaza_kodu, r.magaza_adi, r.bolge, r.agirlig_bal_cemi, r.faktiki_bal, r.faiz_nisbeti]);
+        // PDF-də başlıq neytraldır: rəng məna daşımır
+        const pdf = chartColors();
         const docDef: any = {
             pageOrientation: 'landscape',
             content: [{ table: { headerRows: 1, body: [headers.map(h => ({ text: h, style: 'th' })), ...rows] }, layout: 'lightHorizontalLines' }],
-            styles: { th: { bold: true, color: '#fff', fillColor: '#605DFF', fontSize: 8 } },
+            styles: { th: { bold: true, color: pdf.textStrong, fillColor: pdf.surfaceSubtle, fontSize: 8 } },
             defaultStyle: { fontSize: 8 }
         };
-        void this.fileExport.exportPdf(docDef, datedFileName('esas-tasnifat-uygunlugu', 'pdf'));
+        void this.fileExport.exportPdf(docDef, datedFileName('esas-tesnifat-uygunlugu', 'pdf'));
     }
 }

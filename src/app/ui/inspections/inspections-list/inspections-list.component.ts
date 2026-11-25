@@ -176,7 +176,7 @@ export class InspectionsListComponent implements AfterViewInit {
       next: (response) => {
         this.firms = response.data;
       },
-      error: (error) => this.notify.error(apiErrorMessage(error, 'Müəssisə siyahısı yüklənmədi')),
+      error: (error) => this.notify.error(apiErrorMessage(error, 'Firma siyahısı yüklənmədi')),
     });
   }
 
@@ -186,7 +186,7 @@ export class InspectionsListComponent implements AfterViewInit {
       next: (response) => {
         this.locations = response.data;
       },
-      error: (error) => this.notify.error(apiErrorMessage(error, 'Lokasiya siyahısı yüklənmədi')),
+      error: (error) => this.notify.error(apiErrorMessage(error, 'Mağaza siyahısı yüklənmədi')),
     });
   }
 
@@ -203,7 +203,7 @@ export class InspectionsListComponent implements AfterViewInit {
   onFormSubmit() {
     if (this.inspectionsForm.invalid) {
       this.inspectionsForm.markAllAsTouched();
-      this.notify.warning('Məcburi sahələr seçilməyib', { message: 'Müəssisəni seçin.' });
+      this.notify.warning('Məcburi sahələr seçilməyib', { message: 'Firmanı seçin.' });
       return;
     }
 

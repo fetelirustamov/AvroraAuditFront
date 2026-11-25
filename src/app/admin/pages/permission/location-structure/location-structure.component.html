@@ -8,7 +8,7 @@
                     <span class="material-symbols-outlined title-icon">account_tree</span>
                     Ərazi Bağlantıları
                 </h1>
-                <p class="page-subtitle">Təşkilati struktur — Direktor › Satış müdiri › Mağaza müdiri › əraziləri</p>
+                <p class="page-subtitle">Təşkilati struktur — Direktor › Satış müdiri › Mağaza müdiri › mağazalar</p>
             </div>
             <div class="header-actions">
                 <button type="button" class="export-btn solid" *ngIf="hasNetwork" (click)="startNewBinding()">
@@ -47,7 +47,7 @@
                         <label class="g-field-label"><span class="material-symbols-outlined">business</span>Firma</label>
                         <mat-form-field appearance="outline" class="g-modern-field">
                             <mat-select [(ngModel)]="selectedNetwork" (selectionChange)="onNetworkChange($event.value)"
-                                [disabled]="isLoadingFirms" placeholder="Şəbəkə seçin">
+                                [disabled]="isLoadingFirms" placeholder="Firma seçin">
                                 <mat-option *ngFor="let n of marketNetworks" [value]="n">{{ n.name }}</mat-option>
                             </mat-select>
                         </mat-form-field>
@@ -57,7 +57,7 @@
                         <label class="g-field-label"><span class="material-symbols-outlined">search</span>Axtarış</label>
                         <mat-form-field appearance="outline" class="g-modern-field">
                             <span matPrefix class="material-symbols-outlined field-pre" aria-hidden="true">search</span>
-                            <input matInput type="text" [(ngModel)]="search" placeholder="Ad, sicil və ya ərazi kodu">
+                            <input matInput type="text" [(ngModel)]="search" placeholder="Ad, sicil və ya mağaza kodu">
                             <button matSuffix type="button" class="field-clear" *ngIf="search" (click)="clearSearch()"
                                 matTooltip="Təmizlə" aria-label="Axtarışı təmizlə">
                                 <span class="material-symbols-outlined" aria-hidden="true">close</span>
@@ -75,7 +75,7 @@
                 <span class="stat-chip" *ngIf="countDirectors > 0"><b>{{ countDirectors }}</b> Direktor</span>
                 <span class="stat-chip" *ngIf="countManagers > 0"><b>{{ countManagers }}</b> Satış müdiri</span>
                 <span class="stat-chip" *ngIf="countStoreManagers > 0"><b>{{ countStoreManagers }}</b> Mağaza müdiri</span>
-                <span class="stat-chip is-accent"><b>{{ countBoundStores }}</b> Bağlı ərazi</span>
+                <span class="stat-chip is-accent"><b>{{ countBoundStores }}</b> Bağlı mağaza</span>
                 <span class="stat-chip is-danger" *ngIf="countOrphans > 0"><b>{{ countOrphans }}</b> Rəhbərsiz</span>
                 <span class="stat-chip is-warn" *ngIf="conflictCount > 0"
                     matTooltip="Bu şəxslərin rəhbəri mağazadan-mağazaya fərqlidir — ağacda yalnız biri görünür">
@@ -91,9 +91,9 @@
             </div>
 
             <div class="help-note" *ngIf="showHelp && hasNetwork">
-                Onay zənciri şəxs ağacına çevrilir: <b>1-ci onay = Mağaza müdiri</b> (mağazanı idarə edir),
-                <b>2-ci onay = Satış müdiri</b>, <b>3-cü onay = Direktor</b>. Hər şəxs bir dəfə görünür; sağdakı paneldə
-                seçilən şəxsin komandası, seçilən mağazanın isə redaktə oluna bilən onay zənciri açılır.
+                Təsdiq zənciri şəxs ağacına çevrilir: <b>1-ci təsdiq = Mağaza müdiri</b> (mağazanı idarə edir),
+                <b>2-ci təsdiq = Satış müdiri</b>, <b>3-cü təsdiq = Direktor</b>. Hər şəxs bir dəfə görünür; sağdakı paneldə
+                seçilən şəxsin komandası, seçilən mağazanın isə redaktə oluna bilən təsdiq zənciri açılır.
                 Ağacdakı mağazaya klikləyib zənciri dəyişə, ya da Excel ilə toplu idxal edə bilərsiniz.
             </div>
 
@@ -116,7 +116,7 @@
                             <button type="button" class="g-secondary-btn" (click)="exportCurrentStructure()" [disabled]="!hasNetwork"><span class="material-symbols-outlined" aria-hidden="true">table_chart</span>Strukturu ixrac et</button>
                         </div>
                         <div class="upload-progress" *ngIf="isImporting" role="status" aria-live="polite">
-                            <span>Onay sxemləri yazılır…</span>
+                            <span>Təsdiq zəncirləri yazılır…</span>
                             <mat-progress-bar mode="indeterminate"></mat-progress-bar>
                         </div>
                     </div>
@@ -124,7 +124,7 @@
                         <div class="panel-head"><div class="panel-head-title"><span class="material-symbols-outlined">menu_book</span>Fayl formatı</div></div>
                         <ul class="guide-list">
                             <li><span class="g-num">1</span>İlk sətir başlıqdır: <b>Mağaza kodu, User 1, User 2, …</b></li>
-                            <li><span class="g-num">2</span>Hər sətir bir mağazanın onay zənciridir</li>
+                            <li><span class="g-num">2</span>Hər sətir bir mağazanın təsdiq zənciridir</li>
                             <li><span class="g-num">3</span>User 1 = Mağaza müdiri · User 2 = Satış müdiri · User 3 = Direktor</li>
                             <li><span class="g-num">4</span>Boş xanalar ötürülür, dolular 1-dən nömrələnir</li>
                         </ul>
@@ -148,7 +148,7 @@
             <div class="gate-card" *ngIf="!hasNetwork">
                 <span class="material-symbols-outlined">account_tree</span>
                 <h3>Firma seçin</h3>
-                <p>Firma seçildikdən sonra bütün təşkilati struktur — direktorlar, satış müdürləri, mağaza müdürləri və onların əraziləri ağac şəklində görünəcək.</p>
+                <p>Firma seçildikdən sonra bütün təşkilati struktur — direktorlar, satış müdirləri, mağaza müdirləri və onların mağazaları ağac şəklində görünəcək.</p>
             </div>
 
             <!-- ── Struktur + detal ──────────────────────────────────────────── -->
@@ -173,7 +173,7 @@
 
                     <p class="tree-model-note">
                         <span class="material-symbols-outlined" aria-hidden="true">account_tree</span>
-                        Bu ağac mağaza onay zəncirlərindən <b>hesablanır</b> — müstəqil struktur deyil.
+                        Bu ağac mağaza təsdiq zəncirlərindən <b>hesablanır</b> — müstəqil struktur deyil.
                         Şəxsə klikləyib onun zəncirlərinə keçə bilərsiniz.
                     </p>
 
@@ -197,7 +197,7 @@
                             <span class="material-symbols-outlined" aria-hidden="true">report</span>
                             Rəhbəri təyin edilməyib ({{ displayOrphans.length }})
                         </div>
-                        <p class="orphan-hint">Bu mağaza müdürləri heç bir satış müdürünə/direktora bağlı deyil — zənciri tək addımdan ibarətdir.</p>
+                        <p class="orphan-hint">Bu mağaza müdirləri heç bir satış müdirinə/direktora bağlı deyil — zənciri tək addımdan ibarətdir.</p>
                         <button type="button" class="tree-row orphan" *ngFor="let o of displayOrphans; trackBy: trackByNode"
                             (click)="selectPerson(o)" [class.selected]="selectedPerson?.userCode === o.userCode"
                             [attr.aria-current]="selectedPerson?.userCode === o.userCode ? 'true' : null">
@@ -205,7 +205,7 @@
                             <span class="node-role warn">{{ o.roleLabel }}</span>
                             <span class="node-name">{{ o.name }}</span>
                             <span class="node-code">{{ o.code }}</span>
-                            <span class="node-badge terr">{{ o.territories.length }} ərazi</span>
+                            <span class="node-badge terr">{{ o.territories.length }} mağaza</span>
                         </button>
                     </div>
                 </div>
@@ -250,7 +250,7 @@
 
                             <div class="picker-note" *ngIf="freeStoreCount === 0">
                                 <span class="material-symbols-outlined" aria-hidden="true">info</span>
-                                Bu firmada bağlanmamış mağaza yoxdur — seçdiyiniz mağazanın mövcud onay zənciri redaktə olunacaq.
+                                Bu firmada bağlanmamış mağaza yoxdur — seçdiyiniz mağazanın mövcud təsdiq zənciri redaktə olunacaq.
                             </div>
 
                             <div class="store-picker">
@@ -331,7 +331,7 @@
 
                             <p class="model-note">
                                 <span class="material-symbols-outlined" aria-hidden="true">info</span>
-                                Bu ağac mağaza onay zəncirlərindən qurulur — özü redaktə olunmur.
+                                Bu ağac mağaza təsdiq zəncirlərindən qurulur — özü redaktə olunmur.
                                 Dəyişiklik etmək üçün aşağıdakı mağazalardan birini açın.
                             </p>
 
@@ -369,7 +369,7 @@
                         </div>
 
                         <div class="detail-section">
-                            <div class="detail-section-title">Onay zənciri</div>
+                            <div class="detail-section-title">Təsdiq zənciri</div>
 
                             <div class="edit-row" *ngFor="let m of store.members; trackBy: trackByMember">
                                 <span class="step-node" aria-hidden="true">{{ m.level }}</span>
@@ -388,7 +388,7 @@
                                 </div>
                             </div>
 
-                            <div class="edit-empty" *ngIf="store.members.length === 0">Onay zənciri boşdur. Aşağıdan istifadəçi əlavə edin.</div>
+                            <div class="edit-empty" *ngIf="store.members.length === 0">Təsdiq zənciri boşdur. Aşağıdan istifadəçi əlavə edin.</div>
 
                             <!-- Axtarıla bilən siyahı: mat-select-də axtarış yox idi və
                                  seçilən şəxsin vəzifəsi/hansı rola düşəcəyi görünmürdü.
@@ -475,7 +475,7 @@
             <span class="node-name">{{ node.name }}</span>
             <span class="node-code">{{ node.code }}</span>
             <span class="node-badge people" *ngIf="node.children.length > 0">{{ node.children.length }} nəfər</span>
-            <span class="node-badge terr" *ngIf="node.territories.length > 0">{{ node.territories.length }} ərazi</span>
+            <span class="node-badge terr" *ngIf="node.territories.length > 0">{{ node.territories.length }} mağaza</span>
             <span class="node-badge conflict" *ngIf="supervisorConflict(node)"
                 matTooltip="Rəhbəri mağazadan-mağazaya fərqlidir">!</span>
         </button>

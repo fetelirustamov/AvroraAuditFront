@@ -174,10 +174,10 @@ export class LocationStructureComponent implements OnInit {
 
   get workspaceBusy(): boolean { return this.isLoadingFirms || this.isLoadingData; }
   get workspaceLoadingTitle(): string {
-    return this.isLoadingFirms ? 'Market şəbəkələri yüklənir' : 'Təşkilati struktur qurulur';
+    return this.isLoadingFirms ? 'Firmalar yüklənir' : 'Təşkilati struktur qurulur';
   }
   get workspaceLoadingHint(): string {
-    return this.isLoadingFirms ? 'Şəbəkə siyahısı hazırlanır…' : 'Mağazalar, istifadəçilər və bağlantılar birləşdirilir…';
+    return this.isLoadingFirms ? 'Firma siyahısı hazırlanır…' :'Mağazalar, istifadəçilər və bağlantılar birləşdirilir…';
   }
 
   constructor(
@@ -200,7 +200,7 @@ export class LocationStructureComponent implements OnInit {
       next: (r: any) => { this.marketNetworks = this.extractArray<FirmDto>(r); this.isLoadingFirms = false; },
       error: (err) => {
         this.marketNetworks = []; this.isLoadingFirms = false;
-        this.notify.error(apiErrorMessage(err, 'Market şəbəkələri yüklənmədi'));
+        this.notify.error(apiErrorMessage(err, 'Firmalar yüklənmədi'));
       }
     });
   }
@@ -750,7 +750,7 @@ export class LocationStructureComponent implements OnInit {
   removeMember(store: StoreEditModel, member: ChainMember) {
     this.confirmDialog.confirm({
       title: 'İstifadəçi silinsin?',
-      message: `"${member.name}" istifadəçisini "${store.name}" mağazasının onay sxemindən silmək istədiyinizə əminsiniz?`,
+      message: `"${member.name}" istifadəçisini "${store.name}" mağazasının təsdiq zəncirindən silmək istədiyinizə əminsiniz?`,
       confirmText: 'Sil', tone: 'danger'
     }).subscribe(confirmed => {
       if (!confirmed) return;
@@ -807,7 +807,7 @@ export class LocationStructureComponent implements OnInit {
   }
 
   async processExcelFile(file: File) {
-    if (!this.selectedNetwork) { this.notify.error('Əvvəlcə market şəbəkəsi seçin'); return; }
+    if (!this.selectedNetwork) { this.notify.error('Əvvəlcə firma seçin'); return; }
     // Ön baxışdakı "hazırkı zəncir" və mağaza/istifadəçi yoxlaması yüklənmiş strukturdan gəlir
     if (this.isLoadingData) { this.notify.warning('Struktur hələ yüklənir, bir az sonra yenidən cəhd edin'); return; }
     this.uploadResults = null;
@@ -931,7 +931,7 @@ export class LocationStructureComponent implements OnInit {
           const successCount = result?.successCount ?? 0;
           const errorCount = issues.length - warningCount;
           this.uploadResults = { successCount, warningCount, errorCount, issues };
-          if (successCount > 0) { this.notify.success(`${successCount} mağazanın onay sxemi yeniləndi`); this.loadHierarchy(); }
+          if (successCount > 0) { this.notify.success(`${successCount} mağazanın təsdiq zənciri yeniləndi`); this.loadHierarchy(); }
           if (errorCount > 0) this.notify.error(`${errorCount} sətir idxal edilmədi`);
         },
         error: (err) => {
@@ -943,7 +943,7 @@ export class LocationStructureComponent implements OnInit {
 
   downloadTemplate() {
     const rows = [['Mağaza kodu', 'User 1', 'User 2', 'User 3'], [4336, 200456, 200458, ''], [4337, 200460, '', '']];
-    void this.fileExport.exportGridToExcel(rows, 'Yetkilər', 'yetki_sablonu.xlsx');
+    void this.fileExport.exportGridToExcel(rows, 'Təsdiq zəncirləri', 'tesdiq-zencirleri-sablon.xlsx');
   }
 
   exportCurrentStructure() {
@@ -959,6 +959,6 @@ export class LocationStructureComponent implements OnInit {
     const maxSteps = Math.max(...chains.map(c => c.userCodes.length));
     const grid: unknown[][] = [['Mağaza kodu', ...Array.from({ length: maxSteps }, (_, i) => `User ${i + 1}`)]];
     for (const chain of chains) grid.push([chain.locationCode, ...Array.from({ length: maxSteps }, (_, i) => chain.userCodes[i] ?? '')]);
-    void this.fileExport.exportGridToExcel(grid, 'Yetkilər', datedFileName('yetki-strukturu', 'xlsx'));
+    void this.fileExport.exportGridToExcel(grid, 'Təsdiq zəncirləri', datedFileName('tesdiq-zencirleri', 'xlsx'));
   }
 }

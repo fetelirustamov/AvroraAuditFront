@@ -55,13 +55,20 @@ npx ng build --configuration production # dist/avrora-audit, bundle limiti 2.5 M
 
 ## Stil və UI
 
-- Dizayn token-ləri və təkrarlanan komponentlər `src/_design-system.scss`-dədir (`.report-page-header`, `.kpi-*`, `.table-card`, `.status-chip`, `.empty-state`…). Yeni səhifədə bunları sıfırdan yazma. Səhifəyə xas vurğu üçün yalnız `--page-accent-from` / `--page-accent-to` təyin et.
+- Rəng, şrift ölçüsü, boşluq, radius və kölgə yalnız `src/_tokens.scss`-dəki CSS dəyişənlərindən gəlir (`--accent`, `--text-*`, `--surface-*`, `--border`, `--success|warning|danger|info` + `-soft`/`-text`, `--fs-*`, `--space-*`). Birbaşa hex yazma. Lazım olan rəng yoxdursa, əvvəl orada token yarat.
+- Rəng yalnız məna daşıyır. Bir vurğu rəngi (`--accent`) əsas əməliyyat, aktiv və seçilmiş hal üçündür. Status rəngləri yalnız status üçündür. Qradient, dekorativ rəng və rəngli kölgə işlətmə. Məhsul neytraldır: müştəri adı və ya brendi mətndə yazılmır.
+- Şriftlər IBM Plex Sans/Mono-dur (`@fontsource`, `angular.json`-da). Kod və ID üçün `.mono` sinfi var. 12px-dən kiçik mətn yoxdur.
+- Qrafik rəngləri `shared/utils/chart-colors.ts` ilə token-lərdən oxunur.
+- Mətnlər `docs/design/glossary.md`-yə uyğun olmalıdır: Firma, Mağaza, Şöbə, Parol, təsdiq; cümlə registri.
+- Təkrarlanan səhifə blokları `src/_design-system.scss`-dədir (`.report-page-header`, `.kpi-*`, `.table-card`, `.status-chip`, `.empty-state`). Yeni səhifədə bunları sıfırdan yazma.
 - Filtr və düymələr üçün `styles.scss`-dəki qlobal sistemi işlət, öz siniflərini uydurma:
   - filtr kartı: `.g-filter-card` › `.g-filter-grid` › `.g-filter-field` / `.g-filter-field-wide` › `.g-field-label` + `.g-modern-field`;
   - düymələr: `.g-search-btn`, `.g-secondary-btn`, `.g-export-btn`, `.g-approve-btn` / `.g-reject-btn`.
 - Form sahələri həmişə `mat-form-field` + `.g-modern-field` olsun. Adi `<input>` ilə `mat-select`-i qarışdırma, hizalama pozulur. Minlərlə option olan siyahıda `mat-select` işlətmə, axtarışlı məhdud siyahı qur.
 - Dark mode və RTL yoxdur, qəsdən silinib. Onlar üçün kod yazma.
-- Remixicon CSS sinifləri yüklənmir: bir neçə ox glif kodu ilə işlənir (`font-family: remixicon; content: "\ea4e"`). İkon şriftinə toxunmazdan əvvəl `ri-` siniflərini də, `font-family:` istifadəsini də axtar.
+- Tək ikon dəsti Material Symbols Outlined-dır. `<mat-icon>` də onu işlədir (`MAT_ICON_DEFAULT_OPTIONS`, `app.config.ts`). Başqa ikon şrifti əlavə etmə.
+- Form sahəsinin xəta sətri boş halda yer tutmur və sahə xətalı olanda görünür (`styles.scss`, `.mat-mdc-form-field`). Komponentdə `subscript-wrapper`-i `display: none` ilə gizlətmə.
+- Bütün kök provider-lər `app.config.ts`-dədir, `main.ts` yalnız onu işlədir. Material provider-lərini (məs. `MatPaginatorIntl`) kökdə qeydə alma: bütün modulu başlanğıc bundle-a çəkir. Onlar `core/shell-providers.ts`-dədir və lazy route-larda verilir.
 - Yeni asılılıq yalnız pulsuz, açıq lisenziyalı ola bilər (MIT/Apache). Audit fotolarını xarici servislərə göndərmə.
 
 ## Performans

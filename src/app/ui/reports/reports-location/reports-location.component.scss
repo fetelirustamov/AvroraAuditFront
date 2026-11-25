@@ -8,34 +8,28 @@
 // birləşdirmək şablon (HTML) dəyişikliyi tələb edir, ona görə bu iterasiyada
 // toxunulmadı.
 
-.report-page-header {
-    --page-accent-from: var(--primaryColor);
-    --page-accent-to: #4B83F5;
-}
-
 // ── Filtr kartı (bu səhifəyə xas) ───────────────────────────────────────────
 .filter-card {
     padding: 20px 24px 4px;
     margin-bottom: 20px;
-    border: 1px solid var(--borderColor);
-    border-radius: var(--radius-md);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
     background: var(--surface);
-    box-shadow: var(--shadow-sm);
 
     .filter-card-header {
         display: flex;
         align-items: center;
         gap: 8px;
         margin-bottom: 16px;
-        font-size: 13px;
+        font-size: var(--fs-12);
         font-weight: 600;
-        color: var(--bodyColor);
+        color: var(--text-muted);
         text-transform: uppercase;
-        letter-spacing: .6px;
+        letter-spacing: .06em;
 
         .filter-header-icon {
-            font-size: 18px;
-            color: var(--primaryColor);
+            font-size: 16px;
+            color: var(--text-muted);
         }
     }
 }
@@ -61,16 +55,16 @@
         align-items: center;
         gap: 5px;
         margin-bottom: 6px;
-        font-size: 12px;
-        font-weight: 600;
-        color: var(--bodyColor);
+        font-size: var(--fs-12);
+        font-weight: 500;
+        color: var(--text-muted);
 
         .label-icon {
             font-size: 14px;
-            color: var(--primaryColor);
+            color: var(--text-faint);
         }
         .required-badge {
-            color: var(--dangerColor);
+            color: var(--danger-text);
             font-size: 14px;
             line-height: 1;
         }
@@ -88,24 +82,19 @@
     align-items: center;
     gap: 8px;
     padding: 11px 24px;
-    border: none;
-    border-radius: var(--radius-sm);
-    background: linear-gradient(135deg, var(--primaryColor), var(--primaryDark));
-    color: var(--whiteColor);
-    font-size: 13px;
-    font-weight: 600;
+    border: 1px solid var(--accent);
+    border-radius: var(--radius-md);
+    background: var(--accent);
+    color: var(--on-accent);
+    font-size: var(--fs-13);
+    font-weight: 500;
     cursor: pointer;
     white-space: nowrap;
-    transition: opacity .2s, transform .15s, box-shadow .2s;
-    box-shadow: 0 4px 12px rgba(96, 93, 255, .35);
+    transition: background var(--transition), border-color var(--transition);
 
     &:hover {
-        opacity: .9;
-        transform: translateY(-1px);
-        box-shadow: 0 6px 18px rgba(96, 93, 255, .45);
-    }
-    &:active {
-        transform: translateY(0);
+        background: var(--accent-hover);
+        border-color: var(--accent-hover);
     }
     .material-symbols-outlined {
         font-size: 18px;
@@ -117,23 +106,23 @@
     width: 100%;
 
     .mat-mdc-text-field-wrapper {
-        border-radius: var(--radius-sm) !important;
-        background: var(--surface-muted) !important;
+        border-radius: var(--radius-md) !important;
+        background: var(--surface) !important;
     }
     .mat-mdc-form-field-infix {
         padding: 8px 0 8px !important;
         min-height: 44px;
     }
     .mdc-notched-outline__leading {
-        border-radius: var(--radius-sm) 0 0 var(--radius-sm) !important;
+        border-radius: var(--radius-md) 0 0 var(--radius-md) !important;
     }
     .mdc-notched-outline__trailing {
-        border-radius: 0 var(--radius-sm) var(--radius-sm) 0 !important;
+        border-radius: 0 var(--radius-md) var(--radius-md) 0 !important;
     }
     &.mat-focused .mdc-notched-outline__leading,
     &.mat-focused .mdc-notched-outline__notch,
     &.mat-focused .mdc-notched-outline__trailing {
-        border-color: var(--primaryColor) !important;
+        border-color: var(--accent) !important;
         border-width: 2px !important;
     }
     .mat-mdc-form-field-subscript-wrapper {
@@ -141,17 +130,12 @@
     }
 }
 
-.loading-bar-wrapper {
-    border-radius: var(--radius-sm);
-    overflow: hidden;
-    margin-bottom: 16px;
-}
 :host ::ng-deep .modern-progress {
     .mdc-linear-progress__bar-inner {
-        border-color: var(--primaryColor);
+        border-color: var(--accent);
     }
     .mdc-linear-progress__buffer-bar {
-        background: var(--primarySoft);
+        background: var(--accent-soft);
     }
 }
 
@@ -173,32 +157,29 @@
 
 // Qruplaşdırılmış başlıq sətri (bu hesabata xas)
 :host ::ng-deep .group-header-row th.group-header-cell {
-    background: linear-gradient(135deg, var(--primaryColor) 0%, var(--secondaryColor) 100%);
-    color: var(--whiteColor);
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: .8px;
-    text-transform: uppercase;
+    background: var(--surface-subtle);
+    color: var(--text-strong);
+    font-size: var(--fs-12);
+    font-weight: 600;
     text-align: center;
     padding: 10px 14px;
-    border-bottom: none;
+    border-bottom: 1px solid var(--border);
 }
 
 :host ::ng-deep .data-header-row th.data-header-cell {
-    background: #F8F9FF;
-    color: var(--bodyColor);
-    font-size: 11.5px;
-    font-weight: 700;
+    background: var(--surface-muted);
+    color: var(--text-muted);
+    font-size: var(--fs-12);
+    font-weight: 600;
     text-align: center;
     padding: 10px 12px;
-    border-bottom: 2px solid var(--borderColor);
-    letter-spacing: .3px;
+    border-bottom: 1px solid var(--border);
 }
 
 :host ::ng-deep .filter-row th.filter-header-cell {
     background: var(--surface);
     padding: 6px 8px;
-    border-bottom: 1px solid var(--borderColor);
+    border-bottom: 1px solid var(--border);
 }
 
 .filter-input-wrap {
@@ -206,18 +187,17 @@
     align-items: center;
     gap: 4px;
     padding: 4px 8px;
-    border: 1px solid var(--borderColor);
+    border: 1px solid var(--border);
     border-radius: var(--radius-sm);
-    background: var(--surface-muted);
-    transition: border-color .2s;
+    background: var(--surface);
+    transition: border-color var(--transition);
 
     &:focus-within {
-        border-color: var(--primaryColor);
-        box-shadow: 0 0 0 3px rgba(96, 93, 255, .1);
+        border-color: var(--accent);
     }
     .filter-input-icon {
         font-size: 14px;
-        color: var(--text-muted);
+        color: var(--text-faint);
     }
     .filter-input {
         width: 100%;
@@ -225,35 +205,29 @@
         border: none;
         outline: none;
         background: transparent;
-        font-size: 12px;
+        font-size: var(--fs-12);
         color: var(--text-strong);
 
         &::placeholder {
-            color: var(--text-muted);
+            color: var(--text-faint);
         }
     }
 }
 
 :host ::ng-deep .data-row {
     height: 46px;
-    transition: background .15s;
+    transition: background var(--transition);
 
     td.mat-mdc-cell {
         padding: 8px 12px;
-        border-bottom: 1px solid var(--borderColor);
+        border-bottom: 1px solid var(--border);
     }
     &:hover td.mat-mdc-cell {
-        background: #F8F9FF;
+        background: var(--surface-muted);
     }
     &:last-child td.mat-mdc-cell {
         border-bottom: none;
     }
-}
-:host ::ng-deep .data-row:nth-child(even) td.mat-mdc-cell {
-    background: var(--surface-muted);
-}
-:host ::ng-deep .data-row:nth-child(even):hover td.mat-mdc-cell {
-    background: #EEEFFE;
 }
 
 // ── Sütun məzmunu ───────────────────────────────────────────────────────────
@@ -264,25 +238,25 @@
 
 .code-badge {
     display: inline-block;
-    padding: 3px 10px;
-    border-radius: 6px;
-    background: #EEF2FF;
-    color: #4B5DA8;
-    font-size: 11.5px;
-    font-weight: 700;
-    letter-spacing: .4px;
+    padding: 2px var(--space-2);
+    border-radius: var(--radius-sm);
+    background: var(--surface-subtle);
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: var(--fs-12);
+    font-weight: 500;
 }
 
-// Bal və uyğunsuzluq nişanları — rənglər digər hesabatlarla eyni token
-// cütlüklərindən gəlir (əvvəl hər səhifə `darken()` ilə öz tonunu hesablayırdı)
+// Bal və uyğunsuzluq nişanları — rəng həddə görədir
 .score-chip {
     display: inline-block;
     min-width: 50px;
-    padding: 3px 10px;
-    border-radius: 20px;
+    padding: 2px var(--space-2);
+    border-radius: var(--radius-sm);
     text-align: center;
-    font-size: 12px;
-    font-weight: 700;
+    font-size: var(--fs-12);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
 }
 .nc-badge {
     display: inline-flex;
@@ -291,25 +265,26 @@
     min-width: 28px;
     height: 24px;
     padding: 0 8px;
-    border-radius: 20px;
-    font-size: 12px;
-    font-weight: 700;
+    border-radius: var(--radius-sm);
+    font-size: var(--fs-12);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
 }
 
 .score-high,
 .nc-zero {
-    background: var(--successSoft);
-    color: #1C8A02;
+    background: var(--success-soft);
+    color: var(--success-text);
 }
 .score-mid,
 .nc-low {
-    background: var(--warningSoft);
-    color: #C46A00;
+    background: var(--warning-soft);
+    color: var(--warning-text);
 }
 .score-low,
 .nc-high {
-    background: var(--dangerSoft);
-    color: #E12F14;
+    background: var(--danger-soft);
+    color: var(--danger-text);
 }
 
 // ── Yapışqan sütunlar ───────────────────────────────────────────────────────
@@ -318,7 +293,16 @@
 :host ::ng-deep th.group-header-cell:first-child {
     position: sticky;
     z-index: 2;
+}
+
+:host ::ng-deep td.sticky-col {
     background: var(--surface);
+}
+:host ::ng-deep th.data-header-cell:nth-child(-n+3) {
+    background: var(--surface-muted);
+}
+:host ::ng-deep th.group-header-cell:first-child {
+    background: var(--surface-subtle);
 }
 
 :host ::ng-deep th.sticky-1, td.sticky-1 { left: 0; }
@@ -326,18 +310,18 @@
 :host ::ng-deep th.sticky-3, td.sticky-3 { left: 340px; }
 
 .paginator-wrapper {
-    border-top: 1px solid var(--borderColor);
+    border-top: 1px solid var(--border);
 }
 
 :host ::ng-deep .modern-paginator {
     background: var(--surface);
-    color: var(--bodyColor);
-    font-size: 13px;
+    color: var(--text-muted);
+    font-size: var(--fs-13);
 }
 
 :host ::ng-deep .mat-mdc-menu-panel {
     border-radius: var(--radius-sm) !important;
-    box-shadow: 0 8px 32px rgba(96, 93, 255, .14), 0 2px 8px rgba(0, 0, 0, .06) !important;
+    box-shadow: var(--shadow-md) !important;
     overflow: hidden;
     min-width: 160px !important;
 }
@@ -346,23 +330,17 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    font-size: 13px;
+    font-size: var(--fs-13);
     font-weight: 500;
     color: var(--text-strong);
-    transition: background .15s;
+    transition: background var(--transition);
 
     &:hover {
-        background: var(--primarySoft);
-        color: var(--primaryColor);
+        background: var(--surface-muted);
     }
 }
 
 .menu-icon {
     font-size: 18px;
-}
-.excel-icon {
-    color: #1D6F42;
-}
-.pdf-icon {
-    color: var(--dangerColor);
+    color: var(--text-muted);
 }

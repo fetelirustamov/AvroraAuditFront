@@ -1,10 +1,10 @@
-import { CommonModule } from "@angular/common";
-import { Component, HostListener } from "@angular/core";
-import { MatButtonModule } from "@angular/material/button";
+import { Component } from "@angular/core";
+import { MatIconModule } from "@angular/material/icon";
 import { MatMenuModule } from "@angular/material/menu";
 import { NavigationEnd, Router } from "@angular/router";
-import { ToggleService } from "../../../common/header/toggle.service";
 import { filter } from "rxjs";
+import { SIDEBAR_OVERLAY_QUERY } from "../../../common/header/header.component";
+import { ToggleService } from "../../../common/header/toggle.service";
 import { AuthService } from "../../../auth/auth.service";
 import { UserProfileService } from "../../../auth/user-profile.service";
 
@@ -16,21 +16,21 @@ interface AdminSearchItem {
 
 @Component({
   selector: 'app-header',
-  imports: [MatButtonModule, MatMenuModule, CommonModule],
+  imports: [MatMenuModule, MatIconModule],
   templateUrl: './header.component.html',
-  styleUrl: './header.component.scss'
+  // Ümumi görünüş əsas tətbiqin header-i ilə eynidir; burada yalnız axtarış var
+  styleUrls: ['../../../common/header/header.component.scss', './header.component.scss']
 })
 export class HeaderComponent {
 
-  // isSidebarToggled
   isSidebarToggled = false;
 
   /** Admin menyusu üzrə sürətli axtarış (bax: sidebar.component.html-dəki eyni siyahı) */
   private readonly ALL_ADMIN_SEARCH_ITEMS: AdminSearchItem[] = [
-    { key: 'dashboard', label: 'Dashboard', route: '/admin/dashboard' },
+    { key: 'dashboard', label: 'Əsas səhifə', route: '/admin/dashboard' },
     { key: 'user-permission', label: 'İstifadəçilər (Yeni İstifadəçi əlavə et)', route: '/admin/permissions/user-permission' },
     { key: 'user-add', label: 'Rol və Firma Təyinatı', route: '/admin/permissions/user-add' },
-    { key: 'permission-groups', label: 'Səlahiyyət qrupları', route: '/admin/permissions/permission-groups' },
+    { key: 'permission-groups', label: 'İcazə qrupları', route: '/admin/permissions/permission-groups' },
     { key: 'structure', label: 'Ərazi Bağlantıları', route: '/admin/permissions/structure' },
     { key: 'master-data', label: 'Audit Strukturu', route: '/admin/master-data' },
     { key: 'questions', label: 'Suallar', route: '/admin/questions' },
@@ -47,58 +47,24 @@ export class HeaderComponent {
     private toggleService: ToggleService,
     private authService: AuthService,
     private router: Router,
-    private profile: UserProfileService,
+    public profile: UserProfileService,
   ) {
     this.toggleService.isSidebarToggled$.subscribe(isSidebarToggled => {
       this.isSidebarToggled = isSidebarToggled;
     });
-    // Naviqasiyadan sonra açıq sidebar-ı bağla
+    // Kiçik ekranda açıq panel naviqasiyadan sonra bağlanır.
+    // Masaüstündə `.active` yığılmış zolaqdır, ona toxunulmur.
     this.router.events.pipe(
       filter(event => event instanceof NavigationEnd)
     ).subscribe(() => {
-      if (this.isSidebarToggled) {
+      if (this.isSidebarToggled && window.matchMedia(SIDEBAR_OVERLAY_QUERY).matches) {
         this.toggleService.toggle();
       }
     });
   }
 
-  // Profil göstəriş məntiqi (ad, baş hərflər, avatar, rol) `UserProfileService`-dədir —
-  // əsas app header-i ilə eyni mənbədən oxunur.
-  get profileTriggerLabel(): string {
-    return this.profile.triggerLabel;
-  }
-
-  get profileFullName(): string {
-    return this.profile.fullName;
-  }
-
-  get profileInitials(): string {
-    return this.profile.initials;
-  }
-
-  get profileAvatarDataUrl(): string {
-    return this.profile.avatarDataUrl;
-  }
-
-  get profileRoleLine(): string {
-    return this.profile.roleLine;
-  }
-
-  // Burger Menu Toggle
   toggle() {
     this.toggleService.toggle();
-  }
-
-  // Header Sticky
-  isSticky: boolean = false;
-  @HostListener('window:scroll')
-  checkScroll() {
-    const scrollPosition = window.scrollY || document.documentElement.scrollTop || document.body.scrollTop || 0;
-    if (scrollPosition >= 50) {
-      this.isSticky = true;
-    } else {
-      this.isSticky = false;
-    }
   }
 
   // Admin menyusu üzrə sürətli naviqasiya axtarışı.
@@ -138,8 +104,6 @@ export class HeaderComponent {
   }
 
   logout() {
-
     this.authService.logout();
   }
-
 }

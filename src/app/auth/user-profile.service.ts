@@ -56,15 +56,6 @@ export class UserProfileService {
         return initials || '?';
     }
 
-    /** Baş hərflərdən inline SVG avatar (data URL) — real profil şəkli olmadıqda */
-    get avatarDataUrl(): string {
-        const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64">`
-            + `<rect width="64" height="64" rx="32" fill="#605DFF"/>`
-            + `<text x="50%" y="50%" dy=".35em" text-anchor="middle" font-family="Arial, sans-serif" `
-            + `font-size="26" font-weight="600" fill="#ffffff">${this.initials}</text></svg>`;
-        return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
-    }
-
     /** Rol sətri — JWT Role vergüllə ayrılmış ola bilər */
     get roleLine(): string {
         const u = this.claims;

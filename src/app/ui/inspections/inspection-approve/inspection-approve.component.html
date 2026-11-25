@@ -8,7 +8,7 @@
             <div class="g-filter-field">
                 <label class="g-field-label">
                     <span class="material-symbols-outlined">business</span>
-                    Müəssisə <span class="text-danger">*</span>
+                    Firma <span class="text-danger">*</span>
                 </label>
                 <mat-form-field appearance="outline" class="g-modern-field">
                     <mat-select formControlName="firmId">
@@ -35,16 +35,16 @@
                     <span class="material-symbols-outlined">search</span>
                     Axtar
                 </button>
-                <!-- Sətir düymələri ilə eyni: Təsdiq yoxlamanı yekunlaşdırır (3→4), Rədd mobilə qaytarır (3→2) -->
+                <!-- Sətir düymələri ilə eyni: Təsdiqlə yoxlamanı yekunlaşdırır (3→4), Mobilə qaytar (3→2) -->
                 <button type="button" class="g-approve-btn" (click)="changeSelectedPlanStatus(4)"
                     [disabled]="isSaving || !selection.hasValue()">
                     <span class="material-symbols-outlined">check_circle</span>
-                    Təsdiq
+                    Təsdiqlə
                 </button>
                 <button type="button" class="g-reject-btn" (click)="changeSelectedPlanStatus(2)"
                     [disabled]="isSaving || !selection.hasValue()">
-                    <span class="material-symbols-outlined">cancel</span>
-                    Rədd
+                    <span class="material-symbols-outlined">undo</span>
+                    Mobilə qaytar
                 </button>
             </div>
         </div>
@@ -89,7 +89,7 @@
                     <!-- Email Column -->
                     <ng-container matColumnDef="locationCode">
                         <th mat-header-cell *matHeaderCellDef class="text-center">
-                            Ərazi Kodu
+                            Mağaza kodu
                         </th>
                         <td mat-cell *matCellDef="let element" class="text-center">
                             {{element.locationCode}}
@@ -99,7 +99,7 @@
                     <!-- place Column -->
                     <ng-container matColumnDef="locationName">
                         <th mat-header-cell *matHeaderCellDef class="text-center">
-                            Ərazi
+                            Mağaza
                         </th>
                         <td mat-cell *matCellDef="let element" class="text-center">
                             {{element.locationName}}
@@ -109,7 +109,7 @@
                     <!-- Status Column -->
                     <ng-container matColumnDef="startDate">
                         <th mat-header-cell *matHeaderCellDef class="text-center">
-                            Başlama Tarixi
+                            Başlama tarixi
                         </th>
                         <td mat-cell *matCellDef="let element" class="text-center">
                             {{ element.startDate | date: 'yyyy-MM-dd HH:mm' : '+0400' }}
@@ -118,7 +118,7 @@
                     </ng-container>
                     <ng-container matColumnDef="endDate">
                         <th mat-header-cell *matHeaderCellDef class="text-center">
-                            Bitmə Tarixi
+                            Bitmə tarixi
                         </th>
                         <td mat-cell *matCellDef="let element" class="text-center">
                             {{ element.endDate | date: 'yyyy-MM-dd HH:mm' : '+0400' }}
@@ -144,8 +144,9 @@
                                 </button>
 
                                 <button type="button" class="action-btn reject-btn" (click)="changePlanStatus(element,2)"
-                                    [disabled]="isSaving" matTooltip="Yoxlamanı ləğv et" matTooltipPosition="above">
-                                    <span class="material-symbols-outlined">cancel</span>
+                                    [disabled]="isSaving" matTooltip="Mobilə qaytar" matTooltipPosition="above"
+                                    aria-label="Mobilə qaytar">
+                                    <span class="material-symbols-outlined">undo</span>
                                 </button>
                             </div>
                         </td>

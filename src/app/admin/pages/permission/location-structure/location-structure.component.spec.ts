@@ -12,7 +12,7 @@ async function makeWorkbookFile(grid: unknown[][]): Promise<File> {
   const XLSX = await import('xlsx');
   const sheet = XLSX.utils.aoa_to_sheet(grid as any[][]);
   const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, sheet, 'Yetkilər');
+  XLSX.utils.book_append_sheet(workbook, sheet, 'Təsdiq zəncirləri');
   const bytes: Uint8Array = XLSX.write(workbook, { type: 'array', bookType: 'xlsx' });
   return new File([bytes], 'test.xlsx');
 }

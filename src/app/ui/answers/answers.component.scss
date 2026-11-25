@@ -28,7 +28,7 @@ button .material-symbols-outlined {
     height: 35px;
     margin-top: 4px;
 
-    background-color: white;
+    background-color: var(--surface);
 }
 
 // .header-title {
@@ -57,7 +57,7 @@ button .material-symbols-outlined {
 }
 
 .close-button:hover {
-    background-color: rgb(237, 235, 235);
+    background-color: var(--surface-subtle);
     border-radius: 20px;
 }
 
@@ -79,13 +79,6 @@ button .material-symbols-outlined {
 }
 
 // ─── Answers: yükləmə UX ───────────────────────────────────────────
-
-.g-search-btn:disabled {
-    opacity: 0.62;
-    cursor: not-allowed;
-    transform: none !important;
-    box-shadow: 0 2px 8px rgba(96, 93, 255, 0.18) !important;
-}
 
 .answers-card-content {
     padding-top: 4px;

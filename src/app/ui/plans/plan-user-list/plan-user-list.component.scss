@@ -41,12 +41,12 @@
     gap: 8px;
     padding: 48px 24px;
     text-align: center;
-    color: rgba(0, 0, 0, 0.55);
-    font-size: 14px;
+    color: var(--text-muted);
+    font-size: var(--fs-14);
 
     &__icon {
         font-size: 36px;
-        opacity: 0.35;
+        color: var(--text-faint);
     }
 }
 
@@ -64,8 +64,8 @@
 
         .mat-mdc-card-subtitle {
             margin: 0;
-            font-size: 13px;
-            color: rgba(0, 0, 0, 0.5);
+            font-size: var(--fs-13);
+            color: var(--text-muted);
         }
     }
 }
@@ -79,7 +79,7 @@
     &__name {
         display: block;
         font-weight: 500;
-        color: #1a1a2e;
+        color: var(--text-strong);
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -91,10 +91,11 @@
     font-size: 12px;
     font-weight: 600;
     font-variant-numeric: tabular-nums;
-    color: var(--primaryColor, #667eea);
-    background: rgba(102, 126, 234, 0.1);
-    padding: 4px 10px;
-    border-radius: 6px;
+    font-family: var(--font-mono);
+    color: var(--text);
+    background: var(--surface-subtle);
+    padding: 2px var(--space-2);
+    border-radius: var(--radius-sm);
     white-space: nowrap;
 }
 
@@ -105,29 +106,31 @@
     min-width: 28px;
     height: 28px;
     padding: 0 8px;
-    border-radius: 8px;
-    font-size: 13px;
+    border-radius: var(--radius-sm);
+    font-size: var(--fs-13);
     font-weight: 600;
     font-variant-numeric: tabular-nums;
 
+    // Plan statusu ilə eyni məna (təqvimlə uyğun): gözləyir → warning,
+    // təsdiqlənib → info, yekunlaşıb → success, vaxtı bitib → neytral
     &--planned {
-        color: #5b6abf;
-        background: rgba(102, 126, 234, 0.12);
+        color: var(--warning-text);
+        background: var(--warning-soft);
     }
 
     &--confirmed {
-        color: #2e9e6a;
-        background: rgba(46, 158, 106, 0.12);
+        color: var(--info-text);
+        background: var(--info-soft);
     }
 
     &--expired {
-        color: #d97706;
-        background: rgba(217, 119, 6, 0.12);
+        color: var(--text-muted);
+        background: var(--surface-subtle);
     }
 
     &--finished {
-        color: #64748b;
-        background: rgba(100, 116, 139, 0.12);
+        color: var(--success-text);
+        background: var(--success-soft);
     }
 }
 
@@ -148,8 +151,8 @@
 
     .col-email {
         min-width: 180px;
-        font-size: 13px;
-        color: rgba(0, 0, 0, 0.65);
+        font-size: var(--fs-13);
+        color: var(--text-muted);
     }
 
     .col-stat {
@@ -167,11 +170,11 @@
         transition: background-color 0.15s ease;
 
         &:hover {
-            background-color: rgba(102, 126, 234, 0.04);
+            background-color: var(--surface-muted);
         }
 
         &--selected {
-            background-color: rgba(102, 126, 234, 0.08);
+            background-color: var(--accent-soft);
         }
     }
 }

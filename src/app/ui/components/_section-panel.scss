@@ -1,31 +1,25 @@
 // Plan detalları səhifəsindəki bölmə panelləri (Checklist və Uyğunsuzluqlar tabları) üçün ortaq üslub.
 
-$primary: #6178fa;
-$primary-soft: #eef1fe;
-$danger: #d64545;
-$danger-soft: #fdeceb;
-$border: #e6e9ef;
-$muted: #8a91a5;
-$header-bg: #f8f9fc;
+// Rənglər birbaşa `_tokens.scss`-dən gəlir; bölmə ikonları və saylar neytraldır.
 
 // ── Bölmə (section) paneli ────────────────────────────────────────────────────
 .section-panel {
-    border: 1px solid $border;
-    border-radius: 10px !important;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg) !important;
     box-shadow: none !important;
     overflow: hidden;
 
     &.mat-expanded .section-panel-header {
-        border-bottom: 1px solid $border;
+        border-bottom: 1px solid var(--border);
     }
 }
 
 :host ::ng-deep .section-panel-header {
     min-height: 56px;
-    background: $header-bg;
+    background: var(--surface-muted);
 
     &:hover {
-        background: #f1f3f9 !important;
+        background: var(--surface-subtle) !important;
     }
 }
 
@@ -33,7 +27,7 @@ $header-bg: #f8f9fc;
     display: flex;
     align-items: center;
     gap: 10px;
-    font-size: 15px;
+    font-size: var(--fs-14);
     font-weight: 600;
 
     .section-icon {
@@ -42,18 +36,13 @@ $header-bg: #f8f9fc;
         justify-content: center;
         width: 32px;
         height: 32px;
-        border-radius: 8px;
-        background: $primary-soft;
-        color: $primary;
+        border-radius: var(--radius-md);
+        background: var(--surface-subtle);
+        color: var(--text-muted);
         flex-shrink: 0;
 
         .material-symbols-outlined {
             font-size: 19px;
-        }
-
-        &--danger {
-            background: $danger-soft;
-            color: $danger;
         }
     }
 }
@@ -62,26 +51,27 @@ $header-bg: #f8f9fc;
 .section-score {
     flex-shrink: 0;
     margin-right: 12px;
-    font-size: 13px;
-    font-weight: 700;
+    font-size: var(--fs-13);
+    font-weight: 600;
     font-variant-numeric: tabular-nums;
-    border-radius: 999px;
-    padding: 3px 12px;
+    border-radius: var(--radius-sm);
+    padding: 2px var(--space-2);
     white-space: nowrap;
 
-    &--success { color: var(--successStrong); background: var(--successSoft); }
-    &--warning { color: var(--warningText); background: var(--warningSoft); }
-    &--danger  { color: var(--dangerStrong); background: var(--dangerSoft); }
+    &--success { color: var(--success-text); background: var(--success-soft); }
+    &--warning { color: var(--warning-text); background: var(--warning-soft); }
+    &--danger  { color: var(--danger-text); background: var(--danger-soft); }
 }
 
 .section-count {
     flex-shrink: 0;
-    font-size: 12px;
+    font-size: var(--fs-12);
     font-weight: 500;
-    color: $primary;
-    background: $primary-soft;
-    border-radius: 999px;
-    padding: 3px 10px;
+    font-variant-numeric: tabular-nums;
+    color: var(--text);
+    background: var(--surface-subtle);
+    border-radius: var(--radius-sm);
+    padding: 2px var(--space-2);
     white-space: nowrap;
 }
 
@@ -90,26 +80,26 @@ $header-bg: #f8f9fc;
     width: 100%;
 
     th.mat-mdc-header-cell {
-        font-size: 11.5px;
+        font-size: var(--fs-12);
         font-weight: 600;
         text-transform: uppercase;
         letter-spacing: .4px;
-        color: $muted;
-        background: $header-bg;
-        border-bottom: 1px solid $border;
+        color: var(--text-muted);
+        background: var(--surface-muted);
+        border-bottom: 1px solid var(--border);
         padding: 10px 16px;
     }
 
     td.mat-mdc-cell {
         padding: 12px 16px;
-        border-bottom: 1px solid #f0f2f7;
+        border-bottom: 1px solid var(--border);
         vertical-align: middle;
-        font-size: 13.5px;
-        color: #3a3f4d;
+        font-size: var(--fs-14);
+        color: var(--text);
     }
 
     tr.mat-mdc-row:hover td.mat-mdc-cell {
-        background: #f7f9fd;
+        background: var(--surface-muted);
     }
 
     tr.mat-mdc-row:last-child td.mat-mdc-cell {
@@ -133,15 +123,16 @@ $header-bg: #f8f9fc;
     min-width: 26px;
     height: 26px;
     padding: 0 6px;
-    border-radius: 999px;
-    background: $primary-soft;
-    color: $primary;
-    font-size: 12px;
-    font-weight: 600;
+    border-radius: var(--radius-sm);
+    background: var(--surface-subtle);
+    color: var(--text-muted);
+    font-size: var(--fs-12);
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
 }
 
 .empty-dash {
-    color: #c2c7d4;
+    color: var(--text-faint);
 }
 
 // ── Media düymələri ───────────────────────────────────────────────────────────
@@ -156,10 +147,10 @@ $header-bg: #f8f9fc;
     align-items: center;
     gap: 4px;
     padding: 4px 8px;
-    border: 1px solid $border;
-    border-radius: 8px;
-    background: #fff;
-    color: $primary;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    color: var(--accent-text);
     cursor: pointer;
     transition: background-color .15s ease, border-color .15s ease;
 
@@ -168,12 +159,12 @@ $header-bg: #f8f9fc;
     }
 
     &__count {
-        font-size: 12px;
+        font-size: var(--fs-12);
         font-weight: 600;
     }
 
     &:hover {
-        background: $primary-soft;
-        border-color: $primary;
+        background: var(--accent-soft);
+        border-color: var(--accent);
     }
 }

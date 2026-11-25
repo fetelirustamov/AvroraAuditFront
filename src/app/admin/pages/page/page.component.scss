@@ -2,7 +2,7 @@
 
 .form-card {
     padding: 24px;
-    border-radius: 12px !important;
+    border-radius: var(--radius-lg) !important;
 
     .form-header {
         display: flex;
@@ -10,39 +10,44 @@
         gap: 16px;
         margin-bottom: 24px;
         padding-bottom: 20px;
-        border-bottom: 1px solid var(--borderColor, #f0f0f0);
+        border-bottom: 1px solid var(--border);
 
         .form-header-icon {
-            width: 48px;
-            height: 48px;
-            border-radius: 12px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            width: 40px;
+            height: 40px;
+            border-radius: var(--radius-md);
+            background: var(--surface-subtle);
             display: flex;
             align-items: center;
             justify-content: center;
             flex-shrink: 0;
 
             i {
-                color: #fff;
-                font-size: 24px;
+                color: var(--text-muted);
+                font-size: 22px;
             }
 
+            // Redaktə rejimi seçilmiş haldır
             &.edit-mode {
-                background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+                background: var(--accent-soft);
+
+                i {
+                    color: var(--accent-text);
+                }
             }
         }
 
         .form-header-text {
             h6 {
-                font-size: 16px;
+                font-size: var(--fs-16);
                 font-weight: 600;
-                color: var(--blackColor, #1e1e2d);
+                color: var(--text-strong);
                 margin-bottom: 4px !important;
             }
 
             p {
-                font-size: 13px;
-                color: var(--bodyColor, #6c757d);
+                font-size: var(--fs-13);
+                color: var(--text-muted);
             }
         }
     }
@@ -60,13 +65,13 @@
 
         .field-label {
             display: block;
-            font-size: 13px;
+            font-size: var(--fs-13);
             font-weight: 600;
-            color: var(--blackColor, #1e1e2d);
+            color: var(--text-strong);
             margin-bottom: 6px;
 
             .required {
-                color: #f5576c;
+                color: var(--danger-text);
                 margin-left: 2px;
             }
         }
@@ -77,7 +82,7 @@
 
         .prefix-icon {
             font-size: 18px;
-            color: var(--bodyColor, #94a3b8);
+            color: var(--text-muted);
             margin-right: 4px;
         }
     }
@@ -92,16 +97,15 @@
         .submit-btn {
             height: 46px;
             padding: 0 24px;
-            border-radius: 10px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: #fff;
-            font-weight: 600;
-            font-size: 14px;
+            border-radius: var(--radius-md);
+            background: var(--accent);
+            color: var(--on-accent);
+            font-weight: 500;
+            font-size: var(--fs-14);
             display: flex;
             align-items: center;
             gap: 6px;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-            transition: all 0.2s ease;
+            transition: background var(--transition);
             white-space: nowrap;
 
             i {
@@ -109,25 +113,15 @@
             }
 
             &:hover {
-                box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
-                transform: translateY(-1px);
-            }
-
-            &.edit-btn {
-                background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-                box-shadow: 0 4px 15px rgba(245, 87, 108, 0.4);
-
-                &:hover {
-                    box-shadow: 0 6px 20px rgba(245, 87, 108, 0.5);
-                }
+                background: var(--accent-hover);
             }
         }
 
         .cancel-btn {
             height: 46px;
             padding: 0 20px;
-            border-radius: 10px;
-            font-size: 14px;
+            border-radius: var(--radius-md);
+            font-size: var(--fs-14);
             font-weight: 500;
             display: flex;
             align-items: center;
@@ -144,16 +138,16 @@
 // ─── Table Card ────────────────────────────────────────────────────────────────
 
 .page-table-card {
-    border-radius: 12px !important;
+    border-radius: var(--radius-lg) !important;
     overflow: hidden;
 
     mat-progress-bar {
-        border-radius: 12px 12px 0 0;
+        border-radius: var(--radius-lg) var(--radius-lg) 0 0;
     }
 
     .table-card-header {
         padding: 20px 24px 16px !important;
-        border-bottom: 1px solid var(--borderColor, #f0f0f0);
+        border-bottom: 1px solid var(--border);
         display: flex;
         flex-direction: column;
         gap: 12px;
@@ -176,22 +170,22 @@
                 gap: 12px;
 
                 .title-icon {
-                    font-size: 26px;
-                    color: #667eea;
+                    font-size: 22px;
+                    color: var(--text-muted);
                 }
 
                 .title-text {
                     display: block;
-                    font-size: 16px;
+                    font-size: var(--fs-16);
                     font-weight: 600;
-                    color: var(--blackColor, #1e1e2d);
+                    color: var(--text-strong);
                     line-height: 1.2;
                 }
 
                 .record-count {
                     display: block;
-                    font-size: 12px;
-                    color: var(--bodyColor, #6c757d);
+                    font-size: var(--fs-12);
+                    color: var(--text-muted);
                     font-weight: 400;
                     margin-top: 2px;
                 }
@@ -212,30 +206,28 @@
                     position: absolute;
                     left: 12px;
                     font-size: 20px;
-                    color: var(--bodyColor, #6c757d);
+                    color: var(--text-faint);
                     pointer-events: none;
                 }
 
                 .search-input {
                     height: 40px;
                     padding: 0 14px 0 40px;
-                    border: 1px solid var(--borderColor, #e0e0e0);
-                    border-radius: 10px;
-                    font-size: 14px;
-                    color: var(--blackColor, #1e1e2d);
-                    background: var(--lightColor, #f8f9fa);
+                    border: 1px solid var(--border-strong);
+                    border-radius: var(--radius-md);
+                    font-size: var(--fs-14);
+                    color: var(--text-strong);
+                    background: var(--surface);
                     outline: none;
                     width: 240px;
-                    transition: all 0.2s ease;
+                    transition: border-color var(--transition), width var(--transition);
 
                     &::placeholder {
-                        color: var(--bodyColor, #adb5bd);
+                        color: var(--text-faint);
                     }
 
                     &:focus {
-                        border-color: #667eea;
-                        background: #fff;
-                        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
+                        border-color: var(--accent);
                         width: 280px;
                     }
                 }
@@ -255,37 +247,36 @@
     border-collapse: collapse;
 
     .mat-mdc-header-row {
-        background: var(--lightColor, #f8f9fa);
+        background: var(--surface-muted);
     }
 
     .mat-mdc-header-cell {
-        font-size: 12px;
-        font-weight: 700;
-        color: var(--bodyColor, #6c757d);
-        letter-spacing: 0.5px;
-        text-transform: uppercase;
+        font-size: var(--fs-12);
+        font-weight: 600;
+        color: var(--text-muted);
         padding: 14px 16px;
-        border-bottom: 2px solid var(--borderColor, #e9ecef);
+        border-bottom: 1px solid var(--border);
     }
 
     .mat-mdc-cell {
         padding: 14px 16px;
-        font-size: 14px;
-        color: var(--blackColor, #1e1e2d);
-        border-bottom: 1px solid var(--borderColor, #f0f0f0);
+        font-size: var(--fs-14);
+        color: var(--text-strong);
+        border-bottom: 1px solid var(--border);
         vertical-align: middle;
     }
 
     .mat-mdc-row {
-        transition: background 0.15s ease;
+        transition: background var(--transition);
 
         &:hover {
-            background: rgba(102, 126, 234, 0.04);
+            background: var(--surface-muted);
         }
 
+        // Redaktə olunan sətir — seçilmiş hal
         &.editing-row {
-            background: rgba(240, 147, 251, 0.08);
-            border-left: 3px solid #f093fb;
+            background: var(--accent-soft);
+            box-shadow: inset 3px 0 0 var(--accent);
         }
 
         &:last-child .mat-mdc-cell {
@@ -312,11 +303,11 @@
     justify-content: center;
     width: 30px;
     height: 30px;
-    border-radius: 8px;
-    background: var(--lightColor, #f0f2f5);
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--bodyColor, #6c757d);
+    border-radius: var(--radius-sm);
+    background: var(--surface-subtle);
+    font-size: var(--fs-13);
+    font-weight: 500;
+    color: var(--text-muted);
 }
 
 .name-cell {
@@ -325,10 +316,10 @@
     gap: 10px;
 
     .page-icon {
-        width: 34px;
-        height: 34px;
-        border-radius: 8px;
-        background: rgba(102, 126, 234, 0.12);
+        width: 32px;
+        height: 32px;
+        border-radius: var(--radius-md);
+        background: var(--surface-subtle);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -336,35 +327,34 @@
 
         i {
             font-size: 18px;
-            color: #667eea;
+            color: var(--text-muted);
         }
     }
 
     .name-text {
         font-weight: 500;
-        color: var(--blackColor, #1e1e2d);
+        color: var(--text-strong);
     }
 }
 
 .key-badge {
     display: inline-block;
-    padding: 4px 10px;
-    background: rgba(102, 126, 234, 0.08);
-    color: #667eea;
-    border-radius: 6px;
-    font-size: 13px;
-    font-family: 'Courier New', monospace;
-    font-weight: 600;
-    border: 1px solid rgba(102, 126, 234, 0.2);
+    padding: 2px var(--space-2);
+    background: var(--surface-subtle);
+    color: var(--text);
+    border-radius: var(--radius-sm);
+    font-size: var(--fs-13);
+    font-family: var(--font-mono);
+    font-weight: 500;
 }
 
 .status-chip {
     display: inline-flex;
     align-items: center;
     gap: 4px;
-    padding: 4px 12px;
-    border-radius: 20px;
-    font-size: 12px;
+    padding: 2px var(--space-2);
+    border-radius: var(--radius-sm);
+    font-size: var(--fs-12);
     font-weight: 600;
 
     i {
@@ -372,15 +362,14 @@
     }
 
     &.active {
-        background: rgba(52, 168, 83, 0.1);
-        color: #34a853;
-        border: 1px solid rgba(52, 168, 83, 0.25);
+        background: var(--success-soft);
+        color: var(--success-text);
     }
 
+    // Passiv səhifə xəta deyil — neytral
     &.inactive {
-        background: rgba(234, 67, 53, 0.1);
-        color: #ea4335;
-        border: 1px solid rgba(234, 67, 53, 0.25);
+        background: var(--surface-subtle);
+        color: var(--text);
     }
 }
 
@@ -396,11 +385,12 @@
     .btn-delete {
         width: 36px;
         height: 36px;
-        border-radius: 8px;
+        border-radius: var(--radius-md);
+        background: transparent;
         display: flex;
         align-items: center;
         justify-content: center;
-        transition: all 0.2s ease;
+        transition: background var(--transition), color var(--transition);
 
         i {
             font-size: 18px;
@@ -408,26 +398,19 @@
     }
 
     .btn-edit {
-        background: rgba(102, 126, 234, 0.1);
-        color: #667eea;
+        color: var(--text-muted);
 
         &:hover {
-            background: #667eea;
-            color: #fff;
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+            background: var(--surface-subtle);
+            color: var(--text-strong);
         }
     }
 
     .btn-delete {
-        background: rgba(245, 87, 108, 0.1);
-        color: #f5576c;
+        color: var(--danger-text);
 
         &:hover {
-            background: #f5576c;
-            color: #fff;
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(245, 87, 108, 0.4);
+            background: var(--danger-soft);
         }
     }
 }
@@ -443,16 +426,15 @@
     flex-direction: column;
     align-items: center;
     gap: 12px;
-    color: var(--bodyColor, #adb5bd);
+    color: var(--text-muted);
 
     i {
-        font-size: 48px;
-        opacity: 0.5;
+        font-size: 44px;
+        color: var(--text-faint);
     }
 
     p {
         margin: 0;
-        font-size: 15px;
+        font-size: var(--fs-14);
     }
 }
-

@@ -1,112 +1,60 @@
-<div class="login-container">
-    <div class="login-wrapper">
-        <div class="login-content">
-            <!-- Left Side - Image Section -->
-            <div class="login-image-section">
-                <div class="image-overlay"></div>
-                <div class="image-content">
-                    <div class="welcome-text">
-                        <h2>Avrora Audit-ə Xoş Gəlmisiniz</h2>
-                        <p>Hesabınıza daxil olun və audit proseslərini, maliyyə idarəetməsini və bütün biznes əməliyyatlarınızı effektiv şəkildə idarə edin</p>
-                    </div>
-                </div>
+<main class="signin-page">
+    <section class="signin-card" aria-labelledby="signin-title">
+        <img src="images/logo-big.svg" alt="Loqo" class="signin-logo">
+
+        <h1 id="signin-title" class="signin-title">Sistemə giriş</h1>
+        <p class="signin-lead">Mağaza yoxlamaları, uyğunsuzluqlar və hesabatlar üçün audit sistemi.</p>
+
+        <form [formGroup]="loginForm" class="signin-form" (ngSubmit)="login()" novalidate>
+            <div class="signin-field">
+                <label for="email" class="g-field-label">E-poçt</label>
+                <mat-form-field appearance="outline" class="g-modern-field">
+                    <input #emailInput matInput id="email" formControlName="email" type="email"
+                        autocomplete="username" inputmode="email" spellcheck="false">
+                    @if (loginForm.controls.email.hasError('required')) {
+                        <mat-error>E-poçt tələb olunur</mat-error>
+                    } @else if (loginForm.controls.email.hasError('email')) {
+                        <mat-error>Düzgün e-poçt ünvanı daxil edin</mat-error>
+                    }
+                </mat-form-field>
             </div>
 
-            <!-- Right Side - Form Section -->
-            <div class="login-form-section">
-                <div class="form-container">
-                    <!-- Logo -->
-                    <div class="logo-container">
-                        <div class="logo">
-                            <img src="images/logo-big.svg" alt="Audit" class="logo-img">
-                            <img src="images/white-logo-big.svg" alt="Audit" class="logo-img-white d-none">
-                        </div>
-                        <h1 class="welcome-title">Xoş Gəlmisiniz</h1>
-                        <p class="welcome-subtitle">Hesabınıza daxil olun</p>
-                    </div>
-
-                    <!-- Form -->
-                    <form [formGroup]="loginForm" class="login-form" (ngSubmit)="login()">
-                        <!-- Email Field -->
-                        <div class="form-field-group">
-                            <label for="email" class="field-label">
-                                Email Ünvanı
-                                <span class="required-indicator">*</span>
-                            </label>
-                            <mat-form-field appearance="fill" class="custom-form-field">
-                                <mat-icon matPrefix class="field-icon">email</mat-icon>
-                                <input 
-                                    matInput 
-                                    id="email"
-                                    formControlName="email" 
-                                    type="email"
-                                    placeholder="example@email.com"
-                                    autocomplete="email">
-                                <mat-error *ngIf="loginForm.get('email')?.hasError('required') && loginForm.get('email')?.touched">
-                                    Email ünvanı tələb olunur
-                                </mat-error>
-                                <mat-error *ngIf="loginForm.get('email')?.hasError('email') && loginForm.get('email')?.touched">
-                                    Doğru email daxil edin
-                                </mat-error>
-                            </mat-form-field>
-                        </div>
-
-                        <!-- Password Field -->
-                        <div class="form-field-group">
-                            <label for="password" class="field-label">
-                                Parol
-                                <span class="required-indicator">*</span>
-                            </label>
-                            <mat-form-field appearance="fill" class="custom-form-field">
-                                <mat-icon matPrefix class="field-icon">lock</mat-icon>
-                                <input 
-                                    matInput 
-                                    id="password"
-                                    [type]="hide ? 'password' : 'text'" 
-                                    formControlName="password"
-                                    placeholder="Parolunuzu daxil edin"
-                                    autocomplete="current-password">
-                                <button 
-                                    mat-icon-button 
-                                    matSuffix 
-                                    (click)="hide = !hide" 
-                                    type="button"
-                                    class="toggle-password-btn"
-                                    [attr.aria-label]="hide ? 'Show password' : 'Hide password'">
-                                    <mat-icon class="toggle-password-icon">
-                                        {{hide ? 'visibility_off' : 'visibility'}}
-                                    </mat-icon>
-                                </button>
-                                <mat-error *ngIf="loginForm.get('password')?.hasError('required') && loginForm.get('password')?.touched">
-                                    Parol tələb olunur
-                                </mat-error>
-                                <mat-error *ngIf="loginForm.get('password')?.hasError('minlength') && loginForm.get('password')?.touched">
-                                    Parol ən azı 5 simvol olmalıdır
-                                </mat-error>
-                            </mat-form-field>
-                        </div>
-
-                        <!-- Error Message -->
-                        <div *ngIf="errorMessage" class="error-alert" role="alert">
-                            <mat-icon class="error-icon">error</mat-icon>
-                            <span>{{ errorMessage }}</span>
-                        </div>
-
-                        <!-- Submit Button -->
-                        <button 
-                            type="submit" 
-                            mat-flat-button 
-                            class="login-button"
-                            [disabled]="isLoading || loginForm.invalid"
-                            [class.loading]="isLoading">
-                            <span *ngIf="isLoading" class="button-spinner" role="status" aria-hidden="true"></span>
-                            <span class="button-text">
-                                {{ isLoading ? 'Giriş edilir...' : 'Giriş Et' }}
-                            </span>
-                        </button>
-                    </form>
-                </div>
+            <div class="signin-field">
+                <label for="password" class="g-field-label">Parol</label>
+                <mat-form-field appearance="outline" class="g-modern-field">
+                    <input #passwordInput matInput id="password" formControlName="password"
+                        [type]="hidePassword ? 'password' : 'text'" autocomplete="current-password">
+                    <button mat-icon-button matSuffix type="button" class="password-toggle"
+                        (click)="hidePassword = !hidePassword"
+                        [attr.aria-label]="hidePassword ? 'Parolu göstər' : 'Parolu gizlət'"
+                        [attr.aria-pressed]="!hidePassword">
+                        <mat-icon>{{ hidePassword ? 'visibility' : 'visibility_off' }}</mat-icon>
+                    </button>
+                    @if (loginForm.controls.password.hasError('required')) {
+                        <mat-error>Parol tələb olunur</mat-error>
+                    } @else if (loginForm.controls.password.hasError('minlength')) {
+                        <mat-error>Parol ən azı 5 simvol olmalıdır</mat-error>
+                    }
+                </mat-form-field>
             </div>
-        </div>
-    </div>
-</div>
+
+            @if (errorMessage) {
+                <div class="signin-alert" role="alert">
+                    <mat-icon aria-hidden="true">error</mat-icon>
+                    <span>{{ errorMessage }}</span>
+                </div>
+            }
+
+            <!-- Yalnız sorğu gedərkən bağlıdır: Enter həmişə submit edir, səhv sahə fokuslanır -->
+            <button type="submit" class="g-search-btn signin-submit" [disabled]="isLoading"
+                [attr.aria-busy]="isLoading">
+                @if (isLoading) {
+                    <span class="signin-spinner" aria-hidden="true"></span>
+                    Giriş edilir…
+                } @else {
+                    Giriş et
+                }
+            </button>
+        </form>
+    </section>
+</main>

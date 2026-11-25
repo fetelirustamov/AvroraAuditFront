@@ -7,16 +7,10 @@
 
 @import '../reports/report-filter-toolbar';
 
-// Dashboard-un vurğu rəngi (paylaşılan .report-page-header onu oxuyur)
-.report-page-header {
-    --page-accent-from: #4B48CC;
-    --page-accent-to: #7C7AFF;
-
-    .header-actions {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
+.report-page-header .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
 .period-chip {
@@ -24,20 +18,19 @@
     align-items: center;
     gap: 6px;
     padding: 7px 14px;
-    border: 1px solid rgba(255, 255, 255, .25);
+    border: 1px solid var(--border);
     border-radius: var(--radius-sm);
-    background: rgba(255, 255, 255, .12);
-    color: var(--whiteColor);
-    font-size: 12px;
+    background: var(--surface);
+    color: var(--text-muted);
+    font-size: var(--fs-12);
     font-weight: 600;
 
     .material-symbols-outlined {
         font-size: 17px;
-        opacity: .85;
     }
 }
 
-// ── Filtr panelinin «Sıfırla» düyməsi ───────────────────────────────────────
+// ── Filtr panelinin «Təmizlə» düyməsi ───────────────────────────────────────
 // Ortaq toolbar-da yalnız `.search-btn` var; sıfırlama dashboard-a xasdır.
 .filter-toolbar-action {
     gap: 10px;
@@ -50,10 +43,10 @@
     gap: 6px;
     min-height: 46px;
     padding: 0 18px;
-    border: 1px solid var(--borderColor);
+    border: 1px solid var(--border);
     border-radius: 12px;
     background: var(--surface-muted);
-    color: var(--bodyColor);
+    color: var(--text-muted);
     font-size: 13px;
     font-weight: 600;
     cursor: pointer;
@@ -64,9 +57,9 @@
         font-size: 19px;
     }
     &:hover:not(:disabled) {
-        border-color: var(--primaryColor);
-        background: var(--primarySoft);
-        color: var(--primaryColor);
+        border-color: var(--border-strong);
+        background: var(--surface-subtle);
+        color: var(--text);
     }
     &:disabled {
         opacity: .5;
@@ -90,10 +83,9 @@
     flex-direction: column;
     min-width: 0;
     overflow: hidden;
-    border: 1px solid var(--borderColor);
+    border: 1px solid var(--border);
     border-radius: var(--radius-md);
     background: var(--surface);
-    box-shadow: var(--shadow-sm);
 
     &--wide { grid-column: span 6; }
     &--gauge { grid-column: span 2; }
@@ -107,7 +99,7 @@
     justify-content: space-between;
     gap: 12px;
     padding: 16px 20px;
-    border-bottom: 1px solid var(--borderColor);
+    border-bottom: 1px solid var(--border);
 }
 
 .panel-title-group {
@@ -120,9 +112,9 @@
 .panel-icon {
     flex-shrink: 0;
     padding: 5px;
-    border-radius: 9px;
-    background: var(--primarySoft);
-    color: var(--primaryColor);
+    border-radius: var(--radius-md);
+    background: var(--surface-subtle);
+    color: var(--text-muted);
     font-size: 20px;
 }
 
@@ -135,7 +127,7 @@
 
 .panel-hint {
     margin: 2px 0 0;
-    font-size: 11px;
+    font-size: var(--fs-12);
     line-height: 1.45;
     color: var(--text-muted);
 }
@@ -172,8 +164,8 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    font-size: 11px;
-    color: var(--bodyColor);
+    font-size: var(--fs-12);
+    color: var(--text-muted);
 }
 
 .zone-dot {
@@ -198,16 +190,9 @@
     min-width: 0;
     padding: 16px 18px 0;
     overflow: hidden;
-    border: 1px solid var(--borderColor);
+    border: 1px solid var(--border);
     border-radius: var(--radius-md);
     background: var(--surface);
-    box-shadow: var(--shadow-sm);
-    transition: box-shadow .2s, transform .15s;
-
-    &:hover {
-        box-shadow: var(--shadow-md);
-        transform: translateY(-2px);
-    }
 }
 
 .kpi-tile-top {
@@ -223,24 +208,25 @@
     justify-content: center;
     width: 38px;
     height: 38px;
-    border-radius: 10px;
-    background: var(--primarySoft);
-    color: var(--primaryColor);
+    border-radius: var(--radius-md);
+    background: var(--surface-subtle);
+    color: var(--text-muted);
 
     .material-symbols-outlined {
         font-size: 20px;
     }
+    // Yalnız həddə bağlı göstərici (orta uyğunluq) rənglənir
     &.tone-success {
-        background: var(--successSoft);
-        color: var(--successColor);
+        background: var(--success-soft);
+        color: var(--success-text);
     }
     &.tone-warning {
-        background: var(--warningSoft);
-        color: var(--warningStrong);
+        background: var(--warning-soft);
+        color: var(--warning-text);
     }
     &.tone-danger {
-        background: var(--dangerSoft);
-        color: var(--dangerColor);
+        background: var(--danger-soft);
+        color: var(--danger-text);
     }
 }
 
@@ -249,11 +235,12 @@
     align-items: center;
     gap: 3px;
     padding: 3px 8px;
-    border-radius: 20px;
+    border-radius: var(--radius-sm);
     background: var(--surface-subtle);
-    color: var(--bodyColor);
-    font-size: 11px;
-    font-weight: 700;
+    color: var(--text-muted);
+    font-size: var(--fs-12);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
     white-space: nowrap;
     cursor: default;
 
@@ -261,26 +248,26 @@
         font-size: 15px;
     }
     &.is-good {
-        background: var(--successSoft);
-        color: #1C8A02;
+        background: var(--success-soft);
+        color: var(--success-text);
     }
     &.is-bad {
-        background: var(--dangerSoft);
-        color: #E12F14;
+        background: var(--danger-soft);
+        color: var(--danger-text);
     }
-    // Müqayisə bazası olmayanda — neytral və kiçik
+    // Müqayisə bazası olmayanda — neytral
     &.is-muted {
         color: var(--text-muted);
-        font-size: 10px;
-        font-weight: 600;
+        font-weight: 500;
     }
 }
 
 .kpi-tile-value {
     margin-top: 12px;
     font-size: 28px;
-    font-weight: 700;
+    font-weight: 600;
     line-height: 1;
+    font-variant-numeric: tabular-nums;
     color: var(--text-strong);
 }
 
@@ -288,12 +275,12 @@
     margin-top: 6px;
     font-size: 12px;
     font-weight: 600;
-    color: var(--bodyColor);
+    color: var(--text-muted);
 }
 
 .kpi-tile-hint {
     margin-top: 2px;
-    font-size: 11px;
+    font-size: var(--fs-12);
     color: var(--text-muted);
 }
 
@@ -315,7 +302,7 @@
         border: none;
         border-radius: 8px;
         background: transparent;
-        color: var(--bodyColor);
+        color: var(--text-muted);
         font-size: 12px;
         font-weight: 600;
         cursor: pointer;
@@ -323,8 +310,8 @@
 
         &.is-active {
             background: var(--surface);
-            color: var(--primaryColor);
-            box-shadow: var(--shadow-sm);
+            color: var(--accent-text);
+            box-shadow: 0 0 0 1px var(--border);
         }
     }
 }
@@ -336,18 +323,18 @@
     th {
         padding: 10px 14px;
         background: var(--surface-subtle);
-        border-bottom: 2px solid var(--borderColor);
-        color: var(--bodyColor);
-        font-size: 11px;
-        font-weight: 700;
+        border-bottom: 1px solid var(--border);
+        color: var(--text-muted);
+        font-size: var(--fs-12);
+        font-weight: 600;
         text-align: center;
         text-transform: uppercase;
         letter-spacing: .4px;
     }
     td {
         padding: 10px 14px;
-        border-bottom: 1px solid var(--borderColor);
-        color: var(--bodyColor);
+        border-bottom: 1px solid var(--border);
+        color: var(--text-muted);
         font-size: 13px;
         text-align: center;
     }
@@ -373,11 +360,12 @@
     display: inline-block;
     margin-right: 6px;
     padding: 1px 7px;
-    border-radius: 6px;
+    border-radius: var(--radius-sm);
     background: var(--surface-subtle);
     color: var(--text-muted);
-    font-size: 11px;
-    font-weight: 600;
+    font-family: var(--font-mono);
+    font-size: var(--fs-12);
+    font-weight: 500;
 }
 
 .score-bar {
@@ -404,12 +392,13 @@
 .score-bar-value {
     min-width: 48px;
     text-align: right;
-    font-size: 12px;
-    font-weight: 700;
+    font-size: var(--fs-12);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
 
-    &.is-success { color: #1C8A02; }
-    &.is-warning { color: #C46A00; }
-    &.is-danger  { color: #E12F14; }
+    &.is-success { color: var(--success-text); }
+    &.is-warning { color: var(--warning-text); }
+    &.is-danger  { color: var(--danger-text); }
 }
 
 // ── Bubble tooltip (ApexCharts `custom` ilə qurulur) ────────────────────────
@@ -426,7 +415,7 @@
         font-size: 12px;
     }
     span {
-        color: var(--bodyColor);
+        color: var(--text-muted);
     }
 }
 

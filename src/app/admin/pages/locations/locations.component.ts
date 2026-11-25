@@ -347,8 +347,8 @@ export class LocationsComponent implements OnInit, OnChanges, AfterViewInit {
 
   remove(row: LocationRow) {
     this.confirmDialog.confirm({
-      title: 'Məkan silinsin?',
-      message: `"${row.locationName}" məkanını silmək istədiyinizə əminsiniz?`,
+      title: 'Mağaza silinsin?',
+      message: `"${row.locationName}" mağazasını silmək istədiyinizə əminsiniz?`,
       confirmText: 'Sil',
       tone: 'danger'
     }).subscribe(confirmed => {

@@ -3,7 +3,7 @@
   <!-- ─── Hero Banner ─────────────────────────────────────────────────────── -->
   <div class="hero-banner">
     <div class="hero-left">
-      <h1>Admin Dashboard</h1>
+      <h1>Əsas səhifə</h1>
       <p class="subtitle">Sistem idarəetmə və konfiqurasiya paneli</p>
     </div>
     <div class="hero-right">
@@ -22,8 +22,8 @@
   <div class="kpi-row">
     <div class="kpi-card" *ngFor="let k of kpiCards" [routerLink]="k.route">
       <div class="kpi-top kpi-top-only">
-        <div class="kpi-icon-wrap" [style.background]="k.bgColor">
-          <span class="material-symbols-outlined" [style.color]="k.color">{{ k.icon }}</span>
+        <div class="kpi-icon-wrap">
+          <span class="material-symbols-outlined">{{ k.icon }}</span>
         </div>
         <div class="kpi-info">
           <p class="kpi-label">{{ k.label }}</p>
@@ -39,7 +39,7 @@
       <mat-card-header>
         <mat-card-title>
           <span class="material-symbols-outlined title-icon">group</span>
-          İstifadəçi Rolları
+          İstifadəçi rolları
         </mat-card-title>
       </mat-card-header>
       <mat-card-content>
@@ -51,7 +51,7 @@
       <mat-card-header>
         <mat-card-title>
           <span class="material-symbols-outlined title-icon">store</span>
-          Firma üzrə Mağaza Sayı
+          Firma üzrə mağaza sayı
         </mat-card-title>
       </mat-card-header>
       <mat-card-content>
@@ -68,20 +68,20 @@
       <mat-card-header>
         <mat-card-title>
           <span class="material-symbols-outlined title-icon">bolt</span>
-          Sürətli Keçidlər
+          Sürətli keçidlər
         </mat-card-title>
       </mat-card-header>
       <mat-card-content>
         <div class="action-list">
           <a class="action-item" *ngFor="let a of quickActions" [routerLink]="a.route">
-            <div class="action-icon-wrap" [style.background]="a.bgColor">
-              <span class="material-symbols-outlined" [style.color]="a.color">{{ a.icon }}</span>
+            <div class="action-icon-wrap">
+              <span class="material-symbols-outlined">{{ a.icon }}</span>
             </div>
             <div class="action-text">
               <span class="action-title">{{ a.label }}</span>
               <span class="action-desc">{{ a.desc }}</span>
             </div>
-            <span class="action-count" [style.color]="a.color">{{ a.count }}</span>
+            <span class="action-count">{{ a.count }}</span>
             <span class="material-symbols-outlined arrow-icon">chevron_right</span>
           </a>
         </div>
@@ -93,14 +93,14 @@
       <mat-card-header>
         <mat-card-title>
           <span class="material-symbols-outlined title-icon">dns</span>
-          Sistem Elementləri
+          Sistem elementləri
         </mat-card-title>
       </mat-card-header>
       <mat-card-content>
         <div class="system-elements-list">
           <div class="system-element-item" *ngFor="let e of systemElements">
-            <div class="system-element-icon-wrap" [style.background]="e.bgColor">
-              <span class="material-symbols-outlined" [style.color]="e.color">{{ e.icon }}</span>
+            <div class="system-element-icon-wrap">
+              <span class="material-symbols-outlined">{{ e.icon }}</span>
             </div>
             <span class="system-element-label">{{ e.label }}</span>
             <span class="system-element-value">{{ isLoadingStats ? '—' : e.value }}</span>

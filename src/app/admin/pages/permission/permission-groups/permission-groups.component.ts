@@ -98,7 +98,7 @@ export class PermissionGroupsComponent implements OnInit, AfterViewInit {
 
   remove(row: RoleDto): void {
     this.confirmDialog.confirm({
-      title: 'Səlahiyyət qrupu silinsin?',
+      title: 'İcazə qrupu silinsin?',
       message: `"${row.name}" qrupunu silmək istədiyinizə əminsiniz?`,
       confirmText: 'Sil',
       tone: 'danger'

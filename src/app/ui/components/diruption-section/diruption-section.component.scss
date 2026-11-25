@@ -27,11 +27,11 @@
 .category-chip {
     display: inline-flex;
     align-items: center;
-    padding: 4px 12px;
-    border-radius: 999px;
-    background: $danger-soft;
-    color: $danger;
-    font-size: 12.5px;
+    padding: 2px var(--space-2);
+    border-radius: var(--radius-sm);
+    background: var(--surface-subtle);
+    color: var(--text);
+    font-size: var(--fs-13);
     font-weight: 600;
     line-height: 1.4;
     word-break: break-word;
@@ -39,7 +39,7 @@
 
 .reason-text {
     font-weight: 500;
-    color: #2b2f3a;
+    color: var(--text-strong);
     word-break: break-word;
 }
 
@@ -47,11 +47,11 @@
     display: inline-block;
     word-break: break-word;
     white-space: pre-line;
-    color: #5b6170;
+    color: var(--text);
     line-height: 1.5;
 }
 
 .date-text {
-    color: $muted;
+    color: var(--text-muted);
     font-variant-numeric: tabular-nums;
 }

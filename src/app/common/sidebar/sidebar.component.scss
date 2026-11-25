@@ -1,832 +1,322 @@
-::ng-deep {
-    .sidebar-area {
+// ============================================================================
+//  Sidebar: əsas tətbiq və admin paneli eyni stili işlədir
+//  (admin/layout/sidebar bu faylı styleUrl kimi götürür).
+// ============================================================================
+//  Ölçülər (`--shell-*`) shell konteynerindən gəlir: ui.component.scss.
+//  ≥1200px: sabit panel; `.active` onu ikon zolağına yığır, hover açır.
+//  <1200px: ekrandan kənarda gizlidir; `.active` onu üstə açır.
+//  Material daxili elementləri üçün ::ng-deep lazımdır.
+// ============================================================================
+
+::ng-deep .sidebar-area {
+    // Material expansion panel token-ləri
+    --mat-expansion-container-background-color: transparent;
+    --mat-expansion-container-text-color: var(--text);
+    --mat-expansion-container-shape: var(--radius-md);
+    --mat-expansion-header-text-color: var(--text);
+    --mat-expansion-header-text-font: var(--font-sans);
+    --mat-expansion-header-text-size: var(--fs-14);
+    --mat-expansion-header-text-weight: 500;
+    --mat-expansion-header-text-line-height: 20px;
+    --mat-expansion-header-text-tracking: normal;
+    --mat-expansion-header-indicator-color: var(--text-muted);
+    --mat-expansion-header-collapsed-state-height: 40px;
+    --mat-expansion-header-expanded-state-height: 40px;
+    --mat-expansion-header-hover-state-layer-color: var(--bg);
+    --mat-expansion-header-focus-state-layer-color: var(--bg);
+
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 6;
+    display: flex;
+    flex-direction: column;
+    width: var(--shell-sidebar-w);
+    height: 100vh;
+    overflow: hidden;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    transition: width var(--transition), transform var(--transition);
+
+    // ── Loqo yeri ───────────────────────────────────────────────────────────
+    // Müştəri brendi yalnız buradan gəlir; mətn yoxdur.
+    .sidebar-logo {
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--space-2);
+        height: var(--shell-header-h);
+        padding: 0 var(--space-4) 0 var(--space-5);
+        border-bottom: 1px solid var(--border);
+    }
+
+    .logo-link {
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+        min-width: 0;
         overflow: hidden;
-        position: fixed;
-        height: 100vh;
-        width: 260px;
-        z-index: 6;
-        left: 0;
-        top: 0;
-        
-        .logo {
-            border-bottom: 1px solid var(--borderColor);
-            padding: 24px 25px 20px;
-            position: absolute;
-            z-index: 2;
-            right: 0;
-            left: 0;
-            top: 0;
-            
-            a {
-                transition: unset;
+    }
 
-                img {
-                    left: 0;
-                    height: 34px;
-                    width: auto;
-                }
-                span {
-                    margin-left: 10px;
-                    top: 1px;
+    .logo-icon {
+        flex-shrink: 0;
+        width: auto;
+        height: 32px;
+    }
 
-                    .logo-text-img {
-                        height: 15px;
-                        width: auto;
-                        display: block;
-                    }
-                }
+    .logo-text {
+        width: auto;
+        min-width: 0;
+        max-width: 100%;
+        height: 14px;
+        object-fit: contain;
+        object-position: left center;
+        transition: opacity var(--transition);
+    }
+
+    // Yalnız <1200px-də görünür (orada panel üstə açılır)
+    .sidebar-close {
+        display: none;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        width: 36px;
+        height: 36px;
+        padding: 0;
+        border: 0;
+        border-radius: var(--radius-md);
+        background: transparent;
+        color: var(--text-muted);
+        cursor: pointer;
+        transition: background var(--transition), color var(--transition);
+
+        &:hover {
+            background: var(--bg);
+            color: var(--text-strong);
+        }
+        .material-symbols-outlined {
+            font-size: 22px;
+        }
+    }
+
+    // ── Sürüşmə sahəsi ──────────────────────────────────────────────────────
+    .sidebar-scroll {
+        flex: 1;
+        min-height: 0;
+    }
+
+    .sidebar-menu {
+        padding: var(--space-4) var(--space-3) var(--space-6);
+    }
+
+    .menu-section-title {
+        display: block;
+        margin: var(--space-5) var(--space-3) var(--space-2);
+        font-size: var(--fs-12);
+        font-weight: 600;
+        line-height: 16px;
+        letter-spacing: .06em;
+        text-transform: uppercase;
+        white-space: nowrap;
+        color: var(--text-muted);
+
+        &:first-child {
+            margin-top: 0;
+        }
+    }
+
+    // ── Bənd: tək keçid və qrup başlığı eyni görünür ────────────────────────
+    .sidebar-menu-link,
+    .mat-expansion-panel-header {
+        display: flex;
+        align-items: center;
+        gap: var(--space-3);
+        min-height: 40px;
+        margin-bottom: 2px;
+        padding: 0 var(--space-3);
+        border-radius: var(--radius-md);
+        color: var(--text);
+        font-size: var(--fs-14);
+        font-weight: 500;
+        line-height: 20px;
+        white-space: nowrap;
+        text-decoration: none;
+        transition: background var(--transition), color var(--transition);
+
+        .material-symbols-outlined {
+            flex-shrink: 0;
+            font-size: 20px;
+            color: var(--text-muted);
+            transition: color var(--transition);
+        }
+        .title {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            transition: opacity var(--transition);
+        }
+    }
+
+    .sidebar-menu-link {
+        &:hover {
+            background: var(--bg);
+            color: var(--text-strong);
+
+            .material-symbols-outlined {
+                color: var(--text-strong);
             }
         }
-        .burger-menu {
-            top: 23px;
-            z-index: 3;
+        &.active {
+            background: var(--accent-soft);
+            color: var(--accent-text);
+
+            .material-symbols-outlined {
+                color: var(--accent-text);
+            }
+        }
+    }
+
+    // Çıxış: <button>, brauzer düymə görünüşü sıfırlanır
+    .sidebar-logout-btn {
+        width: 100%;
+        margin-top: var(--space-4);
+        border: 0;
+        background: transparent;
+        font-family: inherit;
+        text-align: left;
+        cursor: pointer;
+    }
+
+    // ── Qrup (mat-expansion-panel) ──────────────────────────────────────────
+    // Material-in `:not([class*=mat-elevation-z])` kölgəsini üstələmək üçün
+    // .mat-accordion da selektora daxildir
+    .mat-accordion .mat-expansion-panel {
+        margin: 0;
+        box-shadow: none;
+    }
+
+    .mat-expansion-panel-header {
+        .mat-content {
+            align-items: center;
+        }
+        .mat-expansion-panel-header-title {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            min-width: 0;
+            margin-right: var(--space-2);
+            color: inherit;
+        }
+    }
+
+    // Qrupun içində aktiv səhifə varsa, başlıq da seçilmiş görünür
+    .mat-expansion-panel:has(.sidemenu-link.active) > .mat-expansion-panel-header {
+        color: var(--text-strong);
+
+        .material-symbols-outlined {
+            color: var(--accent-text);
+        }
+    }
+
+    .mat-expansion-panel-body {
+        padding: 2px 0 var(--space-2);
+    }
+
+    // Alt menyu: ikonun oxu üzərində incə xətt
+    .sidebar-sub-menu {
+        position: relative;
+        margin: 0;
+        padding: 0 0 0 var(--space-6);
+        list-style: none;
+
+        &::before {
+            content: '';
+            position: absolute;
+            top: 2px;
+            bottom: 2px;
+            left: 21px;
+            width: 1px;
+            background: var(--border);
+        }
+    }
+
+    .sidemenu-item + .sidemenu-item {
+        margin-top: 2px;
+    }
+
+    .sidemenu-link {
+        display: block;
+        padding: var(--space-2) var(--space-3);
+        border-radius: var(--radius-md);
+        color: var(--text-muted);
+        font-size: var(--fs-14);
+        font-weight: 500;
+        line-height: 20px;
+        white-space: nowrap;
+        text-decoration: none;
+        transition: background var(--transition), color var(--transition);
+
+        &:hover {
+            background: var(--bg);
+            color: var(--text-strong);
+        }
+        &.active {
+            background: var(--accent-soft);
+            color: var(--accent-text);
+        }
+    }
+
+    // ngx-scrollbar: üfüqi zolaq lazım deyil
+    scrollbar-x {
+        display: none !important;
+    }
+}
+
+// ── <1200px: panel üstə açılır ──────────────────────────────────────────────
+@media only screen and (max-width: 1199.98px) {
+    ::ng-deep .sidebar-area {
+        transform: translateX(-100%);
+
+        &.active {
+            transform: none;
+            box-shadow: var(--shadow-md);
+        }
+        .sidebar-close {
+            display: inline-flex;
+        }
+    }
+}
+
+// ── ≥1200px: `.active` ikon zolağıdır, hover tam açır ───────────────────────
+@media only screen and (min-width: 1200px) {
+    ::ng-deep .sidebar-area.active:not(:hover) {
+        width: var(--shell-rail-w);
+
+        .logo-text,
+        .title,
+        .mat-expansion-indicator {
             opacity: 0;
-            right: 25px;
-            cursor: pointer;
-            position: absolute;
-            visibility: hidden;
-    
-            span {
-                height: 1px;
-                width: 25px;
-                margin: 6px 0;
-            }
-            &.active {
-                opacity: 1;
-                visibility: visible;
-                
-                span {
-                    &.top-bar {
-                        transform: rotate(45deg);
-                        transform-origin: 10% 10%;
-                    }
-                    &.middle-bar {
-                        opacity: 0;
-                    }
-                    &.bottom-bar {
-                        transform: rotate(-45deg);
-                        transform-origin: 10% 90%;
-                        margin-top: 5px;
-                    }
-                }
-            }
         }
-        .ng-scrollbar {
-            height: 100vh;
-
-            .ng-scroll-content {
-                padding-right: 0 !important;
-            }
-            scrollbar-x {
-                display: none !important;
-            }
+        .mat-expansion-panel-content-wrapper,
+        .mat-expansion-panel-content {
+            display: none;
         }
-        .sidebar-inner {
-            padding: {
-                top: 90px;
-                left: 25px;
-                right: 25px;
-                bottom: 20px;
-            };
-            .sidebar-menu {
-                .sub-title {
-                    font-size: 12px;
-                    color: #8695AA;
-                    position: relative;
-                    margin-bottom: 10px;
+        // Bölmə başlığı yerinə qısa ayırıcı xətt
+        .menu-section-title {
+            height: 1px;
+            margin-right: var(--space-2);
+            margin-left: var(--space-2);
+            overflow: hidden;
+            background: var(--border);
+            color: transparent;
 
-                    &:not(:first-child) {
-                        margin-top: 23px;
-                    }
-                }
-                .mat-accordion {
-                    .mat-expansion-panel {
-                        border-radius: 0;
-                        box-sizing: unset;
-                        color: var(--blackColor);
-                        background-color: transparent;
-                        margin: {
-                            top: 0;
-                            bottom: 5px;
-                        };
-                        .mat-expansion-panel-header {
-                            transition: var(--transition);
-                            background-color: transparent;
-                            color: var(--blackColor);
-                            border-radius: 7px;
-                            position: relative;
-                            display: block;
-                            height: auto;
-                            font: {
-                                size: var(--fontSize);
-                                weight: 500;
-                            };
-                            padding: {
-                                bottom: 9px;
-                                right: 30px;
-                                left: 14px;
-                                top: 9px;
-                            };
-                            i {
-                                transition: var(--transition);
-                                color: var(--bodyColor);
-                                margin-right: 7px;
-                                font-size: 22px;
-                                line-height: 1;
-                            }
-                            .title {
-                                line-height: 1;
-                            }
-                            .mat-content {
-                                display: block;
-            
-                                .mat-expansion-panel-header-title, .mat-expansion-panel-header-description {
-                                    display: flex;
-                                    margin-right: 0;
-                                    white-space: nowrap;
-                                    align-items: center;
-                                    color: var(--blackColor);
-                                    transition: var(--transition);
-                                }
-                            }
-                            &.mat-expanded {
-                                color: var(--blackColor);
-                                background-color: #F6F7F9;
-
-                                i {
-                                    color: var(--blackColor);
-                                }
-                                .mat-content {
-                                    .mat-expansion-panel-header-title, .mat-expansion-panel-header-description {
-                                        color: var(--blackColor);
-                                    }
-                                }
-                                .mat-expansion-indicator {
-                                    &::before {
-                                        content: "\ea4e";
-                                    }
-                                }
-                            }
-                            .mat-expansion-indicator {
-                                transform: translateY(-50%) !important;
-                                position: absolute;
-                                right: 8px;
-                                top: 50%;
-            
-                                svg {
-                                    display: none;
-                                }
-                                &::before {
-                                    content: "\ea6e";
-                                    position: relative;
-                                    display: inline-block;
-                                    color: var(--bodyColor);
-                                    transition: var(--transition);
-                                    font: {
-                                        size: 19px;
-                                        family: remixicon;
-                                    };
-                                }
-                            }
-                            .trezo-badge {
-                                padding: 0;
-                                width: 20px;
-                                height: 20px;
-                                font-size: 11px;
-                                line-height: 20px;
-                                color: var(--orangeColor);
-                                background-color: #FFF5ED;
-                                margin: {
-                                    left: auto;
-                                    right: 4px;
-                                };
-                                &.style-two {
-                                    color: #00b69b;
-                                    background: rgba(0, 182, 155, 0.07);
-                                }
-                                &.style-three {
-                                    color: #ee368c;
-                                    background: rgba(238, 54, 140, 0.1);
-                                }
-                            }
-                            &:hover {
-                                color: var(--blackColor);
-                                background-color: #F6F7F9;
-
-                                i {
-                                    color: var(--blackColor);
-                                }
-                                .mat-content {
-                                    .mat-expansion-panel-header-title, .mat-expansion-panel-header-description {
-                                        color: var(--blackColor);
-                                    }
-                                }
-                                .mat-expansion-indicator {
-                                    &::before {
-                                        color: var(--blackColor);
-                                    }
-                                }
-                            }
-                        }
-                        &:not([class*=mat-elevation-z]) {
-                            box-shadow: unset;
-                        }
-                        &:first-of-type {
-                            border-radius: 0;
-                        }
-                        .mat-expansion-panel-content {
-                            display: block;
-                        }
-                        .mat-expansion-panel-body {
-                            padding: 4px 0 0;
-            
-                            .mat-expansion-panel {
-                                margin-bottom: 0;
-                            }
-                            .mat-expansion-panel-header {
-                                border-radius: 7px;
-                                white-space: nowrap;
-                                color: var(--bodyColor);
-                                font: {
-                                    size: var(--fontSize);
-                                    weight: 500;
-                                };
-                                padding: {
-                                    bottom: 8px;
-                                    right: 10px;
-                                    left: 38px;
-                                    top: 8px;
-                                };
-                                &::after {
-                                    top: 50%;
-                                    left: 18px;
-                                    width: 10px;
-                                    content: '';
-                                    height: 10px;
-                                    transition: .3s;
-                                    border-radius: 50%;
-                                    position: absolute;
-                                    transform: translateY(-50%);
-                                    border: 1px solid var(--bodyColor);
-                                }
-                                .mat-content {
-                                    .mat-expansion-panel-header-title, .mat-expansion-panel-header-description {
-                                        color: var(--bodyColor) !important;
-                                        transition: var(--transition);
-                                    }
-                                }
-                                .mat-expansion-indicator {
-                                    right: 10px;
-
-                                    &::before {
-                                        color: var(--blackColor) !important;
-                                    }
-                                }
-                                &.mat-expanded {
-                                    background-color: #e7effd !important;
-                                    color: var(--primaryColor);
-            
-                                    .mat-content {
-                                        .mat-expansion-panel-header-title, .mat-expansion-panel-header-description {
-                                            color: var(--primaryColor) !important;
-                                        }
-                                    }
-                                    &::after {
-                                        border-color: var(--primaryColor);
-                                    }
-                                    .mat-expansion-indicator {
-                                        &::before {
-                                            color: var(--primaryColor) !important;
-                                        }
-                                    }
-                                }
-                                &:hover {
-                                    background-color: #e7effd !important;
-                                    color: var(--primaryColor);
-            
-                                    .mat-content {
-                                        .mat-expansion-panel-header-title, .mat-expansion-panel-header-description {
-                                            color: var(--primaryColor) !important;
-                                        }
-                                    }
-                                    &::after {
-                                        border-color: var(--primaryColor);
-                                    }
-                                }
-                            }
-                            .mat-expansion-panel-body {
-                                padding: {
-                                    top: 6px;
-                                    left: 20px;
-                                };
-                            }
-                            .sidebar-sub-menu {
-                                padding-left: 0;
-                                list-style-type: none;
-                                margin: {
-                                    top: 0;
-                                    bottom: 0;
-                                };
-                                .sidemenu-item {
-                                    margin-bottom: 4px;
-                                    white-space: nowrap;
-
-                                    .sidemenu-link {
-                                        display: block;
-                                        position: relative;
-                                        border-radius: 7px;
-                                        color: var(--bodyColor);
-                                        transition: var(--transition);
-                                        font: {
-                                            size: var(--fontSize);
-                                            weight: 500;
-                                        };
-                                        padding: {
-                                            bottom: 8px;
-                                            right: 10px;
-                                            left: 38px;
-                                            top: 8px;
-                                        };
-                                        &::after {
-                                            top: 50%;
-                                            left: 18px;
-                                            width: 10px;
-                                            content: '';
-                                            height: 10px;
-                                            transition: .3s;
-                                            border-radius: 50%;
-                                            position: absolute;
-                                            transform: translateY(-50%);
-                                            border: 1px solid var(--bodyColor);
-                                        }
-                                        &:hover, &.active {
-                                            background-color: #ECF0FF;
-                                            color: var(--primaryColor);
-            
-                                            &::after {
-                                                border-color: var(--primaryColor);
-                                            }
-                                        }
-                                        .trezo-badge {
-                                            top: -1px;
-                                            padding: 2px 6px;
-                                            margin-left: 5px;
-                                            border-radius: 3px;
-                                            line-height: initial;
-                                            color: var(--orangeColor);
-                                            background-color: #FFE8D4;
-                                            font: {
-                                                size: 10px;
-                                                weight: normal;
-                                            };
-                                            &::before {
-                                                top: 50%;
-                                                left: -3px;
-                                                width: 6px;
-                                                height: 6px;
-                                                content: '';
-                                                position: absolute;
-                                                background: #FFE8D4;
-                                                transform: translateY(-50%) rotate(45deg);
-                                            }
-                                            &.style-two {
-                                                color: var(--successColor);
-                                                background-color: #D8FFC8;
-
-                                                &::before {
-                                                    background: #D8FFC8;
-                                                }
-                                            }
-                                        }
-                                    }
-                                    .mat-expansion-panel {
-                                        margin-bottom: 0;
-                                    }
-                                    &:last-child {
-                                        margin-bottom: 0;
-                                    }
-                                }
-                            }
-                        }
-                        &:has(> .mat-expansion-panel-content-wrapper > .mat-expansion-panel-content > .mat-expansion-panel-body > .sidebar-sub-menu > .sidemenu-item > .sidemenu-link.active) {
-                            .mat-expansion-panel-header {
-                                color: var(--blackColor);
-                                background-color: #F6F7F9;
-
-                                i {
-                                    color: var(--blackColor);
-                                }
-                                .mat-content {
-                                    .mat-expansion-panel-header-title, .mat-expansion-panel-header-description {
-                                        color: var(--blackColor);
-                                    }
-                                }
-                                .mat-expansion-indicator {
-                                    &::before {
-                                        color: var(--blackColor);
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    .sidebar-menu-link {
-                        transition: var(--transition);
-                        color: var(--blackColor);
-                        align-items: center;
-                        white-space: nowrap;
-                        margin-bottom: 5px;
-                        position: relative;
-                        border-radius: 7px;
-                        display: flex;
-                        padding: {
-                            bottom: 9px;
-                            right: 30px;
-                            left: 14px;
-                            top: 9px;
-                        };
-                        font: {
-                            size: var(--fontSize);
-                            weight: 500;
-                        };
-                        i {
-                            transition: var(--transition);
-                            color: var(--bodyColor);
-                            margin-right: 6px;
-                            font-size: 22px;
-                            line-height: 1;
-                        }
-                        .title {
-                            line-height: 1;
-                        }
-                        &:hover, &.active {
-                            color: var(--primaryColor);
-                            background-color: #F6F7F9;
-
-                            i {
-                                color: var(--primaryColor);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        &.right-sidebar {
-            left: auto;
-            right: 0;
-        }
-        &.card-borderd {
-            border: {
-                right: 1px solid var(--borderColor) !important;
-            };
-        }
-        &.card-with-box-shadow {
-            box-shadow: rgba(149, 157, 165, 0.2) 0px 8px 24px !important;
-        }
-    }
-}
-
-/* Max width 767px */
-@media only screen and (max-width : 767px) {
-
-    ::ng-deep {
-        .sidebar-area {
-            width: 250px;
-            left: -100%;
-            
-            .logo {
-                // Sağda `.burger-menu` üçün yer saxlanır, əks halda loqo mətni
-                // bağlama düyməsinin altında qalıb üst-üstə düşür.
-                padding: 18px 55px 18px 18px;
-            }
-            .burger-menu {
-                top: 20px;
-                right: 18px;
-            }
-            .sidebar-inner {
-                padding: {
-                    top: 84px;
-                    left: 18px;
-                    right: 18px;
-                    bottom: 18px;
-                };
-                .sidebar-menu {
-                    .sub-title {
-                        &:not(:first-child) {
-                            margin-top: 15px;
-                        }
-                    }
-                    .mat-accordion {
-                        .mat-expansion-panel {
-                            .mat-expansion-panel-header {
-                                font-size: 13px;
-                                padding: {
-                                    bottom: 8px;
-                                    right: 25px;
-                                    top: 8px;
-                                };
-                                i {
-                                    font-size: 18px;
-                                }
-                                .mat-expansion-indicator {
-                                    right: 8px;
-                
-                                    &::before {
-                                        font-size: 17px;
-                                    }
-                                }
-                                .trezo-badge {
-                                    width: 18px;
-                                    height: 18px;
-                                    font-size: 11px;
-                                    line-height: 18px;
-                                }
-                            }
-                            .mat-expansion-panel-body {
-                                .mat-expansion-panel-header {
-                                    font-size: 13px;
-                                    padding: {
-                                        bottom: 7px;
-                                        right: 10px;
-                                        left: 35px;
-                                        top: 7px;
-                                    };
-                                    &::after {
-                                        left: 16px;
-                                    }
-                                }
-                                .sidebar-sub-menu {
-                                    .sidemenu-item {
-                                        .sidemenu-link {
-                                            font-size: 13px;
-                                            padding: {
-                                                bottom: 7px;
-                                                right: 10px;
-                                                left: 35px;
-                                                top: 7px;
-                                            };
-                                            &::after {
-                                                left: 16px;
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        .sidebar-menu-link {
-                            font-size: 13px;
-                            padding: {
-                                bottom: 8px;
-                                right: 25px;
-                                top: 8px;
-                            };
-                            i {
-                                font-size: 18px;
-                            }
-                        }
-                    }
-                }
-            }
-            &.active {
-                left: 0;
-            }
-            &.right-sidebar {
-                left: auto;
-                right: -100%;
-
-                &.active {
-                    right: 0;
-                }
+            &:first-child {
+                height: 0;
             }
         }
     }
 
-}
-
-/* Min width 576px to Max width 767px */
-@media only screen and (min-width : 576px) and (max-width : 767px) {}
-
-/* Min width 768px to Max width 991px */
-@media only screen and (min-width : 768px) and (max-width : 991px) {
-
-    ::ng-deep {
-        .sidebar-area {
-            left: -100%;
-
-            &.active {
-                left: 0;
-            }
-            &.right-sidebar {
-                left: auto;
-                right: -100%;
-
-                &.active {
-                    right: 0;
-                }
-            }
-        }
+    ::ng-deep .sidebar-area.active:hover {
+        box-shadow: var(--shadow-md);
     }
-
-}
-
-/* Min width 992px to Max width 1199px */
-@media only screen and (min-width : 992px) and (max-width : 1199px) {
-
-    ::ng-deep {
-        .sidebar-area {
-            left: -100%;
-
-            &.active {
-                left: 0;
-            }
-            &.right-sidebar {
-                left: auto;
-                right: -100%;
-
-                &.active {
-                    right: 0;
-                }
-            }
-        }
-    }
-
-}
-
-/* Min width 1200px */
-@media (min-width: 1200px) {
-    
-    ::ng-deep {
-        .sidebar-area {
-            &.active, &.hide-sidebar {
-                width: 100px;
-    
-                .logo {
-                    a {
-                        img {
-                            left: 11px;
-                        }
-                        span {
-                            opacity: 0;
-                        }
-                    }
-                }
-                .burger-menu {
-                    opacity: 0;
-                    visibility: hidden;
-                }
-                .sidebar-inner {
-                    .sidebar-menu {
-                        .sub-title {
-                            font-size: 0;
-                            height: 15px;
-
-                            &::before {
-                                top: 50%;
-                                width: 50px;
-                                content: '';
-                                height: 1px;
-                                position: absolute;
-                                transform: translateY(-50%);
-                                background: var(--borderColor);
-                            }
-                        }
-                        .mat-accordion {
-                            .mat-expansion-panel {
-                                .mat-expansion-panel-header {
-                                    padding: 9px 6px 9px 14px;
-
-                                    .title {
-                                        transition: var(--transition);
-                                        opacity: 0;
-                                        width: 0;
-                                    }
-                                    .mat-expansion-indicator {
-                                        display: none;
-                                    }
-                                    .trezo-badge {
-                                        display: none !important;
-                                    }
-                                }
-                                .mat-expansion-panel-content {
-                                    display: none;
-                                }
-                            }
-                            .sidebar-menu-link {
-                                padding: 9px 6px 9px 14px;
-        
-                                .title {
-                                    transition: var(--transition);
-                                    opacity: 0;
-                                    width: 0;
-                                }
-                            }
-                        }
-                    }
-                }
-                &:hover {
-                    width: 260px;
-
-                    .logo {
-                        a {
-                            img {
-                                left: 0;
-                            }
-                            span {
-                                opacity: 1;
-                            }
-                        }
-                    }
-                    .burger-menu {
-                        opacity: 1;
-                        visibility: visible;
-                    }
-                    .sidebar-inner {
-                        .sidebar-menu {
-                            .sub-title {
-                                font-size: 12px;
-
-                                &::before {
-                                    display: none;
-                                }
-                            }
-                            .mat-accordion {
-                                .mat-expansion-panel {
-                                    .mat-expansion-panel-header {
-                                        padding: {
-                                            right: 30px;
-                                            left: 14px;
-                                        };
-                                        .title {
-                                            opacity: 1;
-                                            width: auto;
-                                        }
-                                        .mat-expansion-indicator {
-                                            display: inline-block;
-                                        }
-                                        .trezo-badge {
-                                            display: inline-block !important;
-                                        }
-                                    }
-                                    .mat-expansion-panel-content {
-                                        display: block;
-                                    }
-                                }
-                                .sidebar-menu-link {
-                                    padding: {
-                                        right: 30px;
-                                        left: 14px;
-                                    };
-                                    .title {
-                                        opacity: 1;
-                                        width: auto;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            &.hide-sidebar {
-                .burger-menu {
-                    display: none !important;
-                }
-            }
-        }
-    }
-
-}
-
-/* Min width 1200px to Max width 1399px */
-@media only screen and (min-width: 1200px) and (max-width: 1399px) {
-
-    ::ng-deep {
-        .sidebar-area {
-            width: 240px;
-
-            &.active, &.hide-sidebar {
-                width: 100px;
-    
-                &:hover {
-                    width: 240px;
-                }
-            }
-        }
-    }
-
-}
-
-/* Min width 1600px */
-@media only screen and (min-width: 1600px) {}
-
-/*
- * Çıxış elementi əvvəl semantik olmayan <a> idi (routerLink olmadan,
- * routerLinkActive ilə). Artıq <button>-dur — brauzerin standart düymə
- * görünüşü sıfırlanır, qalan stilləri .sidebar-menu-link verir.
- */
-.sidebar-logout-btn {
-    width: 100%;
-    background: transparent;
-    border: none;
-    font-family: inherit;
-    text-align: left;
-    cursor: pointer;
 }

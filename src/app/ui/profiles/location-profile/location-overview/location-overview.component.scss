@@ -1,23 +1,15 @@
+// KPI kartları neytraldır (hədd yoxdur). Rəng yalnız proqres zolağında
+// məna daşıyanda var: həll edilmiş → success, açıq → danger.
+// Sinif adları (kpi-blue/…) şablondan gəlir, rəngi yox, metriki bildirir:
+//   kpi-blue → orta nəticə, kpi-orange → ümumi uyğunsuzluq,
+//   kpi-green → həll edilmiş, kpi-purple → açıq.
 .kpi-grid {
     .kpi-card {
-        background: var(--whiteColor, #fff);
-        border-radius: 16px;
+        background: var(--surface);
+        border-radius: var(--radius-lg);
         padding: 22px 20px 20px;
-        border: 1px solid #ECEEF2;
-        border-top: 4px solid transparent;
-        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04), 0 4px 14px rgba(0, 0, 0, 0.05);
-        transition: transform 0.22s ease, box-shadow 0.22s ease;
+        border: 1px solid var(--border);
         cursor: default;
-
-        &:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 28px rgba(0, 0, 0, 0.09);
-        }
-
-        &.kpi-blue   { border-top-color: #605DFF; }
-        &.kpi-orange { border-top-color: #FD7E14; }
-        &.kpi-green  { border-top-color: #28A745; }
-        &.kpi-purple { border-top-color: #9B59B6; }
 
         .kpi-header {
             display: flex;
@@ -27,81 +19,59 @@
         }
 
         .kpi-icon {
-            width: 50px;
-            height: 50px;
-            border-radius: 12px;
+            width: 40px;
+            height: 40px;
+            border-radius: var(--radius-md);
+            background: var(--surface-subtle);
+            color: var(--text-muted);
             display: flex;
             align-items: center;
             justify-content: center;
 
             .material-symbols-outlined {
-                font-size: 26px;
+                font-size: 22px;
             }
-        }
-
-        &.kpi-blue   .kpi-icon { background: rgba(96, 93, 255, 0.10); color: #605DFF; }
-        &.kpi-orange .kpi-icon { background: rgba(253, 126, 20, 0.10); color: #FD7E14; }
-        &.kpi-green  .kpi-icon { background: rgba(40, 167, 69, 0.10);  color: #28A745; }
-        &.kpi-purple .kpi-icon { background: rgba(155, 89, 182, 0.10); color: #9B59B6; }
-
-        .kpi-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 2px;
-            font-size: 12px;
-            font-weight: 600;
-            padding: 4px 9px;
-            border-radius: 20px;
-            line-height: 1;
-
-            .material-symbols-outlined {
-                font-size: 13px;
-                line-height: 1;
-            }
-
-            &.badge-up   { color: #15803D; background: #DCFCE7; }
-            &.badge-down { color: #DC2626; background: #FEE2E2; }
         }
 
         .kpi-number {
             font-size: 32px;
-            font-weight: 700;
-            color: var(--blackColor, #1A2332);
-            letter-spacing: -1px;
+            font-weight: 600;
+            font-variant-numeric: tabular-nums;
+            color: var(--text-strong);
             line-height: 1;
             margin-bottom: 6px;
         }
 
         .kpi-label {
-            font-size: 14px;
+            font-size: var(--fs-14);
             font-weight: 500;
-            color: var(--bodyColor, #64748B);
+            color: var(--text-muted);
             margin-bottom: 3px;
         }
 
         .kpi-sub {
-            font-size: 12px;
-            color: #94A3B8;
+            font-size: var(--fs-12);
+            color: var(--text-muted);
             margin-bottom: 16px;
         }
 
         .kpi-bar {
             height: 4px;
-            background: #F1F5F9;
+            background: var(--surface-subtle);
             border-radius: 100px;
             overflow: hidden;
 
             .kpi-fill {
                 height: 100%;
                 border-radius: 100px;
+                background: var(--gray-500);
                 transition: width 0.7s cubic-bezier(0.4, 0, 0.2, 1);
             }
         }
 
-        &.kpi-blue   .kpi-fill { background: linear-gradient(90deg, #605DFF, #3584FC); }
-        &.kpi-orange .kpi-fill { background: linear-gradient(90deg, #FD7E14, #FFBE3C); }
-        &.kpi-green  .kpi-fill { background: linear-gradient(90deg, #28A745, #20C997); }
-        &.kpi-purple .kpi-fill { background: linear-gradient(90deg, #9B59B6, #AD63F6); }
+        &.kpi-blue   .kpi-fill { background: var(--accent); }
+        &.kpi-green  .kpi-fill { background: var(--success); }
+        &.kpi-purple .kpi-fill { background: var(--danger); }
     }
 
 }
@@ -112,13 +82,6 @@
         padding: 18px;
 
         .kpi-number { font-size: 26px; }
-
-        .kpi-icon {
-            width: 44px;
-            height: 44px;
-
-            .material-symbols-outlined { font-size: 22px; }
-        }
     }
 }
 

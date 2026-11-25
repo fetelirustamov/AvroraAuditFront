@@ -19,6 +19,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { Firm } from '../../inspections/firm.model';
 import { AuditLoadingOverlayComponent } from '../../components/audit-loading-overlay/audit-loading-overlay.component';
 import { NotificationService } from '../../../shared/services/notification.service';
+import { chartColors } from '../../../shared/utils/chart-colors';
 
 type MonthKey = 'jan' | 'feb' | 'mar' | 'apr' | 'may' | 'jun' | 'jul' | 'aug' | 'sep' | 'oct' | 'nov' | 'dec';
 
@@ -91,8 +92,8 @@ export class ReportsComponent {
     // Column configuration (static keys to match backend)
     public baseColumns = [
         { key: 'row', label: 'Sıra' },
-        { key: 'branchName', label: 'Məkanın Adı' },
-        { key: 'branchCode', label: 'Məkan Kodu' }
+        { key: 'branchName', label: 'Mağaza adı' },
+        { key: 'branchCode', label: 'Mağaza kodu' }
     ];
 
     public displayedColumns: string[] = [];
@@ -127,8 +128,8 @@ export class ReportsComponent {
 
         // Hər ay bir qrup başlığıdır; altında iki sütun durur
         this.monthColumns = this.months.flatMap(m => ([
-            { key: `${m.key}Score`, label: 'Checklist Nəticəsi' },
-            { key: `${m.key}NcCount`, label: 'Uyğunsuzluq Sayı' },
+            { key: `${m.key}Score`, label: 'Checklist nəticəsi' },
+            { key: `${m.key}NcCount`, label: 'Uyğunsuzluq sayı' },
         ]));
 
         this.displayedColumns = [...this.baseColumns, ...this.monthColumns].map(c => c.key);
@@ -136,7 +137,7 @@ export class ReportsComponent {
         this.filterColumns = this.displayedColumns.map(k => `${k}__filter`);
 
         this.groupColumns = [
-            { key: 'group-general', label: 'ÜMUMİ MƏLUMATLAR', colspan: this.baseColumns.length },
+            { key: 'group-general', label: 'Ümumi məlumatlar', colspan: this.baseColumns.length },
             ...this.months.map(m => ({ key: `group-${m.key}`, label: m.label.toUpperCase(), colspan: 2 }))
         ];
         this.groupHeaderColumnKeys = this.groupColumns.map(g => g.key);
@@ -224,9 +225,9 @@ export class ReportsComponent {
     exportExcel(): void {
         const data = this.dataSource.data.map((row: any, i: number) => {
             const result: any = {
-                Sira: i + 1,
-                'Məkanın Adı': row.branchName,
-                'Məkan Kodu': row.branchCode,
+                'Sıra': i + 1,
+                'Mağaza adı': row.branchName,
+                'Mağaza kodu': row.branchCode,
             };
             for (const m of this.months) {
                 result[`${m.label} - Checklist`] = row[`${m.key}Score`];
@@ -242,7 +243,7 @@ export class ReportsComponent {
     }
 
     exportPdf(): void {
-        const baseHeaders = ['Sıra', 'Məkanın Adı', 'Məkan Kodu'];
+        const baseHeaders = ['Sıra', 'Mağaza adı', 'Mağaza kodu'];
         const headers = [
             ...baseHeaders,
             ...this.months.flatMap(m => [`${m.label}`, `${m.label}`])
@@ -270,6 +271,8 @@ export class ReportsComponent {
             tableBody.push(rowArr);
         }
 
+        // PDF-də başlıq neytraldır: rəng məna daşımır
+        const pdf = chartColors();
         const docDefinition: any = {
             pageOrientation: 'landscape',
             content: [
@@ -279,9 +282,9 @@ export class ReportsComponent {
                 }
             ],
             styles: {
-                tableHeader: { bold: true, color: 'white', fillColor: '#1976d2', fontSize: 9 },
-                tableHeaderPair: { bold: true, color: 'white', fillColor: '#1976d2', fontSize: 9, alignment: 'center' },
-                tableHeaderSub: { bold: true, color: 'white', fillColor: '#1976d2', fontSize: 8 }
+                tableHeader: { bold: true, color: pdf.textStrong, fillColor: pdf.surfaceSubtle, fontSize: 9 },
+                tableHeaderPair: { bold: true, color: pdf.textStrong, fillColor: pdf.surfaceSubtle, fontSize: 9, alignment: 'center' },
+                tableHeaderSub: { bold: true, color: pdf.textStrong, fillColor: pdf.surfaceSubtle, fontSize: 8 }
             },
             defaultStyle: { fontSize: 8 }
         };

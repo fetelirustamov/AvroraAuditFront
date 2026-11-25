@@ -27,7 +27,7 @@
     <!-- ③ User control: hər zaman görünən əməliyyat düymələri -->
     <div class="d-flex align-items-center gap-3 mt-2 mt-md-0">
         <ng-container *ngIf="!viewMode">
-            <button mat-stroked-button color="warn" (click)="cancel()">İmtina</button>
+            <button mat-stroked-button color="warn" (click)="cancel()">Ləğv et</button>
             <button mat-flat-button color="primary" (click)="submit()"
                 [disabled]="form.invalid || isSaving" class="qa-btn-save" style="margin-left: 16px;">
                 <i class="material-symbols-outlined">check</i>
@@ -64,7 +64,7 @@
                     <div class="form-group">
                         <label class="main-label">
                             Kateqoriya
-                            <span class="qa-required" matTooltip="Məcburi sahə" aria-label="required">*</span>
+                            <span class="qa-required" matTooltip="Məcburi sahə" aria-label="məcburi">*</span>
                         </label>
                         <mat-form-field class="w-100">
                             <mat-select formControlName="categoryId" placeholder="Seçin...">
@@ -82,7 +82,7 @@
                     <div class="form-group">
                         <label class="main-label">
                             Sual tipi
-                            <span class="qa-required" matTooltip="Məcburi sahə" aria-label="required">*</span>
+                            <span class="qa-required" matTooltip="Məcburi sahə" aria-label="məcburi">*</span>
                         </label>
                         <mat-form-field class="w-100">
                             <mat-select formControlName="type" placeholder="Seçin...">

@@ -4,8 +4,8 @@
             <div class="header-container">
                 <mat-card-title>{{pageTitle}}</mat-card-title>
                 <div class="top-actions">
-                    <button mat-flat-button color="primary" type="submit" (click)="submit()" [disabled]="isSaving">Təsdiqlə</button>
-                    <button mat-stroked-button color="warn" type="button" (click)="cancel()">İmtina</button>
+                    <button mat-flat-button color="primary" type="submit" (click)="submit()" [disabled]="isSaving">Yadda saxla</button>
+                    <button mat-stroked-button color="warn" type="button" (click)="cancel()">Ləğv et</button>
                 </div>
             </div>
         </mat-card-header>
@@ -33,7 +33,7 @@
                 <div class="col-md-4">
                     <div class="form-group">
                         <label class="main-label">
-                            Kateqoriya Adı
+                            Kateqoriya adı
                             <span class="text-danger">*</span>
                         </label>
                         <mat-form-field class="w-100">
@@ -50,7 +50,7 @@
                 <div class="col-md-4">
                     <div class="form-group">
                         <label class="main-label">
-                            Kateqoriya Açıqlaması
+                            Kateqoriya açıqlaması
                         </label>
                         <mat-form-field class="w-100">
                             <input matInput formControlName="categoryDescription" placeholder="Qısa açıqlama" />

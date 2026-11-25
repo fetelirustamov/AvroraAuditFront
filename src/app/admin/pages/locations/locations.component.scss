@@ -17,7 +17,7 @@
 .search-title {
     font-size: 18px;
     font-weight: 500;
-    color: #333;
+    color: var(--text);
     margin: 0;
 }
 
@@ -29,7 +29,7 @@
 }
 
 .close-button:hover {
-    background-color: rgb(237, 235, 235);
+    background-color: var(--surface-subtle);
     border-radius: 20px;
 }
 
@@ -71,28 +71,24 @@ mat-form-field {
 }
 
 .searchButtons button:first-child {
-    background-color: var(--primary-color, #1976D2);
-    color: white;
+    background-color: var(--accent);
+    color: var(--on-accent);
     border: none;
-    box-shadow: 0 2px 4px rgba(25, 118, 210, 0.3);
 }
 
 .searchButtons button:first-child:hover {
-    background-color: var(--primary-color-dark, #1565C0);
-    box-shadow: 0 4px 8px rgba(25, 118, 210, 0.4);
+    background-color: var(--accent-hover);
 }
 
 .searchButtons button:last-child {
-    background-color: white;
-    color: #2196F3;
-    border: 1px solid #E0E0E0;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    background-color: var(--surface);
+    color: var(--text-strong);
+    border: 1px solid var(--border-strong);
 }
 
 .searchButtons button:last-child:hover {
-    background-color: #F5F5F5;
-    border-color: #BDBDBD;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    background-color: var(--surface-muted);
+    border-color: var(--text-faint);
 }
 
 .searchButtons button span.material-symbols-outlined {

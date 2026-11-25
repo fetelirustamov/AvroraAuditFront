@@ -104,7 +104,7 @@ export class AnswerApproveComponent {
       next: (response) => {
         this.firms = response.data;
       },
-      error: (error) => this.notify.error(apiErrorMessage(error, 'Müəssisə siyahısı yüklənmədi')),
+      error: (error) => this.notify.error(apiErrorMessage(error, 'Firma siyahısı yüklənmədi')),
     });
   }
 
@@ -114,7 +114,7 @@ export class AnswerApproveComponent {
       next: (response) => {
         this.locations = response.data;
       },
-      error: (error) => this.notify.error(apiErrorMessage(error, 'Lokasiya siyahısı yüklənmədi')),
+      error: (error) => this.notify.error(apiErrorMessage(error, 'Mağaza siyahısı yüklənmədi')),
     });
   }
 
@@ -133,7 +133,7 @@ export class AnswerApproveComponent {
   onFormSubmit() {
     if (this.answerForm.invalid) {
       this.answerForm.markAllAsTouched();
-      this.notify.warning('Məcburi sahələr seçilməyib', { message: 'Müəssisəni seçin.' });
+      this.notify.warning('Məcburi sahələr seçilməyib', { message: 'Firmanı seçin.' });
       return;
     }
 

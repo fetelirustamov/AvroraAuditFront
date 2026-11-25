@@ -159,9 +159,9 @@ export class AnswerApproveDetailsComponent {
 
   checkboxLabel(row?: DisruptionAnswerDTO): string {
     if (!row) {
-      return `${this.isAllSelected() ? 'deselect' : 'select'} all`;
+      return this.isAllSelected() ? 'Bütün seçimləri götür' : 'Hamısını seç';
     }
-    return `${this.selection.isSelected(row) ? 'deselect' : 'select'} row ${row.id + 1}`;
+    return `${this.selection.isSelected(row) ? 'Seçimi götür' : 'Seç'}: sətir ${row.id + 1}`;
   }
 
 
@@ -235,7 +235,8 @@ export class AnswerApproveDetailsComponent {
       .subscribe({
         next: (data) => {
           if (data.success) {
-            this.notify.success('Əməliyyat uğurla tamamlandı');
+            // confirmStatus: 1 Təsdiqlə, 2 Rədd et
+            this.notify.success(dto.confirmStatus === 2 ? 'Cavab rədd edildi' : 'Cavab təsdiqləndi');
           }
           onSuccess?.();
           this.fill();

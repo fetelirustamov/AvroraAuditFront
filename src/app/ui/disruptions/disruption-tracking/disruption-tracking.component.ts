@@ -83,7 +83,7 @@ export class DisruptionTrackingComponent implements OnInit {
     readonly tz = BAKU_TZ;
     readonly stageMeta = stageMeta;
     readonly stageOptions = STAGE_OPTIONS;
-    readonly levelOptions = [1, 2, 3].map(l => ({ value: l, label: `${l}-ci onay · ${levelRoleLabel(l)}` }));
+    readonly levelOptions = [1, 2, 3].map(l => ({ value: l, label: `${l}-ci təsdiq · ${levelRoleLabel(l)}` }));
     readonly displayedColumns = ['disruptionId', 'location', 'reason', 'stage', 'holder', 'track', 'createdDate', 'deadlineDate', 'open'];
 
     readonly filtersForm = new FormGroup({
@@ -227,7 +227,7 @@ export class DisruptionTrackingComponent implements OnInit {
             next: (res: any) => {
                 this.sections = readList<any>(res).map(s => ({ value: Number(s.id), label: s.sectionName ?? '' }));
             },
-            error: fail('Bölmə'),
+            error: fail('Şöbə'),
         });
     }
 
@@ -387,7 +387,7 @@ export class DisruptionTrackingComponent implements OnInit {
                     this.rows = [];
                     this.total = 0;
                     this.stageCounts = [];
-                    this.notify.error('Uyğunsuzluqlar yüklənmədi', { message: 'Şəbəkə və ya icazəni yoxlayın.' });
+                    this.notify.error('Uyğunsuzluqlar yüklənmədi', { message: 'İnternet bağlantısını və ya icazəni yoxlayın.' });
                 },
             });
     }
@@ -448,14 +448,14 @@ export class DisruptionTrackingComponent implements OnInit {
                 'Region': r.regionName,
                 'Mağaza kodu': r.locationCode,
                 'Mağaza': r.locationName,
-                'Bölmə': r.sectionName,
+                'Şöbə': r.sectionName,
                 'Kateqoriya': r.disruptionCategoryName,
                 'Səbəb': r.reasonName,
                 'Təsvir': r.description,
                 'Müfəttiş': r.inspectorName,
                 'Mərhələ': stageMeta(r.stageCode).label,
                 'Kimdədir': h?.name ?? '',
-                'Onay səviyyəsi': h?.role ?? '',
+                'Təsdiq səviyyəsi': h?.role ?? '',
                 'Mərhələdə olduğu tarix': fmt(r.stageSince, 'yyyy-MM-dd HH:mm'),
                 'Yaradılma': fmt(r.createdDate, 'yyyy-MM-dd HH:mm'),
                 'Son tarix': fmt(r.deadlineDate, 'yyyy-MM-dd'),

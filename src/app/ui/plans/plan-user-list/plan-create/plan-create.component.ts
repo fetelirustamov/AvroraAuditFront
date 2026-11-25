@@ -93,7 +93,7 @@ export class PlanCreateComponent {
           this.locations = locations.data;
           this.filteredLocations = locations.data;
         },
-        error: (error) => this.notify.error(apiErrorMessage(error, 'Ərazi siyahısı yüklənmədi')),
+        error: (error) => this.notify.error(apiErrorMessage(error, 'Mağaza siyahısı yüklənmədi')),
       });
   }
 
@@ -184,7 +184,7 @@ export class PlanCreateComponent {
       .subscribe((errors) => {
         const failed = errors.map((message, index) => ({ message, index })).filter(e => e.message !== null);
         if (failed.length === 0) {
-          this.notify.success(plans.length > 1 ? 'Planlar əlavə olundu' : 'Plan uğurla əlavə olundu!', {
+          this.notify.success(plans.length > 1 ? 'Planlar əlavə edildi' : 'Plan əlavə edildi', {
             message: 'Yeni plan sistemə qeydə alındı.',
           });
           this.router.navigate(['plans/add']);

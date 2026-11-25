@@ -17,6 +17,7 @@ import { AuditLoadingOverlayComponent } from '../../components/audit-loading-ove
 import { TableState } from '../../../models/table-state.model';
 import { apiErrorMessage } from '../../../shared/utils/api-error';
 import { weightedPercent } from '../../../shared/utils/compliance';
+import { chartColors } from '../../../shared/utils/chart-colors';
 
 /** UI sütun açarlarından Swagger sıralama/filter sütun adlarına */
 const COLUMN_TO_API_FILTER: Record<string, string> = {
@@ -47,10 +48,10 @@ export class SobelerPuanlamasiComponent {
 
     columns = [
         { key: 'row', label: '№' },
-        { key: 'bolge', label: 'Bölgəsi' },
-        { key: 'magaza_kodu', label: 'Ərazi kodu' },
-        { key: 'magaza_adi', label: 'Ərazi adı' },
-        { key: 'tasnifat', label: 'Tasnifat' },
+        { key: 'bolge', label: 'Bölgə' },
+        { key: 'magaza_kodu', label: 'Mağaza kodu' },
+        { key: 'magaza_adi', label: 'Mağaza adı' },
+        { key: 'tasnifat', label: 'Təsnifat' },
         { key: 'sobe', label: 'Şöbələr' },
         { key: 'toplanan_total_bal', label: 'Şöbə üzrə toplanan bal' },
         { key: 'umumi_total_bal', label: 'Şöbə üzrə ümumi bal' },
@@ -251,28 +252,30 @@ export class SobelerPuanlamasiComponent {
     exportExcel(): void {
         if (!this.allRows) { return; }
         const data = this.allRows.map((r: any) => ({
-            '№': r.row, 'Bölgəsi': r.bolge, 'Ərazi kodu': r.magaza_kodu,
-            'Ərazi adı': r.magaza_adi, 'Tasnifat': r.tasnifat, 'Şöbələr': r.sobe,
+            '№': r.row, 'Bölgə': r.bolge, 'Mağaza kodu': r.magaza_kodu,
+            'Mağaza adı': r.magaza_adi, 'Təsnifat': r.tasnifat, 'Şöbələr': r.sobe,
             'Şöbə üzrə toplanan bal': r.toplanan_total_bal, 'Şöbə üzrə ümumi bal': r.umumi_total_bal,
             'Faiz nisbəti (%)': r.faiz_nisbeti,
         }));
         void this.fileExport.exportRowsToExcel(
             data,
-            'Şöbələr Puanlaması',
-            datedFileName('sobeler-puanlamasi', 'xlsx'),
+            'Şöbə qiymətləndirməsi',
+            datedFileName('sobe-qiymetlendirmesi', 'xlsx'),
         );
     }
 
     exportPdf(): void {
-        const headers = ['№', 'Bölgəsi', 'Ərazi kodu', 'Ərazi adı', 'Tasnifat', 'Şöbələr', 'Şöbə üzrə toplanan bal', 'Şöbə üzrə ümumi bal', 'Faiz(%)'];
+        const headers = ['№', 'Bölgə', 'Mağaza kodu', 'Mağaza adı', 'Təsnifat','Şöbələr', 'Şöbə üzrə toplanan bal', 'Şöbə üzrə ümumi bal', 'Faiz(%)'];
         if (!this.allRows) { return; }
         const rows = this.allRows.map((r: any) => [r.row, r.bolge, r.magaza_kodu, r.magaza_adi, r.tasnifat, r.sobe, r.toplanan_total_bal, r.umumi_total_bal, r.faiz_nisbeti]);
+        // PDF-də başlıq neytraldır: rəng məna daşımır
+        const pdf = chartColors();
         const docDef: any = {
             pageOrientation: 'landscape',
             content: [{ table: { headerRows: 1, body: [headers.map(h => ({ text: h, style: 'th' })), ...rows] }, layout: 'lightHorizontalLines' }],
-            styles: { th: { bold: true, color: '#fff', fillColor: '#E65100', fontSize: 8 } },
+            styles: { th: { bold: true, color: pdf.textStrong, fillColor: pdf.surfaceSubtle, fontSize: 8 } },
             defaultStyle: { fontSize: 8 }
         };
-        void this.fileExport.exportPdf(docDef, datedFileName('sobeler-puanlamasi', 'pdf'));
+        void this.fileExport.exportPdf(docDef, datedFileName('sobe-qiymetlendirmesi', 'pdf'));
     }
 }

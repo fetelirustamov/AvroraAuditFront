@@ -20,6 +20,7 @@ import { InspectionsService } from '../../inspections/inspections.service';
 import { Firm } from '../../inspections/firm.model';
 import { ReportsService } from '../reports.service';
 import { InspectionPlanWorkRow, InspectionPlanWorkResponseData } from './inspection-plan-work.model';
+import { chartColors } from '../../../shared/utils/chart-colors';
 
 const COLUMN_TO_API_FILTER: Record<string, string> = {
     magaza_kodu: 'locationCode',
@@ -240,7 +241,7 @@ export class InspectionPlanWorkComponent {
                         this.mapApiRow(item, page * size + idx + 1));
                 },
                 error: () => {
-                    this.notify.error('Hesabat yüklənmədi', { message: 'Şəbəkə və ya icazəni yoxlayın.' });
+                    this.notify.error('Hesabat yüklənmədi', { message: 'İnternet bağlantısını və ya icazəni yoxlayın.' });
                     this.resetSummary();
                 },
             });
@@ -307,15 +308,15 @@ export class InspectionPlanWorkComponent {
 
     private exportWithAllRows(onReady: (rows: InspectionPlanWorkRow[]) => void): void {
         if (!this.getSelectedFirmId()) {
-            this.notify.error('Firma seçilməyib', { message: 'Export üçün əvvəlcə firma seçin.' });
+            this.notify.error('Firma seçilməyib', { message: 'İxrac üçün əvvəlcə firma seçin.' });
             return;
         }
         if (!this.hasSubmittedSearch) {
-            this.notify.error('Axtarış edilməyib', { message: 'Export üçün əvvəlcə "Axtar" düyməsini basın.' });
+            this.notify.error('Axtarış edilməyib', { message: 'İxrac üçün əvvəlcə "Axtar" düyməsini basın.' });
             return;
         }
         if (this.allCount === 0) {
-            this.notify.error('Export üçün məlumat yoxdur');
+            this.notify.error('İxrac üçün məlumat yoxdur');
             return;
         }
 
@@ -327,13 +328,13 @@ export class InspectionPlanWorkComponent {
                     const data = this.normalizeResponseData(res);
                     const rows = data.items.map((item, idx) => this.mapApiRow(item, idx + 1));
                     if (!rows.length) {
-                        this.notify.error('Export üçün məlumat tapılmadı');
+                        this.notify.error('İxrac üçün məlumat tapılmadı');
                         return;
                     }
                     onReady(rows);
                 },
                 error: () => {
-                    this.notify.error('Export üçün məlumat yüklənmədi', { message: 'Şəbəkə və ya icazəni yoxlayın.' });
+                    this.notify.error('İxrac üçün məlumat yüklənmədi', { message: 'İnternet bağlantısını və ya icazəni yoxlayın.' });
                 },
             });
     }
@@ -378,6 +379,8 @@ export class InspectionPlanWorkComponent {
             r.is_bitme ? this.datePipe.transform(r.is_bitme, 'yyyy-MM-dd HH:mm', '+0400') ?? '—' : '—',
             r.statusLabel,
         ]);
+        // PDF-də başlıq neytraldır: rəng məna daşımır
+        const pdf = chartColors();
         const docDef = {
             pageOrientation: 'landscape' as const,
             content: [{
@@ -387,7 +390,7 @@ export class InspectionPlanWorkComponent {
                 },
                 layout: 'lightHorizontalLines',
             }],
-            styles: { th: { bold: true, color: '#fff', fillColor: '#5B6CFF', fontSize: 9 } },
+            styles: { th: { bold: true, color: pdf.textStrong, fillColor: pdf.surfaceSubtle, fontSize: 9 } },
             defaultStyle: { fontSize: 9 },
         };
         void this.fileExport.exportPdf(docDef, datedFileName('yoxlama-plani-is-statusu', 'pdf'));
