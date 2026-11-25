@@ -37,7 +37,8 @@
                 <mat-form-field appearance="outline" class="g-modern-field">
                     <mat-select formControlName="locationCode" required aria-labelledby="lp-location">
                         @for (location of locations; track location.locationCode) {
-                            <mat-option [value]="location.locationCode">{{ location.locationCode }} · {{ location.locationName }}</mat-option>
+                            <!-- Kod API-dən string gəlir, URL-dən isə rəqəm: seçim eyni tipdə müqayisə olunsun -->
+                            <mat-option [value]="+location.locationCode">{{ location.locationCode }} · {{ location.locationName }}</mat-option>
                         }
                     </mat-select>
                 </mat-form-field>
@@ -54,7 +55,7 @@
 </div>
 
 @if (isLoading) {
-    <mat-progress-bar mode="indeterminate" class="list-progress" />
+    <mat-progress-bar mode="indeterminate" class="page-progress" />
 }
 
 @if (loadError) {
@@ -68,7 +69,8 @@
         </div>
     }
 } @else {
-    <app-location-overview [profile]="profileView" />
+    <app-location-overview [profile]="profileView" [overdue]="overdue"
+                           [trackingParams]="canTrack ? trackingParams : null" />
     @if (profileView.summaries.length) {
         <app-middle-section [profile]="profileView" />
     } @else {

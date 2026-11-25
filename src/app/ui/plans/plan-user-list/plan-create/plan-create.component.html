@@ -1,9 +1,34 @@
 <!-- backLink firmanı saxlayan UrlTree-dir: page-header-in tipi hələ yalnız string | massivdir -->
-<app-page-header title="Yeni plan" [subtitle]="subtitle" [backLink]="backLink" backLabel="Müfəttişlərə qayıt" />
+<app-page-header title="Yeni plan" subtitle="Hər sətir bir mağaza üçün bir plandır"
+    [backLink]="backLink" backLabel="Müfəttişlərə qayıt" />
 
 @if (!hasContext) {
     <section class="table-card">
         <app-list-state state="empty" message="Müfəttiş seçilməyib. Müfəttişlər siyahısından firma və müfəttiş seçin" />
+    </section>
+} @else {
+    <section class="plan-context" aria-label="Planlar kimin üçün yaradılır">
+        <div class="context-group">
+            <span class="context-label">Firma</span>
+            <span class="context-chip">
+                <span class="material-symbols-outlined" aria-hidden="true">business</span>
+                {{ firmName || '…' }}
+            </span>
+        </div>
+        <div class="context-group">
+            <span class="context-label">Müfəttişlər · {{ inspectorCodes.length }}</span>
+            <span class="context-chips">
+                @for (name of inspectorNames; track $index) {
+                    <span class="context-chip">
+                        <span class="material-symbols-outlined" aria-hidden="true">person</span>
+                        {{ name }}
+                    </span>
+                } @empty {
+                    <span class="context-chip">…</span>
+                }
+            </span>
+        </div>
+        <a class="context-change" [routerLink]="backLink">Dəyiş</a>
     </section>
 }
 

@@ -1,3 +1,66 @@
+// Planların kimin üçün yaradıldığı: firma və müfəttişlər chip kimi
+.plan-context {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: var(--space-3) var(--space-6);
+    margin-bottom: var(--space-4);
+    padding: var(--space-3) var(--space-4);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+}
+
+.context-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    min-width: 0;
+}
+
+.context-label {
+    font-size: var(--fs-12);
+    font-weight: 500;
+    color: var(--text-muted);
+}
+
+.context-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-1) var(--space-2);
+}
+
+.context-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px var(--space-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface-muted);
+    color: var(--text-strong);
+    font-size: var(--fs-13);
+    font-weight: 500;
+
+    .material-symbols-outlined {
+        font-size: 16px;
+        color: var(--text-muted);
+    }
+}
+
+.context-change {
+    margin-left: auto;
+    align-self: center;
+    font-size: var(--fs-13);
+    font-weight: 500;
+    color: var(--accent-text);
+    text-decoration: none;
+
+    &:hover {
+        text-decoration: underline;
+    }
+}
+
 // Hər plan sadə sətirdir: nömrə · mağaza · tarix · iki vaxt · sil.
 .plan-rows {
     display: flex;

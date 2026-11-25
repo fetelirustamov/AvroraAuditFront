@@ -82,10 +82,11 @@
         </div>
     </div>
     <div class="kpi-card">
-        <div class="kpi-icon"><span class="material-symbols-outlined" aria-hidden="true">percent</span></div>
+        <div class="kpi-icon" [ngClass]="'tone-' + (avgFaiz | complianceTone)"><span class="material-symbols-outlined" aria-hidden="true">percent</span></div>
         <div class="kpi-body">
             <div class="kpi-value">{{ avgFaizLabel }}</div>
             <div class="kpi-label">Orta faiz nisbəti</div>
+            <div class="kpi-hint"><app-compliance-legend /></div>
         </div>
     </div>
 </div>
@@ -124,9 +125,7 @@
                             <span *ngSwitchCase="'umumi_total_bal'" class="score-num">{{ row[col.key] }}</span>
                             <span *ngSwitchCase="'toplanan_total_bal'" class="score-num">{{ row[col.key] }}</span>
                             <span *ngSwitchCase="'faiz_nisbeti'" class="faiz-chip"
-                                [class.faiz-high]="row[col.key] >= 90"
-                                [class.faiz-mid]="row[col.key] >= 75 && row[col.key] < 90"
-                                [class.faiz-low]="row[col.key] < 75">
+                                [ngClass]="'faiz-' + (row[col.key] | complianceTone)">
                                 {{ row[col.key] }}%
                             </span>
                             <span *ngSwitchDefault>{{ row[col.key] }}</span>

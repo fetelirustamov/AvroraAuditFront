@@ -23,8 +23,28 @@
                     } @else if (loaded && !groupedQuestions.length) {
                         <app-list-state state="empty" message="Bu şöbədə sual yoxdur" />
                     } @else {
+                        @if (loaded) {
+                            <div class="section-toolbar" role="toolbar" aria-label="Sualların görünüşü">
+                                <button type="button" class="toolbar-toggle" [class.is-on]="onlyNo"
+                                    [attr.aria-pressed]="onlyNo" [disabled]="!noCount && !onlyNo"
+                                    (click)="toggleOnlyNo()">
+                                    <span class="material-symbols-outlined" aria-hidden="true">filter_alt</span>
+                                    Yalnız «Xeyr» cavabları
+                                    <span class="toolbar-count">{{ noCount }}</span>
+                                </button>
+                                <span class="toolbar-spacer"></span>
+                                <button type="button" class="toolbar-link" (click)="openAll()">
+                                    <span class="material-symbols-outlined" aria-hidden="true">unfold_more</span>
+                                    Hamısını aç
+                                </button>
+                                <button type="button" class="toolbar-link" (click)="closeAll()">
+                                    <span class="material-symbols-outlined" aria-hidden="true">unfold_less</span>
+                                    Hamısını bağla
+                                </button>
+                            </div>
+                        }
                         <cdk-accordion class="category-accordion" [multi]="true">
-                            @for (group of groupedQuestions; track group.categoryName; let i = $index) {
+                            @for (group of visibleGroups; track group.categoryName; let i = $index) {
                                 @let headerId = 'q-head-' + data?.headerId + '-' + i;
                                 @let bodyId = 'q-body-' + data?.headerId + '-' + i;
                                 <cdk-accordion-item #accordionItem="cdkAccordionItem" class="category-item">
@@ -38,7 +58,12 @@
                                             </span>
                                             <span class="category-header__name">{{ group.categoryName }}</span>
                                         </span>
-                                        <span class="section-count">{{ group.questions.length }} sual</span>
+                                        <span class="category-header__meta">
+                                            @if (!onlyNo && noCountOf(group)) {
+                                                <span class="no-count">{{ noCountOf(group) }} Xeyr</span>
+                                            }
+                                            <span class="section-count">{{ group.questions.length }} sual</span>
+                                        </span>
                                     </button>
 
                                     <div class="category-body" role="region" [id]="bodyId" [attr.aria-labelledby]="headerId"
@@ -48,8 +73,8 @@
 
                                                 <ng-container matColumnDef="position">
                                                     <th mat-header-cell *matHeaderCellDef class="col-position">№</th>
-                                                    <td mat-cell *matCellDef="let element; let n = index" class="col-position">
-                                                        <span class="row-index">{{ n + 1 }}</span>
+                                                    <td mat-cell *matCellDef="let element" class="col-position">
+                                                        <span class="row-index">{{ position(element) }}</span>
                                                     </td>
                                                 </ng-container>
 

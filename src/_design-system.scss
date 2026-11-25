@@ -127,6 +127,55 @@
     color: var(--text-muted);
 }
 
+.kpi-hint {
+    margin-top: 2px;
+    font-size: var(--fs-12);
+    color: var(--text-muted);
+}
+
+// İkon yalnız göstəricinin həddi və ya statusu olanda rənglənir
+.kpi-icon {
+    &.tone-success { background: var(--success-soft); color: var(--success-text); }
+    &.tone-warning { background: var(--warning-soft); color: var(--warning-text); }
+    &.tone-danger  { background: var(--danger-soft);  color: var(--danger-text); }
+}
+
+// Süzülmüş siyahıya aparan KPI: bütün kart keçiddir, sağda ox
+a.kpi-card.is-link {
+    color: inherit;
+    text-decoration: none;
+    transition: border-color var(--transition), background var(--transition);
+
+    .kpi-body { flex: 1; min-width: 0; }
+
+    .kpi-go {
+        align-self: center;
+        font-size: 18px;
+        color: var(--text-muted);
+        transition: color var(--transition), transform var(--transition);
+    }
+
+    &:hover {
+        border-color: var(--border-strong);
+        background: var(--surface-muted);
+
+        .kpi-go { color: var(--accent); transform: translateX(2px); }
+    }
+}
+
+// ── Yenidən yükləmə xətti ───────────────────────────────────────────────────
+// Köhnə data yerində qalır, üstündə nazik xətt görünür (tam overlay yalnız ilk yükləmədə).
+// `.list-progress` kartın içində (cədvəlin üstündə), `.page-progress` bloklar arasında.
+.list-progress,
+.page-progress {
+    display: block;
+    height: 3px;
+}
+
+.page-progress {
+    margin-bottom: var(--space-3);
+}
+
 // ── Cədvəl kartı ────────────────────────────────────────────────────────────
 .table-card {
     overflow: hidden;

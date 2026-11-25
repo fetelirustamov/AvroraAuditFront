@@ -1,6 +1,6 @@
-import { Component, Input, inject } from '@angular/core';
+import { Component, Input, ViewChild, inject } from '@angular/core';
 import { DecimalPipe, NgClass } from '@angular/common';
-import { CdkAccordionModule } from '@angular/cdk/accordion';
+import { CdkAccordion, CdkAccordionModule } from '@angular/cdk/accordion';
 import { MatCardModule } from '@angular/material/card';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatTableModule } from '@angular/material/table';
@@ -45,10 +45,57 @@ export class InspectionSectionComponent {
   readonly MediaType = MediaType;
   readonly Module = Module;
 
+  @ViewChild(CdkAccordion) private categoryAccordion?: CdkAccordion;
+
   groupedQuestions: QuestionGroup[] = [];
+  /** Sualın kateqoriyadakı ilkin sıra nömrəsi: süzgəcdən sonra da eyni qalır */
+  private readonly positions = new Map<QuestionWithDetails, number>();
   isLoading = false;
   loaded = false;
   loadError: string | null = null;
+
+  /** Yalnız «Xeyr» cavablı Bəli/Xeyr sualları: bal itirən yeganə tanınan cavab budur */
+  onlyNo = false;
+  /** Göstərilən qruplar. Massiv yalnız data və ya süzgəc dəyişəndə yenilənir: cədvəl hər yoxlamada yenidən çəkilməsin */
+  visibleGroups: QuestionGroup[] = [];
+  noCount = 0;
+
+  private applyFilter(): void {
+    this.visibleGroups = this.onlyNo
+      ? this.groupedQuestions
+        .map(g => ({ categoryName: g.categoryName, questions: g.questions.filter(q => this.isNoAnswer(q)) }))
+        .filter(g => g.questions.length > 0)
+      : this.groupedQuestions;
+  }
+
+  toggleOnlyNo(): void {
+    this.onlyNo = !this.onlyNo;
+    this.applyFilter();
+    // Süzülmüş siyahıda baxılacaq hər şey görünsün: kateqoriyalar açılır
+    if (this.onlyNo) {
+      setTimeout(() => this.categoryAccordion?.openAll());
+    }
+  }
+
+  openAll(): void {
+    this.categoryAccordion?.openAll();
+  }
+
+  closeAll(): void {
+    this.categoryAccordion?.closeAll();
+  }
+
+  position(question: QuestionWithDetails): number {
+    return this.positions.get(question) ?? 0;
+  }
+
+  noCountOf(group: QuestionGroup): number {
+    return group.questions.filter(q => this.isNoAnswer(q)).length;
+  }
+
+  private isNoAnswer(question: QuestionWithDetails): boolean {
+    return question.questionTypeID === 1 && this.yesNoAnswer(question) === 'no';
+  }
 
   /** Suallar panel ilk dəfə açılanda yüklənir; xəta olubsa təkrar açanda yenidən cəhd edilir. */
   onPanelOpened(): void {
@@ -70,6 +117,8 @@ export class InspectionSectionComponent {
             return;
           }
           this.groupedQuestions = this.groupByCategory(response.data ?? []);
+          this.noCount = this.groupedQuestions.reduce((sum, g) => sum + this.noCountOf(g), 0);
+          this.applyFilter();
           this.loaded = true;
         },
         error: (error) => (this.loadError = apiErrorMessage(error, 'Suallar yüklənmədi')),
@@ -108,6 +157,8 @@ export class InspectionSectionComponent {
         map.set(q.categoryName, [q]);
       }
     }
+    this.positions.clear();
+    map.forEach(items => items.forEach((q, i) => this.positions.set(q, i + 1)));
     return Array.from(map, ([categoryName, items]) => ({ categoryName, questions: items }));
   }
 }

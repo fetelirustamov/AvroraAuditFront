@@ -116,8 +116,7 @@
                         @if (value === '') {
                             <span class="muted">—</span>
                         } @else if (col.key.endsWith('Score')) {
-                            <span class="faiz-chip" [class.faiz-high]="value >= 90"
-                                [class.faiz-mid]="value >= 75 && value < 90" [class.faiz-low]="value < 75">{{ value }}</span>
+                            <span class="faiz-chip" [ngClass]="'faiz-' + (value | complianceTone)">{{ value }}</span>
                         } @else {
                             <span class="count-num">{{ value }}</span>
                         }

@@ -145,14 +145,7 @@
 > **Deploy-dan əvvəl:**
 > - `user-roles` səhifə açarı menyudan çıxdı. Bazada yalnız ona icazəsi olan qruplara `users` icazəsi verilməlidir (`tools/seed-admin-pages.sql`).
 >
-> **Qalanlar (Mərhələ 3):**
-> - Plan, yoxlama və uyğunsuzluq rəddi üçün səbəb sahəsi. Backend və baza dəyişikliyi tələb edir.
-> - Müfəttiş təsdiqində firmasız öz növbəsi. Backend endpoint-i lazımdır.
-> - İzləmədə `stageSince` üzrə sıralama, ↑/↓ keçid və paneldə təsdiq/rədd.
-> - Profildə "gecikən" KPI-ı.
-> - Üç plan təsdiqi ekranını bir komponentdə birləşdirmək.
-> - Admin filtrlərində select oxunun çərçivədən çıxması.
-> - Progress bar yerinin vahid sinfə salınması.
+> **Qalanlar:** Mərhələ 3-ün status blokuna bax.
 
 1. **`PageHeader` + `TitleStrategy` + breadcrumb.** Hamısı `data.menu.title`-dan oxuyur. Brauzer tabının adı: "Səhifə · Audit". Bu komponent üç başlıq üslubunu birləşdirir: qradient başlıq, admin breadcrumb və hero-banner.
 2. **Status modeli.** `shared/utils/status-transitions.ts` faylında hər keçid üçün fel, ikon, ton, `requiresReason` və `confirm` qeyd olunur. Bir `status-chip` komponenti yazılır. Etiket statusu "növbə kimdədir" formasında deyir, məsələn "Baş müfəttiş onayında". "Müfəttiş onaylayıb" kimi yazılmır.
@@ -181,6 +174,34 @@
    Profil menyusunda "Admin paneli ↔ Tətbiq" keçidi olur.
 
 ## Mərhələ 3 — Axınlar (ekran-ekran)
+
+> **Status (2026-11-25): birinci hissə tamamlandı.** Rədd/qaytarma səbəbi ayrıca işdə edildi (front `07a08cf`).
+>
+> - **Əsas səhifə (1):**
+>   - Başda "Diqqət tələb edir" iş növbəsi var (`ui/dashboard/attention-queue`). Dövr filtrindən asılı deyil.
+>   - Saylar mövcud siyahı endpoint-lərinin `total`-ından və izləmənin mərhələ saylarından gəlir. Hər kart yalnız səhifəyə icazə varsa sorğulanır, server sayı istifadəçinin əhatəsinə salır.
+>   - Kartlar süzülmüş siyahıya aparır. Gecikən və qaytarılan işlər birinci gəlir və qırmızıdır.
+>   - Qrafik növləri azaldıldı: gauge (KPI-ı təkrarlayırdı) silindi, radar və treemap sıralı üfüqi sütunlara keçdi. Məlumatı olmayan panel izah göstərir.
+> - **Mağaza profili (7):** 3 KPI var: orta nəticə (hədd rəngi və legend ilə), açıq və gecikən. Son ikisi izləmənin süzülmüş siyahısını açır.
+>   - URL-dən açılanda "Mağaza" sahəsi boş qalırdı (kod string/rəqəm uyğunsuzluğu), düzəldildi.
+> - **Yoxlama detalı (8):** şöbədə "Yalnız «Xeyr» cavabları" süzgəci, "Hamısını aç/bağla" və kateqoriyada "N Xeyr" nişanı var.
+>   - Bazada bal itirən cavabı yalnız Bəli/Xeyr sualında tanımaq olur, ona görə süzgəcin adı "uyğunsuz" deyil.
+> - **Hesabatlar (6):** faiz rəngi 90/75 ilə verilirdi, indi sistemin həddi 85/70-dir (`complianceTone` pipe). Orta faiz KPI-ında hədd legend-i var.
+> - **Plan yaratma (9):** firma və müfəttişlər formun üstündə chip kimi göstərilir, "Dəyiş" linki var.
+> - **Admin (10):** dar sütunda select oxu qonşu sahəyə daşırdı (Material infix-in sabit 180px eni), düzəldildi.
+> - **Ortaq:**
+>   - `.list-progress` / `.page-progress` qlobaldır.
+>   - KPI linki (`a.kpi-card.is-link`), `<app-compliance-legend>` və `complianceTone` pipe əlavə edildi.
+>
+> **Qalanlar:**
+> - **Onay ekranları (2):** `plans-approve`, `plan-actions`, `plan-checked` və `inspection-approve` bir komponentdə birləşdirilməlidir.
+>   - `plan-actions` firma seçmədən yüklənmir. Əsas səhifənin "Təsdiq gözləyən planlar" linki statusu doldurur, firmanı isə istifadəçi seçir.
+> - **Müfəttiş təsdiqi (4):** firmasız öz növbəsi. Backend endpoint-i lazımdır.
+> - **İzləmə (5):**
+>   - `stageSince` üzrə sıralama. Backend `DisruptionRepository.GetTracking`-ə bir `orderBy` açarı lazımdır.
+>   - ↑/↓ ilə keçid və paneldə təsdiq/rədd.
+> - **Əsas səhifə (1):** dövr KPI-larının siyahıya linki yoxdur. İzləmənin süzgəcləri "açıq" tərifi ilə tam üst-üstə düşmür.
+> - **Yoxlanmayıb:** real datada (VPN) baxılmayıb. Bütün yoxlamalar saxta API cavabları ilə brauzerdə aparılıb.
 
 İstinad nümunələri: `disruption-tracking` (siyahı + yan panel) və `location-structure` (axtarışlı seçici, izah panelləri).
 

@@ -1,4 +1,4 @@
-import { NgFor, NgIf, NgSwitch, NgSwitchCase, NgSwitchDefault } from '@angular/common';
+import { NgFor, NgClass, NgIf, NgSwitch, NgSwitchCase, NgSwitchDefault } from '@angular/common';
 import { Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
@@ -12,6 +12,8 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Subject, Subscription, debounceTime, finalize } from 'rxjs';
 import { TableState } from '../../../models/table-state.model';
 import { ListStateComponent } from '../../../shared/components/list-state/list-state.component';
+import { ComplianceTonePipe } from '../../../shared/pipes/compliance-tone.pipe';
+import { ComplianceLegendComponent } from '../../../shared/components/compliance-legend/compliance-legend.component';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
 import { FileExportService, datedFileName } from '../../../shared/services/file-export.service';
 import { NotificationService } from '../../../shared/services/notification.service';
@@ -38,9 +40,9 @@ const COLUMN_TO_API_FILTER: Record<string, string> = {
     selector: 'app-esas-tasnifat-uygunlugu',
     standalone: true,
     imports: [
-        NgIf, NgFor, NgSwitch, NgSwitchCase, NgSwitchDefault, ReactiveFormsModule,
+        NgIf, NgClass, NgFor, NgSwitch, NgSwitchCase, NgSwitchDefault, ReactiveFormsModule,
         MatFormFieldModule, MatSelectModule, MatTableModule, MatPaginatorModule, MatMenuModule, MatProgressBarModule,
-        PageHeaderComponent, ListStateComponent,
+        PageHeaderComponent, ListStateComponent, ComplianceTonePipe, ComplianceLegendComponent,
     ],
     templateUrl: './main-category-compliance.component.html',
     styleUrl: './main-category-compliance.component.scss'

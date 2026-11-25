@@ -63,6 +63,9 @@ npx ng build --configuration production # dist/avrora-audit, bundle limiti 2.5 M
 - Qrafik rəngləri `shared/utils/chart-colors.ts` ilə token-lərdən oxunur.
 - Mətnlər `docs/design/glossary.md`-yə uyğun olmalıdır: Firma, Mağaza, Şöbə, Parol, təsdiq; cümlə registri.
 - Təkrarlanan səhifə blokları `src/_design-system.scss`-dədir (`.kpi-*`, `.table-card`, `.table-sticky`). Yeni səhifədə bunları sıfırdan yazma.
+  - KPI kartı süzülmüş siyahıya aparırsa, `<a class="kpi-card is-link">` + `.kpi-go` oxu işlət. KPI ikonu yalnız həddi olan göstəricidə `tone-success|warning|danger` alır.
+  - Yenidən yükləmə xətti: kartın içində `.list-progress`, bloklar arasında `.page-progress`. Komponentdə öz progress sinfini yazma.
+- Uyğunluq faizinin həddləri (85/70) yalnız `shared/utils/compliance.ts`-dədir. Şablonda `value | complianceTone` pipe-ı işlət, faizi rəngləyən yerdə `<app-compliance-legend />` göstər. Həddi rəqəmlə yazma.
 - Ortaq komponentlər (`shared/`), öz variantını yazma:
   - başlıq: `<app-page-header>`. Ad route-un `data.menu.title`-ından gəlir, düymələr `headerActions` ilə ötürülür. `.report-page-header` köhnəlib;
   - status: `<app-status-chip [planStatus]>` / `[disruptionStatus]`. Etiket və ton yalnız `shared/status/status-meta.ts`-dədir. Status düymələrinin feli, ikonu və dialoq mətni `status-actions.ts`-dədir (`STATUS_ACTIONS`, `statusActionConfirm`);

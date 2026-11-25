@@ -7,11 +7,6 @@
 //
 // İstifadə: `@use '../report-table';`
 
-.list-progress {
-    display: block;
-    height: 3px;
-}
-
 // ── Cədvəl başlığındakı sütun filtrləri ─────────────────────────────────────
 // Yalnız ad sətri sticky qalır: filtr sətri onunla üst-üstə düşməsin deyə sürüşür
 :host ::ng-deep .filter-row th.filter-header-cell {
@@ -127,7 +122,7 @@
     font-variant-numeric: tabular-nums;
 }
 
-// Uyğunluq faizi nişanı — rəng həddə görədir
+// Uyğunluq faizi nişanı — rəng həddə görədir: `'faiz-' + (value | complianceTone)` (shared/utils/compliance.ts)
 .faiz-chip {
     display: inline-block;
     min-width: 50px;
@@ -138,15 +133,15 @@
     font-weight: 600;
     font-variant-numeric: tabular-nums;
 }
-.faiz-high {
+.faiz-success {
     background: var(--success-soft);
     color: var(--success-text);
 }
-.faiz-mid {
+.faiz-warning {
     background: var(--warning-soft);
     color: var(--warning-text);
 }
-.faiz-low {
+.faiz-danger {
     background: var(--danger-soft);
     color: var(--danger-text);
 }

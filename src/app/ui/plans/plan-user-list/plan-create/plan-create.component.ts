@@ -1,6 +1,6 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { FormArray, FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ActivatedRoute, Router, UrlTree } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink, UrlTree } from '@angular/router';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -30,7 +30,7 @@ type PlanRowForm = FormGroup<{
   standalone: true,
   imports: [
     ReactiveFormsModule, FormsModule, MatInputModule, MatFormFieldModule, MatSelectModule, MatDatepickerModule,
-    NgxMaterialTimepickerModule, PageHeaderComponent, ListStateComponent,
+    NgxMaterialTimepickerModule, RouterLink, PageHeaderComponent, ListStateComponent,
   ],
   templateUrl: './plan-create.component.html',
   styleUrls: ['./plan-create.component.scss']
@@ -44,8 +44,9 @@ export class PlanCreateComponent implements OnInit {
 
   firmId: number | null = null;
   inspectorCodes: number[] = [];
-  /** Başlıqdakı izah: firma adı və seçilmiş müfəttişlər. */
-  subtitle = '';
+  /** Formun üstündəki kontekst: planlar kimin üçün yaradılır */
+  firmName = '';
+  inspectorNames: string[] = [];
   backLink: UrlTree = this.router.parseUrl('/plans/add');
 
   locations: Location[] = [];
@@ -188,12 +189,12 @@ export class PlanCreateComponent implements OnInit {
       firms: this.inspectionService.getFirms().pipe(map(r => r.data ?? []), catchError(() => of([]))),
       inspectors: this.planService.getInspectors(firmId).pipe(map(r => r.data ?? []), catchError(() => of([]))),
     }).subscribe(({ firms, inspectors }) => {
-      const firmName = firms.find(f => f.id === firmId)?.name;
-      const names = inspectors
-        .filter(user => this.inspectorCodes.includes(user.userCode))
-        .map(user => `${user.name} ${user.surName}`.trim());
-      const who = names.length ? names.join(', ') : `${this.inspectorCodes.length} müfəttiş`;
-      this.subtitle = [firmName, who].filter(Boolean).join(' · ');
+      this.firmName = firms.find(f => f.id === firmId)?.name ?? `Firma #${firmId}`;
+      // Adı tapılmayan müfəttiş kodu ilə göstərilir: seçim itməsin
+      this.inspectorNames = this.inspectorCodes.map(code => {
+        const user = inspectors.find(u => u.userCode === code);
+        return user ? `${user.name} ${user.surName}`.trim() : `#${code}`;
+      });
     });
   }
 }

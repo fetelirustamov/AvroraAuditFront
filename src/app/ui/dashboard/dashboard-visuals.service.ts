@@ -3,7 +3,6 @@ import { isPlatformBrowser } from '@angular/common';
 
 import { MONTH_SHORT_LABELS } from './dashboard.model';
 import { chartColors } from '../../shared/utils/chart-colors';
-import { complianceTone } from '../../shared/utils/compliance';
 
 /** Risk zonasının qrafik rəngi — `ChartColors`-dakı status açarı */
 export type RiskTone = 'success' | 'warning' | 'danger';
@@ -31,40 +30,6 @@ export class DashboardVisualsService {
             try { chart.destroy(); } catch { /* artıq söküləcək */ }
         });
         this.charts = [];
-    }
-
-    // ── Uyğunluq indeksi (radial gauge) ──────────────────────────────────────
-
-    async renderComplianceGauge(elementId: string, value: number): Promise<void> {
-        if (!this.isBrowser) { return; }
-        const c = chartColors();
-        const percent = Math.max(0, Math.min(100, Math.round(value)));
-        await this.render(elementId, {
-            series: [percent],
-            chart: { type: 'radialBar', height: 260, sparkline: { enabled: true }, fontFamily: 'inherit' },
-            plotOptions: {
-                radialBar: {
-                    startAngle: -135,
-                    endAngle: 135,
-                    hollow: { size: '62%' },
-                    track: { background: c.surfaceSubtle, strokeWidth: '100%' },
-                    dataLabels: {
-                        name: { offsetY: 24, color: c.textMuted, fontSize: '12px' },
-                        value: {
-                            offsetY: -16,
-                            fontSize: '34px',
-                            fontWeight: 600,
-                            color: c.textStrong,
-                            formatter: (val: number) => `${val}%`
-                        }
-                    }
-                }
-            },
-            // Göstərici həddə bağlıdır: rəng risk zonasından gəlir
-            colors: [c[complianceTone(percent)]],
-            stroke: { lineCap: 'round' },
-            labels: ['Uyğunluq indeksi']
-        });
     }
 
     // ── KPI kartlarındakı mini qrafik ────────────────────────────────────────
@@ -143,38 +108,8 @@ export class DashboardVisualsService {
         });
     }
 
-    // ── Şöbə profili (radar): cari dövr vs əvvəlki ───────────────────────────
+    // ── Şöbələr üzrə uyğunluq: cari dövr vs əvvəlki (üfüqi sütunlar) ─────────
 
-    async renderSectionRadar(
-        elementId: string,
-        sections: string[],
-        current: number[],
-        previous: number[]
-    ): Promise<void> {
-        if (!this.isBrowser) { return; }
-        const c = chartColors();
-        await this.render(elementId, {
-            series: [
-                { name: 'Cari dövr', data: current },
-                { name: 'Əvvəlki dövr', data: previous }
-            ],
-            chart: { type: 'radar', height: 340, toolbar: { show: false }, fontFamily: 'inherit' },
-            colors: [c.accent, c.neutral[1]],
-            stroke: { width: 2 },
-            fill: { opacity: [0.2, 0.08] },
-            markers: { size: 3 },
-            xaxis: { categories: sections, labels: { style: { colors: sections.map(() => c.textMuted), fontSize: '12px' } } },
-            yaxis: { min: 0, max: 100, tickAmount: 4, labels: { formatter: (val: number) => `${Math.round(val)}%` } },
-            plotOptions: { radar: { polygons: { strokeColors: c.border, connectorColors: c.border } } },
-            legend: { position: 'top', horizontalAlign: 'right', labels: { colors: c.text }, markers: { radius: 4 } },
-            tooltip: { y: { formatter: (val: number) => `${val}%` } }
-        });
-    }
-
-    /**
-     * Radar ən azı 3 ox tələb edir — 1–2 şöbədə şaquli xəttə çevrilir.
-     * Belə hallarda eyni məlumat üfüqi müqayisə sütunları ilə göstərilir.
-     */
     async renderSectionBars(
         elementId: string,
         sections: string[],
@@ -190,12 +125,13 @@ export class DashboardVisualsService {
             ],
             chart: { type: 'bar', height: 340, toolbar: { show: false }, fontFamily: 'inherit' },
             colors: [c.accent, c.neutral[2]],
-            plotOptions: { bar: { horizontal: true, barHeight: '46%', borderRadius: 4 } },
+            // Yazı sütunun sonundan kənarda: sütunun üstünə düşəndə oxunmur
+            plotOptions: { bar: { horizontal: true, barHeight: '62%', borderRadius: 3, dataLabels: { position: 'top' } } },
             dataLabels: {
                 enabled: true,
                 formatter: (val: number) => `${val}%`,
                 style: { fontSize: '12px', fontWeight: 600, colors: [c.text] },
-                offsetX: 26
+                offsetX: 24
             },
             xaxis: {
                 categories: sections,
@@ -209,30 +145,41 @@ export class DashboardVisualsService {
                 }
             },
             yaxis: { labels: { style: { colors: c.textMuted, fontSize: '12px' } } },
-            grid: { borderColor: c.border, strokeDashArray: 4 },
+            grid: { borderColor: c.border, strokeDashArray: 4, padding: { right: 28 } },
             legend: { position: 'top', horizontalAlign: 'right', labels: { colors: c.text }, markers: { radius: 4 } },
             tooltip: { y: { formatter: (val: number) => `${val}%` } }
         });
     }
 
-    // ── Uyğunsuzluq kateqoriyaları (treemap) ─────────────────────────────────
+    // ── Uyğunsuzluq kateqoriyaları: say üzrə sıralanmış üfüqi sütunlar ───────
 
-    async renderCategoryTreemap(elementId: string, items: { name: string; value: number }[]): Promise<void> {
+    async renderCategoryBars(elementId: string, items: { name: string; value: number }[]): Promise<void> {
         if (!this.isBrowser) { return; }
         const c = chartColors();
         await this.render(elementId, {
-            series: [{ data: items.map(i => ({ x: i.name, y: i.value })) }],
-            chart: { type: 'treemap', height: 340, toolbar: { show: false }, fontFamily: 'inherit' },
-            // Kateqoriyanın özünün mənası yoxdur: tək ton, sahə ölçünü verir
+            series: [{ name: 'Uyğunsuzluq', data: items.map(i => i.value) }],
+            chart: { type: 'bar', height: 340, toolbar: { show: false }, fontFamily: 'inherit' },
+            // Kateqoriyanın özünün mənası yoxdur: tək neytral ton, müqayisə uzunluqladır
             colors: [c.neutral[0]],
-            plotOptions: { treemap: { enableShades: true, shadeIntensity: 0.35, borderRadius: 4 } },
-            stroke: { width: 2, colors: [c.surface] },
-            legend: { show: false },
+            plotOptions: { bar: { horizontal: true, barHeight: '58%', borderRadius: 4, dataLabels: { position: 'top' } } },
             dataLabels: {
                 enabled: true,
-                style: { fontSize: '12px', fontWeight: 600, colors: [c.surface] },
-                formatter: (text: string, op: any) => [text, op.value]
+                offsetX: 22,
+                style: { fontSize: '12px', fontWeight: 600, colors: [c.text] }
             },
+            xaxis: {
+                categories: items.map(i => i.name),
+                // Ən uzun sütunun yazısı üçün ehtiyat yer
+                min: 0,
+                max: Math.ceil(Math.max(1, ...items.map(i => i.value)) * 1.15),
+                tickAmount: 5,
+                axisBorder: { show: false },
+                axisTicks: { show: false },
+                labels: { style: { colors: c.textMuted, fontSize: '12px' }, formatter: (val: string) => `${Math.round(Number(val))}` }
+            },
+            yaxis: { labels: { maxWidth: 180, style: { colors: c.textMuted, fontSize: '12px' } } },
+            grid: { borderColor: c.border, strokeDashArray: 4, padding: { right: 24 } },
+            legend: { show: false },
             tooltip: { y: { formatter: (val: number) => `${val} uyğunsuzluq` } }
         });
     }

@@ -12,33 +12,44 @@
     </div>
 </section>
 
-<div class="kpi-row">
+<div class="kpi-row profile-kpis">
     <div class="kpi-card">
-        <div class="kpi-icon"><span class="material-symbols-outlined" aria-hidden="true">percent</span></div>
+        <div class="kpi-icon" [ngClass]="'tone-' + resultTone"><span class="material-symbols-outlined" aria-hidden="true">percent</span></div>
         <div class="kpi-body">
             <div class="kpi-value">{{ profile.avgPlanResult | number:'1.1-1' }}%</div>
             <div class="kpi-label">Orta nəticə</div>
+            <div class="kpi-hint"><app-compliance-legend /></div>
         </div>
     </div>
-    <div class="kpi-card">
-        <div class="kpi-icon"><span class="material-symbols-outlined" aria-hidden="true">report</span></div>
-        <div class="kpi-body">
-            <div class="kpi-value">{{ profile.totalDiscrepancies }}</div>
-            <div class="kpi-label">Ümumi uyğunsuzluq</div>
-        </div>
-    </div>
-    <div class="kpi-card">
+
+    <ng-template #openBody>
         <div class="kpi-icon"><span class="material-symbols-outlined" aria-hidden="true">pending_actions</span></div>
         <div class="kpi-body">
             <div class="kpi-value">{{ profile.open }}</div>
-            <div class="kpi-label">Açıq</div>
+            <div class="kpi-label">Açıq uyğunsuzluq</div>
+            <div class="kpi-hint">{{ profile.totalDiscrepancies }} ümumi · {{ profile.solved }} həll edilib</div>
         </div>
-    </div>
-    <div class="kpi-card">
-        <div class="kpi-icon"><span class="material-symbols-outlined" aria-hidden="true">task_alt</span></div>
-        <div class="kpi-body">
-            <div class="kpi-value">{{ profile.solved }}</div>
-            <div class="kpi-label">Həll edilmiş</div>
-        </div>
-    </div>
+    </ng-template>
+    @if (trackingParams) {
+        <a class="kpi-card is-link" routerLink="/disruptions/tracking" [queryParams]="openParams"
+           aria-label="Açıq uyğunsuzluqlara bax">
+            <ng-container *ngTemplateOutlet="openBody" />
+            <span class="material-symbols-outlined kpi-go" aria-hidden="true">arrow_forward</span>
+        </a>
+    } @else {
+        <div class="kpi-card"><ng-container *ngTemplateOutlet="openBody" /></div>
+    }
+
+    @if (trackingParams) {
+        <a class="kpi-card is-link" routerLink="/disruptions/tracking" [queryParams]="overdueParams"
+           aria-label="Son tarixi keçən uyğunsuzluqlara bax">
+            <div class="kpi-icon" [class.tone-danger]="overdue"><span class="material-symbols-outlined" aria-hidden="true">schedule</span></div>
+            <div class="kpi-body">
+                <div class="kpi-value">{{ overdue ?? '—' }}</div>
+                <div class="kpi-label">Gecikən</div>
+                <div class="kpi-hint">{{ overdue == null ? 'Say yüklənmədi' : 'Son tarixi keçib' }}</div>
+            </div>
+            <span class="material-symbols-outlined kpi-go" aria-hidden="true">arrow_forward</span>
+        </a>
+    }
 </div>

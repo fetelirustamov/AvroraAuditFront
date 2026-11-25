@@ -850,12 +850,17 @@ button.mat-mdc-button-base {
 
 .g-modern-field {
     width: 100%;
+    min-width: 0;
 
     .mat-mdc-text-field-wrapper {
         border-radius: var(--radius-md) !important;
         background: var(--surface) !important;
     }
+    // Material infix-ə sabit 180px en verir: dar sütunda sahə (və select oxu) qonşu sütuna daşır.
+    // En sütundan gəlsin.
     .mat-mdc-form-field-infix {
+        width: auto;
+        min-width: 0;
         padding: 8px 0 8px !important;
         min-height: 40px;
     }

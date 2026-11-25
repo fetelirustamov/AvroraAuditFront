@@ -9,6 +9,8 @@
     </button>
 </app-page-header>
 
+<app-attention-queue />
+
 <div class="g-filter-card">
     <div class="g-filter-header">
         <span class="material-symbols-outlined" aria-hidden="true">filter_list</span>
@@ -99,7 +101,7 @@
 </div>
 
 <!-- Yenidən yükləmə: köhnə göstəricilər yerində qalır -->
-<mat-progress-bar *ngIf="isLoading && hasLoaded" mode="indeterminate" class="list-progress" />
+<mat-progress-bar *ngIf="isLoading && hasLoaded" mode="indeterminate" class="page-progress" />
 
 <!-- Yükləmə xətası "məlumat yoxdur" kimi göstərilmir -->
 <div class="table-card" *ngIf="loadError">
@@ -114,30 +116,8 @@
 <!-- ══ Dashboard məzmunu ══════════════════════════════════════════════════ -->
 <div class="bento" *ngIf="overview && !isEmpty">
 
-    <!-- Sətir 1: uyğunluq indeksi + KPI kartları -->
-    <section class="panel panel--gauge">
-        <header class="panel-header">
-            <div class="panel-title-group">
-                <span class="material-symbols-outlined panel-icon">speed</span>
-                <div>
-                    <h2 class="panel-title">Uyğunluq indeksi</h2>
-                    <p class="panel-hint">Toplanan balın normativə nisbəti</p>
-                </div>
-            </div>
-        </header>
-        <div class="panel-body gauge-body">
-            <div id="dash_gauge" class="gauge-area" role="img"
-                 [attr.aria-label]="'Uyğunluq indeksi ' + overview.kpi.averageCompliance + ' faiz'"></div>
-            <div class="gauge-legend">
-                <div class="gauge-legend-item" *ngFor="let zone of riskZones">
-                    <span class="zone-dot" [style.background]="zone.color"></span>
-                    {{ zone.name }}
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section class="kpi-grid">
+    <!-- Sətir 1: KPI kartları -->
+    <section class="kpi-grid" aria-label="Dövrün əsas göstəriciləri">
         <article class="kpi-tile" *ngFor="let kpi of kpis; trackBy: trackByKpi">
             <div class="kpi-tile-top">
                 <span class="kpi-tile-icon" [ngClass]="'tone-' + kpi.tone">
@@ -161,6 +141,7 @@
             <div class="kpi-tile-value">{{ kpi.value }}</div>
             <div class="kpi-tile-label">{{ kpi.label }}</div>
             <div class="kpi-tile-hint">{{ kpi.hint }}</div>
+            <app-compliance-legend class="kpi-tile-legend" *ngIf="kpi.key === 'compliance'" />
             <div [id]="'dash_spark_' + kpi.key" class="kpi-spark" aria-hidden="true"></div>
         </article>
     </section>
@@ -186,15 +167,16 @@
     <section class="panel">
         <header class="panel-header">
             <div class="panel-title-group">
-                <span class="material-symbols-outlined panel-icon">radar</span>
+                <span class="material-symbols-outlined panel-icon">bar_chart</span>
                 <div>
-                    <h2 class="panel-title">Şöbə profili</h2>
-                    <p class="panel-hint">Şöbələr üzrə uyğunluq — cari dövr əvvəlki dövrlə müqayisədə</p>
+                    <h2 class="panel-title">Şöbələr üzrə uyğunluq</h2>
+                    <p class="panel-hint">Ən çox uyğunsuzluğu olan şöbələr — cari dövr əvvəlki dövrlə müqayisədə</p>
                 </div>
             </div>
         </header>
         <div class="panel-body">
-            <div id="dash_radar" class="chart-area" role="img"
+            <p class="panel-empty" *ngIf="emptyPanels.sections">Seçilmiş dövrdə məlumat yoxdur</p>
+            <div id="dash_radar" *ngIf="!emptyPanels.sections" class="chart-area" role="img"
                  aria-label="Şöbələr üzrə uyğunluq profili"></div>
         </div>
     </section>
@@ -202,16 +184,17 @@
     <section class="panel">
         <header class="panel-header">
             <div class="panel-title-group">
-                <span class="material-symbols-outlined panel-icon">dashboard</span>
+                <span class="material-symbols-outlined panel-icon">sort</span>
                 <div>
                     <h2 class="panel-title">Uyğunsuzluq kateqoriyaları</h2>
-                    <p class="panel-hint">Sahə ölçüsü uyğunsuzluq sayına mütənasibdir</p>
+                    <p class="panel-hint">Ən çox uyğunsuzluq olan {{ maxCategories }} kateqoriya</p>
                 </div>
             </div>
         </header>
         <div class="panel-body">
-            <div id="dash_treemap" class="chart-area" role="img"
-                 aria-label="Uyğunsuzluq kateqoriyalarının payı"></div>
+            <p class="panel-empty" *ngIf="emptyPanels.categories">Seçilmiş dövrdə məlumat yoxdur</p>
+            <div id="dash_categories" *ngIf="!emptyPanels.categories" class="chart-area" role="img"
+                 aria-label="Kateqoriyalar üzrə uyğunsuzluq sayı"></div>
         </div>
     </section>
 
@@ -227,7 +210,8 @@
             </div>
         </header>
         <div class="panel-body">
-            <div id="dash_heatmap" class="chart-area" role="img"
+            <p class="panel-empty" *ngIf="emptyPanels.heat">Seçilmiş dövrdə məlumat yoxdur</p>
+            <div id="dash_heatmap" *ngIf="!emptyPanels.heat" class="chart-area" role="img"
                  aria-label="Şöbələr və aylar üzrə uyğunsuzluq sıxlığı"></div>
         </div>
     </section>
@@ -244,7 +228,8 @@
             </div>
         </header>
         <div class="panel-body">
-            <div id="dash_risk" class="chart-area" role="img"
+            <p class="panel-empty" *ngIf="emptyPanels.risk">Seçilmiş dövrdə məlumat yoxdur</p>
+            <div id="dash_risk" *ngIf="!emptyPanels.risk" class="chart-area" role="img"
                  aria-label="Mağazaların yoxlama sayı və uyğunluq faizi üzrə risk matrisi"></div>
         </div>
     </section>
@@ -260,7 +245,8 @@
             </div>
         </header>
         <div class="panel-body">
-            <div id="dash_funnel" class="chart-area" role="img"
+            <p class="panel-empty" *ngIf="emptyPanels.funnel">Seçilmiş dövrdə məlumat yoxdur</p>
+            <div id="dash_funnel" *ngIf="!emptyPanels.funnel" class="chart-area" role="img"
                  aria-label="Planların status üzrə bölgüsü"></div>
         </div>
     </section>

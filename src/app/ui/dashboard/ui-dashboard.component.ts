@@ -11,12 +11,14 @@ import { Subject, finalize, takeUntil } from 'rxjs';
 import { LocationService } from '../../admin/services/location.service';
 import { NotificationService } from '../../shared/services/notification.service';
 import { ListStateComponent } from '../../shared/components/list-state/list-state.component';
+import { ComplianceLegendComponent } from '../../shared/components/compliance-legend/compliance-legend.component';
 import { PageHeaderComponent } from '../../shared/components/page-header/page-header.component';
 import { apiErrorMessage } from '../../shared/utils/api-error';
 import { queryNumber, writeQueryState } from '../../shared/utils/query-state';
 import { AuditLoadingOverlayComponent } from '../components/audit-loading-overlay/audit-loading-overlay.component';
 import { Firm } from '../inspections/firm.model';
 import { InspectionsService } from '../inspections/inspections.service';
+import { AttentionQueueComponent } from './attention-queue/attention-queue.component';
 import { DashboardVisualsService } from './dashboard-visuals.service';
 import {
     DashboardLocation,
@@ -64,14 +66,14 @@ interface KpiCard {
 const RISK_ZONES = [
     { key: 'low', name: `Aşağı risk (≥${COMPLIANCE_GOOD}%)`, tone: 'success', color: 'var(--success)', min: COMPLIANCE_GOOD },
     { key: 'medium', name: `Orta risk (${COMPLIANCE_FAIR}–${COMPLIANCE_GOOD}%)`, tone: 'warning', color: 'var(--warning)', min: COMPLIANCE_FAIR },
-    { key: 'high', name: 'Yüksək risk (<70%)', tone: 'danger', color: 'var(--danger)', min: 0 }
+    { key: 'high', name: `Yüksək risk (<${COMPLIANCE_FAIR}%)`, tone: 'danger', color: 'var(--danger)', min: 0 }
 ] as const;
 
-/** Radar və istilik xəritəsi oxunaqlı qalsın deyə şöbə sayı məhdudlaşdırılır */
+/** Şöbə sütunları və istilik xəritəsi oxunaqlı qalsın deyə şöbə sayı məhdudlaşdırılır */
 const MAX_SECTIONS = 8;
 
-/** Bundan az oxda radar şaquli xəttə çevrilir — əvəzinə müqayisə sütunları çəkilir */
-const MIN_RADAR_AXES = 3;
+/** Kateqoriya sütunlarında yalnız ən böyükləri göstərilir */
+const MAX_CATEGORIES = 10;
 
 @Component({
     selector: 'app-ui-dashboard',
@@ -85,7 +87,9 @@ const MIN_RADAR_AXES = 3;
         MatProgressBarModule,
         AuditLoadingOverlayComponent,
         PageHeaderComponent,
-        ListStateComponent
+        ListStateComponent,
+        ComplianceLegendComponent,
+        AttentionQueueComponent
     ],
     providers: [DashboardVisualsService],
     templateUrl: './ui-dashboard.component.html',
@@ -128,7 +132,8 @@ export class UiDashboardComponent implements OnInit, OnDestroy {
     /** Cədvəl «ən yaxşı» yoxsa «ən riskli» əraziləri göstərir */
     rankingMode: 'best' | 'risk' = 'risk';
 
-    readonly riskZones = RISK_ZONES;
+    readonly maxCategories = MAX_CATEGORIES;
+    emptyPanels = { sections: false, categories: false, heat: false, risk: false, funnel: false };
 
     private readonly destroy$ = new Subject<void>();
 
@@ -328,6 +333,15 @@ export class UiDashboardComponent implements OnInit, OnDestroy {
 
         this.kpis = this.buildKpis();
         this.ranking = this.buildRanking();
+        const o = this.overview;
+        // Məlumatı olmayan panel boş ağ qutu kimi qalmasın: qrafik yerinə izah göstərilir
+        this.emptyPanels = {
+            sections: !o.sectionCompliance.length,
+            categories: !o.categoryShare.length,
+            heat: !o.sectionMonthHeat.length,
+            risk: !o.locations.length,
+            funnel: !o.statusFunnel.length,
+        };
 
         // Qrafiklər DOM-a bağlanır, ona görə əvvəlcə şablon yenilənməlidir
         this.cdr.detectChanges();
@@ -421,8 +435,6 @@ export class UiDashboardComponent implements OnInit, OnDestroy {
     private async renderVisuals(): Promise<void> {
         const data = this.overview!;
 
-        await this.visuals.renderComplianceGauge('dash_gauge', data.kpi.averageCompliance);
-
         for (const kpi of this.kpis) {
             await this.visuals.renderSparkline(`dash_spark_${kpi.key}`, kpi.sparkData);
         }
@@ -436,22 +448,21 @@ export class UiDashboardComponent implements OnInit, OnDestroy {
 
         const sections = this.topSections();
         if (sections.length) {
-            const names = sections.map(s => s.sectionName);
-            const current = sections.map(s => s.compliance);
-            const previous = sections.map(s => s.previousCompliance);
-
-            // Radar 3 oxdan az olanda şaquli xəttə çevrilir — o halda sütunlar
-            if (sections.length >= MIN_RADAR_AXES) {
-                await this.visuals.renderSectionRadar('dash_radar', names, current, previous);
-            } else {
-                await this.visuals.renderSectionBars('dash_radar', names, current, previous);
-            }
+            await this.visuals.renderSectionBars(
+                'dash_radar',
+                sections.map(s => s.sectionName),
+                sections.map(s => s.compliance),
+                sections.map(s => s.previousCompliance)
+            );
         }
 
-        if (data.categoryShare.length) {
-            await this.visuals.renderCategoryTreemap(
-                'dash_treemap',
-                data.categoryShare.map(c => ({ name: c.categoryName, value: c.findings }))
+        const categories = [...data.categoryShare]
+            .sort((a, b) => b.findings - a.findings)
+            .slice(0, MAX_CATEGORIES);
+        if (categories.length) {
+            await this.visuals.renderCategoryBars(
+                'dash_categories',
+                categories.map(c => ({ name: c.categoryName, value: c.findings }))
             );
         }
 
@@ -471,7 +482,7 @@ export class UiDashboardComponent implements OnInit, OnDestroy {
         }
     }
 
-    /** Radar üçün ən çox uyğunsuzluğu olan şöbələr — çox ox oxunaqlılığı pozur */
+    /** Ən çox uyğunsuzluğu olan şöbələr — çox sətir oxunaqlılığı pozur */
     private topSections() {
         return [...(this.overview?.sectionCompliance ?? [])]
             .sort((a, b) => b.findings - a.findings)

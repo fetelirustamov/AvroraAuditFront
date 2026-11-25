@@ -5,8 +5,11 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSelectModule } from '@angular/material/select';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { finalize } from 'rxjs';
+import { Subscription, finalize } from 'rxjs';
 import { HasPermissionDirective } from '../../../auth/directives/has-permission.directive';
+import { PermissionService } from '../../../auth/permission.service';
+import { TableState } from '../../../models/table-state.model';
+import { DisruptionTrackingService } from '../../disruptions/disruption-tracking/disruption-tracking.service';
 import { ListStateComponent } from '../../../shared/components/list-state/list-state.component';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
 import { NotificationService } from '../../../shared/services/notification.service';
@@ -31,7 +34,6 @@ import { MiddleSectionComponent } from './middle-section/middle-section.componen
     LocationOverviewComponent, MiddleSectionComponent,
   ],
   templateUrl: './location-profile.component.html',
-  styleUrl: './location-profile.component.scss'
 })
 export class LocationProfileComponent implements OnInit {
   private readonly inspectionsService = inject(InspectionsService);
@@ -40,6 +42,8 @@ export class LocationProfileComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly trackingService = inject(DisruptionTrackingService);
+  private readonly permissions = inject(PermissionService);
 
   firms: Firm[] = [];
   locations: Location[] = [];
@@ -47,7 +51,9 @@ export class LocationProfileComponent implements OnInit {
   isLoading = false;
   loadError: string | null = null;
   profileView: LocationProfileView | null = null;
+  overdue: number | null = null;
   private loadedFirmId: number | null = null;
+  private overdueSub?: Subscription;
 
   readonly searchForm = new FormGroup({
     firmId: new FormControl<number | null>(null, { validators: [Validators.required] }),
@@ -116,6 +122,7 @@ export class LocationProfileComponent implements OnInit {
         const rows = res.success && Array.isArray(res.data) ? res.data : [];
         this.loadedFirmId = firmId;
         this.profileView = this.buildProfileView(code, this.locationName(code), rows);
+        this.loadOverdue(firmId, code);
       },
       error: error => {
         // Köhnə mağazanın göstəriciləri xəta ilə birlikdə ekranda qalmasın
@@ -123,6 +130,29 @@ export class LocationProfileComponent implements OnInit {
         this.loadError = apiErrorMessage(error, 'Mağaza profili yüklənmədi');
       }
     });
+  }
+
+  /**
+   * Gecikən uyğunsuzluq sayı izləmə ekranının mərhələ saylarından gəlir: KPI-ın linki eyni siyahını açır.
+   * İzləməyə icazəsi olmayan istifadəçidə sorğu getmir və KPI göstərilmir.
+   */
+  private loadOverdue(firmId: number | null, locationCode: number): void {
+    this.overdue = null;
+    this.overdueSub?.unsubscribe();
+    if (!this.canTrack) return;
+
+    const state = new TableState();
+    state.paginator.size = 1;
+    state.filter = { locationCode: String(locationCode), ...(firmId != null ? { firmId: String(firmId) } : {}) };
+    this.overdueSub = this.trackingService.list(state).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: res => this.overdue = (res.data?.stages ?? []).reduce((sum, s) => sum + s.overdue, 0),
+      // Say yüklənməsə KPI "—" göstərir, profilin qalanı işləyir
+      error: () => this.overdue = null,
+    });
+  }
+
+  get canTrack(): boolean {
+    return this.permissions.canShow('disruption-tracking');
   }
 
   /** "Uyğunsuzluq izləmə"-də bu mağazanın uyğunsuzluqları */

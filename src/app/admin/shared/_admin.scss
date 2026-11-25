@@ -16,6 +16,7 @@
         position: relative;
     }
 
+    // Ölçü qlobal `.list-progress`-dən; admin siyahısında xətt kartın başına yapışır, sətirləri itələmir
     .list-progress {
         position: absolute;
         top: 0;
@@ -102,9 +103,7 @@
         gap: var(--space-3);
     }
 
-    .page-progress {
-        margin-bottom: var(--space-4);
-    }
+    // `.page-progress` qlobaldır (_design-system.scss)
 
     @include form-grid;
 }
