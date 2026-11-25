@@ -2,7 +2,8 @@ import { Routes } from '@angular/router';
 import { DashboardComponent } from './pages/dashboard/dashboard.component'; // standalone
 import { PermissionComponent } from './pages/permission/permission.component';
 
-// Shell komponentini import etmir: sidebar menyunu bu massivdən qurur və dövri import yaranmır.
+// Shell komponentini import etmir: admin.routes.ts bu massivi shell-ə uşaq kimi verir,
+// shell menyunu öz route-unun `children`-indən qurur.
 export const adminPageRoutes: Routes = [
     { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
     {

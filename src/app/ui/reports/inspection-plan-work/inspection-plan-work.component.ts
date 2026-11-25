@@ -6,7 +6,6 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatMenuModule } from '@angular/material/menu';
-import { MatNativeDateModule } from '@angular/material/core';
 import { MatPaginator, MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
@@ -35,7 +34,7 @@ const COLUMN_TO_API_FILTER: Record<string, string> = {
         CommonModule, ReactiveFormsModule, DatePipe,
         MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule,
         MatTableModule, MatPaginatorModule, MatMenuModule,
-        MatDatepickerModule, MatNativeDateModule,
+        MatDatepickerModule,
         AuditLoadingOverlayComponent,
     ],
     providers: [DatePipe],

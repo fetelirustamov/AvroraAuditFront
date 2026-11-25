@@ -15,7 +15,7 @@ import { apiErrorMessage } from '../../../../shared/utils/api-error';
 import { MatDialogModule } from '@angular/material/dialog';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { CdkTextareaAutosize, TextFieldModule } from '@angular/cdk/text-field';
-import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dialog.service';
+import { ConfirmDialogService } from '../../../../shared/components/confirm-dialog/confirm-dialog.service';
 import { CategoryService } from '../../../services/category.service';
 import { QuestionService } from '../../../services/question.service';
 import { CategoryDto } from '../../../models/category.model';

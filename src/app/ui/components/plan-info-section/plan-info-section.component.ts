@@ -4,7 +4,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatTabsModule } from '@angular/material/tabs';
 import { ComponentService } from '../component.service';
 import { PlanInfo } from '../models/plan-info.model';
-import { planStatusLabel } from '../../../shared/utils/plan-status';
+import { planStatusLabel } from '../../../shared/status/status-meta';
 import { apiErrorMessage } from '../../../shared/utils/api-error';
 import { NotificationService } from '../../../shared/services/notification.service';
 

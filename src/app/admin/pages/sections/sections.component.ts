@@ -17,7 +17,7 @@ import { SectionDto } from '../../models/section.model';
 import { SectionService } from '../../services/section.service';
 import { FirmService } from '../../services/firm.service';
 import { FirmDto } from '../../models/firm.model';
-import { ConfirmDialogService } from '../../shared/confirm-dialog/confirm-dialog.service';
+import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
 import { AdminBreadcrumbComponent } from '../../shared/breadcrumb/admin-breadcrumb.component';
 import { AuditLoadingOverlayComponent } from '../../../ui/components/audit-loading-overlay/audit-loading-overlay.component';
 import { NotificationService } from '../../../shared/services/notification.service';

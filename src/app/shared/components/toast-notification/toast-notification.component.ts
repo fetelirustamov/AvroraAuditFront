@@ -1,41 +1,38 @@
-import { CommonModule } from '@angular/common';
-import { Component, Inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { MAT_SNACK_BAR_DATA, MatSnackBarRef } from '@angular/material/snack-bar';
 
 export type ToastType = 'success' | 'error' | 'warning' | 'info';
 
 export interface ToastData {
-  title: string;
-  message?: string;
-  type: ToastType;
-  duration: number;
+    title: string;
+    message?: string;
+    type: ToastType;
+    /** Millisaniyə; `0` — istifadəçi bağlayana qədər qalır (zaman zolağı göstərilmir). */
+    duration: number;
 }
 
 const ICON_MAP: Record<ToastType, string> = {
-  success: 'check_circle',
-  error: 'cancel',
-  warning: 'warning',
-  info: 'info',
+    success: 'check_circle',
+    error: 'error',
+    warning: 'warning',
+    info: 'info',
 };
 
+/** Bildiriş görünüşü. Birbaşa açma, `NotificationService` işlət. */
 @Component({
-  selector: 'app-toast-notification',
-  standalone: true,
-  imports: [CommonModule],
-  templateUrl: './toast-notification.component.html',
-  styleUrls: ['./toast-notification.component.scss'],
+    selector: 'app-toast-notification',
+    standalone: true,
+    templateUrl: './toast-notification.component.html',
+    styleUrl: './toast-notification.component.scss',
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ToastNotificationComponent {
-  get icon(): string {
-    return ICON_MAP[this.data.type];
-  }
+    protected readonly data = inject<ToastData>(MAT_SNACK_BAR_DATA);
+    private readonly snackBarRef = inject<MatSnackBarRef<ToastNotificationComponent>>(MatSnackBarRef);
 
-  constructor(
-    @Inject(MAT_SNACK_BAR_DATA) public data: ToastData,
-    private snackBarRef: MatSnackBarRef<ToastNotificationComponent>
-  ) {}
+    protected readonly icon = ICON_MAP[this.data.type];
 
-  dismiss(): void {
-    this.snackBarRef.dismiss();
-  }
+    protected dismiss(): void {
+        this.snackBarRef.dismiss();
+    }
 }

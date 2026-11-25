@@ -18,7 +18,7 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import listPlugin from '@fullcalendar/list';
 import { NotificationService } from '../../../shared/services/notification.service';
 import { isoDateAddDays, toBakuDisplay, toBakuWallClock } from '../../../shared/utils/date.util';
-import { PLAN_STATUS_LABELS, planStatusLabel } from '../../../shared/utils/plan-status';
+import { PLAN_STATUS_LABELS, planStatusLabel } from '../../../shared/status/status-meta';
 import { TableState } from '../../../models/table-state.model';
 import { AuditLoadingOverlayComponent } from '../../components/audit-loading-overlay/audit-loading-overlay.component';
 import { TableService } from '../../services/table.service';

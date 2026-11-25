@@ -1,8 +1,10 @@
 // Admin səhifələrinin ortaq forma və cədvəl stilləri.
-// Çərçivə (sidebar, header, məzmun) ui.component.scss-dədir.
+// Yalnız `.admin-area` daxilində təsir edir: shell bu sinfi area = 'admin' olanda qoyur.
+// Selektorlar köhnə `:host ::ng-deep` (AdminComponent) ilə eyni spesifiklikdədir:
+// `.admin-area` əvvəlki `[_nghost]` atributunun yerini tutur, səhifələrdəki üstələmələr dəyişmir.
 
 /* Global admin form input styles */
-:host ::ng-deep {
+::ng-deep .admin-area {
 
     /* Consistent form field styling — 40px standard height */
     .mat-mdc-form-field {
@@ -166,7 +168,7 @@
 }
 
 /* Final override: use Locations input/select design in admin pages */
-:host ::ng-deep .admin-input-design {
+::ng-deep .admin-area .admin-input-design {
     .mat-mdc-form-field {
         width: 100%;
 
@@ -345,7 +347,7 @@
 // ═══════════════════════════════════════════════════════════════════
 // GLOBAL ADMIN TABLE DESIGN SYSTEM
 // ═══════════════════════════════════════════════════════════════════
-:host ::ng-deep {
+::ng-deep .admin-area {
 
     // ── Table wrapper ────────────────────────────────────────────────
     .table-responsive {

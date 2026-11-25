@@ -16,7 +16,7 @@ import { catchError, finalize } from 'rxjs/operators';
 import { apiErrorMessage } from '../../../../shared/utils/api-error';
 import { ImportIssue, ImportPreviewData, ImportPreviewDialogComponent, ImportPreviewRow } from './import-preview-dialog.component';
 import { FileExportService, datedFileName } from '../../../../shared/services/file-export.service';
-import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dialog.service';
+import { ConfirmDialogService } from '../../../../shared/components/confirm-dialog/confirm-dialog.service';
 import { FirmService } from '../../../services/firm.service';
 import { LocationService } from '../../../services/location.service';
 import { UserService } from '../../../services/user.service';

@@ -1,5 +1,5 @@
 import { Route, Routes } from '@angular/router';
-import { UiComponent } from './ui.component';
+import { ShellComponent } from '../common/shell/shell.component';
 import { AuthGuard } from '../auth/guards/auth.guard';
 import { permissionGuard } from '../auth/guards/permission.guard';
 import { uiPageRoutes } from './ui-pages.routes';
@@ -20,9 +20,10 @@ function withPermission(route: Route): Route {
 export const uiRoutes: Routes = [
     {
         path: '',
-        component: UiComponent,
+        component: ShellComponent,
         canActivate: [AuthGuard],
         providers: SHELL_PROVIDERS,
+        data: { area: 'ui' },
         children: uiPageRoutes.map(withPermission),
     },
 ];

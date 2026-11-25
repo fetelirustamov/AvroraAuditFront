@@ -14,7 +14,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialogModule, MatDialogRef, MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import { QuestionService } from '../../services/question.service';
-import { ConfirmDialogService } from '../../shared/confirm-dialog/confirm-dialog.service';
+import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
 import { CategoryService } from '../../services/category.service';
 import { CategoryDto } from '../../models/category.model';
 import { QUESTION_TYPES, QuestionDto, questionTypeLabel, toQuestionTypeId } from '../../models/question.model';

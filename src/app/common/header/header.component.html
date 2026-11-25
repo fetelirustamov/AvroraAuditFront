@@ -1,11 +1,34 @@
-<header class="header-area" [class.active]="isSidebarToggled">
+<header class="header">
     <div class="header-start">
-        <button type="button" class="header-icon-btn" (click)="toggle()" aria-label="Menyu">
+        <button #menuButton type="button" class="header-icon-btn" (click)="menuToggle.emit()"
+            [attr.aria-label]="menuExpanded() ? 'Menyunu yığ' : 'Menyunu aç'"
+            [attr.aria-expanded]="menuExpanded()" aria-controls="app-sidebar">
             <span class="material-symbols-outlined" aria-hidden="true">menu</span>
         </button>
     </div>
 
     <div class="header-end">
+        <div class="menu-search" role="search">
+            <span class="material-symbols-outlined menu-search-icon" aria-hidden="true">search</span>
+            <input type="search" class="menu-search-input" placeholder="Menyuda axtar" aria-label="Menyuda axtar"
+                autocomplete="off" [matAutocomplete]="searchPanel" (input)="onSearchInput($event)">
+            <mat-autocomplete #searchPanel="matAutocomplete" class="menu-search-panel"
+                [autoActiveFirstOption]="true" [displayWith]="clearInput"
+                (optionSelected)="goTo($event.option.value)">
+                @for (result of results(); track result.link.path) {
+                    <mat-option [value]="result.link">
+                        <span class="result">
+                            <span class="result-title">{{ result.link.title }}</span>
+                            <span class="result-context">{{ result.context }}</span>
+                        </span>
+                    </mat-option>
+                }
+                @if (query().trim() && !results().length) {
+                    <mat-option disabled>Nəticə tapılmadı</mat-option>
+                }
+            </mat-autocomplete>
+        </div>
+
         <button type="button" class="profile-trigger" [matMenuTriggerFor]="profileMenu"
             [attr.aria-label]="'Profil: ' + profile.fullName">
             <span class="shell-avatar" aria-hidden="true">{{ profile.initials }}</span>
@@ -22,6 +45,19 @@
                     }
                 </div>
             </div>
+            @if (canSwitchArea) {
+                @if (area() === 'admin') {
+                    <a mat-menu-item routerLink="/">
+                        <mat-icon>arrow_back</mat-icon>
+                        <span>Tətbiqə qayıt</span>
+                    </a>
+                } @else {
+                    <a mat-menu-item routerLink="/admin">
+                        <mat-icon>admin_panel_settings</mat-icon>
+                        <span>Admin paneli</span>
+                    </a>
+                }
+            }
             <button mat-menu-item type="button" (click)="logout()">
                 <mat-icon>logout</mat-icon>
                 <span>Çıxış</span>

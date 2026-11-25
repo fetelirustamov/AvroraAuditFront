@@ -9,7 +9,8 @@
 // ============================================================================
 
 // ── Səhifə başlığı ──────────────────────────────────────────────────────────
-// Sadə başlıq: ad, bir sətirlik izah, sağda əməliyyatlar. Rəng və bəzək yoxdur.
+// KÖHNƏLİB: yeni kodda `<app-page-header>` işlət (shared/components/page-header).
+// Ekranlar komponentə keçdikcə bu sinfin istifadəsi silinir, sonra qayda da silinəcək.
 .report-page-header {
     padding: 0 0 var(--space-4);
     margin-bottom: var(--space-5);
@@ -172,6 +173,31 @@
     overflow-x: auto;
 }
 
+// Sticky başlıq: cədvəli bu konteynerə sal (`.table-responsive-wrapper` əvəzinə).
+// Konteyner hər iki istiqamətdə özü sürüşür, ona görə başlıq uzun siyahıda yuxarıda qalır.
+// Hündürlüyü dəyişmək üçün: `style="--table-max-h: 480px"`.
+//
+// Cədvəl qaydaları:
+// - ikon düymələri `.action-btn`-dir (styles.scss, 36px) və hər birində azərbaycanca
+//   `aria-label` olur, düymədəki feli təkrarlayır: aria-label="Redaktə et", "Sil", "Bax".
+//   Tooltip ad vermir, ekran oxuyucusu onu oxumur;
+// - kod və ID sütunları `.mono`, rəqəmlər `font-variant-numeric: tabular-nums`;
+// - status `<app-status-chip>`, boş/xəta halı `<app-list-state>`.
+.table-sticky {
+    max-height: var(--table-max-h, 70vh);
+    overflow: auto;
+
+    thead th,
+    .mat-mdc-header-cell {
+        position: sticky;
+        top: 0;
+        z-index: 2;
+        background: var(--surface);
+        // Sürüşəndə başlığın alt xətti sətirlərlə birlikdə getməsin
+        box-shadow: inset 0 -1px 0 var(--border);
+    }
+}
+
 .modern-table {
     width: 100%;
 
@@ -190,6 +216,8 @@
 
 // ── Status nişanları ────────────────────────────────────────────────────────
 // Rəng yalnız mənadır. Mətn öz fonu üzərində ən azı 4.5:1 kontrast verir.
+// Yeni kodda `<app-status-chip>` işlət (shared/status): etiket və ton status-meta.ts-dən gəlir.
+// Bu qlobal sinif ekranlar komponentə keçənə qədər qalır.
 .status-chip {
     display: inline-flex;
     align-items: center;
@@ -227,6 +255,7 @@
 }
 
 // ── Boş vəziyyət ────────────────────────────────────────────────────────────
+// Siyahılarda `<app-list-state>` işlət: "hələ axtarılmayıb", "nəticə yoxdur", "yüklənmədi".
 .empty-state {
     display: flex;
     flex-direction: column;

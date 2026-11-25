@@ -1,30 +1,32 @@
-<aside class="sidebar-area" [class.active]="isSidebarToggled">
+<aside id="app-sidebar" class="sidebar" [cdkTrapFocus]="open()">
     <div class="sidebar-logo">
-        <a routerLink="/dashboard" class="logo-link">
-            <img src="images/logo-icon.svg" class="logo-icon" alt="Loqo">
+        <a [routerLink]="homePath()" class="logo-link" aria-label="Əsas səhifə">
+            <img src="images/logo-icon.svg" class="logo-icon" alt="">
             <img src="images/logo-text.svg" class="logo-text" alt="">
         </a>
-        <button type="button" class="sidebar-close" (click)="toggle()" aria-label="Menyunu bağla">
+        <button type="button" class="sidebar-close" (click)="closeRequest.emit()" aria-label="Menyunu bağla">
             <span class="material-symbols-outlined" aria-hidden="true">close</span>
         </button>
     </div>
 
     <ng-scrollbar visibility="hover" class="sidebar-scroll">
-        <nav class="sidebar-menu" aria-label="Menyu">
+        <nav class="sidebar-menu" [attr.aria-label]="navLabel()">
+            <!-- Menyu route ağacından (data.menu) icazəyə görə qurulur. Statik link yoxdur. -->
             <mat-accordion displayMode="flat">
-                <!-- Menyu route ağacından (data.menu) icazəyə görə qurulur. Statik link yoxdur. -->
                 @for (section of menu(); track section.label) {
                     <span class="menu-section-title">{{ section.label }}</span>
 
-                    @for (entry of section.entries; track $index) {
+                    @for (entry of section.entries; track entry.kind + entry.title) {
                         @if (entry.kind === 'link') {
-                            <a [routerLink]="entry.path" class="sidebar-menu-link" routerLinkActive="active"
-                                [routerLinkActiveOptions]="{exact: true}">
+                            <a [routerLink]="entry.path" class="sidebar-menu-link"
+                                [class.active]="isActive(entry)"
+                                [attr.aria-current]="isActive(entry) ? 'page' : null">
                                 <span class="material-symbols-outlined" aria-hidden="true">{{ entry.icon }}</span>
                                 <span class="title">{{ entry.title }}</span>
                             </a>
                         } @else {
-                            <mat-expansion-panel>
+                            <!-- Aktiv bəndin qrupu açıq gəlir; istifadəçi sonra özü bağlaya bilər -->
+                            <mat-expansion-panel [expanded]="hasActive(entry)" [class.has-active]="hasActive(entry)">
                                 <mat-expansion-panel-header>
                                     <mat-panel-title>
                                         <span class="material-symbols-outlined" aria-hidden="true">{{ entry.icon }}</span>
@@ -34,8 +36,9 @@
                                 <ul class="sidebar-sub-menu">
                                     @for (item of entry.items; track item.pageKey) {
                                         <li class="sidemenu-item">
-                                            <a [routerLink]="item.path" routerLinkActive="active"
-                                                [routerLinkActiveOptions]="{exact: true}" class="sidemenu-link">
+                                            <a [routerLink]="item.path" class="sidemenu-link"
+                                                [class.active]="isActive(item)"
+                                                [attr.aria-current]="isActive(item) ? 'page' : null">
                                                 {{ item.title }}
                                             </a>
                                         </li>
@@ -46,11 +49,6 @@
                     }
                 }
             </mat-accordion>
-
-            <button type="button" (click)="logout()" class="sidebar-menu-link sidebar-logout-btn">
-                <span class="material-symbols-outlined" aria-hidden="true">logout</span>
-                <span class="title">Çıxış</span>
-            </button>
         </nav>
     </ng-scrollbar>
 </aside>

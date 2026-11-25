@@ -13,11 +13,10 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatDatepickerModule } from '@angular/material/datepicker';
-import { MatNativeDateModule } from '@angular/material/core';
 import { LocationAddComponent } from './add/location-add.component';
 import { FirmService } from '../../services/firm.service';
 import { FirmDto } from '../../models/firm.model';
-import { ConfirmDialogService } from '../../shared/confirm-dialog/confirm-dialog.service';
+import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
 import { LocationService } from '../../services/location.service';
 import { LocationDto } from '../../models/location.model';
 import { AdminBreadcrumbComponent } from '../../shared/breadcrumb/admin-breadcrumb.component';
@@ -60,7 +59,6 @@ interface LocationRow {
     MatTooltipModule,
     MatDialogModule,
     MatDatepickerModule,
-    MatNativeDateModule,
     AdminBreadcrumbComponent,
     AuditLoadingOverlayComponent
   ],

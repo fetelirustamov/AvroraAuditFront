@@ -3,7 +3,6 @@ import { Component } from '@angular/core';
 import { FormArray, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
-import { MatNativeDateModule } from '@angular/material/core';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -30,7 +29,6 @@ import { catchError, finalize, forkJoin, map, of } from 'rxjs';
     MatInputModule,
     MatFormFieldModule,
     MatSelectModule,
-    MatNativeDateModule,
     MatButtonModule,
     MatDatepickerModule,
     MatExpansionModule,

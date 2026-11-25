@@ -18,7 +18,7 @@ import { AuditLoadingOverlayComponent } from '../../../ui/components/audit-loadi
 import { MatChipsModule } from '@angular/material/chips';
 import { PageService } from '../../services/page.service';
 import { PageDto } from '../../models/page.model';
-import { ConfirmDialogService } from '../../shared/confirm-dialog/confirm-dialog.service';
+import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
 import { AdminBreadcrumbComponent } from '../../shared/breadcrumb/admin-breadcrumb.component';
 
 @Component({

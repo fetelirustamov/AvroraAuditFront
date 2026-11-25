@@ -5,7 +5,8 @@ import { RoleGuard } from '../auth/guards/role.guard';
 // Əvvəl bu fayl 25 komponenti statik import edirdi, ona görə build hamısını —
 // leaflet (xəritə), fullcalendar (təqvim) və bütün hesabatlarla birlikdə — bir
 // chunk-a yığırdı: istifadəçi sadəcə Əsas Səhifəni açanda da ~1.2 MB alırdı.
-// Shell komponentini import etmir: sidebar menyunu bu massivdən qurur və dövri import yaranmır.
+// Shell komponentini import etmir: ui.routes.ts bu massivi shell-ə uşaq kimi verir,
+// shell menyunu öz route-unun `children`-indən qurur.
 export const uiPageRoutes: Routes = [
     { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
     {
@@ -106,7 +107,8 @@ export const uiPageRoutes: Routes = [
                     menu: {
                         area: 'app', section: 'İş axını', order: 10,
                         group: 'Planlama', groupIcon: 'edit_calendar', groupOrder: 10,
-                        title: 'Planla', pageKey: 'plans'
+                        title: 'Planla', pageKey: 'plans',
+                        activeAlso: ['plans']
                     }
                 }
             },
@@ -186,7 +188,8 @@ export const uiPageRoutes: Routes = [
                     menu: {
                         area: 'app', section: 'İş axını', order: 41,
                         group: 'Uyğunsuzluqlar', groupIcon: 'report', groupOrder: 40,
-                        title: 'Müfəttiş təsdiqi', pageKey: 'disruption-middle'
+                        title: 'Müfəttiş təsdiqi', pageKey: 'disruption-middle',
+                        activeAlso: ['disruptions/middle-details']
                     }
                 },
             },
@@ -241,7 +244,8 @@ export const uiPageRoutes: Routes = [
                     menu: {
                         area: 'app', section: 'İş axını', order: 51,
                         group: 'Cavablar', groupIcon: 'border_color', groupOrder: 50,
-                        title: 'Təsdiq gözləyən', pageKey: 'answer-approve'
+                        title: 'Təsdiq gözləyən', pageKey: 'answer-approve',
+                        activeAlso: ['answers/approve-details']
                     }
                 }
             },
@@ -266,7 +270,8 @@ export const uiPageRoutes: Routes = [
         data: {
             menu: {
                 area: 'app', section: 'Hesabat və təhlil', order: 60,
-                title: 'Mağaza profili', icon: 'account_box', pageKey: 'location-profile'
+                title: 'Mağaza profili', icon: 'account_box', pageKey: 'location-profile',
+                activeAlso: ['profiles']
             }
         }
     },

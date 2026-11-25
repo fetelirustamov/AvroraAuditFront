@@ -1016,9 +1016,14 @@ button.mat-mdc-button-base {
 }
 
 // ─── Toast bildirişləri (Material snackbar konteyneri sıfırlanır) ───────────
+// NotificationService yuxarı sağda açır: paginatoru və cədvəlin altını örtmür.
+// Görünüş toast-notification komponentindədir, burada yalnız konteyner sıfırlanır və yerləşir.
 .ap-toast-panel {
     // Reset Material snackbar container
     &.mat-mdc-snack-bar-container {
+        // Shell header-in (64px) altında çıxır: profil menyusunu örtmür.
+        // Overlay shell-dən kənardadır, --shell-header-h oraya miras keçmir.
+        margin: calc(64px + var(--space-2)) var(--space-4) var(--space-4) !important;
         padding: 0 !important;
         background: transparent !important;
         box-shadow: none !important;

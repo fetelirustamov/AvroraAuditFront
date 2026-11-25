@@ -13,7 +13,7 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { HttpErrorResponse } from '@angular/common/http';
 import { NotificationService } from '../../../../shared/services/notification.service';
-import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dialog.service';
+import { ConfirmDialogService } from '../../../../shared/components/confirm-dialog/confirm-dialog.service';
 import { AuditLoadingOverlayComponent } from '../../../../ui/components/audit-loading-overlay/audit-loading-overlay.component';
 import { MatChipsModule } from '@angular/material/chips';
 import { UserService } from '../../../services/user.service';

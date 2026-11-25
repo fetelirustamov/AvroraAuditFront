@@ -3,7 +3,6 @@ import { Component, DestroyRef, OnInit, ViewChild, inject } from '@angular/core'
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatNativeDateModule } from '@angular/material/core';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -57,7 +56,7 @@ const FIRM_DEPENDENT = ['regionId', 'locationCode', 'inspectorId', 'approverUser
     standalone: true,
     imports: [
         DatePipe, ReactiveFormsModule, FormsModule,
-        MatFormFieldModule, MatInputModule, MatSelectModule, MatDatepickerModule, MatNativeDateModule,
+        MatFormFieldModule, MatInputModule, MatSelectModule, MatDatepickerModule,
         MatCheckboxModule, MatTableModule, MatSortModule, MatPaginatorModule,
         AuditLoadingOverlayComponent, TrackingDetailPanelComponent,
     ],

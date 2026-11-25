@@ -21,7 +21,6 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
-import { MatNativeDateModule } from '@angular/material/core';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { FileUploadModule } from '@iplab/ngx-file-upload';
@@ -36,7 +35,7 @@ import { catchError, EMPTY, finalize, of, switchMap } from 'rxjs';
 
 @Component({
   selector: 'app-answer-details',
-  imports: [MatCardModule, MatButtonModule, MatMenuModule, MatTableModule, CommonModule, MatPaginatorModule, MatProgressSpinnerModule, MatInputModule, MatFormFieldModule, MatSelectModule, MatDatepickerModule, MatNativeDateModule, FormsModule, ReactiveFormsModule, NgxMaterialTimepickerModule, NgFor, FileUploadModule, MediaComponent, MatTooltipModule],
+  imports: [MatCardModule, MatButtonModule, MatMenuModule, MatTableModule, CommonModule, MatPaginatorModule, MatProgressSpinnerModule, MatInputModule, MatFormFieldModule, MatSelectModule, MatDatepickerModule, FormsModule, ReactiveFormsModule, NgxMaterialTimepickerModule, NgFor, FileUploadModule, MediaComponent, MatTooltipModule],
   providers: [DatePipe],
   templateUrl: './answer-details.component.html',
   styleUrl: './answer-details.component.scss'

@@ -19,7 +19,6 @@ import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldControl, MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { MatDatepickerModule } from '@angular/material/datepicker';
-import { MatNativeDateModule } from '@angular/material/core';
 import { NgxMaterialTimepickerModule } from 'ngx-material-timepicker';
 import { SelectionModel } from '@angular/cdk/collections';
 import { FileUploadModule } from '@iplab/ngx-file-upload';
@@ -31,7 +30,7 @@ import { apiErrorMessage } from '../../../shared/utils/api-error';
 
 @Component({
   selector: 'app-disruption-middle',
-  imports: [MatCardModule, MatButtonModule, MatMenuModule, MatTableModule, CommonModule, MatPaginatorModule, MatInputModule, MatFormFieldModule, MatSelectModule, MatDatepickerModule, MatNativeDateModule, FormsModule, ReactiveFormsModule, NgxMaterialTimepickerModule, NgFor, FileUploadModule, AuditLoadingOverlayComponent],
+  imports: [MatCardModule, MatButtonModule, MatMenuModule, MatTableModule, CommonModule, MatPaginatorModule, MatInputModule, MatFormFieldModule, MatSelectModule, MatDatepickerModule, FormsModule, ReactiveFormsModule, NgxMaterialTimepickerModule, NgFor, FileUploadModule, AuditLoadingOverlayComponent],
   providers: [DatePipe],
   templateUrl: './disruption-middle.component.html',
   styleUrl: './disruption-middle.component.scss'

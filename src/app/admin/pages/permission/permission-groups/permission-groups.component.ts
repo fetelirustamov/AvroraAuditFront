@@ -15,7 +15,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialogModule } from '@angular/material/dialog';
 import { AuditLoadingOverlayComponent } from '../../../../ui/components/audit-loading-overlay/audit-loading-overlay.component';
 import { NotificationService } from '../../../../shared/services/notification.service';
-import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dialog.service';
+import { ConfirmDialogService } from '../../../../shared/components/confirm-dialog/confirm-dialog.service';
 import { RoleService } from '../../../services/role.service';
 import { RoleDto } from '../../../models/role.model';
 import { AdminBreadcrumbComponent } from '../../../shared/breadcrumb/admin-breadcrumb.component';

@@ -12,7 +12,6 @@ import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { MatDatepickerModule } from '@angular/material/datepicker';
-import { MatNativeDateModule } from '@angular/material/core';
 import { InspectionsService } from '../inspections.service';
 import { Firm } from '../firm.model';
 import { Location } from '../location.model';
@@ -42,7 +41,6 @@ import { NotificationService } from '../../../shared/services/notification.servi
     MatFormFieldModule,
     MatSelectModule,
     MatDatepickerModule,
-    MatNativeDateModule,
     FormsModule,
     ReactiveFormsModule,
     NgxMaterialTimepickerModule,

@@ -1,14 +1,13 @@
 // ============================================================================
-//  Sidebar: əsas tətbiq və admin paneli eyni stili işlədir
-//  (admin/layout/sidebar bu faylı styleUrl kimi götürür).
+//  Sidebar (əsas tətbiq və admin eyni). Ölçülər (`--shell-*`) shell-dən gəlir.
 // ============================================================================
-//  Ölçülər (`--shell-*`) shell konteynerindən gəlir: ui.component.scss.
-//  ≥1200px: sabit panel; `.active` onu ikon zolağına yığır, hover açır.
-//  <1200px: ekrandan kənarda gizlidir; `.active` onu üstə açır.
-//  Material daxili elementləri üçün ::ng-deep lazımdır.
+//  ≥1200px: sabit panel; `:host(.is-rail)` onu ikon zolağına yığır,
+//           hover və ya klaviatura fokusu müvəqqəti tam açır.
+//  <1200px: ekrandan kənarda gizlidir; `:host(.is-open)` drawer kimi açır.
+//  Material-in daxili elementləri üçün yalnız orada ::ng-deep işlənir.
 // ============================================================================
 
-::ng-deep .sidebar-area {
+.sidebar {
     // Material expansion panel token-ləri
     --mat-expansion-container-background-color: transparent;
     --mat-expansion-container-text-color: var(--text);
@@ -28,7 +27,7 @@
     position: fixed;
     top: 0;
     left: 0;
-    z-index: 6;
+    z-index: 7;
     display: flex;
     flex-direction: column;
     width: var(--shell-sidebar-w);
@@ -36,270 +35,253 @@
     overflow: hidden;
     background: var(--surface);
     border-right: 1px solid var(--border);
-    transition: width var(--transition), transform var(--transition);
+    transition: width var(--transition), transform var(--transition), visibility 0s linear;
+}
 
-    // ── Loqo yeri ───────────────────────────────────────────────────────────
-    // Müştəri brendi yalnız buradan gəlir; mətn yoxdur.
-    .sidebar-logo {
-        flex-shrink: 0;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: var(--space-2);
-        height: var(--shell-header-h);
-        padding: 0 var(--space-4) 0 var(--space-5);
-        border-bottom: 1px solid var(--border);
+// ── Loqo yeri ───────────────────────────────────────────────────────────────
+// Müştəri brendi yalnız buradan gəlir; mətn yoxdur.
+.sidebar-logo {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2);
+    height: var(--shell-header-h);
+    padding: 0 var(--space-4) 0 var(--space-5);
+    border-bottom: 1px solid var(--border);
+}
+
+.logo-link {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    min-width: 0;
+    overflow: hidden;
+}
+
+.logo-icon {
+    flex-shrink: 0;
+    width: auto;
+    height: 32px;
+}
+
+.logo-text {
+    width: auto;
+    min-width: 0;
+    max-width: 100%;
+    height: 14px;
+    object-fit: contain;
+    object-position: left center;
+    transition: opacity var(--transition);
+}
+
+// Yalnız <1200px-də görünür (orada panel drawer-dir)
+.sidebar-close {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border: 0;
+    border-radius: var(--radius-md);
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: background var(--transition), color var(--transition);
+
+    &:hover {
+        background: var(--bg);
+        color: var(--text-strong);
     }
+    .material-symbols-outlined {
+        font-size: 22px;
+    }
+}
 
-    .logo-link {
-        display: flex;
-        align-items: center;
-        gap: var(--space-2);
-        min-width: 0;
+// ── Sürüşmə sahəsi ──────────────────────────────────────────────────────────
+.sidebar-scroll {
+    flex: 1;
+    min-height: 0;
+}
+
+.sidebar-menu {
+    padding: var(--space-4) var(--space-3) var(--space-6);
+}
+
+.menu-section-title {
+    display: block;
+    margin: var(--space-5) var(--space-3) var(--space-2);
+    font-size: var(--fs-12);
+    font-weight: 600;
+    line-height: 16px;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    color: var(--text-muted);
+
+    &:first-child {
+        margin-top: 0;
+    }
+}
+
+// ── Bənd: tək keçid və qrup başlığı eyni görünür ────────────────────────────
+.sidebar-menu-link,
+.mat-expansion-panel-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    min-height: 40px;
+    margin-bottom: 2px;
+    padding: 0 var(--space-3);
+    border-radius: var(--radius-md);
+    color: var(--text);
+    font-size: var(--fs-14);
+    font-weight: 500;
+    line-height: 20px;
+    white-space: nowrap;
+    text-decoration: none;
+    transition: background var(--transition), color var(--transition);
+
+    .material-symbols-outlined {
+        flex-shrink: 0;
+        font-size: 20px;
+        color: var(--text-muted);
+        transition: color var(--transition);
+    }
+    .title {
         overflow: hidden;
-    }
-
-    .logo-icon {
-        flex-shrink: 0;
-        width: auto;
-        height: 32px;
-    }
-
-    .logo-text {
-        width: auto;
-        min-width: 0;
-        max-width: 100%;
-        height: 14px;
-        object-fit: contain;
-        object-position: left center;
+        text-overflow: ellipsis;
         transition: opacity var(--transition);
     }
+}
 
-    // Yalnız <1200px-də görünür (orada panel üstə açılır)
-    .sidebar-close {
-        display: none;
-        align-items: center;
-        justify-content: center;
-        flex-shrink: 0;
-        width: 36px;
-        height: 36px;
-        padding: 0;
-        border: 0;
-        border-radius: var(--radius-md);
-        background: transparent;
-        color: var(--text-muted);
-        cursor: pointer;
-        transition: background var(--transition), color var(--transition);
-
-        &:hover {
-            background: var(--bg);
-            color: var(--text-strong);
-        }
-        .material-symbols-outlined {
-            font-size: 22px;
-        }
-    }
-
-    // ── Sürüşmə sahəsi ──────────────────────────────────────────────────────
-    .sidebar-scroll {
-        flex: 1;
-        min-height: 0;
-    }
-
-    .sidebar-menu {
-        padding: var(--space-4) var(--space-3) var(--space-6);
-    }
-
-    .menu-section-title {
-        display: block;
-        margin: var(--space-5) var(--space-3) var(--space-2);
-        font-size: var(--fs-12);
-        font-weight: 600;
-        line-height: 16px;
-        letter-spacing: .06em;
-        text-transform: uppercase;
-        white-space: nowrap;
-        color: var(--text-muted);
-
-        &:first-child {
-            margin-top: 0;
-        }
-    }
-
-    // ── Bənd: tək keçid və qrup başlığı eyni görünür ────────────────────────
-    .sidebar-menu-link,
-    .mat-expansion-panel-header {
-        display: flex;
-        align-items: center;
-        gap: var(--space-3);
-        min-height: 40px;
-        margin-bottom: 2px;
-        padding: 0 var(--space-3);
-        border-radius: var(--radius-md);
-        color: var(--text);
-        font-size: var(--fs-14);
-        font-weight: 500;
-        line-height: 20px;
-        white-space: nowrap;
-        text-decoration: none;
-        transition: background var(--transition), color var(--transition);
-
-        .material-symbols-outlined {
-            flex-shrink: 0;
-            font-size: 20px;
-            color: var(--text-muted);
-            transition: color var(--transition);
-        }
-        .title {
-            overflow: hidden;
-            text-overflow: ellipsis;
-            transition: opacity var(--transition);
-        }
-    }
-
-    .sidebar-menu-link {
-        &:hover {
-            background: var(--bg);
-            color: var(--text-strong);
-
-            .material-symbols-outlined {
-                color: var(--text-strong);
-            }
-        }
-        &.active {
-            background: var(--accent-soft);
-            color: var(--accent-text);
-
-            .material-symbols-outlined {
-                color: var(--accent-text);
-            }
-        }
-    }
-
-    // Çıxış: <button>, brauzer düymə görünüşü sıfırlanır
-    .sidebar-logout-btn {
-        width: 100%;
-        margin-top: var(--space-4);
-        border: 0;
-        background: transparent;
-        font-family: inherit;
-        text-align: left;
-        cursor: pointer;
-    }
-
-    // ── Qrup (mat-expansion-panel) ──────────────────────────────────────────
-    // Material-in `:not([class*=mat-elevation-z])` kölgəsini üstələmək üçün
-    // .mat-accordion da selektora daxildir
-    .mat-accordion .mat-expansion-panel {
-        margin: 0;
-        box-shadow: none;
-    }
-
-    .mat-expansion-panel-header {
-        .mat-content {
-            align-items: center;
-        }
-        .mat-expansion-panel-header-title {
-            display: flex;
-            align-items: center;
-            gap: var(--space-3);
-            min-width: 0;
-            margin-right: var(--space-2);
-            color: inherit;
-        }
-    }
-
-    // Qrupun içində aktiv səhifə varsa, başlıq da seçilmiş görünür
-    .mat-expansion-panel:has(.sidemenu-link.active) > .mat-expansion-panel-header {
+.sidebar-menu-link {
+    &:hover {
+        background: var(--bg);
         color: var(--text-strong);
 
         .material-symbols-outlined {
+            color: var(--text-strong);
+        }
+    }
+    &.active {
+        background: var(--accent-soft);
+        color: var(--accent-text);
+
+        .material-symbols-outlined {
             color: var(--accent-text);
         }
     }
+}
 
+// ── Qrup (mat-expansion-panel) ──────────────────────────────────────────────
+// Material-in `:not([class*=mat-elevation-z])` kölgəsini üstələmək üçün
+// .mat-accordion da selektora daxildir
+.mat-accordion .mat-expansion-panel {
+    margin: 0;
+    box-shadow: none;
+}
+
+.mat-expansion-panel-header-title {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    min-width: 0;
+    margin-right: var(--space-2);
+    color: inherit;
+}
+
+// Qrupun içində aktiv səhifə varsa, başlıq da seçilmiş görünür
+.mat-expansion-panel.has-active > .mat-expansion-panel-header {
+    color: var(--text-strong);
+
+    .material-symbols-outlined {
+        color: var(--accent-text);
+    }
+}
+
+:host ::ng-deep {
+    .mat-expansion-panel-header .mat-content {
+        align-items: center;
+    }
     .mat-expansion-panel-body {
         padding: 2px 0 var(--space-2);
     }
-
-    // Alt menyu: ikonun oxu üzərində incə xətt
-    .sidebar-sub-menu {
-        position: relative;
-        margin: 0;
-        padding: 0 0 0 var(--space-6);
-        list-style: none;
-
-        &::before {
-            content: '';
-            position: absolute;
-            top: 2px;
-            bottom: 2px;
-            left: 21px;
-            width: 1px;
-            background: var(--border);
-        }
-    }
-
-    .sidemenu-item + .sidemenu-item {
-        margin-top: 2px;
-    }
-
-    .sidemenu-link {
-        display: block;
-        padding: var(--space-2) var(--space-3);
-        border-radius: var(--radius-md);
-        color: var(--text-muted);
-        font-size: var(--fs-14);
-        font-weight: 500;
-        line-height: 20px;
-        white-space: nowrap;
-        text-decoration: none;
-        transition: background var(--transition), color var(--transition);
-
-        &:hover {
-            background: var(--bg);
-            color: var(--text-strong);
-        }
-        &.active {
-            background: var(--accent-soft);
-            color: var(--accent-text);
-        }
-    }
-
     // ngx-scrollbar: üfüqi zolaq lazım deyil
     scrollbar-x {
         display: none !important;
     }
 }
 
-// ── <1200px: panel üstə açılır ──────────────────────────────────────────────
-@media only screen and (max-width: 1199.98px) {
-    ::ng-deep .sidebar-area {
-        transform: translateX(-100%);
+// Alt menyu: ikonun oxu üzərində incə xətt
+.sidebar-sub-menu {
+    position: relative;
+    margin: 0;
+    padding: 0 0 0 var(--space-6);
+    list-style: none;
 
-        &.active {
-            transform: none;
-            box-shadow: var(--shadow-md);
-        }
-        .sidebar-close {
-            display: inline-flex;
+    &::before {
+        content: '';
+        position: absolute;
+        top: 2px;
+        bottom: 2px;
+        left: 21px;
+        width: 1px;
+        background: var(--border);
+    }
+}
+
+.sidemenu-item + .sidemenu-item {
+    margin-top: 2px;
+}
+
+.sidemenu-link {
+    position: relative;
+    display: block;
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-md);
+    color: var(--text-muted);
+    font-size: var(--fs-14);
+    font-weight: 500;
+    line-height: 20px;
+    white-space: nowrap;
+    text-decoration: none;
+    transition: background var(--transition), color var(--transition);
+
+    &:hover {
+        background: var(--bg);
+        color: var(--text-strong);
+    }
+    &.active {
+        background: var(--accent-soft);
+        color: var(--accent-text);
+
+        // Aktiv bəndin yerini alt menyunun xəttində də göstərir
+        &::before {
+            content: '';
+            position: absolute;
+            top: var(--space-2);
+            bottom: var(--space-2);
+            left: calc(21px - var(--space-6) - 1px);
+            width: 3px;
+            border-radius: var(--radius-sm);
+            background: var(--accent);
         }
     }
 }
 
-// ── ≥1200px: `.active` ikon zolağıdır, hover tam açır ───────────────────────
+// ── ≥1200px: dar rail; hover və ya klaviatura fokusu paneli müvəqqəti tam açır ─
+// `:focus-within` yox, `:has(:focus-visible)`: siçanla klikdən sonra link fokusda
+// qalır və panel açıq ilişərdi.
 @media only screen and (min-width: 1200px) {
-    ::ng-deep .sidebar-area.active:not(:hover) {
+    :host(.is-rail) .sidebar:not(:hover):not(:has(:focus-visible)) {
         width: var(--shell-rail-w);
 
         .logo-text,
-        .title,
-        .mat-expansion-indicator {
+        .title {
             opacity: 0;
-        }
-        .mat-expansion-panel-content-wrapper,
-        .mat-expansion-panel-content {
-            display: none;
         }
         // Bölmə başlığı yerinə qısa ayırıcı xətt
         .menu-section-title {
@@ -316,7 +298,50 @@
         }
     }
 
-    ::ng-deep .sidebar-area.active:hover {
+    :host(.is-rail) .sidebar:not(:hover):not(:has(:focus-visible)) ::ng-deep {
+        .mat-expansion-indicator {
+            opacity: 0;
+        }
+        .mat-expansion-panel-content-wrapper,
+        .mat-expansion-panel-content {
+            display: none;
+        }
+    }
+
+    :host(.is-rail) .sidebar:hover,
+    :host(.is-rail) .sidebar:has(:focus-visible) {
         box-shadow: var(--shadow-md);
+    }
+}
+
+// ── <1200px: drawer ─────────────────────────────────────────────────────────
+// Bağlı drawer `visibility: hidden` ilə Tab sırasından da çıxır;
+// gizlənmə sürüşmə animasiyası bitəndən sonra baş verir.
+@media only screen and (max-width: 1199.98px) {
+    .sidebar {
+        max-width: calc(100vw - var(--space-8));
+        transform: translateX(-100%);
+        visibility: hidden;
+        transition: transform var(--transition), visibility 0s linear .2s;
+    }
+
+    :host(.is-open) .sidebar {
+        transform: none;
+        visibility: visible;
+        box-shadow: var(--shadow-md);
+        transition: transform var(--transition), visibility 0s linear;
+    }
+
+    .sidebar-close {
+        display: inline-flex;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .sidebar,
+    :host(.is-open) .sidebar,
+    .logo-text,
+    .title {
+        transition: none;
     }
 }

@@ -21,6 +21,12 @@ export interface MenuMeta {
     groupIcon?: string;
     /** Group-un bölmə daxilində sırası. */
     groupOrder?: number;
+    /**
+     * Öz menyu bəndi olmayan səhifələr (bölmə kökünə nisbətən, məs. 'answers/approve-details').
+     * Onlar açılanda bu bənd aktiv görünür. Bəndin öz yolunun alt yolları buraya yazılmır:
+     * onlar avtomatik uyğunlaşır (bax MenuService.findActive).
+     */
+    activeAlso?: string[];
 }
 
 /** Menyuda birbaşa link (açılan panelsiz). */
@@ -28,6 +34,8 @@ export interface MenuLink {
     kind: 'link';
     title: string;
     path: string;
+    /** Bu bəndi aktiv edən mütləq yollar: öz yolu + `activeAlso`. */
+    matchPaths: string[];
     pageKey: string;
     icon?: string;
     order: number;

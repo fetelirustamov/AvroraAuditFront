@@ -1,0 +1,45 @@
+// Rəng yalnız mənadır. Mətn öz fonu üzərində ən azı 4.5:1 kontrast verir.
+:host {
+    display: inline-flex;
+    vertical-align: middle;
+}
+
+.status-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    min-width: 50px;
+    padding: 2px var(--space-2);
+    border: 1px solid transparent;
+    border-radius: var(--radius-sm);
+    text-align: center;
+    font-size: var(--fs-12);
+    font-weight: 600;
+    line-height: 18px;
+    white-space: nowrap;
+
+    &.is-success {
+        background: var(--success-soft);
+        color: var(--success-text);
+    }
+    &.is-warning {
+        background: var(--warning-soft);
+        color: var(--warning-text);
+    }
+    &.is-danger {
+        background: var(--danger-soft);
+        color: var(--danger-text);
+    }
+    &.is-info {
+        background: var(--info-soft);
+        color: var(--info-text);
+    }
+    &.is-neutral {
+        background: var(--surface-subtle);
+        color: var(--text);
+    }
+}
+
+.status-chip-icon {
+    font-size: 14px;
+}

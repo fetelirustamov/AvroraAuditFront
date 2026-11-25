@@ -13,7 +13,6 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
-import { MatNativeDateModule } from '@angular/material/core';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { FileUploadModule } from '@iplab/ngx-file-upload';
 import { NgxMaterialTimepickerModule } from 'ngx-material-timepicker';
@@ -31,7 +30,7 @@ import { MediaComponent } from '../../../components/media/media.component';
 
 @Component({
   selector: 'app-answer-approve-details',
-  imports: [MatCardModule, MatButtonModule, MatMenuModule, MatTableModule, CommonModule, MatPaginatorModule, MatProgressSpinnerModule, MatInputModule, MatFormFieldModule, MatSelectModule, MatDatepickerModule, MatNativeDateModule, FormsModule, ReactiveFormsModule, NgxMaterialTimepickerModule, FileUploadModule, MatCheckboxModule, MediaComponent],
+  imports: [MatCardModule, MatButtonModule, MatMenuModule, MatTableModule, CommonModule, MatPaginatorModule, MatProgressSpinnerModule, MatInputModule, MatFormFieldModule, MatSelectModule, MatDatepickerModule, FormsModule, ReactiveFormsModule, NgxMaterialTimepickerModule, FileUploadModule, MatCheckboxModule, MediaComponent],
   providers: [DatePipe],
   templateUrl: './answer-approve-details.component.html',
   styleUrl: './answer-approve-details.component.scss'

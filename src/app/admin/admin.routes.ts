@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { AdminComponent } from './admin.component';
+import { ShellComponent } from '../common/shell/shell.component';
 import { AuthGuard } from '../auth/guards/auth.guard';
 import { adminPageRoutes } from './admin-pages.routes';
 import { SHELL_PROVIDERS } from '../core/shell-providers';
@@ -7,13 +7,10 @@ import { SHELL_PROVIDERS } from '../core/shell-providers';
 export const adminRoutes: Routes = [
     {
         path: '',
-        component: AdminComponent,
+        component: ShellComponent,
         canActivate: [AuthGuard],
         providers: SHELL_PROVIDERS,
-        data: {
-            title: 'Admin paneli',
-            breadcrumb: 'Admin'
-        },
+        data: { area: 'admin' },
         children: adminPageRoutes
     }
 ];

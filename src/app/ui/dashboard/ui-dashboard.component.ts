@@ -20,7 +20,7 @@ import {
 } from './dashboard.model';
 import { DashboardService } from './dashboard.service';
 import { COMPLIANCE_FAIR, COMPLIANCE_GOOD, complianceTone } from '../../shared/utils/compliance';
-import { planStatusLabel } from '../../shared/utils/plan-status';
+import { planStatusLabel } from '../../shared/status/status-meta';
 
 /** `/locations/regions/{firmId}` cavabındakı bölgə */
 interface RegionOption {

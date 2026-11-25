@@ -1,19 +1,28 @@
 // ============================================================================
-//  Tətbiq çərçivəsi: sidebar + header + məzmun.
-//  AdminComponent də bu faylı styleUrls-da götürür.
+//  Tətbiq çərçivəsi: sidebar + header + məzmun (əsas tətbiq və admin eyni).
 // ============================================================================
 //  `--shell-*` ölçüləri buradan sidebar və header-ə miras keçir.
-//  ≥1200px sidebar sabitdir; `.active` onu ikon zolağına yığır.
-//  <1200px sidebar üstə açılır, məzmun tam enlidir.
+//  `--shell-offset`: məzmunun və header-in soldan boşluğu.
+//    ≥1200px: tam panel və ya (`.is-rail`) ikon zolağı;
+//    <1200px: 0, sidebar backdrop ilə üstə açılan drawer-dir.
 // ============================================================================
+
+:host {
+    display: block;
+}
 
 .app-shell {
     --shell-sidebar-w: 248px;
     --shell-rail-w: 72px;
     --shell-header-h: 64px;
+    --shell-offset: var(--shell-sidebar-w);
 
     min-height: 100vh;
     background: var(--bg);
+
+    &.is-rail {
+        --shell-offset: var(--shell-rail-w);
+    }
 }
 
 .main-content {
@@ -24,24 +33,33 @@
     // yaratmır, ona görə səhifələrdəki `position: sticky` işləyir.
     overflow-x: clip;
     padding: calc(var(--shell-header-h) + var(--space-6)) var(--space-6) var(--space-6)
-        calc(var(--shell-sidebar-w) + var(--space-6));
+        calc(var(--shell-offset) + var(--space-6));
     transition: padding-left var(--transition);
+}
 
-    &.active {
-        padding-left: calc(var(--shell-rail-w) + var(--space-6));
-    }
+// Drawer açıq olanda səhifənin üstünü örtür; klik drawer-i bağlayır
+.shell-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 6;
+    background: color-mix(in srgb, var(--gray-900) 32%, transparent);
 }
 
 @media only screen and (max-width: 1199.98px) {
-    .main-content,
-    .main-content.active {
-        padding-left: var(--space-6);
+    .app-shell,
+    .app-shell.is-rail {
+        --shell-offset: 0px;
     }
 }
 
 @media only screen and (max-width: 767.98px) {
-    .main-content,
-    .main-content.active {
+    .main-content {
         padding: calc(var(--shell-header-h) + var(--space-4)) var(--space-4) var(--space-4);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .main-content {
+        transition: none;
     }
 }

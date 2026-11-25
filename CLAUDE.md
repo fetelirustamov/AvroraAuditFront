@@ -34,7 +34,9 @@ npx ng build --configuration production # dist/avrora-audit, bundle limiti 2.5 M
 
 ## Menyu və icazələr
 
-- Menyunun vahid mənbəyi route-ların `data.menu` sahəsidir (`area, section, order, title, icon, pageKey, group…`). Bu sahəni `MenuService` `admin/admin-pages.routes.ts` və `ui/ui-pages.routes.ts`-dəki massivlərdən oxuyur. Yeni səhifə əlavə edəndə menyunu HTML-də yox, route-da qeyd et. Bu fayllar shell komponentini (`AdminComponent` / `UiComponent`) import etməməlidir: sidebar onları import edir və dövri import yaranır.
+- Tətbiqin və admin panelinin bir çərçivəsi var: `common/shell` (`ShellComponent`). Sahə route-un `data.area`-sından gəlir (`'ui'` / `'admin'`). Admin formalarının stilləri yalnız admin sahəsində işləyir (`common/shell/admin-area.scss`).
+- Menyunun vahid mənbəyi route-ların `data.menu` sahəsidir (`section, order, title, icon, pageKey, group, activeAlso…`). Shell menyunu öz route-unun `children`-ından qurur. Yeni səhifə əlavə edəndə menyunu HTML-də yox, route-da qeyd et.
+- Aktiv bənd URL-in ən uzun prefiksinə görə seçilir. Başqa bəndə aid detal səhifəsi üçün həmin bəndə `data.menu.activeAlso` yaz. Səhifə adı brauzer tabında və header-də `data.menu.title`-dan gəlir.
 - İcazələr `PermissionService` vasitəsilə `GET /api/me/permissions`-dan gəlir; Admin bütün yoxlamaları keçir. `pageKey` bazadakı `Pages.[Key]` ilə dəqiq uyğun olmalıdır. Açar dəyişsə, həm SQL seed, həm route dəyişməlidir. Yeni açar üçün front deploy-dan **əvvəl** baza seed-i və rol icazələri lazımdır.
 - `permissionGuard` və `*hasPermission` mövcuddur. Köhnə `RoleGuard` / `*hasRole` / `data.roles` hələ bir neçə yerdə qalır. Yeni kodda onları yox, icazə qatını işlət.
 - `ui.routes.ts` pageKey-i olan hər UI səhifəsinə `permissionGuard` qoşur, menyudan gizlənən səhifə URL ilə də açılmır. Əsas Səhifə (`dashboard`) istisnadır: girişdən sonra hamı ora yönləndirilir.
@@ -60,7 +62,16 @@ npx ng build --configuration production # dist/avrora-audit, bundle limiti 2.5 M
 - Şriftlər IBM Plex Sans/Mono-dur (`@fontsource`, `angular.json`-da). Kod və ID üçün `.mono` sinfi var. 12px-dən kiçik mətn yoxdur.
 - Qrafik rəngləri `shared/utils/chart-colors.ts` ilə token-lərdən oxunur.
 - Mətnlər `docs/design/glossary.md`-yə uyğun olmalıdır: Firma, Mağaza, Şöbə, Parol, təsdiq; cümlə registri.
-- Təkrarlanan səhifə blokları `src/_design-system.scss`-dədir (`.report-page-header`, `.kpi-*`, `.table-card`, `.status-chip`, `.empty-state`). Yeni səhifədə bunları sıfırdan yazma.
+- Təkrarlanan səhifə blokları `src/_design-system.scss`-dədir (`.kpi-*`, `.table-card`, `.table-sticky`). Yeni səhifədə bunları sıfırdan yazma.
+- Ortaq komponentlər (`shared/`), öz variantını yazma:
+  - başlıq: `<app-page-header>`. Ad route-un `data.menu.title`-ından gəlir, düymələr `headerActions` ilə ötürülür. `.report-page-header` köhnəlib;
+  - status: `<app-status-chip [planStatus]>` / `[disruptionStatus]`. Etiket və ton yalnız `shared/status/status-meta.ts`-dədir. Status düymələrinin feli, ikonu və dialoq mətni `status-actions.ts`-dədir (`STATUS_ACTIONS`, `statusActionConfirm`);
+  - siyahının boş/xəta halı: `<app-list-state state="idle|empty|error" (retry)>`.
+- Təsdiq tələb edən əməliyyat `ConfirmDialogService.confirm()` ilə soruşulur (`shared/components/confirm-dialog`). Təsir olunan qeydləri `items`-də, səbəbi `reason`-da ver. `undefined` ləğv deməkdir. Əl ilə popup yazma.
+- Bildiriş yalnız `NotificationService` ilədir. Müddəti növ təyin edir: xəta bağlanana qədər qalır, xəbərdarlıq 8 s, qalanı 4 s.
+- Tarixi istifadəçiyə `appDate` pipe ilə göstər (`'date'` / `'datetime'`, Bakı vaxtı). `LOCALE_ID` `az`-dır: serverə gedən tarix/rəqəm stringi rəqəmli pattern (`yyyy-MM-dd`) və ya açıq `'en-US'` ilə qurulur.
+- Filtr, səhifə nömrəsi və seçilmiş qeyd URL-də saxlanır: `shared/utils/query-state.ts` (`queryString/queryNumber/queryNumbers/queryDate`, `writeQueryState`). Router state və sessionStorage işlətmə.
+- Hər ikon düyməsində (`.action-btn`) azərbaycanca `aria-label` olur və düymədəki feli təkrarlayır.
 - Filtr və düymələr üçün `styles.scss`-dəki qlobal sistemi işlət, öz siniflərini uydurma:
   - filtr kartı: `.g-filter-card` › `.g-filter-grid` › `.g-filter-field` / `.g-filter-field-wide` › `.g-field-label` + `.g-modern-field`;
   - düymələr: `.g-search-btn`, `.g-secondary-btn`, `.g-export-btn`, `.g-approve-btn` / `.g-reject-btn`.
