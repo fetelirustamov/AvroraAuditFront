@@ -89,6 +89,10 @@ export class SignInComponent implements OnInit {
         if (status === 403) {
             return 'Bu hesabın sistemə girişi bağlanıb.';
         }
+        // Şəbəkədən dəqiqədə 30-dan çox cəhd və ya hesaba 15 dəqiqədə 10 səhv parol.
+        if (status === 429) {
+            return 'Həddindən artıq giriş cəhdi. Bir neçə dəqiqə gözləyib yenidən cəhd edin.';
+        }
         if (status >= 500) {
             return 'Serverdə xəta baş verdi. Bir az sonra yenidən cəhd edin.';
         }
