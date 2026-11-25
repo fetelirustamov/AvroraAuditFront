@@ -70,6 +70,24 @@ describe('PlanStatusTableComponent', () => {
     expect(component.canApplyToSelection(reject)).toBeFalse();
   });
 
+  it('yoxlanmış planlarda nəticə və uyğunsuzluq sayı ayrıca sorğu ilə gəlir', () => {
+    create(INSPECTION_APPROVE_PAGE);
+    respondList([plan(7, PLAN_STATUS.AWAITING_APPROVAL), plan(9, PLAN_STATUS.AWAITING_APPROVAL)]);
+    const req = http.expectOne(r => r.url.endsWith('/inspectionPlans/checklist/summaries'));
+    expect(req.request.params.getAll('ids')).toEqual(['7', '9']);
+    req.flush({ success: true, data: [{ planId: 7, result: 82.5, disruptionCount: 3 }] });
+    expect(component.summaryOf(component.rows[0])?.disruptionCount).toBe(3);
+    expect(component.summaryOf(component.rows[1])).toBeUndefined();
+    expect(component.displayedColumns).toContain('result');
+  });
+
+  it('plan əməliyyatlarında nəticə sorğusu getmir', () => {
+    create(PLAN_ACTIONS_PAGE);
+    respondList([plan(1, PLAN_STATUS.PENDING)]);
+    http.expectNone(r => r.url.endsWith('/inspectionPlans/checklist/summaries'));
+    expect(component.displayedColumns).not.toContain('result');
+  });
+
   it('firma seçilməyəndə firma sütunu görünür', () => {
     create(INSPECTION_APPROVE_PAGE);
     respondList([plan(1, PLAN_STATUS.AWAITING_APPROVAL)]);

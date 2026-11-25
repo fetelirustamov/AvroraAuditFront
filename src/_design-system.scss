@@ -163,6 +163,22 @@ a.kpi-card.is-link {
     }
 }
 
+// ── Uyğunluq faizi nişanı ───────────────────────────────────────────────────
+// Rəng həddə görədir: `[ngClass]="'faiz-' + (value | complianceTone)"` (shared/utils/compliance.ts)
+.faiz-chip {
+    display: inline-block;
+    min-width: 50px;
+    padding: 2px var(--space-2);
+    border-radius: var(--radius-sm);
+    text-align: center;
+    font-size: var(--fs-12);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+.faiz-success { background: var(--success-soft); color: var(--success-text); }
+.faiz-warning { background: var(--warning-soft); color: var(--warning-text); }
+.faiz-danger  { background: var(--danger-soft);  color: var(--danger-text); }
+
 // ── Yenidən yükləmə xətti ───────────────────────────────────────────────────
 // Köhnə data yerində qalır, üstündə nazik xətt görünür (tam overlay yalnız ilk yükləmədə).
 // `.list-progress` kartın içində (cədvəlin üstündə), `.page-progress` bloklar arasında.

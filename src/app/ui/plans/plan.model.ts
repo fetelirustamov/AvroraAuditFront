@@ -6,6 +6,15 @@ export class PlanApprove {
     reason?: string;
 }
 
+/** `GET inspectionPlans/checklist/summaries`: onay siyahısında qərar üçün planın nəticəsi */
+export interface PlanChecklistSummary {
+    planId: number;
+    /** Checklist faizi; yoxlama aparılmayıbsa `null` */
+    result: number | null;
+    /** Rədd edilməmiş uyğunsuzluqlar */
+    disruptionCount: number;
+}
+
 
 export class PlanDetails {
     id!: number;

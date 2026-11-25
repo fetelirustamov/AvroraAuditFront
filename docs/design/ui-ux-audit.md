@@ -199,14 +199,16 @@
 >   - Sıralama serverdə aparılır və URL-də saxlanır. "Təmizlə" düyməsi var.
 >   - Toplu düymə yalnız seçilmiş sətirlərin hamısına uyğun olanda aktivdir. Server qeydlərin bir hissəsini dəyişibsə, xəbərdarlıq çıxır.
 >   - "Yoxlanılmış"dan da yoxlama detalı açılır, geri linki həmin siyahıya qayıdır.
->   - Bal və uyğunsuzluq sayı sütunları hələ yoxdur: `inspectionPlans/getDetails` onları qaytarmır.
+>   - "Təsdiq" və "Yoxlanılmış"da "Nəticə" (hədd rəngi ilə) və "Uyğunsuzluq" sütunları var. Onlar yeni `GET inspectionPlans/checklist/summaries?ids=` endpoint-indən gəlir, `getDetails`-in cavab tipi dəyişmədi.
+> - **Müfəttiş təsdiqi (4):**
+>   - Firma ixtiyaridir, səhifə açılan kimi öz növbəsi yüklənir. Backend onsuz da `FirmScope` ilə süzürdü.
+>   - Hər planın yanında "N gündür gözləyir" yazılır. "Təmizlə" düyməsi əlavə olundu.
+>   - URL-dən açılanda mağaza seçimi boş qalırdı, düzəldildi.
+> - **İzləmə (5):** "Kimdədir" sütunu mərhələdə qalma müddətinə görə sıralanır (`stageSince`). Birinci klik ən çox gözləyəni üstə çıxarır, tarixi olmayanlar sonda qalır.
 >
 > **Qalanlar:**
-> - **Onay ekranları (2):** bal və uyğunsuzluq sayı sütunları. Backend-də `getDetails`-ə sahə əlavə etmək lazımdır.
-> - **Müfəttiş təsdiqi (4):** firmasız öz növbəsi. Backend endpoint-i lazımdır.
-> - **İzləmə (5):**
->   - `stageSince` üzrə sıralama. Backend `DisruptionRepository.GetTracking`-ə bir `orderBy` açarı lazımdır.
->   - ↑/↓ ilə keçid və paneldə təsdiq/rədd.
+> - **İzləmə (5):** yan paneldə ↑/↓ ilə keçid, paneldə təsdiq/rədd.
+> - **Yoxlanmayıb:** yeni summaries SQL-i lokal AUDITDB-də xətasız işləyir, amma baza boşdur. Real rəqəmlər VPN ilə və ya deploy-dan sonra yoxlanmalıdır.
 > - **Əsas səhifə (1):** dövr KPI-larının siyahıya linki yoxdur. İzləmənin süzgəcləri "açıq" tərifi ilə tam üst-üstə düşmür.
 > - **Yoxlanmayıb:** real datada (VPN) baxılmayıb. Bütün yoxlamalar saxta API cavabları ilə brauzerdə aparılıb.
 
@@ -248,9 +250,9 @@
 ## Backend asılılıqları
 
 - Rədd, qaytarma və yenidən açma əməliyyatlarında səbəbi saxlamaq üçün sahə. Bu, plan, yoxlama və uyğunsuzluq üçün lazımdır.
-- `inspectionPlans/getDetails`-ə bal və uyğunsuzluq sayı.
+- ~~`inspectionPlans/getDetails`-ə bal və uyğunsuzluq sayı.~~ Ayrıca endpoint ilə edildi: `checklist/summaries`.
 - Hesabat orta faizinin serverdə çəkili hesablanması: Σfaktiki / Σnormativ.
-- `disruption-middle` üçün istifadəçinin öz növbəsi (firma filtri olmadan).
+- ~~`disruption-middle` üçün istifadəçinin öz növbəsi (firma filtri olmadan).~~ Backend artıq dəstəkləyirdi, yalnız front dəyişdi.
 
 ## Yoxlanmayanlar
 

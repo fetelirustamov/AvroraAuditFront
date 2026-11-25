@@ -1,6 +1,6 @@
 import { Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -25,6 +25,7 @@ import { InspectionsService } from '../../inspections/inspections.service';
 import { Location } from '../../inspections/location.model';
 import { TableService } from '../../services/table.service';
 import { BACK_PARAM } from '../disruption-nav';
+import { daysSince } from '../disruption-tracking/disruption-tracking.model';
 
 /** `disruptions/plans` sətri: təsdiq gözləyən uyğunsuzluğu olan plan */
 interface DisruptionPlanRow {
@@ -62,7 +63,8 @@ export class DisruptionMiddleComponent implements OnInit {
   readonly pageSize = PAGE_SIZE;
 
   readonly filtersForm = new FormGroup({
-    firmId: new FormControl<number | null>(null, { validators: [Validators.required] }),
+    // Firma ixtiyaridir: server sorğunu istifadəçinin öz firmalarına salır (FirmScope)
+    firmId: new FormControl<number | null>(null),
     locationCode: new FormControl<number | null>(null),
     dateRange: new FormGroup({
       start: new FormControl<Date | null>(null),
@@ -77,7 +79,7 @@ export class DisruptionMiddleComponent implements OnInit {
   total = 0;
   pageIndex = 0;
 
-  searched = false;
+  hasLoaded = false;
   isLoading = false;
   loadError: string | null = null;
 
@@ -99,19 +101,44 @@ export class DisruptionMiddleComponent implements OnInit {
 
     this.loadFirms();
 
+    // Səhifə açılan kimi istifadəçinin öz növbəsi yüklənir; filtrlər URL-dən bərpa olunur
     const q = this.route.snapshot.queryParamMap;
     const firmId = queryNumber(q, 'firm');
     this.pageIndex = queryNumber(q, 'page') ?? 0;
-    if (firmId == null) return;
-
     this.filtersForm.patchValue({
       firmId,
-      locationCode: queryNumber(q, 'location'),
+      locationCode: firmId != null ? queryNumber(q, 'location') : null,
       dateRange: { start: queryDate(q, 'from'), end: queryDate(q, 'to') },
     });
-    this.loadLocations(firmId);
+    this.syncLocationControl(firmId);
+    if (firmId != null) this.loadLocations(firmId);
     this.applyFilter();
     this.fill();
+  }
+
+  /** Mağaza siyahısı firmadan asılıdır: firma seçilməyəndə sahə bağlıdır */
+  private syncLocationControl(firmId: number | null): void {
+    const control = this.filtersForm.controls.locationCode;
+    if (firmId != null) control.enable({ emitEvent: false }); else control.disable({ emitEvent: false });
+  }
+
+  get hasActiveFilters(): boolean {
+    const v = this.filtersForm.getRawValue();
+    return v.firmId != null || v.locationCode != null || v.dateRange.start != null || v.dateRange.end != null;
+  }
+
+  clearFilters(): void {
+    this.filtersForm.reset({ firmId: null, locationCode: null, dateRange: { start: null, end: null } });
+    this.locations = [];
+    this.syncLocationControl(null);
+    this.onSearch();
+  }
+
+  /** Yoxlamadan bəri keçən gün: növbədə nə qədər gözlədiyini göstərir */
+  waitingLabel(row: DisruptionPlanRow): string | null {
+    const days = daysSince(row.createdDate);
+    if (days == null || days < 0) return null;
+    return days === 0 ? 'Bu gün' : `${days} gündür gözləyir`;
   }
 
   private loadFirms(): void {
@@ -128,18 +155,14 @@ export class DisruptionMiddleComponent implements OnInit {
     });
   }
 
-  onSelectFirm(firmId: number): void {
+  onSelectFirm(firmId: number | null): void {
     this.filtersForm.controls.locationCode.setValue(null);
     this.locations = [];
-    this.loadLocations(firmId);
+    this.syncLocationControl(firmId);
+    if (firmId != null) this.loadLocations(firmId);
   }
 
   onSearch(): void {
-    if (this.filtersForm.invalid) {
-      this.filtersForm.markAllAsTouched();
-      this.notify.warning('Firma seçin');
-      return;
-    }
     const v = this.filtersForm.getRawValue();
     this.pageIndex = 0;
     void writeQueryState(this.router, {
@@ -169,7 +192,6 @@ export class DisruptionMiddleComponent implements OnInit {
   }
 
   fill(): void {
-    this.searched = true;
     this.isLoading = true;
     this.loadError = null;
     this.tableState.paginator.page = this.pageIndex;
@@ -185,6 +207,7 @@ export class DisruptionMiddleComponent implements OnInit {
         }
         this.rows = (response.data?.items ?? []) as unknown as DisruptionPlanRow[];
         this.total = response.data?.total ?? 0;
+        this.hasLoaded = true;
       },
       error: error => this.loadError = apiErrorMessage(error, 'Planlar yüklənmədi'),
     });

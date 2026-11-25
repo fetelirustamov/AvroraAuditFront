@@ -292,7 +292,8 @@
                 </ng-container>
 
                 <ng-container matColumnDef="holder">
-                    <th mat-header-cell *matHeaderCellDef mat-sort-header="level">Kimdədir</th>
+                    <!-- Mərhələdə qalma müddətinə görə: birinci klik ən çox gözləyəni üstə çıxarır -->
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header="stageSince" start="asc">Kimdədir</th>
                     <td mat-cell *matCellDef="let row">
                         @let h = holder(row);
                         @if (h) {

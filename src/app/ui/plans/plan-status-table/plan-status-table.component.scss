@@ -13,3 +13,13 @@
 tr.is-selected td {
     background: var(--accent-soft);
 }
+
+.muted {
+    color: var(--text-muted);
+}
+
+// Uyğunsuzluq sayı: sıfır olmayanda status rəngi (qərara təsir edir)
+.has-findings {
+    font-weight: 600;
+    color: var(--danger-text);
+}

@@ -10,10 +10,11 @@
             <div class="g-filter-field">
                 <label class="g-field-label" id="dm-firm">
                     <span class="material-symbols-outlined" aria-hidden="true">business</span>
-                    Firma <span class="text-danger" aria-hidden="true">*</span>
+                    Firma
                 </label>
                 <mat-form-field appearance="outline" class="g-modern-field">
-                    <mat-select aria-labelledby="dm-firm" formControlName="firmId" required (selectionChange)="onSelectFirm($event.value)">
+                    <mat-select aria-labelledby="dm-firm" formControlName="firmId" placeholder="Hamısı" (selectionChange)="onSelectFirm($event.value)">
+                        <mat-option [value]="null">Hamısı</mat-option>
                         @for (firm of firms; track firm.id) {
                             <mat-option [value]="firm.id">{{ firm.name }}</mat-option>
                         }
@@ -26,10 +27,12 @@
                     Mağaza
                 </label>
                 <mat-form-field appearance="outline" class="g-modern-field">
-                    <mat-select aria-labelledby="dm-location" formControlName="locationCode" placeholder="Hamısı">
+                    <mat-select aria-labelledby="dm-location" formControlName="locationCode"
+                        [placeholder]="filtersForm.controls.firmId.value ? 'Hamısı' : 'Əvvəlcə firma seçin'">
                         <mat-option [value]="null">Hamısı</mat-option>
                         @for (location of locations; track location.locationCode) {
-                            <mat-option [value]="location.locationCode">{{ location.locationCode }} · {{ location.locationName }}</mat-option>
+                            <!-- Kod API-dən string gəlir, URL-dən rəqəm: eyni tipdə müqayisə olunsun -->
+                            <mat-option [value]="+location.locationCode">{{ location.locationCode }} · {{ location.locationName }}</mat-option>
                         }
                     </mat-select>
                 </mat-form-field>
@@ -53,25 +56,36 @@
                     <span class="material-symbols-outlined" aria-hidden="true">search</span>
                     Axtar
                 </button>
+                <button type="button" class="g-secondary-btn" (click)="clearFilters()" [disabled]="!hasActiveFilters">
+                    <span class="material-symbols-outlined" aria-hidden="true">filter_alt_off</span>
+                    Təmizlə
+                </button>
             </div>
         </div>
     </form>
 </div>
 
 <div class="table-card" [attr.aria-busy]="isLoading">
-    @if (isLoading) {
-        <mat-progress-bar mode="indeterminate" class="list-progress" />
-    }
+    <div class="table-card-header">
+        <div class="table-info">
+            <span class="material-symbols-outlined table-info-icon" aria-hidden="true">pending_actions</span>
+            <span class="table-title">Təsdiqinizi gözləyənlər</span>
+            @if (hasLoaded) {
+                <span class="result-badge">{{ total }} plan</span>
+            }
+        </div>
+    </div>
+    <div class="progress-slot">
+        @if (isLoading) {
+            <mat-progress-bar mode="indeterminate" class="list-progress" />
+        }
+    </div>
 
     @if (loadError) {
         <app-list-state state="error" [errorMessage]="loadError" (retry)="fill()" />
-    } @else if (!searched) {
-        <app-list-state state="idle" message="Firma seçib «Axtar» düyməsini basın" />
-    } @else if (!rows.length) {
-        @if (!isLoading) {
-            <app-list-state state="empty" message="Bu filtrlərlə təsdiq gözləyən uyğunsuzluq tapılmadı" />
-        }
-    } @else {
+    } @else if (hasLoaded && !rows.length) {
+        <app-list-state state="empty" message="Təsdiqinizi gözləyən uyğunsuzluq yoxdur" />
+    } @else if (rows.length) {
         <div class="table-sticky">
             <table mat-table [dataSource]="rows" class="modern-table">
                 <ng-container matColumnDef="position">
@@ -95,8 +109,15 @@
                 </ng-container>
 
                 <ng-container matColumnDef="createdDate">
-                    <th mat-header-cell *matHeaderCellDef>Tarix</th>
-                    <td mat-cell *matCellDef="let row">{{ row.createdDate | appDate }}</td>
+                    <th mat-header-cell *matHeaderCellDef>Yoxlama tarixi</th>
+                    <td mat-cell *matCellDef="let row">
+                        <div class="cell-stack">
+                            <span>{{ row.createdDate | appDate }}</span>
+                            @if (waitingLabel(row); as waiting) {
+                                <span class="cell-sub">{{ waiting }}</span>
+                            }
+                        </div>
+                    </td>
                 </ng-container>
 
                 <ng-container matColumnDef="details">

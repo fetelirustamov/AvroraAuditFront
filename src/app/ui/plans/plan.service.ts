@@ -1,12 +1,12 @@
 import { Injectable } from '@angular/core';
 import { environment } from '../../../environments/environment';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { User } from './user.model';
 import { InspectionPlan } from '../inspections/InpectionPlan.model';
 import { RequestResponse, RequestResponseOne } from '../../models/table-state.model';
 import { StatusChange } from '../../shared/status/status-reason.component';
-import { PlanApprove } from './plan.model';
+import { PlanApprove, PlanChecklistSummary } from './plan.model';
 
 @Injectable({
   providedIn: 'root'
@@ -43,6 +43,12 @@ export class PlanService {
 
     return this.http.post<any>(url, planApproveList, config);
 
+  }
+
+  /** Onay siyahısının sətirləri üçün checklist faizi və uyğunsuzluq sayı (bir sorğuda, ən çox 200 plan). */
+  getChecklistSummaries(planIds: readonly number[]): Observable<RequestResponse<PlanChecklistSummary>> {
+    const params = new HttpParams({ fromObject: { ids: planIds.map(String) } });
+    return this.http.get<RequestResponse<PlanChecklistSummary>>(`${this.API_URL}/inspectionPlans/checklist/summaries`, { params });
   }
 
   /** Planın səbəbi yazılmış son status dəyişikliyi (rədd, mobilə qaytarma, yenidən açma); yoxdursa `data: null`. */

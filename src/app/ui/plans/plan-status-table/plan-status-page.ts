@@ -32,8 +32,11 @@ export interface PlanStatusPage {
     /** Süzgəcdə seçilən statuslar; birincisi açılışda seçilir. Bir status varsa süzgəc göstərilmir. */
     statuses: readonly number[];
     transitions: readonly PlanTransition[];
-    /** Sətirdən yoxlama detalına keçid (yalnız yoxlaması aparılmış planlarda mənalıdır) */
-    showDetails: boolean;
+    /**
+     * Yoxlaması aparılmış planların siyahısı: sətirdən yoxlama detalı açılır,
+     * checklist nəticəsi və uyğunsuzluq sayı göstərilir (qərar üçün).
+     */
+    inspected: boolean;
     emptyMessage: string;
 }
 
@@ -50,7 +53,7 @@ export const PLAN_ACTIONS_PAGE: PlanStatusPage = {
         { action: STATUS_ACTIONS.approve, from: [PENDING, REJECTED], to: APPROVED, success: ['Plan təsdiqləndi', 'Planlar təsdiqləndi'] },
         { action: STATUS_ACTIONS.reject, from: [PENDING, APPROVED], to: REJECTED, success: ['Plan rədd edildi', 'Planlar rədd edildi'] },
     ],
-    showDetails: false,
+    inspected: false,
     emptyMessage: 'Bu statusda plan yoxdur',
 };
 
@@ -64,7 +67,7 @@ export const INSPECTION_APPROVE_PAGE: PlanStatusPage = {
         { action: STATUS_ACTIONS.approve, from: [AWAITING_APPROVAL], to: COMPLETED, success: ['Yoxlama təsdiqləndi', 'Yoxlamalar təsdiqləndi'] },
         { action: STATUS_ACTIONS.returnToMobile, from: [AWAITING_APPROVAL], to: APPROVED, success: ['Yoxlama mobilə qaytarıldı', 'Yoxlamalar mobilə qaytarıldı'] },
     ],
-    showDetails: true,
+    inspected: true,
     emptyMessage: 'Təsdiq gözləyən yoxlama yoxdur',
 };
 
@@ -78,7 +81,7 @@ export const PLAN_CHECKED_PAGE: PlanStatusPage = {
         // Uyğunsuzluğu mağaza zəncirinə düşmüş plan yenidən açılmır: server 409 və səbəbini qaytarır
         { action: STATUS_ACTIONS.reopen, from: [COMPLETED], to: APPROVED, success: ['Plan yenidən açıldı', 'Planlar yenidən açıldı'] },
     ],
-    showDetails: true,
+    inspected: true,
     emptyMessage: 'Yekunlaşmış plan yoxdur',
 };
 

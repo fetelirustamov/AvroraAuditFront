@@ -1,6 +1,7 @@
 import { Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { DatePipe } from '@angular/common';
+import { DatePipe, DecimalPipe, NgClass } from '@angular/common';
+import { ComplianceTonePipe } from '../../../shared/pipes/compliance-tone.pipe';
 import { SelectionModel } from '@angular/cdk/collections';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -20,7 +21,7 @@ import { Firm } from '../../inspections/firm.model';
 import { InspectionsService } from '../../inspections/inspections.service';
 import { TableState } from '../../../models/table-state.model';
 import { TableService } from '../../services/table.service';
-import { PlanApprove } from '../plan.model';
+import { PlanApprove, PlanChecklistSummary } from '../plan.model';
 import { PlanService } from '../plan.service';
 import { planStoreLabel } from '../plan-row';
 import { NotificationService } from '../../../shared/services/notification.service';
@@ -53,6 +54,7 @@ const SORTABLE = ['locationCode', 'locationName', 'startTime', 'endTime'];
     ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatDatepickerModule,
     MatTableModule, MatSortModule, MatCheckboxModule, MatPaginatorModule, MatProgressBarModule, MatTooltipModule,
     PageHeaderComponent, ListStateComponent, StatusChipComponent, AppDatePipe,
+    NgClass, DecimalPipe, ComplianceTonePipe,
   ],
   providers: [DatePipe, TableService],
   templateUrl: './plan-status-table.component.html',
@@ -98,12 +100,20 @@ export class PlanStatusTableComponent implements OnInit {
   isSaving = false;
   loadError: string | null = null;
 
+  /** planId → checklist faizi və uyğunsuzluq sayı (yalnız `page.inspected` səhifələrində) */
+  private summaries = new Map<number, PlanChecklistSummary>();
+  summariesFailed = false;
+
   private readonly tableState = new TableState();
   private loadSub?: Subscription;
+  private summarySub?: Subscription;
 
   constructor() {
     this.tableService.api_url = 'inspectionPlans/getDetails';
-    this.destroyRef.onDestroy(() => this.loadSub?.unsubscribe());
+    this.destroyRef.onDestroy(() => {
+      this.loadSub?.unsubscribe();
+      this.summarySub?.unsubscribe();
+    });
   }
 
   ngOnInit(): void {
@@ -143,8 +153,29 @@ export class PlanStatusTableComponent implements OnInit {
     return [
       ...(this.transitions.length ? ['select'] : []),
       ...(this.showFirmColumn ? ['firmName'] : []),
-      'locationCode', 'locationName', 'inspectorsName', 'startDate', 'endDate', 'status', 'action',
+      'locationCode', 'locationName', 'inspectorsName', 'startDate', 'endDate',
+      ...(this.page.inspected ? ['result', 'disruptions'] : []),
+      'status', 'action',
     ];
+  }
+
+  summaryOf(row: InspectionPlan): PlanChecklistSummary | undefined {
+    return this.summaries.get(row.id);
+  }
+
+  /**
+   * Nəticə və uyğunsuzluq sayı ayrıca sorğu ilə gəlir (siyahının cavab tipi mobil üçün dəyişmir).
+   * Alınmasa sütunlar "—" göstərir, siyahının özü işləyir.
+   */
+  private loadSummaries(rows: InspectionPlan[]): void {
+    this.summarySub?.unsubscribe();
+    this.summaries = new Map();
+    this.summariesFailed = false;
+    if (!this.page.inspected || rows.length === 0) return;
+    this.summarySub = this.planService.getChecklistSummaries(rows.map(r => r.id)).subscribe({
+      next: res => this.summaries = new Map((res?.data ?? []).map(s => [s.planId, s])),
+      error: () => this.summariesFailed = true,
+    });
   }
 
   /** Cari siyahıda ən azı bir sətrə tətbiq olunan keçidlər (toplu düymələr) */
@@ -250,6 +281,7 @@ export class PlanStatusTableComponent implements OnInit {
         this.hasLoaded = true;
         this.rows = items;
         this.total = response.data?.total ?? 0;
+        this.loadSummaries(items);
         // Toplu əməliyyat yalnız ekranda görünən sətirlərə tətbiq olunsun
         this.selection.clear();
       });
