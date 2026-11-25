@@ -696,14 +696,18 @@ button {
         color: var(--danger-text);
     }
 
-    .mdc-floating-label:not(.mdc-floating-label--float-above) {
-        top: 50% !important;
-        transform: translateY(-50%) !important;
-    }
+    // Kompakt etiket tək sətirli sahə üçündür. Çoxsətirli textarea-da Material-ın öz mövqeyi qalır:
+    // əks halda etiket yazılan mətnin altına düşür və çərçivədə boş kəsik qalır.
+    &:not(:has(textarea)) {
+        .mdc-floating-label:not(.mdc-floating-label--float-above) {
+            top: 50% !important;
+            transform: translateY(-50%) !important;
+        }
 
-    .mdc-floating-label--float-above {
-        top: 50% !important;
-        transform: translateY(-130%) scale(0.75) !important;
+        .mdc-floating-label--float-above {
+            top: 50% !important;
+            transform: translateY(-130%) scale(0.75) !important;
+        }
     }
 }
 
