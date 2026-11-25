@@ -11,7 +11,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
-import { RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { InspectionsService } from '../inspections.service';
@@ -26,6 +26,7 @@ import { NotificationService } from '../../../shared/services/notification.servi
 import { PlanApprove } from '../../plans/plan.model';
 import { PlanService } from '../../plans/plan.service';
 import { AuditLoadingOverlayComponent } from '../../components/audit-loading-overlay/audit-loading-overlay.component';
+import { InspectionApproveCacheService } from './inspection-approve-cache.service';
 
 
 @Component({
@@ -63,7 +64,9 @@ export class InspectionApproveComponent {
     private fb: FormBuilder,
     private datePipe: DatePipe,
     private planService: PlanService,
-    private notify: NotificationService
+    private notify: NotificationService,
+    private router: Router,
+    private approveCache: InspectionApproveCacheService
   ) {
     this.getFirms();
 
@@ -75,10 +78,21 @@ export class InspectionApproveComponent {
     this._tableState.sorting.direction = "desc";
     this._tableState.paginator.size = Number(this.pageSize);
     this.createForm();
+
+    // Detal səhifəsindən qayıdış: filtrlər və səhifə bərpa olunur, data isə
+    // yenidən çəkilir (orada verilən qərar siyahını dəyişmiş ola bilər).
+    const restored = this.approveCache.consumeSnapshot();
+    if (restored) {
+      this.planForm.patchValue(restored.formValue as object);
+      this._tableState.filter = { ...restored.filter };
+      this._tableState.paginator.page = restored.page;
+      this.fill();
+    }
   }
 
 
   ngAfterViewInit() {
+    this.paginator.pageIndex = this._tableState.paginator.page;
     this.paginator.page.subscribe(() => {
       this._tableState.paginator.page = this.paginator.pageIndex;
       this.pageSize = this.paginator.pageSize;
@@ -180,8 +194,16 @@ export class InspectionApproveComponent {
     this._tableService.fill(this._tableState).pipe(
       finalize(() => this.isLoading = false)
     ).subscribe((response) => {
+      const items = response.data?.items || [];
+      // Son sətir təsdiqlənib/rədd edilibsə boş qalan səhifədən bir əvvəlkinə keç
+      if (items.length === 0 && this._tableState.paginator.page > 0) {
+        this._tableState.paginator.page--;
+        if (this.paginator) this.paginator.pageIndex = this._tableState.paginator.page;
+        this.fill();
+        return;
+      }
       this._tableState.paginator.total = response.data?.total || 0;
-      this.dataSource = response.data?.items || [];
+      this.dataSource = items;
       // Toplu əməliyyat yalnız ekranda görünən sətirlərə tətbiq olunsun
       this.selection.clear();
       this.allDataCount = response.data?.total || 0;
@@ -197,6 +219,18 @@ export class InspectionApproveComponent {
 
 
   // }
+
+  onDetails(row: InspectionPlan) {
+    this.approveCache.save({
+      formValue: this.planForm.getRawValue(),
+      filter: { ...this._tableState.filter },
+      page: this._tableState.paginator.page,
+    });
+    this.router.navigate(['/inspections/details'], {
+      queryParams: { id: row.id, planId: row.id, returnUrl: this.router.url },
+      state: { ...row, planId: row.id, returnUrl: this.router.url }
+    });
+  }
 
   changePlanStatus(row: any, status: number) {
     const item = new PlanApprove();

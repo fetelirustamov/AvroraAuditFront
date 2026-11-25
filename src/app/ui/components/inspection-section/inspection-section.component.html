@@ -10,6 +10,12 @@
                         </span>
                         <span class="section-name">{{ data?.sectionName }}</span>
                     </mat-panel-title>
+                    @if (result != null) {
+                    <span class="section-score" [ngClass]="'section-score--' + complianceTone(result)"
+                        matTooltip="Şöbənin checklist nəticəsi" matTooltipPosition="above">
+                        {{ result | number: '1.0-1' }}%
+                    </span>
+                    }
                 </mat-expansion-panel-header>
 
                 <div class="audit-table-loading-shell" style="min-height: 12rem;">

@@ -1,5 +1,5 @@
 import { DatePipe, NgClass, NgIf } from '@angular/common';
-import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
 import { MatTabsModule } from '@angular/material/tabs';
 import { ComponentService } from '../component.service';
@@ -17,6 +17,8 @@ export class PlanInfoSectionComponent implements OnChanges {
 
   @Input() data: any; // digər məlumatlar üçün
   @Input() planId: number | string | null = null; // inspection-details-dən gələn planId
+  /** Plan məlumatı yükləndikdə ötürülür — valideyn statusa görə qərar verə bilsin. */
+  @Output() planInfoLoaded = new EventEmitter<PlanInfo>();
 
   public planInfo: PlanInfo | null = null; // Plan məlumatlarını saxlamaq üçün dəyişən
   readonly statusLabel = planStatusLabel;
@@ -55,6 +57,7 @@ export class PlanInfoSectionComponent implements OnChanges {
     this.componentService.GetPlanInfoByPlanId(Number(this.planId)).subscribe(response => {
       if (response.success) {
         this.planInfo = response.data;
+        this.planInfoLoaded.emit(response.data);
       }
     });
   }

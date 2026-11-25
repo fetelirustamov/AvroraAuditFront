@@ -19,6 +19,7 @@ import {
     PLAN_STATUS_LABELS
 } from './dashboard.model';
 import { DashboardService } from './dashboard.service';
+import { COMPLIANCE_FAIR, COMPLIANCE_GOOD, complianceTone } from '../../shared/utils/compliance';
 
 /** `/locations/regions/{firmId}` cavabındakı bölgə */
 interface RegionOption {
@@ -52,8 +53,8 @@ interface KpiCard {
 
 /** Risk matrisindəki zonalar — bubble seriyalarına və cədvəl nişanlarına eyni məntiq */
 const RISK_ZONES = [
-    { key: 'low', name: 'Aşağı risk (≥85%)', color: '#25B003', min: 85 },
-    { key: 'medium', name: 'Orta risk (70–85%)', color: '#F59E0B', min: 70 },
+    { key: 'low', name: `Aşağı risk (≥${COMPLIANCE_GOOD}%)`, color: '#25B003', min: COMPLIANCE_GOOD },
+    { key: 'medium', name: `Orta risk (${COMPLIANCE_FAIR}–${COMPLIANCE_GOOD}%)`, color: '#F59E0B', min: COMPLIANCE_FAIR },
     { key: 'high', name: 'Yüksək risk (<70%)', color: '#F43F5E', min: 0 }
 ];
 
@@ -365,9 +366,7 @@ export class UiDashboardComponent implements OnInit, OnDestroy {
     }
 
     scoreTone(compliance: number): 'is-success' | 'is-warning' | 'is-danger' {
-        if (compliance >= 85) { return 'is-success'; }
-        if (compliance >= 70) { return 'is-warning'; }
-        return 'is-danger';
+        return `is-${complianceTone(compliance)}`;
     }
 
     // ── Qrafiklər ────────────────────────────────────────────────────────────

@@ -58,6 +58,22 @@ $header-bg: #f8f9fc;
     }
 }
 
+// Şöbənin checklist faizi — rəng həddləri shared/utils/compliance.ts-dədir
+.section-score {
+    flex-shrink: 0;
+    margin-right: 12px;
+    font-size: 13px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    border-radius: 999px;
+    padding: 3px 12px;
+    white-space: nowrap;
+
+    &--success { color: var(--successStrong); background: var(--successSoft); }
+    &--warning { color: var(--warningText); background: var(--warningSoft); }
+    &--danger  { color: var(--dangerStrong); background: var(--dangerSoft); }
+}
+
 .section-count {
     flex-shrink: 0;
     font-size: 12px;

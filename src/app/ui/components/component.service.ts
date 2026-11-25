@@ -8,6 +8,11 @@ import { QuestionWithDetails } from './models/questionDto.model';
 import { Disruption, DisruptionDto } from '../disruptions/disruption.model';
 import { PlanInfo } from './models/plan-info.model';
 
+export interface SectionChecklistResult {
+    headerId: number;
+    result: number;
+}
+
 @Injectable({
     providedIn: 'root'
 })
@@ -45,6 +50,11 @@ export class ComponentService {
     GetChecklistByPlanId(planId: number): Observable<RequestResponseOne<string>> {
         return this.http.get<RequestResponseOne<string>>(`${this.baseUrl}/inspectionPlans/checklist/${planId}`);
 
+    }
+
+    /** Şöbə (QuestionResultHead) üzrə checklist faizləri; hesablanmayan şöbə siyahıda olmur. */
+    GetSectionChecklistResults(planId: number): Observable<RequestResponse<SectionChecklistResult>> {
+        return this.http.get<RequestResponse<SectionChecklistResult>>(`${this.baseUrl}/inspectionPlans/checklist/${planId}/sections`);
     }
 
 } 

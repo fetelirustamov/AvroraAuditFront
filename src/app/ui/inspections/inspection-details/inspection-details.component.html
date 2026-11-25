@@ -1,11 +1,25 @@
-<div class="details-header d-flex align-items-center justify-content-end mb-10">
+<div class="details-header mb-10">
+    <div class="decision-bar" *ngIf="canDecide">
+        <span class="decision-text">
+            <span class="material-symbols-outlined">pending_actions</span>
+            Bu yoxlama təsdiq gözləyir
+        </span>
+        <button type="button" class="g-approve-btn" (click)="decide(APPROVED)" [disabled]="isSaving">
+            <span class="material-symbols-outlined">check_circle</span>
+            Təsdiq
+        </button>
+        <button type="button" class="g-reject-btn" (click)="decide(RETURNED_TO_MOBILE)" [disabled]="isSaving">
+            <span class="material-symbols-outlined">cancel</span>
+            Rədd
+        </button>
+    </div>
     <button mat-stroked-button color="primary" (click)="goBack()" class="back-btn">
         <span class="material-symbols-outlined mr-5">arrow_back</span>
         Geri
     </button>
 </div>
 
-<app-plan-info-section [planId]="planId"></app-plan-info-section>
+<app-plan-info-section [planId]="planId" (planInfoLoaded)="onPlanInfoLoaded($event)"></app-plan-info-section>
 
 <mat-card class=" border-radius d-block bg-white border-0 shadow-none">
     <!-- <mat-card-header>
@@ -19,7 +33,7 @@
         <mat-tab-group>
             <mat-tab label="Checklist" (click)="onSection()">
                 <app-inspection-section *ngFor="let section of sections" [plan]="planId"
-                    [section]="section"></app-inspection-section>
+                    [section]="section" [result]="sectionResults.get(section.headerId)"></app-inspection-section>
             </mat-tab>
             <mat-tab label="Uyğunsuzluqlar">
                 <app-diruption-section [data]="stateDate"></app-diruption-section>

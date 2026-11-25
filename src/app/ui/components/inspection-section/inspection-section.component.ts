@@ -22,6 +22,7 @@ import { ChangeDetectorRef, Component, Input, signal, SimpleChanges, TemplateRef
 import { CdkAccordionModule } from '@angular/cdk/accordion';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { AuditLoadingOverlayComponent } from '../audit-loading-overlay/audit-loading-overlay.component';
+import { complianceTone } from '../../../shared/utils/compliance';
 
 // Tree node interfaces
 
@@ -52,7 +53,11 @@ export class InspectionSectionComponent {
 
   // @ViewChild("sectionTable") table: DatatableComponent;
   @Input("section") data!: any; // Yeni 
-  @Input("plan") plan!: any; // Yeni 
+  @Input("plan") plan!: any; // Yeni
+  /** Şöbənin checklist faizi; hesablanmayıbsa undefined. */
+  @Input() result?: number;
+
+  readonly complianceTone = complianceTone;
 
   readonly panelOpenState = signal(false);
 
