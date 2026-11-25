@@ -1,282 +1,126 @@
-<mat-card class="mb-25 border-radius d-block bg-white border-0 shadow-none">
-    <div class="row align-items-center mb-25">
-        <div class="col-md-3">
-            <span>Page</span>
-            <select class="page-select" on required>
-                <option value="10">10</option>
-                <option value="20">20</option>
-                <option value="50">50</option>
-            </select>
+<!-- backLink filtrli siyahı URL-idir (UrlTree): page-header-in tipi hələ yalnız string | massivdir -->
+<app-page-header [title]="title" [subtitle]="subtitle" [backLink]="backLink" backLabel="Planlara qayıt" />
+
+<section class="table-card" [attr.aria-busy]="isLoading">
+    <div class="table-card-header">
+        <div class="table-info">
+            <span class="material-symbols-outlined table-info-icon" aria-hidden="true">rule</span>
+            <span class="table-title">Təsdiq gözləyən cavablar</span>
+            @if (loaded) {
+                <span class="result-badge">{{ total }} qeyd</span>
+            }
         </div>
     </div>
-    <mat-card-content>
-        <div class="table-responsive" style="max-height: 1000px; overflow-y: auto;">
-            <table mat-table [dataSource]="dataSource" class="w-100">
-                <ng-container matColumnDef="select">
-                    <th mat-header-cell *matHeaderCellDef>
-                        <mat-checkbox (change)="$event ? toggleAllRows() : null"
-                            [checked]="selection.hasValue() && isAllSelected()"
-                            [indeterminate]="selection.hasValue() && !isAllSelected()" [aria-label]="checkboxLabel()">
-                        </mat-checkbox>
-                    </th>
-                    <td mat-cell *matCellDef="let row">
-                        <mat-checkbox (click)="$event.stopPropagation()"
-                            (change)="$event ? selection.toggle(row) : null" [checked]="selection.isSelected(row)"
-                            [aria-label]="checkboxLabel(row)">
-                        </mat-checkbox>
-                    </td>
-                </ng-container>
+
+    <div class="table-progress">
+        @if (isLoading) {
+            <mat-progress-bar mode="indeterminate" aria-label="Cavablar yüklənir" />
+        }
+    </div>
+
+    @if (planId == null) {
+        <app-list-state state="empty" message="Plan seçilməyib. Siyahıya qayıdıb planı seçin" />
+    } @else if (loadError) {
+        <app-list-state state="error" [errorMessage]="loadError" (retry)="load()" />
+    } @else if (loaded && !rows.length) {
+        <app-list-state state="empty" message="Bu planda təsdiq gözləyən cavab yoxdur" />
+    } @else if (rows.length) {
+        <div class="table-sticky">
+            <table mat-table [dataSource]="rows" class="modern-table">
+
                 <ng-container matColumnDef="position">
                     <th mat-header-cell *matHeaderCellDef>#</th>
-                    <td mat-cell *matCellDef="let element; let i = index">
-                        {{ getRowNumber(i) }}
-                    </td>
-                </ng-container>
-
-
-                <!-- Customer Column -->
-                <ng-container matColumnDef="inspectorName">
-                    <th mat-header-cell *matHeaderCellDef>Müfəttiş</th>
-                    <td mat-cell *matCellDef="let element">{{ element.inspectorName }}</td>
+                    <td mat-cell *matCellDef="let row; let i = index" class="row-number">{{ rowNumber(i) }}</td>
                 </ng-container>
 
                 <ng-container matColumnDef="sectionName">
                     <th mat-header-cell *matHeaderCellDef>Şöbə</th>
-                    <td mat-cell *matCellDef="let element">{{ element.sectionName }}</td>
+                    <td mat-cell *matCellDef="let row">{{ row.sectionName }}</td>
                 </ng-container>
-                <ng-container matColumnDef="disruptionCategoryName">
-                    <th mat-header-cell *matHeaderCellDef>Kategoriya</th>
-                    <td mat-cell *matCellDef="let element">{{ element.disruptionCategoryName }}</td>
-                </ng-container>
+
                 <ng-container matColumnDef="reasonName">
                     <th mat-header-cell *matHeaderCellDef>Səbəb</th>
-                    <td mat-cell *matCellDef="let element">{{ element.reasonName }}</td>
+                    <td mat-cell *matCellDef="let row" class="truncate-cell" [matTooltip]="row.reasonName">{{ row.reasonName }}</td>
                 </ng-container>
-                <ng-container matColumnDef="note">
+
+                <ng-container matColumnDef="createdDate">
+                    <th mat-header-cell *matHeaderCellDef>Tarix</th>
+                    <td mat-cell *matCellDef="let row" class="num">{{ row.createdDate | appDate }}</td>
+                </ng-container>
+
+                <ng-container matColumnDef="description">
                     <th mat-header-cell *matHeaderCellDef>Açıqlama</th>
-                    <td mat-cell *matCellDef="let element">{{ element.description }}</td>
+                    <td mat-cell *matCellDef="let row" class="truncate-cell" [matTooltip]="row.description">{{ row.description }}</td>
                 </ng-container>
+
                 <ng-container matColumnDef="media">
                     <th mat-header-cell *matHeaderCellDef>Media</th>
-                    <td mat-cell *matCellDef="let element">
-                        <!-- Şərtli image icon -->
-                        <app-media #mediaCompImg [id]="element.id" [type]="MediaType.Image" [module]="Module.DisAnswer">
-                            <span *ngIf="element.images > 0" class="material-symbols-outlined primary"
-                                (click)="mediaCompImg.open()" style="cursor:pointer;" media-trigger>
-                                image
-                            </span>
-                        </app-media>
-                        <app-media #mediaCompVid [id]="element.id" [type]="MediaType.Video" [module]="Module.DisAnswer">
-                            <span *ngIf="element.videos > 0" class="material-symbols-outlined primary"
-                                (click)="mediaCompVid.open()" style="cursor:pointer;" media-trigger>
-                                video
-                            </span>
-                        </app-media>
+                    <td mat-cell *matCellDef="let row">
+                        <!-- Uyğunsuzluğun faylları; mağazanın cavab faylları "Cavab tarixçəsi"ndədir -->
+                        @if (row.image > 0 || row.video > 0) {
+                            <div class="media-actions">
+                                <app-media #mediaImg [id]="row.disruptionId" [type]="MediaType.Image" [module]="Module.Disruption">
+                                    @if (row.image > 0) {
+                                        <button type="button" class="media-btn" media-trigger matTooltip="Şəkillərə bax"
+                                            [attr.aria-label]="'Şəkillərə bax: ' + row.image" (click)="mediaImg.open()">
+                                            <span class="material-symbols-outlined" aria-hidden="true">image</span>
+                                            <span class="media-btn__count">{{ row.image }}</span>
+                                        </button>
+                                    }
+                                </app-media>
+                                <app-media #mediaVid [id]="row.disruptionId" [type]="MediaType.Video" [module]="Module.Disruption">
+                                    @if (row.video > 0) {
+                                        <button type="button" class="media-btn" media-trigger matTooltip="Videolara bax"
+                                            [attr.aria-label]="'Videolara bax: ' + row.video" (click)="mediaVid.open()">
+                                            <span class="material-symbols-outlined" aria-hidden="true">videocam</span>
+                                            <span class="media-btn__count">{{ row.video }}</span>
+                                        </button>
+                                    }
+                                </app-media>
+                            </div>
+                        } @else {
+                            <span class="empty-dash">—</span>
+                        }
                     </td>
+                </ng-container>
 
-                </ng-container>
-                <!-- Avg. Resolution Time Column -->
-                <ng-container matColumnDef="createdDate">
-                    <th mat-header-cell *matHeaderCellDef class="text-center">
-                        Tarix
-                    </th>
-                    <td mat-cell *matCellDef="let element" class="text-center">
-                        {{element.createdDate | date: 'yyyy-MM-dd'}}
-                    </td>
-                </ng-container>
-
-                <ng-container matColumnDef="details">
-                    <th mat-header-cell *matHeaderCellDef class="text-center">
-                        Details
-                    </th>
-                    <td mat-cell *matCellDef="let element" class="text-center">
-                        <button mat-flat-button
-                            class="d-flex align-items-center btn-xs justify-content-center text-center"
-                            style="gap: 6px; margin: 0 auto;" (click)="openDetailsDialog(element)">
-                            <span class="material-symbols-outlined"
-                                style="font-size: 20px; margin-right: 5px;">visibility</span>
-                            <span>Detallar</span>
-                        </button>
-                    </td>
-                </ng-container>
-                <!-- Action Column -->
-                <ng-container matColumnDef="actions">
-                    <th mat-header-cell *matHeaderCellDef>
-                        Action
-                    </th>
-                    <td mat-cell *matCellDef="let element">
-                        <div class="d-flex gap-2">
-                            <button mat-icon-button matTooltip="Təsdiq"
-                                (click)="changeDisruptionAnswerStatus(element, 1)">
-                                <span class="material-symbols-outlined approve-icon">check_circle</span>
+                <ng-container matColumnDef="answer">
+                    <th mat-header-cell *matHeaderCellDef>Mağazanın cavabı</th>
+                    <td mat-cell *matCellDef="let row">
+                        <div class="answer-cell">
+                            <span class="truncate-cell" [matTooltip]="row.note" [matTooltipDisabled]="!row.note">{{ row.note || '—' }}</span>
+                            <button type="button" class="action-btn" (click)="openHistory(row)"
+                                matTooltip="Cavab tarixçəsinə bax" [attr.aria-label]="'Cavab tarixçəsinə bax: ' + rowLabel(row)">
+                                <span class="material-symbols-outlined" aria-hidden="true">history</span>
                             </button>
-                            <button mat-icon-button matTooltip="Rədd"
-                                (click)="openRejectDialog(element)">
-                                <span class="material-symbols-outlined reject-icon">cancel</span>
-                            </button>
-
                         </div>
                     </td>
                 </ng-container>
 
+                <ng-container matColumnDef="actions">
+                    <th mat-header-cell *matHeaderCellDef>Əməliyyatlar</th>
+                    <td mat-cell *matCellDef="let row">
+                        <div class="action-buttons">
+                            <button type="button" class="action-btn approve-btn" (click)="approve(row)" [disabled]="isSaving"
+                                [matTooltip]="approveAction.label" [attr.aria-label]="approveAction.label + ': ' + rowLabel(row)">
+                                <span class="material-symbols-outlined" aria-hidden="true">{{ approveAction.icon }}</span>
+                            </button>
+                            <button type="button" class="action-btn reject-btn" (click)="reject(row)" [disabled]="isSaving"
+                                [matTooltip]="rejectAction.label" [attr.aria-label]="rejectAction.label + ': ' + rowLabel(row)">
+                                <span class="material-symbols-outlined" aria-hidden="true">{{ rejectAction.icon }}</span>
+                            </button>
+                        </div>
+                    </td>
+                </ng-container>
 
-
-                <tr mat-header-row *matHeaderRowDef="displayedColumns" class="sticky-header"></tr>
+                <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
                 <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
-
             </table>
         </div>
-        <mat-paginator [pageSizeOptions]="[6]" showFirstLastButtons></mat-paginator>
+    }
 
-    </mat-card-content>
-</mat-card>
-
-
-<!-- Reject Dialog Popup -->
-<div class="add-new-popup" [class.active]="isRejectDialogOpen">
-    <div class="reject-dialog">
-        <mat-card class="border-radius d-block bg-white border-0 shadow-none">
-            <mat-card-header>
-                <mat-card-title>
-                    <h5 class="mb-0">Rədd səbəbi</h5>
-                </mat-card-title>
-                <mat-card-subtitle>
-                    <button mat-button (click)="closeRejectDialog()">
-                        <i class="material-symbols-outlined">close</i>
-                    </button>
-                </mat-card-subtitle>
-            </mat-card-header>
-            <mat-card-content>
-                <div class="reject-field">
-                    <label for="reject-note-input" class="reject-field-label">
-                        Qeyd <abbr class="reject-required" title="Mütləq sahə">*</abbr>
-                    </label>
-                    <textarea id="reject-note-input" class="reject-textarea"
-                        rows="5"
-                        [(ngModel)]="rejectNote"
-                        (ngModelChange)="rejectNoteError = false"
-                        placeholder="Rədd səbəbini daxil edin..."
-                        [class.reject-textarea--error]="rejectNoteError"
-                        autocomplete="off"></textarea>
-                    <p *ngIf="rejectNoteError" class="reject-note-error" role="alert">
-                        Qeyd mütləq doldurulmalıdır
-                    </p>
-                </div>
-                <div class="reject-actions">
-                    <button mat-stroked-button type="button" (click)="closeRejectDialog()">Ləğv et</button>
-                    <button mat-flat-button color="warn" type="button" (click)="confirmReject()">Rədd et</button>
-                </div>
-            </mat-card-content>
-        </mat-card>
-    </div>
-</div>
-
-<!-- Edit Dialog Popup -->
-<div class="add-new-popup" [class.active]="isDetailsDialogOpen">
-    <div class="details-dialog">
-        <mat-card class="border-radius d-block bg-white border-0 shadow-none">
-            <mat-card-header>
-                <mat-card-title>
-                    <h5 class="mb-0">Cavab detallar</h5>
-                </mat-card-title>
-                <mat-card-subtitle>
-                    <button mat-button (click)="closeDetailsDialog()">
-                        <i class="material-symbols-outlined">close</i>
-                    </button>
-                </mat-card-subtitle>
-            </mat-card-header>
-            <mat-card-content>
-                <table mat-table [dataSource]="dataSourceModal" class="w-100">
-
-                    <ng-container matColumnDef="inspectorName">
-                        <th mat-header-cell *matHeaderCellDef>Müfəttiş</th>
-                        <td mat-cell *matCellDef="let element">{{ element.inspectorName }}</td>
-                    </ng-container>
-
-                    <ng-container matColumnDef="sectionName">
-                        <th mat-header-cell *matHeaderCellDef>Şöbə</th>
-                        <td mat-cell *matCellDef="let element">{{ element.sectionName }}</td>
-                    </ng-container>
-                    <ng-container matColumnDef="disruptionCategoryName">
-                        <th mat-header-cell *matHeaderCellDef>Kategoriya</th>
-                        <td mat-cell *matCellDef="let element">{{ element.disruptionCategoryName }}</td>
-                    </ng-container>
-                    <ng-container matColumnDef="reasonName">
-                        <th mat-header-cell *matHeaderCellDef>Səbəb</th>
-                        <td mat-cell *matCellDef="let element">{{ element.reasonName }}</td>
-                    </ng-container>
-                    <ng-container matColumnDef="disruptionNote">
-                        <th mat-header-cell *matHeaderCellDef>Açıqlama</th>
-                        <td mat-cell *matCellDef="let element">{{ element.description }}</td>
-                    </ng-container>
-                    <ng-container matColumnDef="media">
-                        <th mat-header-cell *matHeaderCellDef>Media</th>
-                        <td mat-cell *matCellDef="let element">
-                            <app-media #modalMediaImg [id]="element.disruptionId" [type]="MediaType.Image" [module]="Module.Disruption">
-                                <span class="material-symbols-outlined primary" (click)="modalMediaImg.open()" style="cursor:pointer;" media-trigger>
-                                    image
-                                </span>
-                            </app-media>
-                            <app-media #modalMediaVid [id]="element.disruptionId" [type]="MediaType.Video" [module]="Module.Disruption">
-                                <span class="material-symbols-outlined primary" (click)="modalMediaVid.open()" style="cursor:pointer;" media-trigger>
-                                    video_file
-                                </span>
-                            </app-media>
-                        </td>
-                    </ng-container>
-                    <ng-container matColumnDef="createdDate">
-                        <th mat-header-cell *matHeaderCellDef class="text-center">
-                            Tarix
-                        </th>
-                        <td mat-cell *matCellDef="let element" class="text-center">
-                            {{element.createdDate | date: 'yyyy-MM-dd'}}
-                        </td>
-                    </ng-container>
-                    <ng-container matColumnDef="answeredUser">
-                        <th mat-header-cell *matHeaderCellDef>Cavablandıran İstifadəçi</th>
-                        <td mat-cell *matCellDef="let element">{{ element.answeredUser }}</td>
-                    </ng-container>
-                    <ng-container matColumnDef="answerNote">
-                        <th mat-header-cell *matHeaderCellDef>Cavab Açıqlama</th>
-                        <td mat-cell *matCellDef="let element">{{ element.note }}</td>
-                    </ng-container>
-                    <ng-container matColumnDef="answerMedia">
-                        <th mat-header-cell *matHeaderCellDef>Cavab Media</th>
-                        <td mat-cell *matCellDef="let element">
-                            <app-media #modalAnswerMediaImg [id]="element.id" [type]="MediaType.Image" [module]="Module.DisAnswer">
-                                <span class="material-symbols-outlined primary" (click)="modalAnswerMediaImg.open()" style="cursor:pointer;" media-trigger>
-                                    image
-                                </span>
-                            </app-media>
-                            <app-media #modalAnswerMediaVid [id]="element.id" [type]="MediaType.Video" [module]="Module.DisAnswer">
-                                <span class="material-symbols-outlined primary" (click)="modalAnswerMediaVid.open()" style="cursor:pointer;" media-trigger>
-                                    video_file
-                                </span>
-                            </app-media>
-                        </td>
-                    </ng-container>
-                    <ng-container matColumnDef="answerDate">
-                        <th mat-header-cell *matHeaderCellDef class="text-center">
-                            Tarix
-                        </th>
-                        <td mat-cell *matCellDef="let element" class="text-center">
-                            {{element.answerDate | date: 'yyyy-MM-dd'}}
-                        </td>
-                    </ng-container>
-                    <ng-container matColumnDef="answerStatus">
-                        <th mat-header-cell *matHeaderCellDef> Cavab Status </th>
-                        <td mat-cell *matCellDef="let element">
-                            <span [ngClass]="getStatusClass(element.approveStatus)">
-                                {{ getStatusText(element.approveStatus) }}
-                            </span>
-                        </td>
-                    </ng-container>
-
-                    <tr mat-header-row *matHeaderRowDef="displayedColumnsModal" class="sticky-header"></tr>
-                    <tr mat-row *matRowDef="let row; columns: displayedColumnsModal;">
-                    </tr>
-                </table>
-            </mat-card-content>
-        </mat-card>
-    </div>
-</div>
+    @if (loaded && total > 0) {
+        <mat-paginator [length]="total" [pageIndex]="pageIndex" [pageSize]="pageSize" [pageSizeOptions]="pageSizes"
+            [disabled]="isLoading" showFirstLastButtons (page)="onPage($event)" />
+    }
+</section>

@@ -1,0 +1,66 @@
+.confirm-dialog {
+    padding: var(--space-6);
+}
+
+.confirm-title {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin: 0 0 var(--space-2);
+    font-size: var(--fs-16);
+    font-weight: 600;
+    line-height: 1.4;
+    color: var(--text-strong);
+}
+
+// İkon yalnız dağıdıcı əməliyyatda çıxır: rəng məna daşıyır
+.confirm-icon {
+    font-size: 22px;
+    color: var(--danger);
+}
+
+.confirm-message {
+    margin: 0;
+    font-size: var(--fs-14);
+    line-height: 1.5;
+    color: var(--text);
+}
+
+// Təsir olunan qeydlər: sakit, oxunaqlı siyahı
+.confirm-items {
+    margin: var(--space-3) 0 0;
+    padding: var(--space-2) var(--space-3);
+    list-style: none;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--surface-muted);
+
+    li {
+        padding: 2px 0;
+        overflow: hidden;
+        font-size: var(--fs-13);
+        color: var(--text);
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+}
+
+.confirm-items-more {
+    color: var(--text-muted) !important;
+}
+
+.confirm-reason {
+    margin-top: var(--space-4);
+
+    textarea {
+        resize: vertical;
+        min-height: 64px;
+    }
+}
+
+.confirm-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--space-3);
+    margin-top: var(--space-6);
+}

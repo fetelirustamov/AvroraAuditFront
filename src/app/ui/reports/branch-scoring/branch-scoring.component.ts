@@ -1,24 +1,32 @@
-import { CommonModule, NgFor, NgIf } from '@angular/common';
-import { Component, ViewChild } from '@angular/core';
+import { NgFor, NgClass, NgIf, NgSwitch, NgSwitchCase, NgSwitchDefault } from '@angular/common';
+import { Component, DestroyRef, OnInit, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
-import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatSelectModule } from '@angular/material/select';
-import { MatTableModule, MatTableDataSource } from '@angular/material/table';
-import { MatPaginator, MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatMenuModule } from '@angular/material/menu';
-import { debounceTime, finalize, Subject } from 'rxjs';
-import * as XLSX from 'xlsx';
-import pdfMake from 'pdfmake/build/pdfmake';
-import pdfFonts from 'pdfmake/build/vfs_fonts';
-import { InspectionsService } from '../../inspections/inspections.service';
-import { Firm } from '../../inspections/firm.model';
-import { NotificationService } from '../../../shared/services/notification.service';
-import { ReportsService } from '../reports.service';
-import { AuditLoadingOverlayComponent } from '../../components/audit-loading-overlay/audit-loading-overlay.component';
+import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatSelectModule } from '@angular/material/select';
+import { MatTableDataSource, MatTableModule } from '@angular/material/table';
+import { ActivatedRoute, Router } from '@angular/router';
+import { Subject, Subscription, debounceTime, finalize } from 'rxjs';
 import { TableState } from '../../../models/table-state.model';
+import { ListStateComponent } from '../../../shared/components/list-state/list-state.component';
+import { ComplianceTonePipe } from '../../../shared/pipes/compliance-tone.pipe';
+import { ComplianceLegendComponent } from '../../../shared/components/compliance-legend/compliance-legend.component';
+import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
+import { FileExportService, datedFileName } from '../../../shared/services/file-export.service';
+import { NotificationService } from '../../../shared/services/notification.service';
+import { apiErrorMessage } from '../../../shared/utils/api-error';
+import { chartColors } from '../../../shared/utils/chart-colors';
+import { weightedPercent } from '../../../shared/utils/compliance';
+import { queryNumber, writeQueryState } from '../../../shared/utils/query-state';
+import { Firm } from '../../inspections/firm.model';
+import { InspectionsService } from '../../inspections/inspections.service';
+import { ReportsService } from '../reports.service';
+import { MONTH_OPTIONS, PAGE_SIZES, REPORT_YEARS } from '../report-filters';
 
-/** UI sütun açarlarından Swagger sıralama/filter sütun adlarına */
+/** UI sütun açarlarından server filtr/sıralama sütun adlarına */
 const COLUMN_TO_API_FILTER: Record<string, string> = {
     bolge: 'regionName',
     magaza_kodu: 'locationCode',
@@ -34,80 +42,91 @@ const COLUMN_TO_API_FILTER: Record<string, string> = {
     selector: 'app-sobeler-puanlamasi',
     standalone: true,
     imports: [
-        CommonModule, NgIf, NgFor, ReactiveFormsModule,
-        MatButtonModule, MatFormFieldModule, MatSelectModule,
-        MatTableModule, MatPaginatorModule, MatMenuModule,
-        AuditLoadingOverlayComponent
+        NgIf, NgClass, NgFor, NgSwitch, NgSwitchCase, NgSwitchDefault, ReactiveFormsModule,
+        MatFormFieldModule, MatSelectModule, MatTableModule, MatPaginatorModule, MatMenuModule, MatProgressBarModule,
+        PageHeaderComponent, ListStateComponent, ComplianceTonePipe, ComplianceLegendComponent,
     ],
     templateUrl: './branch-scoring.component.html',
     styleUrl: './branch-scoring.component.scss'
 })
-export class SobelerPuanlamasiComponent {
-    @ViewChild(MatPaginator) paginator!: MatPaginator;
+export class SobelerPuanlamasiComponent implements OnInit {
+    private readonly inspectionsService = inject(InspectionsService);
+    private readonly reportsService = inject(ReportsService);
+    private readonly notify = inject(NotificationService);
+    private readonly fileExport = inject(FileExportService);
+    private readonly router = inject(Router);
+    private readonly route = inject(ActivatedRoute);
+    private readonly destroyRef = inject(DestroyRef);
 
     columns = [
         { key: 'row', label: '№' },
-        { key: 'bolge', label: 'Bölgəsi' },
-        { key: 'magaza_kodu', label: 'Ərazi kodu' },
-        { key: 'magaza_adi', label: 'Ərazi adı' },
-        { key: 'tasnifat', label: 'Tasnifat' },
+        { key: 'bolge', label: 'Bölgə' },
+        { key: 'magaza_kodu', label: 'Mağaza kodu' },
+        { key: 'magaza_adi', label: 'Mağaza adı' },
+        { key: 'tasnifat', label: 'Təsnifat' },
         { key: 'sobe', label: 'Şöbələr' },
         { key: 'toplanan_total_bal', label: 'Şöbə üzrə toplanan bal' },
         { key: 'umumi_total_bal', label: 'Şöbə üzrə ümumi bal' },
         { key: 'faiz_nisbeti', label: 'Faiz nisbəti (%)' },
     ];
     displayedColumns = this.columns.map(c => c.key);
+    get filterColumns(): string[] { return this.columns.map(c => c.key + '__filter'); }
     dataSource = new MatTableDataSource<any>([]);
     allCount = 0;
 
-    filtersForm = new FormGroup({
-        year: new FormControl<number | null>(new Date().getFullYear()),
+    readonly years = REPORT_YEARS;
+    readonly months = MONTH_OPTIONS;
+    readonly pageSizes = PAGE_SIZES;
+    readonly filtersForm = new FormGroup({
+        year: new FormControl<number | null>(REPORT_YEARS[0]),
         month: new FormControl<number | null>(null),
         firmId: new FormControl<number | null>(null),
     });
-
     firms: Firm[] = [];
+
     readonly tableState = new TableState();
     private columnFilterSubject = new Subject<{ key: string; value: string }>();
     private columnApiFilters: Record<string, string> = {};
-    private hasSubmittedSearch = false;
+    /** Filtrə uyğun bütün sətirlər; axtarışdan əvvəl və yüklənərkən null-dır (ixrac bağlıdır) */
+    allRows: any[] | null = null;
+    /** Çəkili orta: Σ toplanan bal / Σ ümumi bal × 100 */
+    avgFaiz: number | null = null;
+    private allRowsSub?: Subscription;
 
-    years = Array.from({ length: 6 }, (_, i) => new Date().getFullYear() - i);
-    months = [
-        { value: 1, label: 'Yanvar' }, { value: 2, label: 'Fevral' },
-        { value: 3, label: 'Mart' }, { value: 4, label: 'Aprel' },
-        { value: 5, label: 'May' }, { value: 6, label: 'İyun' },
-        { value: 7, label: 'İyul' }, { value: 8, label: 'Avqust' },
-        { value: 9, label: 'Sentyabr' }, { value: 10, label: 'Oktyabr' },
-        { value: 11, label: 'Noyabr' }, { value: 12, label: 'Dekabr' }
-    ];
-
+    searched = false;
     isLoading = false;
-    get filterColumns(): string[] { return this.columns.map(c => c.key + '__filter'); }
+    loadError: string | null = null;
 
     get hasActiveColumnFilters(): boolean {
         return Object.keys(this.columnApiFilters).length > 0;
     }
 
-    constructor(
-        private inspectionsService: InspectionsService,
-        private reportsService: ReportsService,
-        private notify: NotificationService,
-    ) {
+    constructor() {
         this.tableState.paginator.page = 0;
-        this.tableState.paginator.size = 10;
+        this.tableState.paginator.size = PAGE_SIZES[0];
         this.tableState.sorting.column = 'sectionName';
         this.tableState.sorting.direction = 'asc';
         this.tableState.searchTerm = '';
 
-        this.inspectionsService.getFirms().subscribe({
-            next: res => { this.firms = res.data ?? []; },
-            error: () => { this.notify.error('Firmalar yüklənmədi'); },
-        });
-
-        this.columnFilterSubject.pipe(debounceTime(400)).subscribe(({ key, value }) => {
+        this.columnFilterSubject.pipe(debounceTime(400), takeUntilDestroyed()).subscribe(({ key, value }) => {
             this.applyColumnFilterDebounced(key, value);
         });
+    }
+
+    ngOnInit(): void {
+        this.inspectionsService.getFirms().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+            next: res => { this.firms = res.data ?? []; },
+            error: error => { this.notify.error(apiErrorMessage(error, 'Firmalar yüklənmədi')); },
+        });
+
+        // URL-də il varsa əvvəlki axtarış bərpa olunur
+        const q = this.route.snapshot.queryParamMap;
+        const year = queryNumber(q, 'year');
+        if (year == null) return;
+        this.filtersForm.patchValue({ year, month: queryNumber(q, 'month'), firmId: queryNumber(q, 'firm') });
+        this.tableState.paginator.page = queryNumber(q, 'page') ?? 0;
+        this.tableState.paginator.size = queryNumber(q, 'size') ?? PAGE_SIZES[0];
+        this.load();
     }
 
     applyColumnFilter(event: Event, key: string): void {
@@ -123,44 +142,62 @@ export class SobelerPuanlamasiComponent {
         } else {
             delete this.columnApiFilters[apiKey];
         }
-        // Sütun filtrləri birbaşa serverə göndərilir; «Axtar» gözləmədən sorğu göndərilir
-        this.hasSubmittedSearch = true;
-        this.resetToFirstPage();
-        this.syncFilterPayload();
-        this.fetch();
+        if (!this.searched) { return; }
+        this.search();
     }
 
-    clearFilters(): void {
+    clearColumnFilters(): void {
         this.columnApiFilters = {};
         document.querySelectorAll<HTMLInputElement>('.filter-input').forEach(i => { i.value = ''; });
-        this.resetToFirstPage();
-        this.syncFilterPayload();
-        this.fetch();
+        if (!this.searched) { return; }
+        this.search();
     }
 
     onSearch(): void {
-        this.hasSubmittedSearch = true;
-        this.resetToFirstPage();
+        this.search();
+    }
+
+    /** "Təmizlə": filtrlər standart dəyərə qayıdır, nəticə və URL təmizlənir */
+    clearAll(): void {
+        this.filtersForm.reset({ year: REPORT_YEARS[0], month: null, firmId: null });
+        this.columnApiFilters = {};
+        document.querySelectorAll<HTMLInputElement>('.filter-input').forEach(i => { i.value = ''; });
+        this.allRowsSub?.unsubscribe();
+        this.searched = false;
+        this.loadError = null;
+        this.dataSource.data = [];
+        this.allCount = 0;
+        this.allRows = null;
+        this.avgFaiz = null;
+        void writeQueryState(this.router, { year: null, month: null, firm: null, page: null, size: null });
+    }
+
+    /** Filtr dəyişdi: cədvəl ilk səhifədən, orta faiz və ixrac məlumatı bütün sətirlərdən yenilənir */
+    private search(): void {
+        this.tableState.paginator.page = 0;
+        const { year, month, firmId } = this.filtersForm.getRawValue();
+        void writeQueryState(this.router, { year, month, firm: firmId, page: null });
+        this.load();
+    }
+
+    /** Cari səhifə və bütün sətirlər (orta faiz, ixrac) birlikdə yüklənir */
+    load(): void {
         this.syncFilterPayload();
         this.fetch();
+        this.loadAllRows();
     }
 
     onPage(e: PageEvent): void {
-        if (!this.hasSubmittedSearch) { return; }
         this.tableState.paginator.page = e.pageIndex;
         this.tableState.paginator.size = e.pageSize;
+        void writeQueryState(this.router, { page: e.pageIndex || null, size: e.pageSize === PAGE_SIZES[0] ? null : e.pageSize });
         this.syncFilterPayload();
         this.fetch();
-    }
-
-    private resetToFirstPage(): void {
-        this.tableState.paginator.page = 0;
-        this.paginator?.firstPage();
     }
 
     private getFormFilters(): Record<string, string> {
         const f: Record<string, string> = {};
-        const { year, month, firmId } = this.filtersForm.value;
+        const { year, month, firmId } = this.filtersForm.getRawValue();
         if (year != null) { f['year'] = String(year); }
         if (month != null) { f['month'] = String(month); }
         if (firmId != null) { f['firmId'] = String(firmId); }
@@ -172,10 +209,11 @@ export class SobelerPuanlamasiComponent {
     }
 
     private fetch(): void {
+        this.searched = true;
         this.isLoading = true;
-        this.syncFilterPayload();
+        this.loadError = null;
         this.reportsService.getCategoryScoreDetailsBySection(this.tableState)
-            .pipe(finalize(() => { this.isLoading = false; }))
+            .pipe(finalize(() => { this.isLoading = false; }), takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: res => {
                     const items = (res as any)?.data?.items ?? [];
@@ -186,12 +224,29 @@ export class SobelerPuanlamasiComponent {
                     this.dataSource.data = (items as any[]).map((item, idx) =>
                         this.mapApiRow(item, page * size + idx + 1));
                 },
-                error: () => {
-                    this.notify.error('Məlumat yüklənmədi');
-                    this.dataSource.data = [];
-                    this.allCount = 0;
+                error: error => {
+                    this.loadError = apiErrorMessage(error, 'Hesabat yüklənmədi');
                 },
             });
+    }
+
+    /**
+     * Filtrə uyğun bütün sətirlər (page = -1 serverdə səhifələməni söndürür).
+     * Cədvəl serverdə səhifələnir, ona görə orta faiz və ixrac cari səhifədən yox, buradan götürülür.
+     */
+    private loadAllRows(): void {
+        this.allRowsSub?.unsubscribe();
+        this.allRows = null;
+        this.avgFaiz = null;
+        const state = { ...this.tableState, paginator: { ...this.tableState.paginator, page: -1 } } as TableState;
+        this.allRowsSub = this.reportsService.getCategoryScoreDetailsBySection(state).subscribe({
+            next: res => {
+                const items: any[] = (res as any)?.data?.items ?? [];
+                this.allRows = items.map((item, idx) => this.mapApiRow(item, idx + 1));
+                this.avgFaiz = weightedPercent(this.allRows, 'toplanan_total_bal', 'umumi_total_bal');
+            },
+            error: error => this.notify.error(apiErrorMessage(error, 'Orta faiz və ixrac məlumatı yüklənmədi')),
+        });
     }
 
     private mapApiRow(item: any, rowNo: number): any {
@@ -202,7 +257,6 @@ export class SobelerPuanlamasiComponent {
             pct = (Number(score) / Number(norm)) * 100;
         }
         const faiz = pct != null ? Number(Number(pct).toFixed(1)) : 0;
-
         return {
             row: rowNo,
             bolge: item?.regionName ?? item?.RegionName ?? '',
@@ -216,37 +270,38 @@ export class SobelerPuanlamasiComponent {
         };
     }
 
-    getAvgFaiz(): string {
-        const data = this.dataSource.data;
-        if (!data.length) return '0';
-        const avg = data.reduce((s, r) => s + Number(r.faiz_nisbeti), 0) / data.length;
-        return avg.toFixed(1);
+    get avgFaizLabel(): string {
+        if (this.allRows === null) { return '…'; }
+        return this.avgFaiz === null ? '—' : `${this.avgFaiz.toFixed(1)}%`;
     }
 
     exportExcel(): void {
-        const data = this.dataSource.data.map((r: any) => ({
-            '№': r.row, 'Bölgəsi': r.bolge, 'Ərazi kodu': r.magaza_kodu,
-            'Ərazi adı': r.magaza_adi, 'Tasnifat': r.tasnifat, 'Şöbələr': r.sobe,
+        if (!this.allRows) { return; }
+        const data = this.allRows.map((r: any) => ({
+            '№': r.row, 'Bölgə': r.bolge, 'Mağaza kodu': r.magaza_kodu,
+            'Mağaza adı': r.magaza_adi, 'Təsnifat': r.tasnifat, 'Şöbələr': r.sobe,
             'Şöbə üzrə toplanan bal': r.toplanan_total_bal, 'Şöbə üzrə ümumi bal': r.umumi_total_bal,
             'Faiz nisbəti (%)': r.faiz_nisbeti,
         }));
-        const ws = XLSX.utils.json_to_sheet(data);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, 'Şöbələr Puanlaması');
-        XLSX.writeFile(wb, `sobeler-puanlamasi-${new Date().toISOString().slice(0, 10)}.xlsx`);
+        void this.fileExport.exportRowsToExcel(
+            data,
+            'Şöbə qiymətləndirməsi',
+            datedFileName('sobe-qiymetlendirmesi', 'xlsx'),
+        );
     }
 
     exportPdf(): void {
-        const vfs: any = (pdfFonts as any).pdfMake ? (pdfFonts as any).pdfMake.vfs : (pdfFonts as any).vfs;
-        (pdfMake as any).vfs = vfs;
-        const headers = ['№', 'Bölgəsi', 'Ərazi kodu', 'Ərazi adı', 'Tasnifat', 'Şöbələr', 'Şöbə üzrə toplanan bal', 'Şöbə üzrə ümumi bal', 'Faiz(%)'];
-        const rows = this.dataSource.data.map((r: any) => [r.row, r.bolge, r.magaza_kodu, r.magaza_adi, r.tasnifat, r.sobe, r.toplanan_total_bal, r.umumi_total_bal, r.faiz_nisbeti]);
+        if (!this.allRows) { return; }
+        const headers = ['№', 'Bölgə', 'Mağaza kodu', 'Mağaza adı', 'Təsnifat', 'Şöbələr', 'Şöbə üzrə toplanan bal', 'Şöbə üzrə ümumi bal', 'Faiz(%)'];
+        const rows = this.allRows.map((r: any) => [r.row, r.bolge, r.magaza_kodu, r.magaza_adi, r.tasnifat, r.sobe, r.toplanan_total_bal, r.umumi_total_bal, r.faiz_nisbeti]);
+        // PDF-də başlıq neytraldır: rəng məna daşımır
+        const pdf = chartColors();
         const docDef: any = {
             pageOrientation: 'landscape',
             content: [{ table: { headerRows: 1, body: [headers.map(h => ({ text: h, style: 'th' })), ...rows] }, layout: 'lightHorizontalLines' }],
-            styles: { th: { bold: true, color: '#fff', fillColor: '#E65100', fontSize: 8 } },
+            styles: { th: { bold: true, color: pdf.textStrong, fillColor: pdf.surfaceSubtle, fontSize: 8 } },
             defaultStyle: { fontSize: 8 }
         };
-        pdfMake.createPdf(docDef).download(`sobeler-puanlamasi-${new Date().toISOString().slice(0, 10)}.pdf`);
+        void this.fileExport.exportPdf(docDef, datedFileName('sobe-qiymetlendirmesi', 'pdf'));
     }
 }

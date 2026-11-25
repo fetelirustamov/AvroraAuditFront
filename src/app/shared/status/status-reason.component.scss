@@ -1,0 +1,97 @@
+// Rədd/qaytarma səbəbi: sol xətt tonu deyir, mətn neytral fonda oxunur (status-chip ilə eyni token-lər).
+:host {
+    display: block;
+}
+
+.status-reason {
+    --reason-accent: var(--warning);
+    --reason-soft: var(--warning-soft);
+    --reason-text: var(--warning-text);
+
+    display: flex;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-4);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--reason-accent);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+
+    &.is-danger {
+        --reason-accent: var(--danger);
+        --reason-soft: var(--danger-soft);
+        --reason-text: var(--danger-text);
+    }
+}
+
+.status-reason-icon {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    border-radius: var(--radius-sm);
+    background: var(--reason-soft);
+    color: var(--reason-text);
+    font-size: 18px;
+}
+
+.status-reason-body {
+    min-width: 0;
+}
+
+.status-reason-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--space-1) var(--space-3);
+    margin: 0 0 var(--space-1);
+}
+
+.status-reason-title {
+    color: var(--reason-text);
+    font-size: var(--fs-13);
+    font-weight: 600;
+}
+
+.status-reason-meta {
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+    font-size: var(--fs-12);
+}
+
+.status-reason-text {
+    margin: 0;
+    color: var(--text-strong);
+    font-size: var(--fs-14);
+    line-height: 1.5;
+    white-space: pre-line;
+    overflow-wrap: anywhere;
+}
+
+// Cədvəl sətrində: ikonsuz, kiçik, haşiyəsiz - yalnız sol xətt
+.status-reason.is-compact {
+    gap: 0;
+    margin-top: var(--space-2);
+    padding: var(--space-1) var(--space-2);
+    border: 0;
+    border-left: 2px solid var(--reason-accent);
+    border-radius: 0;
+    background: var(--reason-soft);
+
+    .status-reason-icon {
+        display: none;
+    }
+
+    .status-reason-head {
+        margin-bottom: 2px;
+    }
+
+    .status-reason-title,
+    .status-reason-meta {
+        font-size: var(--fs-12);
+    }
+
+    .status-reason-text {
+        font-size: var(--fs-13);
+    }
+}

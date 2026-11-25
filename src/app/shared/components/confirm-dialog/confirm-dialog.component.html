@@ -1,0 +1,53 @@
+<div class="confirm-dialog" [class.is-danger]="data.tone === 'danger'">
+    <h2 class="confirm-title" [id]="data.titleId">
+        @if (data.tone === 'danger') {
+            <span class="material-symbols-outlined confirm-icon" aria-hidden="true">error</span>
+        }
+        {{ data.title }}
+    </h2>
+
+    <p class="confirm-message">{{ data.message }}</p>
+
+    @if (visibleItems.length) {
+        <ul class="confirm-items">
+            @for (item of visibleItems; track $index) {
+                <li>{{ item }}</li>
+            }
+            @if (hiddenItemCount > 0) {
+                <li class="confirm-items-more">və daha {{ hiddenItemCount }} qeyd</li>
+            }
+        </ul>
+    }
+
+    @if (data.reason; as reason) {
+        <mat-form-field appearance="outline" class="g-modern-field confirm-reason">
+            <mat-label>{{ reason.label || 'Səbəb' }}</mat-label>
+            <textarea matInput rows="3" [formControl]="reasonControl" [required]="reason.required"
+                      [attr.maxlength]="reason.maxLength ?? null"></textarea>
+            <!-- Hər @if-də bir kök element: mat-form-field məzmunu selektorla yerləşdirir -->
+            @if (reason.minLength) {
+                <mat-hint>Ən azı {{ reason.minLength }} simvol</mat-hint>
+            }
+            @if (reason.minLength) {
+                <mat-hint align="end">{{ reasonLength }} / {{ reason.minLength }}</mat-hint>
+            }
+            @if (reasonControl.hasError('required')) {
+                <mat-error>Səbəbi yazın</mat-error>
+            } @else if (reasonControl.hasError('minlength')) {
+                <mat-error>Ən azı {{ reason.minLength }} simvol yazın</mat-error>
+            }
+        </mat-form-field>
+    }
+
+    <div class="confirm-actions">
+        <button type="button" class="g-secondary-btn" cdkFocusInitial (click)="cancel()">
+            {{ data.cancelText || 'Ləğv et' }}
+        </button>
+        <button type="button"
+                [class]="data.tone === 'danger' ? 'g-reject-btn' : 'g-search-btn'"
+                [disabled]="!canConfirm"
+                (click)="confirm()">
+            {{ data.confirmText || 'Təsdiqlə' }}
+        </button>
+    </div>
+</div>

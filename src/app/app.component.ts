@@ -1,19 +1,16 @@
 import { Component } from '@angular/core';
-import { CommonModule, ViewportScroller } from '@angular/common';
+import { ViewportScroller } from '@angular/common';
 import { RouterOutlet, Router, Event, NavigationEnd } from '@angular/router';
-import { SidebarSettingsComponent } from './sidebar-settings/sidebar-settings.component';
 
 @Component({
     selector: 'app-root',
-    // Əgər siz Standalone komponent istifadə edirsinizsə,
-    // imports daxilində lazımi modulları qeyd edin.
-    standalone: true,  // <-- Bu sətri əlavə edin
-    imports: [RouterOutlet, CommonModule, SidebarSettingsComponent],
+    standalone: true,
+    imports: [RouterOutlet],
     templateUrl: './app.component.html',
-    styleUrls: ['./app.component.scss']  // "styleUrls" düzgün açardır (nəzərə alın: "styleUrl" deyil)
+    styleUrls: ['./app.component.scss']
 })
 export class AppComponent {
-    title = 'Audit Sistemi';
+    title = 'Audit sistemi';
 
     constructor(
         private router: Router,

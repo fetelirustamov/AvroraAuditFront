@@ -1,249 +1,154 @@
-import { Component, ViewChild, AfterViewInit, ElementRef } from '@angular/core';
-import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { finalize } from 'rxjs/internal/operators/finalize';
-import { InspectionPlan } from '../../inspections/InpectionPlan.model';
-import { PlanApprove } from '../../plans/plan.model';
-import { TableState } from '../../../models/table-state.model';
-import { Observable } from 'rxjs';
-import { SelectionModel } from '@angular/cdk/collections';
-import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
-import { Firm } from '../../inspections/firm.model';
-import { TableService } from '../../services/table.service';
-import { Router } from '@angular/router';
-import { InspectionsService } from '../../inspections/inspections.service';
-import { DisruptionAnswerService } from '../disruption-answer.service';
-import { DisruptionAnswer, DisruptionAnswerDTO } from '../disruption-answer.model';
-import { CommonModule, DatePipe, NgFor, Location } from '@angular/common';
-import { MatCardModule } from '@angular/material/card';
-import { MatButtonModule } from '@angular/material/button';
-import { MatMenuModule } from '@angular/material/menu';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { ActivatedRoute, Router, UrlTree } from '@angular/router';
+import { MatDialog } from '@angular/material/dialog';
+import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatTableModule } from '@angular/material/table';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatInputModule } from '@angular/material/input';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatSelectModule } from '@angular/material/select';
-import { MatNativeDateModule } from '@angular/material/core';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatDatepickerModule } from '@angular/material/datepicker';
-import { FileUploadModule } from '@iplab/ngx-file-upload';
-import { NgxMaterialTimepickerModule } from 'ngx-material-timepicker';
-import { NotificationService } from '../../../shared/services/notification.service';
+import { Subscription, finalize } from 'rxjs';
+import { TableState } from '../../../models/table-state.model';
+import { TableService } from '../../services/table.service';
+import { DisruptionAnswerDTO } from '../disruption-answer.model';
 import { MediaComponent } from '../../components/media/media.component';
 import { MediaType, Module } from '../../components/media/media-type.enum';
-import { AttachmentService } from '../../../admin/services/attachment.service';
+import { planStoreLabel } from '../../plans/plan-row';
+import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
+import { ListStateComponent } from '../../../shared/components/list-state/list-state.component';
+import { StatusChipComponent } from '../../../shared/status/status-chip.component';
+import { AppDatePipe } from '../../../shared/pipes/app-date.pipe';
+import { apiErrorMessage } from '../../../shared/utils/api-error';
+import { queryNumber, queryString, writeQueryState } from '../../../shared/utils/query-state';
+import { AnswerFormDialogComponent } from './answer-form-dialog.component';
 
+const LIST_URL = '/answers';
+const PAGE_SIZES = [10, 25, 50];
+
+/** Bir planın mağaza cavabı gözləyən uyğunsuzluqları. Plan `?planId=` ilə gəlir. */
 @Component({
   selector: 'app-answer-details',
-  imports: [MatCardModule, MatButtonModule, MatMenuModule, MatTableModule, CommonModule, MatPaginatorModule, MatProgressSpinnerModule, MatInputModule, MatFormFieldModule, MatSelectModule, MatDatepickerModule, MatNativeDateModule, FormsModule, ReactiveFormsModule, NgxMaterialTimepickerModule, NgFor, FileUploadModule, MediaComponent, MatTooltipModule],
-  providers: [DatePipe],
+  standalone: true,
+  imports: [
+    MatTableModule, MatPaginatorModule, MatProgressBarModule, MatTooltipModule,
+    MediaComponent, PageHeaderComponent, ListStateComponent, StatusChipComponent, AppDatePipe,
+  ],
+  providers: [TableService],
   templateUrl: './answer-details.component.html',
   styleUrl: './answer-details.component.scss'
 })
-export class AnswerDetailsComponent {
+export class AnswerDetailsComponent implements OnInit, OnDestroy {
+  private readonly tableService = inject(TableService);
+  private readonly dialog = inject(MatDialog);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
 
-  displayedColumns: string[] = ['position', 'inspectorName', 'sectionName', 'disruptionCategoryName', 'reasonName', 'createdDate', 'note', 'internalStatus', 'returnReason', 'media', 'details'];
-  public answerStatus: any[] = [
-    { value: '1', viewValue: 'Həll edildi' },
-    { value: '3', viewValue: 'Razı deyiləm' }
-  ];
-  public dataSource: DisruptionAnswerDTO[] = [];
+  readonly displayedColumns = ['position', 'sectionName', 'disruptionCategoryName', 'reasonName', 'createdDate', 'note', 'internalStatus', 'returnReason', 'media', 'action'];
+  readonly pageSizes = PAGE_SIZES;
+  readonly MediaType = MediaType;
+  readonly Module = Module;
 
-  @ViewChild(MatPaginator) paginator!: MatPaginator;
-  @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
+  planId: number | null = null;
+  /** Geri linki: siyahının filtrli URL-i (query `returnUrl`). */
+  backLink: UrlTree = this.router.parseUrl(LIST_URL);
 
-  allDataCount: number = 0;
+  rows: DisruptionAnswerDTO[] = [];
+  total = 0;
+  pageIndex = 0;
+  pageSize = PAGE_SIZES[0];
+  loaded = false;
+  isLoading = false;
+  loadError: string | null = null;
 
-  public selectedFirmId: number = 0;
-  public selectedLocationId: number = 0;
-  private _tableState: TableState = new TableState();
-  public pageSize: number = 10;
-  public pageSizeOptions: number[] = [5, 10, 20]; // Səhifə ölçüsü seçimləri
-  public isLoading: boolean = false;
-  public rows$: Observable<any[]> = new Observable<any[]>();
-  public data: any;
-  public action: boolean = false;
-  public editedAnswer: DisruptionAnswer = new DisruptionAnswer();
-  /** Cavab dialoqu üçün tam sətir (rədd səbəbi və s.) */
-  editedRow: DisruptionAnswerDTO | null = null;
-  private searchTerm: string = "";
+  private readonly tableState = new TableState();
+  private loadSub?: Subscription;
 
-  editForm!: FormGroup;
-  isEditDialogOpen = false;
-  MediaType = MediaType;
-  Module = Module;
+  constructor() {
+    this.tableService.api_url = 'disruptionAnswers/getDetails';
+    this.tableState.filter['disruptionStatus'] = '2';
+    this.tableState.filter['level'] = '1';
+    this.tableState.filter['disruptionAnswerStatus'] = '1';
+    this.tableState.filter['isCurrent'] = 'true';
+    this.tableState.sorting.direction = 'desc';
+  }
 
-  constructor(private inspectionsService: InspectionsService,
-    private disruptionAnswerService: DisruptionAnswerService,
-    private _tableService: TableService,
-    private datePipe: DatePipe,
-    private router: Router,
-    private attachmentService: AttachmentService,
-    private notify: NotificationService,
-    private fb: FormBuilder,
-    private location: Location,) {
-
-
-    this._tableState = new TableState();
-    this._tableService.api_url = "disruptionAnswers/getDetails";
-    this._tableState.filter['disruptionStatus'] = "2";
-
-    this._tableState.paginator.page = 0;
-    this._tableState.sorting.direction = "desc";
-    this._tableState.paginator.size = Number(this.pageSize);
-    const navigation = this.router.getCurrentNavigation();
-    if (navigation?.extras?.state) {
-      const state = navigation.extras.state;
-      this.data = state["data"]; // row obyekti
-      this.action = state["action"];
-
-
-      this._tableState.filter['inspectionPlanId'] = this.data.inspectionPlanId.toString();
-
-      this._tableState.filter['level'] = "1";
-      this._tableState.filter['disruptionAnswerStatus'] = state["status"];
-      this._tableState.filter['isCurrent'] = state["isCurrent"];
-
-    } else {
-      this.location.back();
-      return;
+  ngOnInit(): void {
+    const q = this.route.snapshot.queryParamMap;
+    const returnUrl = queryString(q, 'returnUrl');
+    if (returnUrl?.startsWith(LIST_URL) && !returnUrl.startsWith(`${LIST_URL}/`)) {
+      this.backLink = this.router.parseUrl(returnUrl);
     }
+
+    this.planId = queryNumber(q, 'planId');
+    if (this.planId == null) return;
+    this.tableState.filter['inspectionPlanId'] = String(this.planId);
+    this.pageIndex = queryNumber(q, 'page') ?? 0;
+    this.pageSize = queryNumber(q, 'size') ?? PAGE_SIZES[0];
+    this.load();
   }
 
-
-  ngOnInit() {
-    this.editForm = this.fb.group({
-      id: [''],
-      answerStatus: ['', Validators.required],
-      note: ['', [Validators.required, Validators.minLength(10)]],
-      files: [null, Validators.required]
-    });
-
-    this.fill(); // Məlumatları ilkin yüklə
+  ngOnDestroy(): void {
+    this.loadSub?.unsubscribe();
   }
 
-  ngAfterViewInit() {
-    if (this.paginator) {
-      this.paginator.page.subscribe(() => {
-        this._tableState.paginator.page = this.paginator.pageIndex;
-        this.pageSize = this.paginator.pageSize;
-        this._tableState.paginator.size = this.pageSize;
-        this.fill();
-      });
-    } else {
-      console.warn('MatPaginator is not initialized in ngAfterViewInit');
-    }
+  /** Mağaza və müfəttiş planın bütün sətirlərində eynidir: başlıq ilk sətirdən qurulur. */
+  get title(): string {
+    const first = this.rows[0];
+    return first ? planStoreLabel(first) : `Plan № ${this.planId}`;
   }
 
-  onPageSizeChange(newPageSize: any) {
-    this.pageSize = newPageSize;
-    this._tableState.paginator.size = this.pageSize;
-    if (this.paginator) {
-      this.paginator.pageSize = this.pageSize;
-      this.paginator.pageIndex = 0; // Səhifəni sıfırlayır
-      this.fill();
-    }
+  get subtitle(): string {
+    return [`Plan № ${this.planId}`, this.rows[0]?.inspectorName].filter(Boolean).join(' · ');
   }
 
-
-  getRowNumber(index: number): number {
-    return this.paginator ? index + 1 + (this.paginator.pageIndex * this.paginator.pageSize) : index + 1;
+  onPage(event: PageEvent): void {
+    this.pageIndex = event.pageIndex;
+    this.pageSize = event.pageSize;
+    writeQueryState(this.router, { page: event.pageIndex || null, size: event.pageSize });
+    this.load();
   }
 
-  private fill() {
+  load(): void {
+    this.loadSub?.unsubscribe();
     this.isLoading = true;
-    this._tableState.paginator.size = this.pageSize;
-    if (!this._tableState.filter) {
-      this._tableState.filter = {};
-    }
-    this._tableState.searchTerm = this.searchTerm;
+    this.loadError = null;
+    this.tableState.paginator.page = this.pageIndex;
+    this.tableState.paginator.size = this.pageSize;
 
-    this._tableService.fill(this._tableState).pipe(
-      finalize(() => {
-        this.isLoading = false;
-        // this.cdr.detectChanges();
-      })
-    ).subscribe((response) => {
-      this._tableState.paginator.total = response.data?.total || 0;
-      this.dataSource = response.data?.items || [];
-      this.allDataCount = response.data?.total || 0;
-    });
-  }
-
-
-
-
-
-  openEditDialog(answer: DisruptionAnswerDTO) {
-    this.editedAnswer = answer;
-    this.editedRow = answer;
-    this.editForm.patchValue({
-      id: answer.id,
-      note: answer.note,
-      approveStatus: answer.approveStatus,
-    });
-    this.isEditDialogOpen = true;
-
-  }
-
-
-  closeEditDialog() {
-    this.isEditDialogOpen = false;
-    this.editedRow = null;
-    this.editForm.reset();
-    if (this.fileInput?.nativeElement) {
-      this.fileInput.nativeElement.value = '';
-    }
-    Object.keys(this.editForm.controls).forEach(key => {
-      const control = this.editForm.get(key);
-      control?.markAsPristine();
-      control?.markAsUntouched();
-      control?.updateValueAndValidity();
-    });
-  }
-
-  onNativeFileChange(event: any) {
-    const files = Array.from(event.target.files);
-    this.editForm.get('files')?.setValue(files.length > 0 ? files : null);
-    this.editForm.get('files')?.markAsTouched();
-    this.editForm.get('files')?.updateValueAndValidity();
-  }
-
-  saveEdit() {
-    const files = this.editForm.get('files')?.value || [];
-    if (this.editForm.invalid) {
-      this.editForm.markAllAsTouched();
-      return;
-    }
-    if (this.editForm.valid && this.editedAnswer) {
-      const updatedDisruption = {
-        id: this.editForm.get('id')?.value,
-        answerStatus: this.editForm.get('answerStatus')?.value,
-        note: this.editForm.value.note,
-      };
-
-      this.disruptionAnswerService.AddDisruptionAnswer(updatedDisruption).subscribe({
-        next: (response: { success: boolean }) => {
-          if (response.success) {
-            if (files.length > 0) {
-              this.attachmentService.uploadAttachment(
-                Module.DisAnswer,
-                MediaType.Image,
-                this.editForm.get('id')?.value,
-                files
-              ).subscribe({
-                next: () => this.notify.success('Şəkil uğurla yükləndi'),
-                error: () => this.notify.error('Şəkil yüklənmədi')
-              });
-            }
-            this.notify.success('Uyğunsuzluq yeniləndi');
-            this.closeEditDialog();
-            this.fill();
+    this.loadSub = this.tableService.fill(this.tableState)
+      .pipe(finalize(() => (this.isLoading = false)))
+      .subscribe({
+        next: (response) => {
+          if (!response.success) {
+            this.loadError = response.message;
+            return;
           }
+          const items = response.data?.items ?? [];
+          // Səhifənin son sətrinə cavab verilibsə boş qalan səhifədən bir əvvəlkinə keç
+          if (items.length === 0 && this.pageIndex > 0) {
+            this.pageIndex--;
+            writeQueryState(this.router, { page: this.pageIndex || null });
+            this.load();
+            return;
+          }
+          this.loaded = true;
+          this.rows = items;
+          this.total = response.data?.total ?? 0;
         },
-        error: () => {
-          this.notify.error('Xəta baş verdi');
-        }
+        error: (error) => (this.loadError = apiErrorMessage(error, 'Uyğunsuzluqlar yüklənmədi')),
       });
-    }
+  }
+
+  rowNumber(index: number): number {
+    return this.pageIndex * this.pageSize + index + 1;
+  }
+
+  openAnswerDialog(row: DisruptionAnswerDTO): void {
+    this.dialog.open<AnswerFormDialogComponent, DisruptionAnswerDTO, boolean>(AnswerFormDialogComponent, {
+      data: row,
+      width: '560px',
+      maxWidth: '95vw',
+      autoFocus: 'first-tabbable',
+    }).afterClosed().subscribe(saved => {
+      if (saved) this.load();
+    });
   }
 }

@@ -1,0 +1,337 @@
+// Giriş ekranlarının ortaq çərçivəsi: solda səhnə, sağda forma.
+// /login və /admin-login bunu @use ilə götürür, səhnənin içini isə özü çəkir.
+// Səhnə rəngləri `_tokens.scss`-dəki --stage-* token-lərindən gəlir.
+
+:host {
+    display: block;
+}
+
+.auth {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(400px, 1fr);
+    min-height: 100vh;
+    min-height: 100dvh;
+    background: var(--surface);
+}
+
+// ── Səhnə ───────────────────────────────────────────────────────────────────
+.auth-stage {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+    padding: var(--space-8) clamp(var(--space-7), 5vw, 72px);
+    overflow: hidden;
+    isolation: isolate;
+    background-color: var(--stage-bg);
+    color: var(--stage-text);
+
+    // Ölçü toru: kiçik addım 24px, böyük addım 120px
+    &::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: -1;
+        background-image:
+            linear-gradient(var(--stage-line) 1px, transparent 1px),
+            linear-gradient(90deg, var(--stage-line) 1px, transparent 1px),
+            linear-gradient(var(--stage-line) 1px, transparent 1px),
+            linear-gradient(90deg, var(--stage-line) 1px, transparent 1px);
+        background-size: 24px 24px, 24px 24px, 120px 120px, 120px 120px;
+        background-position: -1px -1px;
+    }
+
+    // Sağ kənarda xətkeş bölgüləri: hər 24px-də qısa, hər 120px-də uzun
+    &::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        width: 14px;
+        z-index: -1;
+        background-image:
+            linear-gradient(var(--stage-line-strong) 1px, transparent 1px),
+            linear-gradient(var(--stage-line-strong) 1px, transparent 1px);
+        background-size: 6px 24px, 14px 120px;
+        background-position: right -1px, right -1px;
+        background-repeat: repeat-y;
+    }
+}
+
+.stage-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: var(--fs-12);
+    letter-spacing: .04em;
+    color: var(--stage-text-muted);
+
+    &::before {
+        content: "";
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--stage-ok);
+    }
+}
+
+.stage-title {
+    max-width: 15em;
+    margin: 0;
+    font-size: var(--fs-stage);
+    font-weight: 500;
+    line-height: 1.1;
+    letter-spacing: -.02em;
+    color: var(--stage-text);
+
+    em {
+        font-style: normal;
+        color: var(--stage-ok);
+    }
+}
+
+.stage-lead {
+    max-width: 30em;
+    margin: calc(var(--space-2) * -1) 0 0;
+    font-size: var(--fs-16);
+    line-height: 1.55;
+    color: var(--stage-text-muted);
+}
+
+// Səhnənin illüstrasiya sahəsi: qalan hündürlüyü tutur
+.stage-scene {
+    position: relative;
+    flex: 1;
+    min-height: 340px;
+}
+
+// Künclərdəki çap nişanları (crop marks)
+.stage-mark {
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    border-color: var(--stage-line-strong);
+    border-style: solid;
+    border-width: 0;
+
+    &.tl { top: var(--space-5); left: var(--space-5); border-top-width: 1px; border-left-width: 1px; }
+    &.tr { top: var(--space-5); right: var(--space-7); border-top-width: 1px; border-right-width: 1px; }
+    &.bl { bottom: var(--space-5); left: var(--space-5); border-bottom-width: 1px; border-left-width: 1px; }
+    &.br { bottom: var(--space-5); right: var(--space-7); border-bottom-width: 1px; border-right-width: 1px; }
+}
+
+// ── Forma paneli ───────────────────────────────────────────────────────────
+.auth-panel {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: var(--space-8) clamp(var(--space-6), 5vw, 72px);
+    background: var(--surface);
+}
+
+.auth-form-wrap {
+    width: 100%;
+    max-width: 380px;
+    margin: 0 auto;
+    animation: auth-rise .5s ease-out both;
+}
+
+.auth-logo {
+    display: block;
+    width: auto;
+    max-width: 100%;
+    height: 36px;
+    margin-bottom: var(--space-8);
+}
+
+.auth-title {
+    margin: 0 0 var(--space-2);
+    font-size: var(--fs-28);
+    font-weight: 600;
+    line-height: 1.2;
+    letter-spacing: -.01em;
+    color: var(--text-strong);
+}
+
+.auth-lead {
+    margin: 0 0 var(--space-7);
+    font-size: var(--fs-14);
+    line-height: 1.55;
+    color: var(--text-muted);
+}
+
+.auth-field {
+    margin-bottom: var(--space-4);
+}
+
+.password-toggle {
+    color: var(--text-muted);
+}
+
+.auth-alert {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-2);
+    margin-bottom: var(--space-4);
+    padding: var(--space-3);
+    border: 1px solid var(--danger-soft);
+    border-radius: var(--radius-md);
+    background: var(--danger-soft);
+    color: var(--danger-text);
+    font-size: var(--fs-13);
+    line-height: 20px;
+
+    mat-icon {
+        flex-shrink: 0;
+        width: 20px;
+        height: 20px;
+        font-size: 20px;
+    }
+}
+
+.auth-submit {
+    width: 100%;
+    min-height: 48px !important;
+    margin-top: var(--space-2);
+    font-size: var(--fs-14);
+
+    &:focus-visible {
+        outline: none;
+        box-shadow: var(--focus-ring);
+    }
+}
+
+.auth-spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid currentColor;
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: auth-spin .8s linear infinite;
+}
+
+.auth-note {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-2);
+    margin: var(--space-7) 0 0;
+    padding-top: var(--space-5);
+    border-top: 1px solid var(--border);
+    font-size: var(--fs-13);
+    line-height: 1.5;
+    color: var(--text-muted);
+
+    mat-icon {
+        flex-shrink: 0;
+        width: 18px;
+        height: 18px;
+        font-size: 18px;
+        color: var(--text-faint);
+    }
+}
+
+@keyframes auth-spin {
+    to { transform: rotate(360deg); }
+}
+
+@keyframes auth-rise {
+    from { opacity: 0; transform: translateY(12px); }
+}
+
+@keyframes auth-pop {
+    from { opacity: 0; transform: scale(.4); }
+}
+
+@keyframes auth-fade {
+    from { opacity: 0; }
+}
+
+// ── Ölçülər ────────────────────────────────────────────────────────────────
+@media (max-width: 1199.98px) {
+    .auth {
+        grid-template-columns: minmax(0, 1fr) minmax(380px, 1fr);
+    }
+}
+
+// Planşet və telefon: səhnə yuxarıda zolaq olur, illüstrasiya gizlənir,
+// forma paneli zolağın üstünə çıxır.
+@media (max-width: 899.98px) {
+    .auth {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto 1fr;
+        background: var(--stage-bg);
+    }
+
+    .auth-stage {
+        gap: var(--space-4);
+        padding: var(--space-7) var(--space-6) calc(var(--space-8) + var(--space-6));
+
+        &::after { display: none; }
+    }
+
+    .stage-scene,
+    .stage-mark.bl,
+    .stage-mark.br {
+        display: none;
+    }
+
+    .stage-mark.tr { right: var(--space-5); }
+
+    .stage-title {
+        font-size: var(--fs-28);
+    }
+
+    .stage-lead {
+        font-size: var(--fs-14);
+        margin-top: 0;
+    }
+
+    // Səhnə positioned olduğu üçün panel öndə qalsın deyə öz qatını alır
+    .auth-panel {
+        position: relative;
+        z-index: 1;
+        justify-content: flex-start;
+        margin-top: calc(var(--space-8) * -1);
+        padding: var(--space-8) var(--space-6);
+        border-radius: calc(var(--radius-lg) * 2) calc(var(--radius-lg) * 2) 0 0;
+    }
+
+    .auth-logo {
+        margin-bottom: var(--space-7);
+    }
+}
+
+@media (max-width: 479.98px) {
+    .auth-stage {
+        padding: var(--space-6) var(--space-5) calc(var(--space-8) + var(--space-5));
+    }
+
+    .stage-title {
+        font-size: var(--fs-24);
+    }
+
+    .auth-panel {
+        padding: var(--space-7) var(--space-5) var(--space-6);
+    }
+
+    .auth-title {
+        font-size: var(--fs-24);
+    }
+
+    .auth-lead {
+        margin-bottom: var(--space-6);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .auth-form-wrap {
+        animation: none;
+    }
+
+    .auth-spinner {
+        animation-duration: 2.4s;
+    }
+}

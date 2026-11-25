@@ -1,0 +1,56 @@
+<form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <h2 mat-dialog-title class="form-dialog-title">{{ isEdit ? 'Firmanı redaktə et' : 'Yeni firma' }}</h2>
+
+    <mat-dialog-content>
+        <div class="form-grid">
+            <div class="form-field">
+                <label class="g-field-label" for="firm-name">Firma adı <span class="required-mark" aria-hidden="true">*</span></label>
+                <mat-form-field appearance="outline" class="g-modern-field">
+                    <input id="firm-name" matInput formControlName="name" required placeholder="Məs: Firma adı">
+                    <mat-error>Firma adını yazın</mat-error>
+                </mat-form-field>
+            </div>
+
+            <div class="form-field">
+                <label class="g-field-label" for="firm-description">Açıqlama</label>
+                <mat-form-field appearance="outline" class="g-modern-field">
+                    <input id="firm-description" matInput formControlName="description" placeholder="Qısa açıqlama">
+                </mat-form-field>
+            </div>
+
+            <div class="form-field">
+                <label class="g-field-label" for="firm-address">Ünvan</label>
+                <mat-form-field appearance="outline" class="g-modern-field">
+                    <input id="firm-address" matInput formControlName="address">
+                </mat-form-field>
+            </div>
+
+            <div class="form-field">
+                <label class="g-field-label" for="firm-phone">Telefon</label>
+                <mat-form-field appearance="outline" class="g-modern-field">
+                    <input id="firm-phone" matInput formControlName="phone" type="tel" placeholder="+994 XX XXX XX XX">
+                </mat-form-field>
+            </div>
+
+            <div class="form-field">
+                <label class="g-field-label" for="firm-email">E-poçt</label>
+                <mat-form-field appearance="outline" class="g-modern-field">
+                    <input id="firm-email" matInput formControlName="email" type="email" placeholder="ad.soyad@sirket.az">
+                    <mat-error>E-poçt formatı düzgün deyil</mat-error>
+                </mat-form-field>
+            </div>
+
+            <div class="form-field">
+                <label class="g-field-label" for="firm-website">Vebsayt</label>
+                <mat-form-field appearance="outline" class="g-modern-field">
+                    <input id="firm-website" matInput formControlName="website" type="url" placeholder="https://">
+                </mat-form-field>
+            </div>
+        </div>
+    </mat-dialog-content>
+
+    <mat-dialog-actions align="end">
+        <button type="button" class="g-secondary-btn" (click)="cancel()">Ləğv et</button>
+        <button type="submit" class="g-search-btn" [disabled]="isSaving">{{ isEdit ? 'Yadda saxla' : 'Əlavə et' }}</button>
+    </mat-dialog-actions>
+</form>

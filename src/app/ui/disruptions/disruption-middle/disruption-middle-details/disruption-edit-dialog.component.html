@@ -1,0 +1,50 @@
+<h2 mat-dialog-title>Uyğunsuzluğu redaktə et</h2>
+
+<form [formGroup]="form" (ngSubmit)="save()">
+    <mat-dialog-content class="edit-form">
+        <dl class="edit-context">
+            <div><dt>Şöbə</dt><dd>{{ disruption.sectionName || '—' }}</dd></div>
+            <div><dt>Kateqoriya</dt><dd>{{ disruption.disruptionCategoryName || '—' }}</dd></div>
+        </dl>
+
+        <mat-form-field appearance="outline" class="g-modern-field">
+            <mat-label>Səbəb</mat-label>
+            <mat-select formControlName="disruptionReasonId" required>
+                @for (reason of reasons; track reason.id) {
+                    <mat-option [value]="reason.id">{{ reason.reasonName }}</mat-option>
+                }
+            </mat-select>
+            @if (form.controls.disruptionReasonId.hasError('required')) {
+                <mat-error>Səbəbi seçin</mat-error>
+            }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="g-modern-field">
+            <mat-label>Son tarix (gün)</mat-label>
+            <input matInput formControlName="deadline" type="number" min="1" step="1" required>
+            @if (form.controls.deadline.hasError('required')) {
+                <mat-error>Son tarixi yazın</mat-error>
+            } @else if (form.controls.deadline.hasError('min')) {
+                <mat-error>Son tarix ən azı 1 gün olmalıdır</mat-error>
+            }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="g-modern-field">
+            <mat-label>Açıqlama</mat-label>
+            <textarea matInput formControlName="description" rows="4" required></textarea>
+            @if (form.controls.description.hasError('required')) {
+                <mat-error>Açıqlamanı yazın</mat-error>
+            }
+        </mat-form-field>
+
+        <div class="upload-field">
+            <span class="g-field-label">Şəkil əlavə et</span>
+            <file-upload class="file-uploader" formControlName="files" [multiple]="true" [accept]="acceptedImageTypes"></file-upload>
+        </div>
+    </mat-dialog-content>
+
+    <mat-dialog-actions align="end">
+        <button type="button" class="g-secondary-btn" mat-dialog-close cdkFocusInitial>Ləğv et</button>
+        <button type="submit" class="g-search-btn" [disabled]="isSaving">Yadda saxla</button>
+    </mat-dialog-actions>
+</form>

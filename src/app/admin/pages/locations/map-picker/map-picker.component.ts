@@ -2,13 +2,11 @@ import { AfterViewInit, Component, ElementRef, EventEmitter, HostListener, Input
 import { CommonModule } from '@angular/common';
 import * as L from 'leaflet';
 
-// Leaflet's default marker images are served from angular.json's "leaflet/" asset output
-// instead of the package's relative dist/images path, which the Angular build doesn't resolve.
-L.Icon.Default.mergeOptions({
-    iconRetinaUrl: 'leaflet/marker-icon-2x.png',
-    iconUrl: 'leaflet/marker-icon.png',
-    shadowUrl: 'leaflet/marker-shadow.png'
-});
+// Leaflet builds its default icon URLs as imagePath + file name, and auto-detects imagePath
+// from leaflet.css - which the Angular build rewrites into "media/". Point imagePath at
+// angular.json's "leaflet/" asset output instead; setting the *Url options here would only be
+// appended to the detected "media/" prefix and 404.
+L.Icon.Default.imagePath = 'leaflet/';
 
 @Component({
     selector: 'app-map-picker',

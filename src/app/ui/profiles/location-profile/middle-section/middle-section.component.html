@@ -1,93 +1,66 @@
-<div class="ms-wrapper" [class.rtl-mode]="themeService.isRTLEnabled()">
-    <div class="row g-4 mb-25">
-
-        <div class="col-xxl-3 col-lg-4">
-            <div class="store-card" [class.dark-mode]="themeService.isDark()">
-
-                <div class="store-hero">
-                    <div class="store-avatar">
-                        <span class="material-symbols-outlined">storefront</span>
-                    </div>
-                    <button mat-button [matMenuTriggerFor]="storeMenu" class="store-menu-btn">
-                        <i class="ri-more-fill"></i>
-                    </button>
-                    <mat-menu #storeMenu="matMenu" xPosition="before"></mat-menu>
-                </div>
-
-                <div class="store-body">
-                    <h4 class="store-name">{{ profile?.locationName || 'Lokasiya seçin' }}</h4>
-                    <p class="store-email" *ngIf="profile">
-                        <span class="material-symbols-outlined">tag</span>
-                        Kod: {{ profile.locationCode }}
-                    </p>
-
-                    <div class="store-divider"></div>
-
-                    <div class="store-stats">
-                        <div class="stat-row">
-                            <div class="stat-dot dot-blue"></div>
-                            <div class="stat-info">
-                                <span class="stat-label">Son yoxlama tarixi</span>
-                                <span class="stat-value">{{ formatDate(profile?.lastInspectionDate ?? null) }}</span>
-                            </div>
-                        </div>
-                        <div class="stat-row">
-                            <div class="stat-dot dot-orange"></div>
-                            <div class="stat-info">
-                                <span class="stat-label">Ümumi uyğunsuzluq</span>
-                                <span class="stat-value val-orange">{{ profile?.totalDiscrepancies ?? '—' }}</span>
-                            </div>
-                        </div>
-                        <div class="stat-row">
-                            <div class="stat-dot dot-purple"></div>
-                            <div class="stat-info">
-                                <span class="stat-label">Açıqda qalan</span>
-                                <span class="stat-value val-purple">{{ profile?.open ?? '—' }}</span>
-                            </div>
-                        </div>
-                        <div class="stat-row">
-                            <div class="stat-dot dot-green"></div>
-                            <div class="stat-info">
-                                <span class="stat-label">Həll edilmiş</span>
-                                <span class="stat-value">{{ profile?.solved ?? '—' }}</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
+<div class="trend-grid">
+    <section class="table-card chart-card">
+        <header class="table-card-header">
+            <div class="table-info">
+                <span class="material-symbols-outlined table-info-icon" aria-hidden="true">show_chart</span>
+                <h2 class="table-title">Yoxlama nəticəsi</h2>
             </div>
-        </div>
+            <span class="chart-unit">faizlə</span>
+        </header>
+        <div #resultChart class="chart-area" role="img"
+             aria-label="Yoxlamalar üzrə nəticə faizi. Rəqəmlər aşağıdakı cədvəldədir"></div>
+    </section>
 
-        <div class="col-xxl-9 col-lg-8">
-            <div class="chart-card" [class.dark-mode]="themeService.isDark()">
-
-                <div class="chart-card-header">
-                    <div class="chart-title-wrap">
-                        <h5 class="chart-title">Yoxlama planları üzrə göstəricilər</h5>
-                        <div class="chart-score-pill" *ngIf="profile">
-                            <span class="chart-score-val">{{ profile.avgPlanResult | number : '1.1-1' }}%</span>
-                            <span class="chart-score-sub">ortalama nəticə</span>
-                        </div>
-                    </div>
-                    <button mat-button [matMenuTriggerFor]="timeMenu" class="chart-time-btn">
-                        {{ selectedTimeframe }}
-                        <span class="material-symbols-outlined">expand_more</span>
-                    </button>
-                    <mat-menu #timeMenu="matMenu" xPosition="before">
-                        <ul class="p-0 m-0 list-unstyled">
-                            <li>
-                                <button mat-menu-item (click)="onTimeframeChange()">Yenilə</button>
-                            </li>
-                        </ul>
-                    </mat-menu>
-                </div>
-
-                <div class="chart-card-body">
-                    <div id="ep_revenue_chart"></div>
-                </div>
-
+    <section class="table-card chart-card">
+        <header class="table-card-header">
+            <div class="table-info">
+                <span class="material-symbols-outlined table-info-icon" aria-hidden="true">bar_chart</span>
+                <h2 class="table-title">Uyğunsuzluqlar</h2>
             </div>
-        </div>
-
-    </div>
+            <span class="chart-unit">sayla</span>
+        </header>
+        <div #countChart class="chart-area" role="img"
+             aria-label="Yoxlamalar üzrə həll edilmiş və açıq uyğunsuzluq sayı. Rəqəmlər aşağıdakı cədvəldədir"></div>
+    </section>
 </div>
+
+<section class="table-card">
+    <header class="table-card-header">
+        <div class="table-info">
+            <span class="material-symbols-outlined table-info-icon" aria-hidden="true">history</span>
+            <h2 class="table-title">Son yoxlamalar</h2>
+            <span class="result-badge">{{ recent.length }} yoxlama</span>
+        </div>
+    </header>
+    <div class="table-sticky" style="--table-max-h: 420px">
+        <table mat-table [dataSource]="recent" class="modern-table">
+            <ng-container matColumnDef="startDate">
+                <th mat-header-cell *matHeaderCellDef>Tarix</th>
+                <td mat-cell *matCellDef="let row">{{ row.startDate | appDate }}</td>
+            </ng-container>
+            <ng-container matColumnDef="planId">
+                <th mat-header-cell *matHeaderCellDef>Plan №</th>
+                <td mat-cell *matCellDef="let row"><span class="mono">{{ row.planId }}</span></td>
+            </ng-container>
+            <ng-container matColumnDef="planResult">
+                <th mat-header-cell *matHeaderCellDef class="num">Nəticə</th>
+                <td mat-cell *matCellDef="let row" class="num">{{ row.planResult | number:'1.1-1' }}%</td>
+            </ng-container>
+            <ng-container matColumnDef="totalCount">
+                <th mat-header-cell *matHeaderCellDef class="num">Uyğunsuzluq</th>
+                <td mat-cell *matCellDef="let row" class="num">{{ row.totalCount }}</td>
+            </ng-container>
+            <ng-container matColumnDef="solvedCount">
+                <th mat-header-cell *matHeaderCellDef class="num">Həll edilmiş</th>
+                <td mat-cell *matCellDef="let row" class="num">{{ row.solvedCount }}</td>
+            </ng-container>
+            <ng-container matColumnDef="openCount">
+                <th mat-header-cell *matHeaderCellDef class="num">Açıq</th>
+                <td mat-cell *matCellDef="let row" class="num">{{ row.openCount }}</td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+        </table>
+    </div>
+</section>

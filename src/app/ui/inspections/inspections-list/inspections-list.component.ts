@@ -1,375 +1,194 @@
-import { AsyncPipe, CommonModule, DatePipe, JsonPipe, NgFor, NgIf } from '@angular/common';
-import { AfterViewInit, Component, Input, SimpleChanges, TemplateRef, ViewChild } from '@angular/core';
-import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
-import { MatMenuModule } from '@angular/material/menu';
-import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
-import { AuditLoadingOverlayComponent } from '../../components/audit-loading-overlay/audit-loading-overlay.component';
-import { MatTableDataSource, MatTableModule } from '@angular/material/table';
-import { NgxMaterialTimepickerModule } from 'ngx-material-timepicker';
-import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { MatInputModule } from '@angular/material/input';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatSelectModule } from '@angular/material/select';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { DatePipe } from '@angular/common';
+import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
 import { MatDatepickerModule } from '@angular/material/datepicker';
-import { MatNativeDateModule } from '@angular/material/core';
-import { InspectionsService } from '../inspections.service';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatSelectModule } from '@angular/material/select';
+import { MatTableModule } from '@angular/material/table';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { Subscription, finalize } from 'rxjs';
+import { InspectionPlan } from '../InpectionPlan.model';
 import { Firm } from '../firm.model';
 import { Location } from '../location.model';
-import { debounceTime, finalize, Observable, Subject } from 'rxjs';
+import { InspectionsService } from '../inspections.service';
+import { TableState } from '../../../models/table-state.model';
 import { TableService } from '../../services/table.service';
-import { Page, Sort, TableState } from '../../../models/table-state.model';
-import { InspectionPlan } from '../InpectionPlan.model';
-import { Router } from '@angular/router';
-import { MatSort, MatSortModule } from '@angular/material/sort';
-import { MatDialog, MatDialogModule, MatDialogRef, MatDialogTitle, MatDialogContent } from '@angular/material/dialog';
-import { InspectionsListCacheService, InspectionsListSnapshot } from '../inspections-list-cache.service';
+import { planStoreLabel } from '../../plans/plan-row';
+import { NotificationService } from '../../../shared/services/notification.service';
+import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
+import { ListStateComponent } from '../../../shared/components/list-state/list-state.component';
+import { AppDatePipe } from '../../../shared/pipes/app-date.pipe';
+import { apiErrorMessage } from '../../../shared/utils/api-error';
+import { setFilter } from '../../../shared/utils/table-filter';
+import { queryDate, queryNumber, writeQueryState } from '../../../shared/utils/query-state';
+
+/** `InspectionPlans.Status`: 4 = yekunlaşmış yoxlama. */
+const COMPLETED = 4;
+
+const PAGE_SIZES = [10, 20, 50];
 
 @Component({
   selector: 'app-inspections-list',
   standalone: true,
   imports: [
-    MatCardModule,
-    MatButtonModule,
-    MatMenuModule,
-    MatTableModule,
-    CommonModule,
-    MatPaginatorModule,
-    AuditLoadingOverlayComponent,
-    MatInputModule,
-    MatFormFieldModule,
-    MatSelectModule,
-    MatDatepickerModule,
-    MatNativeDateModule,
-    FormsModule,
-    ReactiveFormsModule,
-    NgxMaterialTimepickerModule,
-    NgFor,
-    MatDialogModule,
-    MatDialogTitle,
-    MatDialogContent,
-    NgIf,
-    MatSortModule
+    ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatDatepickerModule,
+    MatTableModule, MatPaginatorModule, MatProgressBarModule, MatTooltipModule,
+    PageHeaderComponent, ListStateComponent, AppDatePipe,
   ],
-  providers: [DatePipe],
+  providers: [DatePipe, TableService],
   templateUrl: './inspections-list.component.html',
   styleUrl: './inspections-list.component.scss'
 })
-export class InspectionsListComponent implements AfterViewInit {
+export class InspectionsListComponent implements OnInit, OnDestroy {
+  private readonly inspectionsService = inject(InspectionsService);
+  private readonly tableService = inject(TableService);
+  private readonly notify = inject(NotificationService);
+  private readonly datePipe = inject(DatePipe);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
 
-  displayedColumns: string[] = ['position', 'inspectorsName', 'locationCode', 'locationName', 'startDatee', 'startDate', 'endDate', 'action'];
+  readonly displayedColumns = ['position', 'inspectorsName', 'locationCode', 'locationName', 'startDate', 'endDate', 'action'];
+  readonly pageSizes = PAGE_SIZES;
+  readonly storeLabel = planStoreLabel;
 
-
-  @ViewChild(MatPaginator) paginator!: MatPaginator;
-  @ViewChild('modalContent') modalContent!: TemplateRef<any>;
-  @Input() data: any; // Yeni data üçün input
-  private dialogRef!: MatDialogRef<any>; //
-  public dataSource: InspectionPlan[] = [];
-  public isProfilePage: boolean = false;
-  filterSubject = new Subject<{ key: string, value: string }>();
-  public selectedFirmId: number = 0;
-  public selectedLocationId: number = 0;
-  public firms: Firm[] = [];
-  public locations: Location[] = [];
-  public allDataCount: number = 0;
-  private _tableState: TableState = new TableState();
-  public pageSize: Number = 10;
-  public isLoading: boolean = false;
-  public rows$: Observable<any[]> = new Observable<any[]>();
-  public rowData: any[] = [];
-  public receivedData: any; // Yeni data üçün dəyişən
-  private searchTerm: string = "";
-  private pendingPaginatorSync = false;
-  private skipPaginatorPageEventOnce = false;
-
-  constructor(private inspectionsService: InspectionsService,
-    private _tableService: TableService,
-    private datePipe: DatePipe,
-    private router: Router,
-    public dialog: MatDialog,
-    private inspectionsListCache: InspectionsListCacheService) {
-    this.getFirms();
-
-    this._tableState = new TableState();
-    this._tableService.api_url = "inspectionPlans/getDetails";
-    this._tableState.filter['status'] = "4";
-    this._tableState.paginator.page = 0;
-    this._tableState.sorting.direction = "desc";
-    this._tableState.paginator.size = Number(this.pageSize);
-
-    this.filterSubject.pipe(
-      debounceTime(500)
-    ).subscribe(filter => {
-      if (filter.value) {
-        this._tableState.filter[filter.key] = filter.value;
-      } else {
-        delete this._tableState.filter[filter.key];
-      }
-      this.fill();
-    });
-
-  }
-  ngOnInit(): void {
-    const restored = this.inspectionsListCache.consumeSnapshot();
-    if (restored) {
-      this.applySnapshot(restored);
-      return;
-    }
-
-    console.log("List komponentinə gələn data:", this.data);
-    if (this.data && this.data.count > 0) {
-      this.receivedData = this.data;
-      // Yeni datanı filter-ə əlavə et
-      if (this.receivedData.firmId && this.receivedData.locationCode) {
-        this._tableState.filter['firmId'] = this.receivedData.firmId.toString();
-        this._tableState.filter['locationCode'] = this.receivedData.locationCode.toString();
-      }
-      this.fill();
-    }
-  }
-
-  ngAfterViewInit(): void {
-    this.paginator.page.subscribe(() => {
-      this._tableState.paginator.page = this.paginator.pageIndex;
-      this.pageSize = this.paginator.pageSize;
-      if (this.skipPaginatorPageEventOnce) {
-        this.skipPaginatorPageEventOnce = false;
-        return;
-      }
-      this.fill();
-    });
-
-    if (this.pendingPaginatorSync) {
-      this.pendingPaginatorSync = false;
-      this.skipPaginatorPageEventOnce = true;
-      queueMicrotask(() => {
-        if (!this.paginator) {
-          return;
-        }
-        this.paginator.pageIndex = this._tableState.paginator.page;
-        this.paginator.pageSize = Number(this._tableState.paginator.size);
-      });
-    }
-
-    setTimeout(() => {
-      this.skipPaginatorPageEventOnce = false;
-    }, 0);
-  }
-
-  ngOnChanges(changes: SimpleChanges): void {
-    if (changes['data']) {
-      this.isProfilePage = true;
-      // Yeni gələn datanı dataSource-a əlavə et
-      if (changes['data'].currentValue.count > 0) {
-        this.receivedData = changes['data'].currentValue;
-
-        // Yeni datanı filter-ə əlavə et
-        if (this.receivedData.firmId && this.receivedData.locationCode) {
-          this._tableState.filter['firmId'] = this.receivedData.firmId.toString();
-          this._tableState.filter['locationCode'] = this.receivedData.locationCode.toString();
-        }
-
-        this.fill();
-      }
-    }
-  }
-
-  getFirms() {
-    this.inspectionsService.getFirms().subscribe((response) => {
-      this.firms = response.data;
-    });
-  }
-
-
-  getLocations(firmId: number) {
-    this.inspectionsService.getLocationByFirmId(firmId).subscribe((response) => {
-      this.locations = response.data;
-    });
-  }
-
-  onSelectFirm(selectedFirmId: number) {
-    this.getLocations(selectedFirmId);
-  }
-
-  onSelectLocation(selectedLocationId: number) {
-    console.log(selectedLocationId);
-
-  }
-
-
-  onFormSubmit() {
-    if (this.inspectionsForm.valid) {
-      this.isLoading = true;
-      const formData = this.inspectionsForm.value;
-
-      const firmId = formData.firmId;
-      const locationCode = formData.locationCode;
-      const startDate = this.datePipe.transform(formData.dateRange?.start, 'yyyy-MM-dd');
-      const endDate = this.datePipe.transform(formData.dateRange?.end, 'yyyy-MM-dd');
-      if (startDate != null) {
-        this._tableState.filter['startDate'] = startDate;
-      }
-
-      if (endDate != null) {
-        this._tableState.filter['endDate'] = endDate;
-      }
-
-      if (locationCode != null) {
-        this._tableState.filter['locationCode'] = locationCode.toString();
-      }
-
-      if (firmId != null) {
-        this._tableState.filter['firmId'] = firmId.toString();
-      }
-
-      // Backend çağırışı
-      this.fill();
-
-    } else {
-      console.log('Form düzgün doldurulmayıb.');
-    }
-  }
-
-
-  private fill() {
-    this.isLoading = true;
-    // this._tableState.paginator.page = 0;
-    this._tableState.paginator.size = Number(this.pageSize);
-    if (!this._tableState.filter) {
-      this._tableState.filter = {};
-    }
-    this._tableState.searchTerm = this.searchTerm;
-    this._tableService.fill(this._tableState).pipe(
-      finalize(() => this.isLoading = false)
-    ).subscribe((response) => {
-      this._tableState.paginator.total = response.data != null ? response.data.total : 0;
-      this.dataSource = response.data.items;
-      this.allDataCount = response.data.total;
-    });
-  }
-
-  public inspectionsForm = new FormGroup({
-    firmId: new FormControl<number | null>(null, { validators: [Validators.required] }),
+  readonly form = new FormGroup({
+    firmId: new FormControl<number | null>(null, Validators.required),
     locationCode: new FormControl<number | null>(null),
-    eraziKodu: new FormControl<string>(''),
     dateRange: new FormGroup({
       start: new FormControl<Date | null>(null),
       end: new FormControl<Date | null>(null),
     }),
   });
 
-  public searchForm = new FormGroup({
-    inspectorName: new FormControl<string>(''),
-    locationCode: new FormControl<string>(''),
-    locationName: new FormControl<string>(''),
-    date: new FormControl<Date | null>(null),
-  });
+  firms: Firm[] = [];
+  locations: Location[] = [];
+  rows: InspectionPlan[] = [];
+  total = 0;
+  pageIndex = 0;
+  pageSize = PAGE_SIZES[0];
+  searched = false;
+  isLoading = false;
+  loadError: string | null = null;
 
-  getRowNumber(index: number): number {
-    return this.paginator ? index + 1 + (this.paginator.pageIndex * this.paginator.pageSize) : index + 1;
+  private readonly tableState = new TableState();
+  private loadSub?: Subscription;
+
+  constructor() {
+    this.tableService.api_url = 'inspectionPlans/getDetails';
+    this.tableState.filter['status'] = String(COMPLETED);
+    this.tableState.sorting.direction = 'desc';
   }
 
-  onDetails(row: InspectionPlan) {
-    console.log('Selected row:', row);
-    this.inspectionsListCache.save(this.buildSnapshot());
-    this.router.navigate(['/apps/inspections/details'], {
-      queryParams: {
-        id: row.id,
-        // Hazırda planId ayrıca sahə deyil, planın özü id ilə eynidir
-        planId: row.id,
-        returnUrl: this.router.url
-      },
-      state: { ...row, planId: row.id, returnUrl: this.router.url }
+  ngOnInit(): void {
+    this.getFirms();
+
+    // Detal səhifəsindən qayıdanda filtr və səhifə URL-dən bərpa olunur
+    const q = this.route.snapshot.queryParamMap;
+    const firmId = queryNumber(q, 'firm');
+    this.form.patchValue({
+      firmId,
+      locationCode: queryNumber(q, 'store'),
+      dateRange: { start: queryDate(q, 'from'), end: queryDate(q, 'to') },
     });
-  }
+    this.pageIndex = queryNumber(q, 'page') ?? 0;
+    this.pageSize = queryNumber(q, 'size') ?? PAGE_SIZES[0];
 
-
-  applyFilter(event: Event, key: string) {
-    const inputValue = (event.target as HTMLInputElement).value.trim();
-    this.filterSubject.next({ key, value: inputValue });
-  }
-
-  openModal(): void {
-    this.dialogRef = this.dialog.open(this.modalContent, {
-      width: '400px',
-      height: '100vh',
-      position: { right: '0' },
-      panelClass: 'right-panel'
-    });
-
-    this.dialogRef.afterClosed().subscribe(result => {
-      console.log('Modal bağlandı:', result);
-    });
-  }
-
-  closeModal(): void {
-    if (this.dialogRef) {
-      this.dialogRef.close();
-    }
-  }
-
-  onSearchSubmit() {
-    if (this.searchForm.valid) {
-      const formValue = this.searchForm.value as Record<string, any>;
-      Object.keys(formValue).forEach(key => {
-        const value = formValue[key];
-        if (value) {
-          if (key === 'date') {
-            this._tableState.filter[key] = this.datePipe.transform(value, 'yyyy-MM-dd')?.toString() ?? '';
-          } else {
-            this._tableState.filter[key] = String(value);
-          }
-        } else {
-          delete this._tableState.filter[key];
-        }
-      });
-      this.fill();
-    }
-  }
-
-  resetForm() {
-    this.searchForm.reset();
-  }
-
-  private buildSnapshot(): InspectionsListSnapshot {
-    return {
-      tableState: JSON.parse(JSON.stringify(this._tableState)) as TableState,
-      dataSource: JSON.parse(JSON.stringify(this.dataSource)) as InspectionPlan[],
-      allDataCount: this.allDataCount,
-      searchTerm: this.searchTerm,
-      pageSize: Number(this.pageSize),
-      inspectionsFormValue: this.inspectionsForm.getRawValue(),
-      searchFormValue: this.searchForm.getRawValue(),
-    };
-  }
-
-  private applySnapshot(snap: InspectionsListSnapshot): void {
-    const raw = snap.tableState as unknown as {
-      filter: Record<string, string>;
-      paginator: Page;
-      sorting: Sort;
-      searchTerm: string;
-    };
-    this._tableState = new TableState();
-    this._tableState.filter = { ...raw.filter };
-    this._tableState.paginator = Object.assign(new Page(), raw.paginator);
-    this._tableState.sorting = Object.assign(new Sort(), raw.sorting);
-    this._tableState.searchTerm = raw.searchTerm ?? '';
-
-    this.dataSource = snap.dataSource;
-    this.allDataCount = snap.allDataCount;
-    this.searchTerm = snap.searchTerm;
-    this.pageSize = snap.pageSize;
-
-    this.inspectionsForm.patchValue(snap.inspectionsFormValue as any);
-    this.searchForm.patchValue(snap.searchFormValue as any);
-
-    const firmId = (snap.inspectionsFormValue as { firmId?: number } | null)?.firmId;
-    if (firmId) {
+    if (firmId != null) {
       this.getLocations(firmId);
     }
-    this.pendingPaginatorSync = true;
+    if (this.form.valid) {
+      this.applyFilters();
+      this.load();
+    }
   }
 
-}
+  ngOnDestroy(): void {
+    this.loadSub?.unsubscribe();
+  }
 
+  onSelectFirm(firmId: number): void {
+    this.form.controls.locationCode.setValue(null);
+    this.getLocations(firmId);
+  }
+
+  onSearch(): void {
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      this.notify.warning('Məcburi sahələr seçilməyib', { message: 'Firmanı seçin.' });
+      return;
+    }
+    this.pageIndex = 0;
+    const { firmId, locationCode, dateRange } = this.form.getRawValue();
+    writeQueryState(this.router, {
+      firm: firmId, store: locationCode, from: dateRange.start, to: dateRange.end, page: null,
+    });
+    this.applyFilters();
+    this.load();
+  }
+
+  onPage(event: PageEvent): void {
+    this.pageIndex = event.pageIndex;
+    this.pageSize = event.pageSize;
+    writeQueryState(this.router, { page: event.pageIndex || null, size: event.pageSize });
+    this.load();
+  }
+
+  load(): void {
+    this.loadSub?.unsubscribe();
+    this.isLoading = true;
+    this.loadError = null;
+    this.tableState.paginator.page = this.pageIndex;
+    this.tableState.paginator.size = this.pageSize;
+
+    this.loadSub = this.tableService.fill(this.tableState)
+      .pipe(finalize(() => (this.isLoading = false)))
+      .subscribe({
+        next: (response) => {
+          if (!response.success) {
+            this.loadError = response.message;
+            return;
+          }
+          this.searched = true;
+          this.rows = response.data?.items ?? [];
+          this.total = response.data?.total ?? 0;
+        },
+        error: (error) => (this.loadError = apiErrorMessage(error, 'Yoxlamalar yüklənmədi')),
+      });
+  }
+
+  rowNumber(index: number): number {
+    return this.pageIndex * this.pageSize + index + 1;
+  }
+
+  /** Detal səhifəsi ID-ni URL-dən alır; geri linki siyahının filtrli URL-inə qayıdır. */
+  openDetails(row: InspectionPlan): void {
+    this.router.navigate(['/inspections/details'], { queryParams: { id: row.id, returnUrl: this.router.url } });
+  }
+
+  private getFirms(): void {
+    this.inspectionsService.getFirms().subscribe({
+      next: (response) => (this.firms = response.data ?? []),
+      error: (error) => this.notify.error(apiErrorMessage(error, 'Firma siyahısı yüklənmədi')),
+    });
+  }
+
+  private getLocations(firmId: number): void {
+    this.inspectionsService.getLocationByFirmId(firmId).subscribe({
+      // API kodu string qaytarır, URL-dən oxunan isə rəqəmdir: mat-select seçimi tanısın
+      next: (response) => (this.locations = (response.data ?? []).map(l => ({ ...l, locationCode: Number(l.locationCode) }))),
+      error: (error) => this.notify.error(apiErrorMessage(error, 'Mağaza siyahısı yüklənmədi')),
+    });
+  }
+
+  private applyFilters(): void {
+    const { firmId, locationCode, dateRange } = this.form.getRawValue();
+    setFilter(this.tableState.filter, 'firmId', firmId);
+    setFilter(this.tableState.filter, 'locationCode', locationCode);
+    setFilter(this.tableState.filter, 'startDate', this.datePipe.transform(dateRange.start, 'yyyy-MM-dd'));
+    setFilter(this.tableState.filter, 'endDate', this.datePipe.transform(dateRange.end, 'yyyy-MM-dd'));
+  }
+}

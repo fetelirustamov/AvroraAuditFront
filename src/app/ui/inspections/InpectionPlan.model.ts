@@ -8,6 +8,8 @@ export class InspectionPlan {
     inspectors: number[];
     inspectorsName: string = "";
     firmId: number;
+    /** Siyahıda gəlir (`inspectionPlans/getDetails`), yaratmada göndərilmir */
+    firmName?: string;
     createdBy: number;
     createdDate: string | Date;
     disruptionStatus: number = 0;

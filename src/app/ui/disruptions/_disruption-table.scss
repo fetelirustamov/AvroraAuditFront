@@ -1,0 +1,24 @@
+// Uyğunsuzluq cədvəllərinin ortaq hissəsi (detal və müfəttiş təsdiqi).
+// Kart, sticky başlıq, `.action-btn`, `.media-btn`, `.status-chip` qlobal qatdan gəlir.
+
+.media-actions {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: var(--space-1);
+}
+
+.cell-wrap {
+    min-width: 160px;
+    max-width: 320px;
+    white-space: normal;
+    word-break: break-word;
+}
+
+.muted {
+    color: var(--text-muted);
+}
+
+.list-progress {
+    display: block;
+    height: 3px;
+}

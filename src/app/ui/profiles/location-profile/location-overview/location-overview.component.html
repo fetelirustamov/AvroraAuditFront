@@ -1,79 +1,55 @@
-<div class="kpi-grid mb-25" [class.dark-theme]="themeService.isDark()">
-    <div class="row g-4">
-
-        <div class="col-sm-6 col-xxl-3">
-            <div class="kpi-card kpi-blue">
-                <div class="kpi-header">
-                    <div class="kpi-icon">
-                        <span class="material-symbols-outlined">app_registration</span>
-                    </div>
-                </div>
-                <div class="kpi-number">
-                    <ng-container *ngIf="profile; else emptyKpi">{{ profile.avgPlanResult | number : '1.1-1' }}%</ng-container>
-                </div>
-                <div class="kpi-label">Checklist ortalaması</div>
-                <div class="kpi-sub">Seçilmiş lokasiya üzrə planlar</div>
-                <div class="kpi-bar">
-                    <div class="kpi-fill" [style.width.%]="profile ? barPct(profile.avgPlanResult, 100) : 0"></div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-sm-6 col-xxl-3">
-            <div class="kpi-card kpi-orange">
-                <div class="kpi-header">
-                    <div class="kpi-icon">
-                        <span class="material-symbols-outlined">manage_search</span>
-                    </div>
-                </div>
-                <div class="kpi-number">
-                    <ng-container *ngIf="profile; else emptyKpi">{{ profile.totalDiscrepancies | number }}</ng-container>
-                </div>
-                <div class="kpi-label">Ümumi uyğunsuzluq</div>
-                <div class="kpi-sub">Bütün planlar üzrə cəm</div>
-                <div class="kpi-bar">
-                    <div class="kpi-fill" [style.width.%]="profile ? barPct(profile.totalDiscrepancies, maxCap(profile)) : 0"></div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-sm-6 col-xxl-3">
-            <div class="kpi-card kpi-green">
-                <div class="kpi-header">
-                    <div class="kpi-icon">
-                        <span class="material-symbols-outlined">add_task</span>
-                    </div>
-                </div>
-                <div class="kpi-number">
-                    <ng-container *ngIf="profile; else emptyKpi">{{ profile.solved | number }}</ng-container>
-                </div>
-                <div class="kpi-label">Həll edilmiş</div>
-                <div class="kpi-sub">solvedCount cəmi</div>
-                <div class="kpi-bar">
-                    <div class="kpi-fill" [style.width.%]="profile ? barPct(profile.solved, (profile.solved + profile.open) || 1) : 0"></div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-sm-6 col-xxl-3">
-            <div class="kpi-card kpi-purple">
-                <div class="kpi-header">
-                    <div class="kpi-icon">
-                        <span class="material-symbols-outlined">data_alert</span>
-                    </div>
-                </div>
-                <div class="kpi-number">
-                    <ng-container *ngIf="profile; else emptyKpi">{{ profile.open | number }}</ng-container>
-                </div>
-                <div class="kpi-label">Açıqda qalan</div>
-                <div class="kpi-sub">openCount cəmi</div>
-                <div class="kpi-bar">
-                    <div class="kpi-fill" [style.width.%]="profile ? barPct(profile.open, (profile.solved + profile.open) || 1) : 0"></div>
-                </div>
-            </div>
-        </div>
-
+<section class="store-head" aria-label="Mağaza">
+    <span class="store-icon" aria-hidden="true">
+        <span class="material-symbols-outlined">storefront</span>
+    </span>
+    <div class="store-text">
+        <h2 class="store-name">{{ profile.locationName || 'Mağaza' }} <span class="store-code mono">{{ profile.locationCode }}</span></h2>
+        <p class="store-meta">
+            Son yoxlama: {{ profile.lastInspectionDate | appDate }}
+            <span aria-hidden="true">·</span>
+            {{ profile.summaries.length }} yoxlama
+        </p>
     </div>
-</div>
+</section>
 
-<ng-template #emptyKpi>—</ng-template>
+<div class="kpi-row profile-kpis">
+    <div class="kpi-card">
+        <div class="kpi-icon" [ngClass]="'tone-' + resultTone"><span class="material-symbols-outlined" aria-hidden="true">percent</span></div>
+        <div class="kpi-body">
+            <div class="kpi-value">{{ profile.avgPlanResult | number:'1.1-1' }}%</div>
+            <div class="kpi-label">Orta nəticə</div>
+            <div class="kpi-hint"><app-compliance-legend /></div>
+        </div>
+    </div>
+
+    <ng-template #openBody>
+        <div class="kpi-icon"><span class="material-symbols-outlined" aria-hidden="true">pending_actions</span></div>
+        <div class="kpi-body">
+            <div class="kpi-value">{{ profile.open }}</div>
+            <div class="kpi-label">Açıq uyğunsuzluq</div>
+            <div class="kpi-hint">{{ profile.totalDiscrepancies }} ümumi · {{ profile.solved }} həll edilib</div>
+        </div>
+    </ng-template>
+    @if (trackingParams) {
+        <a class="kpi-card is-link" routerLink="/disruptions/tracking" [queryParams]="openParams"
+           aria-label="Açıq uyğunsuzluqlara bax">
+            <ng-container *ngTemplateOutlet="openBody" />
+            <span class="material-symbols-outlined kpi-go" aria-hidden="true">arrow_forward</span>
+        </a>
+    } @else {
+        <div class="kpi-card"><ng-container *ngTemplateOutlet="openBody" /></div>
+    }
+
+    @if (trackingParams) {
+        <a class="kpi-card is-link" routerLink="/disruptions/tracking" [queryParams]="overdueParams"
+           aria-label="Son tarixi keçən uyğunsuzluqlara bax">
+            <div class="kpi-icon" [class.tone-danger]="overdue"><span class="material-symbols-outlined" aria-hidden="true">schedule</span></div>
+            <div class="kpi-body">
+                <div class="kpi-value">{{ overdue ?? '—' }}</div>
+                <div class="kpi-label">Gecikən</div>
+                <div class="kpi-hint">{{ overdue == null ? 'Say yüklənmədi' : 'Son tarixi keçib' }}</div>
+            </div>
+            <span class="material-symbols-outlined kpi-go" aria-hidden="true">arrow_forward</span>
+        </a>
+    }
+</div>

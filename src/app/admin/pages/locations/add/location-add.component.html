@@ -1,142 +1,113 @@
-<div class="modal-like">
-    <mat-card>
-        <mat-card-header>
-            <div class="header-container">
-                <mat-card-title>{{ data?.mode === 'edit' ? 'Mağaza Redaktə Et' : 'Yeni Mağaza' }}</mat-card-title>
-                <div class="top-actions">
-                    <button mat-flat-button color="primary" type="button" (click)="submit()">
-                        {{ data?.mode === 'edit' ? 'Yadda Saxla' : 'Təsdiqlə' }}
-                    </button>
-                    <button mat-stroked-button color="warn" type="button" (click)="cancel()">İmtina</button>
-                </div>
+<form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <h2 mat-dialog-title class="form-dialog-title">{{ isEdit ? 'Mağazanı redaktə et' : 'Yeni mağaza' }}</h2>
+
+    <mat-dialog-content>
+        <div class="form-grid cols-3">
+            <div class="form-field">
+                <label class="g-field-label" id="location-firm-label">Firma <span class="required-mark" aria-hidden="true">*</span></label>
+                <mat-form-field appearance="outline" class="g-modern-field">
+                    <mat-select formControlName="firmId" aria-labelledby="location-firm-label" required placeholder="Firma seçin"
+                        (selectionChange)="onFirmChange($event.value)">
+                        @for (f of firms; track f.id) {
+                            <mat-option [value]="f.id">{{ f.name }}</mat-option>
+                        }
+                    </mat-select>
+                    <mat-error>Firmanı seçin</mat-error>
+                </mat-form-field>
             </div>
-        </mat-card-header>
 
-        <mat-card-content>
-            <form [formGroup]="form" class="row g-3 admin-input-design" novalidate>
-                <div class="col-md-4 col-sm-6 col-12">
-                    <div class="form-group">
-                        <label class="main-label">
-                            Firma
-                            <span class="text-danger">*</span>
-                        </label>
-                        <mat-form-field class="w-100">
-                            <mat-select formControlName="firmId" required placeholder="Firma" (selectionChange)="onFirmChange($event.value)">
-                                <mat-option *ngIf="firms.length === 0" disabled>Firmalar yüklənir...</mat-option>
-                                <mat-option *ngFor="let f of firms" [value]="f.id">{{ f.name }}</mat-option>
-                            </mat-select>
-                            <mat-error *ngIf="form.get('firmId')?.hasError('required') && form.get('firmId')?.touched">
-                                Firma tələb olunur
-                            </mat-error>
-                        </mat-form-field>
-                    </div>
-                </div>
+            <div class="form-field">
+                <label class="g-field-label" id="location-region-field-label">Region</label>
+                <mat-form-field appearance="outline" class="g-modern-field">
+                    <mat-select formControlName="regionId" aria-labelledby="location-region-field-label"
+                        [placeholder]="regions.length ? 'Region seçilməyib' : regionEmptyMessage">
+                        <mat-option [value]="null">Region seçilməyib</mat-option>
+                        @for (r of regions; track r.id) {
+                            <mat-option [value]="r.id">{{ r.name }}</mat-option>
+                        }
+                    </mat-select>
+                </mat-form-field>
+            </div>
 
-                <div class="col-md-4 col-sm-6 col-12">
-                    <div class="form-group">
-                        <label class="main-label">
-                            Region
-                            <span class="text-danger">*</span>
-                        </label>
-                        <mat-form-field class="w-100">
-                            <mat-select formControlName="regionId" required placeholder="Region" [disabled]="!regions.length" [compareWith]="compareNumericIds">
-                                <mat-option *ngIf="form.get('firmId')?.value && regions.length === 0" disabled>Regionlar yüklənir...</mat-option>
-                                <mat-option *ngFor="let r of regions" [value]="r.id">{{ r.regionName || r.name }}</mat-option>
-                            </mat-select>
-                            <mat-error *ngIf="form.get('regionId')?.hasError('required') && form.get('regionId')?.touched">
-                                Region tələb olunur
-                            </mat-error>
-                        </mat-form-field>
-                    </div>
-                </div>
+            <div class="form-field">
+                <label class="g-field-label" id="location-sections-label">Şöbələr</label>
+                <mat-form-field appearance="outline" class="g-modern-field">
+                    <mat-select [formControl]="sectionsControl" aria-labelledby="location-sections-label" multiple
+                        [placeholder]="sections.length ? 'Şöbə seçin' : sectionEmptyMessage">
+                        @for (s of sections; track s.id) {
+                            <mat-option [value]="s.id">{{ s.sectionName }}</mat-option>
+                        }
+                    </mat-select>
+                </mat-form-field>
+            </div>
 
-                <div class="col-md-4 col-sm-6 col-12" *ngIf="!isEditMode">
-                    <div class="form-group">
-                        <label class="main-label">Şöbələr</label>
-                        <mat-form-field class="w-100">
-                            <mat-select [(ngModel)]="selectedSectionIds" [ngModelOptions]="{standalone: true}" multiple placeholder="Şöbə seçin" [disabled]="!sections.length">
-                                <mat-option *ngIf="form.get('firmId')?.value && sections.length === 0" disabled>Şöbələr yüklənir...</mat-option>
-                                <mat-option *ngFor="let s of sections" [value]="s.id">{{ s.sectionName }}</mat-option>
-                            </mat-select>
-                        </mat-form-field>
-                    </div>
-                </div>
+            <div class="form-field">
+                <label class="g-field-label" for="location-name">Mağaza adı <span class="required-mark" aria-hidden="true">*</span></label>
+                <mat-form-field appearance="outline" class="g-modern-field">
+                    <input id="location-name" matInput formControlName="locationName" required>
+                    <mat-error>Mağaza adını yazın</mat-error>
+                </mat-form-field>
+            </div>
 
-                <div class="col-md-4 col-sm-6 col-12">
-                    <div class="form-group">
-                        <label class="main-label">
-                            Məkan Adı
-                            <span class="text-danger">*</span>
-                        </label>
-                        <mat-form-field class="w-100">
-                            <input matInput formControlName="locationName" required placeholder="Mağaza / məkan adı" />
-                            <mat-error
-                                *ngIf="form.get('locationName')?.hasError('required') && form.get('locationName')?.touched">
-                                Ad tələb olunur
-                            </mat-error>
-                        </mat-form-field>
-                    </div>
-                </div>
+            <div class="form-field">
+                <label class="g-field-label" for="location-code">Mağaza kodu <span class="required-mark" aria-hidden="true">*</span></label>
+                <mat-form-field appearance="outline" class="g-modern-field">
+                    <input id="location-code" matInput class="mono" type="number" formControlName="locationCode" required>
+                    @if (form.controls.locationCode.hasError('required')) {
+                        <mat-error>Mağaza kodunu yazın</mat-error>
+                    } @else if (form.controls.locationCode.hasError('min')) {
+                        <mat-error>Kod 0-dan böyük olmalıdır</mat-error>
+                    }
+                </mat-form-field>
+                @if (isEdit) {
+                    <p class="field-note">Kod planlar, təsdiq zənciri və şöbələrlə bağlıdır, dəyişdirilmir.</p>
+                }
+            </div>
 
-                <div class="col-md-4 col-sm-6 col-12">
-                    <div class="form-group">
-                        <label class="main-label">
-                            Məkan Kodu
-                        </label>
-                        <mat-form-field class="w-100">
-                            <input matInput formControlName="locationCode" placeholder="Kod" />
-                        </mat-form-field>
-                    </div>
-                </div>
+            <div class="form-field">
+                <label class="g-field-label" for="location-contact">Əlaqə nömrəsi</label>
+                <mat-form-field appearance="outline" class="g-modern-field">
+                    <input id="location-contact" matInput type="tel" formControlName="contactNumber" placeholder="050 xxx xx xx">
+                </mat-form-field>
+            </div>
 
-                <div class="col-md-8 col-sm-12 col-12">
-                    <div class="form-group">
-                        <label class="main-label">
-                            Ünvan
-                        </label>
-                        <mat-form-field class="w-100">
-                            <input matInput formControlName="locationAddress" placeholder="Ünvanı yazın" />
-                        </mat-form-field>
-                    </div>
-                </div>
+            <div class="form-field form-field-full">
+                <label class="g-field-label" for="location-address">Ünvan</label>
+                <mat-form-field appearance="outline" class="g-modern-field">
+                    <input id="location-address" matInput formControlName="locationAddress">
+                </mat-form-field>
+            </div>
 
-                <div class="col-md-4 col-sm-6 col-12">
-                    <div class="form-group">
-                        <label class="main-label">
-                            Əlaqə Nömrəsi
-                        </label>
-                        <mat-form-field class="w-100">
-                            <input matInput formControlName="contactNumber" placeholder="050 xxx xx xx" />
-                        </mat-form-field>
-                    </div>
-                </div>
+            <div class="form-field form-field-full">
+                <span class="g-field-label">Xəritədə yer</span>
+                <app-map-picker [lat]="initialLat" [lng]="initialLng" (pick)="onPickCoord($event)" />
+            </div>
 
-                <div class="col-12">
-                    <app-map-picker [lat]="initialLat" [lng]="initialLng" (pick)="onPickCoord($event)"></app-map-picker>
-                </div>
+            <div class="form-field">
+                <label class="g-field-label" for="location-lat">Enlik</label>
+                <mat-form-field appearance="outline" class="g-modern-field">
+                    <input id="location-lat" matInput class="mono" formControlName="latitude" placeholder="Xəritədən seçin">
+                </mat-form-field>
+            </div>
 
-                <div class="col-md-6 col-sm-6 col-12 after-map">
-                    <div class="form-group">
-                        <label class="main-label">
-                            Latitude
-                        </label>
-                        <mat-form-field class="w-100">
-                            <input matInput formControlName="latitude" placeholder="Enlik (auto)" />
-                        </mat-form-field>
-                    </div>
-                </div>
+            <div class="form-field">
+                <label class="g-field-label" for="location-lng">Uzunluq</label>
+                <mat-form-field appearance="outline" class="g-modern-field">
+                    <input id="location-lng" matInput class="mono" formControlName="longitude" placeholder="Xəritədən seçin">
+                </mat-form-field>
+            </div>
 
-                <div class="col-md-6 col-sm-6 col-12 after-map">
-                    <div class="form-group">
-                        <label class="main-label">
-                            Longitude
-                        </label>
-                        <mat-form-field class="w-100">
-                            <input matInput formControlName="longitude" placeholder="Uzunluq (auto)" />
-                        </mat-form-field>
-                    </div>
-                </div>
-            </form>
-        </mat-card-content>
-    </mat-card>
-</div>
+            <div class="form-field">
+                <label class="g-field-label" for="location-radius">Radius (metr)</label>
+                <mat-form-field appearance="outline" class="g-modern-field">
+                    <input id="location-radius" matInput type="number" formControlName="radius" placeholder="Məs: 100">
+                </mat-form-field>
+            </div>
+        </div>
+    </mat-dialog-content>
+
+    <mat-dialog-actions align="end">
+        <button type="button" class="g-secondary-btn" (click)="cancel()">Ləğv et</button>
+        <button type="submit" class="g-search-btn" [disabled]="isSaving">{{ isEdit ? 'Yadda saxla' : 'Əlavə et' }}</button>
+    </mat-dialog-actions>
+</form>

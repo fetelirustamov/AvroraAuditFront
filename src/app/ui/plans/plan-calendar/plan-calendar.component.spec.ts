@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { PlanCalendarComponent } from './plan-calendar.component';
+import { appTestProviders } from '../../../../testing/test-providers';
 
 describe('PlanCalendarComponent', () => {
   let component: PlanCalendarComponent;
@@ -8,6 +9,7 @@ describe('PlanCalendarComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
+      providers: [appTestProviders],
       imports: [PlanCalendarComponent]
     })
     .compileComponents();

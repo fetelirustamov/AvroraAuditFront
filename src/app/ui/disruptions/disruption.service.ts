@@ -2,8 +2,9 @@ import { Injectable } from '@angular/core';
 import { Disruption, DisruptionApproveDto, DisruptionDto } from './disruption.model';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { RequestResponse, RequestResponseOne } from '../../models/table-state.model';
+import { StatusChange } from '../../shared/status/status-reason.component';
 
 @Injectable({
   providedIn: 'root'
@@ -33,6 +34,12 @@ export class DisruptionService {
     };
 
     return this.http.put<any>(url, disruption, config);
+  }
+
+  /** Hər uyğunsuzluğun səbəbi yazılmış son status dəyişikliyi (rədd, müfəttişə qaytarma). Səbəbsizlər cavabda yoxdur. */
+  getStatusReasons(ids: readonly number[]): Observable<RequestResponseOne<StatusChange[]>> {
+    const params = new HttpParams({ fromObject: { ids: ids.map(String) } });
+    return this.http.get<RequestResponseOne<StatusChange[]>>(`${this.API_URL}/disruptions/statusReasons`, { params });
   }
 
   getById(id: number): Observable<RequestResponseOne<Disruption>> {

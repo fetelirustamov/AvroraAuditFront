@@ -1,0 +1,26 @@
+<header class="page-header">
+    @if (backLink(); as link) {
+        <a class="page-header-back" [routerLink]="link">
+            <span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>
+            {{ backLabel() || 'Siyahıya qayıt' }}
+        </a>
+    }
+
+    <div class="page-header-row">
+        <div class="page-header-text">
+            <h1 class="page-header-title">
+                @if (icon()) {
+                    <span class="material-symbols-outlined page-header-icon" aria-hidden="true">{{ icon() }}</span>
+                }
+                {{ resolvedTitle() }}
+            </h1>
+            @if (subtitle()) {
+                <p class="page-header-subtitle">{{ subtitle() }}</p>
+            }
+        </div>
+
+        <div class="page-header-actions">
+            <ng-content select="[headerActions]" />
+        </div>
+    </div>
+</header>

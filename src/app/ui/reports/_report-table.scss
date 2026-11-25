@@ -1,0 +1,138 @@
+// Hesabat cədvəllərinin ortaq hissəsi.
+//
+// Başlıq `<app-page-header>`, filtr kartı və düymələr `styles.scss`-dəki `g-*` sistemi,
+// `.kpi-*`, `.table-card`, `.table-sticky`, `.modern-table`, `.row-number` `_design-system.scss`-dən,
+// boş/xəta halı `<app-list-state>`-dən gəlir. Burada yalnız hesabatlara xas olanlar:
+// sütun filtri sətri, sütun nişanları, uyğunluq faizinin tonları və ixrac menyusu.
+//
+// İstifadə: `@use '../report-table';`
+
+// ── Cədvəl başlığındakı sütun filtrləri ─────────────────────────────────────
+// Yalnız ad sətri sticky qalır: filtr sətri onunla üst-üstə düşməsin deyə sürüşür
+:host ::ng-deep .filter-row th.filter-header-cell {
+    position: static;
+    padding: 6px 8px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+}
+
+.filter-input-wrap {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    transition: border-color var(--transition);
+
+    &:focus-within {
+        border-color: var(--accent);
+    }
+    .filter-input-icon {
+        font-size: 14px;
+        color: var(--text-faint);
+    }
+    .filter-input {
+        width: 100%;
+        min-width: 60px;
+        border: none;
+        outline: none;
+        background: transparent;
+        font-size: var(--fs-12);
+        color: var(--text-strong);
+
+        &::placeholder {
+            color: var(--text-faint);
+        }
+    }
+}
+
+// ── Sətirlər ────────────────────────────────────────────────────────────────
+:host ::ng-deep .data-header-row th.data-header-cell {
+    padding: 10px 12px;
+    color: var(--text-muted);
+    font-size: var(--fs-12);
+    font-weight: 600;
+    text-align: center;
+    border-bottom: 1px solid var(--border);
+}
+
+:host ::ng-deep .data-row {
+    height: 46px;
+
+    td.mat-mdc-cell {
+        padding: 8px 12px;
+        border-bottom: 1px solid var(--border);
+        text-align: center;
+    }
+    &:hover td.mat-mdc-cell {
+        background: var(--surface-muted);
+    }
+    &:last-child td.mat-mdc-cell {
+        border-bottom: none;
+    }
+}
+
+// ── Sütun nişanları ─────────────────────────────────────────────────────────
+.branch-name {
+    font-weight: 600;
+    color: var(--text-strong);
+}
+
+.code-badge,
+.region-badge,
+.tasnifat-badge,
+.sobe-badge {
+    display: inline-block;
+    padding: 2px var(--space-2);
+    border-radius: var(--radius-sm);
+    background: var(--surface-subtle);
+    color: var(--text);
+    font-size: var(--fs-12);
+    font-weight: 500;
+}
+
+.code-badge {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+}
+
+.score-num,
+.count-num {
+    font-size: var(--fs-13);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-strong);
+}
+
+// Planlı / plansız sayı: məna sütun başlığındadır, rəngdə yox
+.count-chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 36px;
+    height: 24px;
+    padding: 0 var(--space-2);
+    border-radius: var(--radius-sm);
+    background: var(--surface-subtle);
+    color: var(--text-strong);
+    font-size: var(--fs-13);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+// Uyğunluq faizi nişanı (`.faiz-chip`) qlobaldır: _design-system.scss
+
+// ── Paginator və ixrac menyusu ──────────────────────────────────────────────
+:host ::ng-deep .modern-paginator {
+    background: var(--surface);
+    color: var(--text-muted);
+    font-size: var(--fs-13);
+    border-top: 1px solid var(--border);
+}
+
+.menu-icon {
+    font-size: 18px;
+    color: var(--text-muted);
+}

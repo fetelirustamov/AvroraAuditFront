@@ -1,50 +1,64 @@
-import { CommonModule, DatePipe } from '@angular/common';
-import { Component, ViewChild } from '@angular/core';
+import { DatePipe } from '@angular/common';
+import { Component, DestroyRef, OnInit, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
-import { MatButtonModule } from '@angular/material/button';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatMenuModule } from '@angular/material/menu';
-import { MatNativeDateModule } from '@angular/material/core';
-import { MatPaginator, MatPaginatorModule, PageEvent } from '@angular/material/paginator';
+import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
-import { debounceTime, finalize, Subject } from 'rxjs';
-import * as XLSX from 'xlsx';
-import pdfMake from 'pdfmake/build/pdfmake';
-import pdfFonts from 'pdfmake/build/vfs_fonts';
+import { ActivatedRoute, Router } from '@angular/router';
+import { Subject, debounceTime, finalize } from 'rxjs';
 import { TableState } from '../../../models/table-state.model';
+import { ListStateComponent } from '../../../shared/components/list-state/list-state.component';
+import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
+import { AppDatePipe } from '../../../shared/pipes/app-date.pipe';
+import { FileExportService, datedFileName } from '../../../shared/services/file-export.service';
 import { NotificationService } from '../../../shared/services/notification.service';
+import { StatusChipComponent } from '../../../shared/status/status-chip.component';
+import { StatusTone } from '../../../shared/status/status-meta';
+import { apiErrorMessage } from '../../../shared/utils/api-error';
+import { chartColors } from '../../../shared/utils/chart-colors';
 import { parseApiUtcDate } from '../../../shared/utils/date.util';
-import { AuditLoadingOverlayComponent } from '../../components/audit-loading-overlay/audit-loading-overlay.component';
-import { InspectionsService } from '../../inspections/inspections.service';
+import { queryDate, queryNumber, queryString, toQueryDate, writeQueryState } from '../../../shared/utils/query-state';
 import { Firm } from '../../inspections/firm.model';
+import { InspectionsService } from '../../inspections/inspections.service';
+import { PAGE_SIZES } from '../report-filters';
 import { ReportsService } from '../reports.service';
-import { InspectionPlanWorkRow, InspectionPlanWorkResponseData } from './inspection-plan-work.model';
+import { InspectionPlanWorkResponseData, InspectionPlanWorkRow } from './inspection-plan-work.model';
 
 const COLUMN_TO_API_FILTER: Record<string, string> = {
     magaza_kodu: 'locationCode',
     istifadeci: 'userName',
-    status: 'status',
+    status: 'work',
 };
 
+// Datanı API yalnız Admin və baş müfəttişə verir (RolePolicies.AdminOrHeadInspector).
 @Component({
     selector: 'app-inspection-plan-work',
     standalone: true,
     imports: [
-        CommonModule, ReactiveFormsModule, DatePipe,
-        MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule,
-        MatTableModule, MatPaginatorModule, MatMenuModule,
-        MatDatepickerModule, MatNativeDateModule,
-        AuditLoadingOverlayComponent,
+        ReactiveFormsModule,
+        MatFormFieldModule, MatInputModule, MatSelectModule, MatDatepickerModule,
+        MatTableModule, MatPaginatorModule, MatMenuModule, MatProgressBarModule,
+        PageHeaderComponent, ListStateComponent, StatusChipComponent, AppDatePipe,
     ],
     providers: [DatePipe],
     templateUrl: './inspection-plan-work.component.html',
     styleUrl: './inspection-plan-work.component.scss',
 })
-export class InspectionPlanWorkComponent {
-    @ViewChild(MatPaginator) paginator!: MatPaginator;
+export class InspectionPlanWorkComponent implements OnInit {
+    private readonly reportsService = inject(ReportsService);
+    private readonly inspectionsService = inject(InspectionsService);
+    private readonly notify = inject(NotificationService);
+    private readonly datePipe = inject(DatePipe);
+    private readonly fileExport = inject(FileExportService);
+    private readonly router = inject(Router);
+    private readonly route = inject(ActivatedRoute);
+    private readonly destroyRef = inject(DestroyRef);
 
     columns = [
         { key: 'row', label: '№' },
@@ -55,63 +69,73 @@ export class InspectionPlanWorkComponent {
         { key: 'status', label: 'Status' },
     ];
     displayedColumns = this.columns.map(c => c.key);
+    get filterColumns(): string[] { return this.columns.map(c => c.key + '__filter'); }
     dataSource = new MatTableDataSource<InspectionPlanWorkRow>([]);
     allCount = 0;
-    status2Count = 0;
-    status34Count = 0;
+    /** Status 2 və 5: təsdiqlənib, yoxlama aparılmayıb. */
+    notWorkedCount = 0;
+    /** Status 3 və 4: mobil yoxlamanı bitirib. */
+    workedCount = 0;
 
-    filtersForm = new FormGroup({
+    readonly pageSizes = PAGE_SIZES;
+    readonly filtersForm = new FormGroup({
         firmId: new FormControl<number | null>(null),
-        userName: new FormControl<string>(''),
-        locationCode: new FormControl<string>(''),
+        userName: new FormControl<string>('', { nonNullable: true }),
+        locationCode: new FormControl<string>('', { nonNullable: true }),
         dateRange: new FormGroup({
             start: new FormControl<Date | null>(null),
             end: new FormControl<Date | null>(null),
         }),
     });
-
     firms: Firm[] = [];
 
     readonly tableState = new TableState();
-    private columnFilterSubject = new Subject<{ key: string; value: string }>();
+    private readonly columnFilterSubject = new Subject<{ key: string; value: string }>();
     private columnApiFilters: Record<string, string> = {};
-    hasSubmittedSearch = false;
 
+    searched = false;
     isLoading = false;
     isExporting = false;
+    loadError: string | null = null;
 
+    /** API filtri `work`: hesabat yalnız təsdiqlənmiş planları göstərir (2, 3, 4, 5). */
     readonly statusOptions = [
         { value: '', label: 'Hamısı' },
-        { value: '2', label: 'İşlənilməyib' },
-        { value: '3', label: 'İşlənilib' },
-        { value: '4', label: 'İşlənilib (4)' },
+        { value: 'notWorked', label: 'İşlənilməyib' },
+        { value: 'worked', label: 'İşlənilib' },
     ];
-
-    get filterColumns(): string[] {
-        return this.columns.map(c => c.key + '__filter');
-    }
 
     get hasActiveColumnFilters(): boolean {
         return Object.keys(this.columnApiFilters).length > 0;
     }
 
-    constructor(
-        private reportsService: ReportsService,
-        private inspectionsService: InspectionsService,
-        private notify: NotificationService,
-        private datePipe: DatePipe,
-    ) {
+    constructor() {
         this.tableState.paginator.page = 0;
-        this.tableState.paginator.size = 10;
-
-        this.inspectionsService.getFirms().subscribe({
-            next: res => { this.firms = res.data ?? []; },
-            error: () => { this.notify.error('Firmalar yüklənmədi'); },
-        });
-
-        this.columnFilterSubject.pipe(debounceTime(400)).subscribe(({ key, value }) => {
+        this.tableState.paginator.size = PAGE_SIZES[0];
+        this.columnFilterSubject.pipe(debounceTime(400), takeUntilDestroyed()).subscribe(({ key, value }) => {
             this.applyColumnFilterDebounced(key, value);
         });
+    }
+
+    ngOnInit(): void {
+        this.inspectionsService.getFirms().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+            next: res => { this.firms = res.data ?? []; },
+            error: error => { this.notify.error(apiErrorMessage(error, 'Firmalar yüklənmədi')); },
+        });
+
+        // Firma məcburidir: URL-də varsa axtarış bərpa olunur
+        const q = this.route.snapshot.queryParamMap;
+        const firmId = queryNumber(q, 'firm');
+        if (firmId == null) return;
+        this.filtersForm.patchValue({
+            firmId,
+            userName: queryString(q, 'user') ?? '',
+            locationCode: queryString(q, 'location') ?? '',
+            dateRange: { start: queryDate(q, 'from'), end: queryDate(q, 'to') },
+        });
+        this.tableState.paginator.page = queryNumber(q, 'page') ?? 0;
+        this.tableState.paginator.size = queryNumber(q, 'size') ?? PAGE_SIZES[0];
+        this.fetch();
     }
 
     applyColumnFilter(event: Event, key: string): void {
@@ -131,88 +155,69 @@ export class InspectionPlanWorkComponent {
         } else {
             delete this.columnApiFilters[apiKey];
         }
-        if (!this.hasSubmittedSearch || !this.getSelectedFirmId()) { return; }
-        this.resetToFirstPage();
-        this.syncFilterPayload();
+        if (!this.searched || !this.selectedFirmId) { return; }
+        this.tableState.paginator.page = 0;
         this.fetch();
     }
 
     clearColumnFilters(): void {
         this.columnApiFilters = {};
         document.querySelectorAll<HTMLInputElement>('.column-filter-input').forEach(i => { i.value = ''; });
-        if (this.hasSubmittedSearch && this.getSelectedFirmId()) {
-            this.resetToFirstPage();
-            this.syncFilterPayload();
+        if (this.searched && this.selectedFirmId) {
+            this.tableState.paginator.page = 0;
             this.fetch();
         }
     }
 
-    clearAllFilters(): void {
-        this.filtersForm.reset({
-            firmId: null,
-            userName: '',
-            locationCode: '',
-            dateRange: { start: null, end: null },
-        });
+    /** "Təmizlə": filtrlər sıfırlanır, nəticə və URL təmizlənir */
+    clearAll(): void {
+        this.filtersForm.reset();
         this.columnApiFilters = {};
         document.querySelectorAll<HTMLInputElement>('.column-filter-input').forEach(i => { i.value = ''; });
-        this.hasSubmittedSearch = false;
+        this.searched = false;
+        this.loadError = null;
         this.resetSummary();
+        void writeQueryState(this.router, { firm: null, user: null, location: null, from: null, to: null, page: null, size: null });
     }
 
     onSearch(): void {
-        if (!this.getSelectedFirmId()) {
-            this.notify.error('Firma seçilməyib', { message: 'Hesabat üçün əvvəlcə firma seçin.' });
+        if (!this.selectedFirmId) {
+            this.filtersForm.controls.firmId.markAsTouched();
+            this.notify.warning('Firma seçin');
             return;
         }
-        this.hasSubmittedSearch = true;
-        this.resetToFirstPage();
-        this.syncFilterPayload();
+        const v = this.filtersForm.getRawValue();
+        this.tableState.paginator.page = 0;
+        void writeQueryState(this.router, {
+            firm: v.firmId,
+            user: v.userName.trim(),
+            location: v.locationCode.trim(),
+            from: v.dateRange.start,
+            to: v.dateRange.end,
+            page: null,
+        });
         this.fetch();
     }
 
     onPage(e: PageEvent): void {
-        if (!this.hasSubmittedSearch || !this.getSelectedFirmId()) { return; }
         this.tableState.paginator.page = e.pageIndex;
         this.tableState.paginator.size = e.pageSize;
-        this.syncFilterPayload();
+        void writeQueryState(this.router, { page: e.pageIndex || null, size: e.pageSize === PAGE_SIZES[0] ? null : e.pageSize });
         this.fetch();
     }
 
-    private resetToFirstPage(): void {
-        this.tableState.paginator.page = 0;
-        this.paginator?.firstPage();
-    }
-
-    private getSelectedFirmId(): number | null {
-        const firmId = this.filtersForm.getRawValue().firmId;
-        return firmId != null ? firmId : null;
+    private get selectedFirmId(): number | null {
+        return this.filtersForm.controls.firmId.value;
     }
 
     private getFormFilters(): Record<string, string> {
         const f: Record<string, string> = {};
         const { firmId, userName, locationCode, dateRange } = this.filtersForm.getRawValue();
-
-        if (firmId != null) {
-            f['firmId'] = String(firmId);
-        }
-
-        if (userName?.trim()) {
-            f['userName'] = userName.trim();
-        }
-        if (locationCode?.trim()) {
-            f['locationCode'] = locationCode.trim();
-        }
-
-        const startDate = this.datePipe.transform(dateRange?.start, 'yyyy-MM-dd');
-        const endDate = this.datePipe.transform(dateRange?.end, 'yyyy-MM-dd');
-        if (startDate) {
-            f['startDate'] = startDate;
-        }
-        if (endDate) {
-            f['endDate'] = endDate;
-        }
-
+        if (firmId != null) { f['firmId'] = String(firmId); }
+        if (userName.trim()) { f['userName'] = userName.trim(); }
+        if (locationCode.trim()) { f['locationCode'] = locationCode.trim(); }
+        if (dateRange.start) { f['startDate'] = toQueryDate(dateRange.start); }
+        if (dateRange.end) { f['endDate'] = toQueryDate(dateRange.end); }
         return f;
     }
 
@@ -221,28 +226,26 @@ export class InspectionPlanWorkComponent {
         this.tableState.searchTerm = '';
     }
 
-    private fetch(): void {
-        if (!this.getSelectedFirmId()) {
-            return;
-        }
+    fetch(): void {
+        if (!this.selectedFirmId) { return; }
+        this.searched = true;
         this.isLoading = true;
+        this.loadError = null;
         this.syncFilterPayload();
         this.reportsService.getInspectionPlanWorkDetails(this.tableState)
-            .pipe(finalize(() => { this.isLoading = false; }))
+            .pipe(finalize(() => { this.isLoading = false; }), takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: res => {
                     const data = this.normalizeResponseData(res);
                     this.allCount = data.total;
-                    this.status2Count = data.status2Count;
-                    this.status34Count = data.status34Count;
+                    this.notWorkedCount = data.notWorkedCount;
+                    this.workedCount = data.workedCount;
                     const page = this.tableState.paginator.page;
                     const size = this.tableState.paginator.size;
-                    this.dataSource.data = data.items.map((item, idx) =>
-                        this.mapApiRow(item, page * size + idx + 1));
+                    this.dataSource.data = data.items.map((item, idx) => this.mapApiRow(item, page * size + idx + 1));
                 },
-                error: () => {
-                    this.notify.error('Hesabat yüklənmədi', { message: 'Şəbəkə və ya icazəni yoxlayın.' });
-                    this.resetSummary();
+                error: error => {
+                    this.loadError = apiErrorMessage(error, 'Hesabat yüklənmədi. İnternet bağlantısını və ya icazəni yoxlayın.');
                 },
             });
     }
@@ -250,18 +253,17 @@ export class InspectionPlanWorkComponent {
     private resetSummary(): void {
         this.dataSource.data = [];
         this.allCount = 0;
-        this.status2Count = 0;
-        this.status34Count = 0;
+        this.notWorkedCount = 0;
+        this.workedCount = 0;
     }
 
     private normalizeResponseData(res: unknown): InspectionPlanWorkResponseData {
         const raw = (res as { data?: Record<string, unknown> })?.data ?? {};
         const items = (raw['items'] ?? raw['Items'] ?? []) as Record<string, unknown>[];
         const total = this.toCount(raw['total'] ?? raw['Total'], items.length);
-        const status2Count = this.toCount(raw['status2Count'] ?? raw['Status2Count']);
-        const status34Count = this.toCount(raw['status34Count'] ?? raw['Status34Count']);
-
-        return { items, total, status2Count, status34Count };
+        const notWorkedCount = this.toCount(raw['notWorkedCount']);
+        const workedCount = this.toCount(raw['workedCount']);
+        return { items, total, notWorkedCount, workedCount };
     }
 
     private toCount(value: unknown, fallback = 0): number {
@@ -274,8 +276,7 @@ export class InspectionPlanWorkComponent {
 
     private mapApiRow(item: Record<string, unknown>, rowNo: number): InspectionPlanWorkRow {
         const status = Number(item['status'] ?? item['Status'] ?? 0);
-        const statusMeta = this.resolveStatus(status);
-
+        const work = this.resolveWork(status);
         return {
             row: rowNo,
             magaza_kodu: (item['locationCode'] ?? item['LocationCode'] ?? '') as number | string,
@@ -283,19 +284,21 @@ export class InspectionPlanWorkComponent {
             is_baslama: parseApiUtcDate(item['workStartDate'] as string | null) ?? null,
             is_bitme: parseApiUtcDate(item['workEndDate'] as string | null) ?? null,
             status,
-            statusLabel: statusMeta.label,
-            statusClass: statusMeta.class,
+            statusLabel: work.label,
+            statusTone: work.tone,
         };
     }
 
-    private resolveStatus(status: number): { label: string; class: InspectionPlanWorkRow['statusClass'] } {
-        if (status === 2) {
-            return { label: 'İşlənilməyib', class: 'not-processed' };
-        }
-        if (status === 3 || status === 4) {
-            return { label: 'İşlənilib', class: 'processed' };
-        }
-        return { label: `Naməlum (${status})`, class: 'unknown' };
+    /**
+     * Hesabatın öz anlayışı: plan işi görülübmü. Plan statusunun etiketi deyil —
+     * 3 və 4 birlikdə "İşlənilib", 2 və 5 "İşlənilməyib" sayılır (KPI və sütun filtri də belədir).
+     * 5-də vaxt keçib: plan artıq işlənməyəcək, ona görə ayrıca etiket alır.
+     */
+    private resolveWork(status: number): { label: string; tone: StatusTone } {
+        if (status === 2) return { label: 'İşlənilməyib', tone: 'warning' };
+        if (status === 5) return { label: 'Vaxtı bitib', tone: 'danger' };
+        if (status === 3 || status === 4) return { label: 'İşlənilib', tone: 'success' };
+        return { label: `Status ${status}`, tone: 'neutral' };
     }
 
     exportExcel(): void {
@@ -307,16 +310,8 @@ export class InspectionPlanWorkComponent {
     }
 
     private exportWithAllRows(onReady: (rows: InspectionPlanWorkRow[]) => void): void {
-        if (!this.getSelectedFirmId()) {
-            this.notify.error('Firma seçilməyib', { message: 'Export üçün əvvəlcə firma seçin.' });
-            return;
-        }
-        if (!this.hasSubmittedSearch) {
-            this.notify.error('Axtarış edilməyib', { message: 'Export üçün əvvəlcə "Axtar" düyməsini basın.' });
-            return;
-        }
-        if (this.allCount === 0) {
-            this.notify.error('Export üçün məlumat yoxdur');
+        if (!this.searched || this.allCount === 0) {
+            this.notify.error('İxrac üçün məlumat yoxdur', { message: 'Əvvəlcə firma seçib «Axtar» düyməsini basın.' });
             return;
         }
 
@@ -328,13 +323,13 @@ export class InspectionPlanWorkComponent {
                     const data = this.normalizeResponseData(res);
                     const rows = data.items.map((item, idx) => this.mapApiRow(item, idx + 1));
                     if (!rows.length) {
-                        this.notify.error('Export üçün məlumat tapılmadı');
+                        this.notify.error('İxrac üçün məlumat tapılmadı');
                         return;
                     }
                     onReady(rows);
                 },
-                error: () => {
-                    this.notify.error('Export üçün məlumat yüklənmədi', { message: 'Şəbəkə və ya icazəni yoxlayın.' });
+                error: error => {
+                    this.notify.error(apiErrorMessage(error, 'İxrac üçün məlumat yüklənmədi'));
                 },
             });
     }
@@ -362,17 +357,14 @@ export class InspectionPlanWorkComponent {
                 : '—',
             'Status': r.statusLabel,
         }));
-        const ws = XLSX.utils.json_to_sheet(data);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, 'Plan iş statusu');
-        XLSX.writeFile(wb, `yoxlama-plani-is-statusu-${new Date().toISOString().slice(0, 10)}.xlsx`);
+        void this.fileExport.exportRowsToExcel(
+            data,
+            'Plan iş statusu',
+            datedFileName('yoxlama-plani-is-statusu', 'xlsx'),
+        );
     }
 
     private writePdf(rows: InspectionPlanWorkRow[]): void {
-        const vfs: Record<string, string> = (pdfFonts as { pdfMake?: { vfs: Record<string, string> }; vfs?: Record<string, string> }).pdfMake
-            ? (pdfFonts as { pdfMake: { vfs: Record<string, string> } }).pdfMake.vfs
-            : (pdfFonts as { vfs: Record<string, string> }).vfs;
-        (pdfMake as { vfs: Record<string, string> }).vfs = vfs;
         const headers = ['№', 'Mağaza kodu', 'İstifadəçi', 'Başlama', 'Bitmə', 'Status'];
         const bodyRows = rows.map(r => [
             r.row,
@@ -382,6 +374,8 @@ export class InspectionPlanWorkComponent {
             r.is_bitme ? this.datePipe.transform(r.is_bitme, 'yyyy-MM-dd HH:mm', '+0400') ?? '—' : '—',
             r.statusLabel,
         ]);
+        // PDF-də başlıq neytraldır: rəng məna daşımır
+        const pdf = chartColors();
         const docDef = {
             pageOrientation: 'landscape' as const,
             content: [{
@@ -391,9 +385,9 @@ export class InspectionPlanWorkComponent {
                 },
                 layout: 'lightHorizontalLines',
             }],
-            styles: { th: { bold: true, color: '#fff', fillColor: '#5B6CFF', fontSize: 9 } },
+            styles: { th: { bold: true, color: pdf.textStrong, fillColor: pdf.surfaceSubtle, fontSize: 9 } },
             defaultStyle: { fontSize: 9 },
         };
-        pdfMake.createPdf(docDef).download(`yoxlama-plani-is-statusu-${new Date().toISOString().slice(0, 10)}.pdf`);
+        void this.fileExport.exportPdf(docDef, datedFileName('yoxlama-plani-is-statusu', 'pdf'));
     }
 }

@@ -1,66 +1,81 @@
-import { Component, OnInit, ViewChild, AfterViewInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { Router, RouterModule } from '@angular/router';
-import { MatCardModule } from '@angular/material/card';
-import { MatButtonModule } from '@angular/material/button';
+import { AfterViewInit, Component, DestroyRef, OnInit, ViewChild, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule, MatTableDataSource } from '@angular/material/table';
 import { MatSortModule, MatSort } from '@angular/material/sort';
 import { MatPaginatorModule, MatPaginator } from '@angular/material/paginator';
-import { MatIconModule } from '@angular/material/icon';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatDialogModule } from '@angular/material/dialog';
-import { AuditLoadingOverlayComponent } from '../../../../ui/components/audit-loading-overlay/audit-loading-overlay.component';
+import { debounceTime, finalize } from 'rxjs';
 import { NotificationService } from '../../../../shared/services/notification.service';
-import { ConfirmDialogService } from '../../../shared/confirm-dialog/confirm-dialog.service';
+import { ConfirmDialogService } from '../../../../shared/components/confirm-dialog/confirm-dialog.service';
+import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
+import { ListStateComponent } from '../../../../shared/components/list-state/list-state.component';
+import { apiErrorMessage } from '../../../../shared/utils/api-error';
+import { queryString } from '../../../../shared/utils/query-state';
 import { RoleService } from '../../../services/role.service';
+import { UserService } from '../../../services/user.service';
 import { RoleDto } from '../../../models/role.model';
-import { AdminBreadcrumbComponent } from '../../../shared/breadcrumb/admin-breadcrumb.component';
+import { TableUrlState } from '../../../shared/table-url-state';
 
 @Component({
   selector: 'app-permission-groups',
   standalone: true,
   imports: [
-    CommonModule,
-    FormsModule,
-    RouterModule,
-    MatCardModule,
-    MatButtonModule,
+    ReactiveFormsModule,
+    RouterLink,
     MatFormFieldModule,
     MatInputModule,
-    MatSelectModule,
     MatTableModule,
     MatSortModule,
     MatPaginatorModule,
-    MatIconModule,
+    MatProgressBarModule,
     MatTooltipModule,
-    MatDialogModule,
-    AuditLoadingOverlayComponent,
-    AdminBreadcrumbComponent
+    PageHeaderComponent,
+    ListStateComponent
   ],
   templateUrl: './permission-groups.component.html',
   styleUrl: './permission-groups.component.scss'
 })
 export class PermissionGroupsComponent implements OnInit, AfterViewInit {
+  private readonly confirmDialog = inject(ConfirmDialogService);
+  private readonly roleService = inject(RoleService);
+  private readonly userService = inject(UserService);
+  private readonly notify = inject(NotificationService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly destroyRef = inject(DestroyRef);
+
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
 
-  displayedColumns: string[] = ['id', 'name', 'description', 'actions'];
-  dataSource = new MatTableDataSource<RoleDto>();
-  isLoading = false;
+  readonly displayedColumns = ['name', 'description', 'members', 'actions'];
+  /** Qrup adı → istifadəçi sayı (`users/userdetails`-in roleName sahəsindən); yüklənməyibsə null */
+  memberCounts: Map<string, number> | null = null;
 
-  constructor(
-    private router: Router,
-    private confirmDialog: ConfirmDialogService,
-    private roleService: RoleService,
-    private notify: NotificationService
-  ) { }
+  members(row: RoleDto): number | null {
+    return this.memberCounts ? (this.memberCounts.get(row.name) ?? 0) : null;
+  }
+  readonly dataSource = new MatTableDataSource<RoleDto>([]);
+  readonly urlState = new TableUrlState(inject(Router), this.route);
+  readonly searchControl = new FormControl(queryString(this.route.snapshot.queryParamMap, 'q') ?? '', { nonNullable: true });
+
+  isLoading = false;
+  loaded = false;
+  loadError: string | null = null;
 
   ngOnInit(): void {
-    this.loadRoles();
+    this.dataSource.filter = this.searchControl.value.trim().toLowerCase();
+    this.searchControl.valueChanges
+      .pipe(debounceTime(250), takeUntilDestroyed(this.destroyRef))
+      .subscribe(value => {
+        this.dataSource.filter = value.trim().toLowerCase();
+        this.paginator.firstPage();
+        this.urlState.writeFilters({ q: value.trim() });
+      });
+    this.load();
   }
 
   ngAfterViewInit(): void {
@@ -68,48 +83,50 @@ export class PermissionGroupsComponent implements OnInit, AfterViewInit {
     this.dataSource.sort = this.sort;
   }
 
-  loadRoles(): void {
+  load(): void {
     this.isLoading = true;
-    this.roleService.getAllRoles().subscribe({
+    this.loadError = null;
+    this.roleService.getAllRoles()
+      .pipe(finalize(() => this.isLoading = false))
+      .subscribe({
+        next: res => {
+          this.dataSource.data = Array.isArray(res?.data) ? res.data : [];
+          this.loaded = true;
+          this.urlState.restorePage(this.paginator, this.dataSource.filteredData.length);
+        },
+        error: err => this.loadError = apiErrorMessage(err, 'İcazə qrupları yüklənmədi')
+      });
+    this.userService.getUserDetails().subscribe({
       next: res => {
-        this.dataSource.data = res.data ?? [];
-        this.isLoading = false;
+        const counts = new Map<string, number>();
+        for (const u of (Array.isArray(res?.data) ? res.data : []) as { roleName?: string }[]) {
+          const name = u.roleName?.trim();
+          if (name) counts.set(name, (counts.get(name) ?? 0) + 1);
+        }
+        this.memberCounts = counts;
       },
-      error: () => {
-        this.isLoading = false;
-        this.notify.error('Rollar yüklənmədi');
-      }
+      // Say əlavə məlumatdır: alınmasa sütun "—" göstərir
+      error: () => this.memberCounts = null,
     });
-  }
-
-  applyFilter(event: Event): void {
-    const value = (event.target as HTMLInputElement).value;
-    this.dataSource.filter = value.trim().toLowerCase();
-    if (this.dataSource.paginator) this.dataSource.paginator.firstPage();
-  }
-
-  view(row: RoleDto): void {
-    this.router.navigate(['/admin/permissions/permission-groups/view', row.id]);
-  }
-
-  edit(row: RoleDto): void {
-    this.router.navigate(['/admin/permissions/permission-groups/edit', row.id]);
   }
 
   remove(row: RoleDto): void {
     this.confirmDialog.confirm({
-      title: 'Səlahiyyət qrupu silinsin?',
-      message: `"${row.name}" qrupunu silmək istədiyinizə əminsiniz?`,
-      confirmText: 'Bəli, sil',
-      cancelText: 'Ləğv et'
-    }).subscribe(confirmed => {
-      if (!confirmed) return;
+      title: 'İcazə qrupu silinsin?',
+      message: 'Qrup və onun səhifə icazələri siyahıdan çıxacaq, admin panelindən geri qaytarmaq olmur. '
+        + 'İstifadəçilərə təyin olunmuş və ya sistem qrupu silinmir: server buna icazə vermir.',
+      confirmText: 'Sil',
+      tone: 'danger',
+      items: [row.name]
+    }).subscribe(result => {
+      if (!result) return;
       this.roleService.deleteRole(row.id).subscribe({
         next: () => {
-          this.notify.success('Qrup uğurla silindi');
-          this.loadRoles();
+          this.notify.success('İcazə qrupu silindi');
+          this.load();
         },
-        error: () => this.notify.error('Silmə zamanı xəta baş verdi')
+        // 409: sistem qrupu və ya istifadəçilərə təyin olunmuş qrup - səbəb serverin mesajındadır
+        error: err => this.notify.error(apiErrorMessage(err, 'İcazə qrupu silinmədi'))
       });
     });
   }

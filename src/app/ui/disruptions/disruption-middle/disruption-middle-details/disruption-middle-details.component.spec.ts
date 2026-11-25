@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { DisruptionMiddleDetailsComponent } from './disruption-middle-details.component';
+import { appTestProviders } from '../../../../../testing/test-providers';
 
 describe('DisruptionMiddleDetailsComponent', () => {
   let component: DisruptionMiddleDetailsComponent;
@@ -8,6 +9,7 @@ describe('DisruptionMiddleDetailsComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
+      providers: [appTestProviders],
       imports: [DisruptionMiddleDetailsComponent]
     })
       .compileComponents();

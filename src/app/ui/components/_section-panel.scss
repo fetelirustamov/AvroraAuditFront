@@ -1,0 +1,145 @@
+// Plan detalları səhifəsindəki bölmə panelləri (Checklist və Uyğunsuzluqlar tabları) üçün ortaq üslub.
+
+// Rənglər birbaşa `_tokens.scss`-dən gəlir; bölmə ikonları və saylar neytraldır.
+
+// ── Bölmə (section) paneli ────────────────────────────────────────────────────
+.section-panel {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg) !important;
+    box-shadow: none !important;
+    overflow: hidden;
+
+    &.mat-expanded .section-panel-header {
+        border-bottom: 1px solid var(--border);
+    }
+}
+
+:host ::ng-deep .section-panel-header {
+    min-height: 56px;
+    background: var(--surface-muted);
+
+    &:hover {
+        background: var(--surface-subtle) !important;
+    }
+}
+
+.section-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: var(--fs-14);
+    font-weight: 600;
+
+    .section-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        border-radius: var(--radius-md);
+        background: var(--surface-subtle);
+        color: var(--text-muted);
+        flex-shrink: 0;
+
+        .material-symbols-outlined {
+            font-size: 19px;
+        }
+    }
+}
+
+// Şöbənin checklist faizi — rəng həddləri shared/utils/compliance.ts-dədir
+.section-score {
+    flex-shrink: 0;
+    margin-right: 12px;
+    font-size: var(--fs-13);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    border-radius: var(--radius-sm);
+    padding: 2px var(--space-2);
+    white-space: nowrap;
+
+    &--success { color: var(--success-text); background: var(--success-soft); }
+    &--warning { color: var(--warning-text); background: var(--warning-soft); }
+    &--danger  { color: var(--danger-text); background: var(--danger-soft); }
+}
+
+.section-count {
+    flex-shrink: 0;
+    font-size: var(--fs-12);
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    color: var(--text);
+    background: var(--surface-subtle);
+    border-radius: var(--radius-sm);
+    padding: 2px var(--space-2);
+    white-space: nowrap;
+}
+
+// ── Cədvəl ────────────────────────────────────────────────────────────────────
+.section-table {
+    width: 100%;
+
+    th.mat-mdc-header-cell {
+        font-size: var(--fs-12);
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: .4px;
+        color: var(--text-muted);
+        background: var(--surface-muted);
+        border-bottom: 1px solid var(--border);
+        padding: 10px 16px;
+    }
+
+    td.mat-mdc-cell {
+        padding: 12px 16px;
+        border-bottom: 1px solid var(--border);
+        vertical-align: middle;
+        font-size: var(--fs-14);
+        color: var(--text);
+    }
+
+    tr.mat-mdc-row:hover td.mat-mdc-cell {
+        background: var(--surface-muted);
+    }
+
+    tr.mat-mdc-row:last-child td.mat-mdc-cell {
+        border-bottom: none;
+    }
+
+    .col-position {
+        width: 56px;
+        text-align: center;
+    }
+
+    .col-media {
+        width: 110px;
+    }
+}
+
+.row-index {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 26px;
+    height: 26px;
+    padding: 0 6px;
+    border-radius: var(--radius-sm);
+    background: var(--surface-subtle);
+    color: var(--text-muted);
+    font-size: var(--fs-12);
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+}
+
+.empty-dash {
+    color: var(--text-faint);
+}
+
+// ── Media düymələri ───────────────────────────────────────────────────────────
+.media-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+// `.media-btn` qlobaldır: src/_design-system.scss

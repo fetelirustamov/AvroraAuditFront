@@ -1,56 +1,7 @@
-$primary: #6178fa;
-$primary-soft: #eef1fe;
-$border: #e6e9ef;
-$muted: #8a91a5;
-$header-bg: #f8f9fc;
+@use '../section-panel' as *;
 
 .inspection-section-card.mat-mdc-card {
     padding: 8px 0;
-}
-
-// ── Bölmə (section) paneli ────────────────────────────────────────────────────
-.section-panel {
-    border: 1px solid $border;
-    border-radius: 10px !important;
-    box-shadow: none !important;
-    overflow: hidden;
-
-    &.mat-expanded .section-panel-header {
-        border-bottom: 1px solid $border;
-    }
-}
-
-:host ::ng-deep .section-panel-header {
-    min-height: 56px;
-    background: $header-bg;
-
-    &:hover {
-        background: #f1f3f9 !important;
-    }
-}
-
-.section-title {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-size: 15px;
-    font-weight: 600;
-
-    .section-icon {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 32px;
-        height: 32px;
-        border-radius: 8px;
-        background: $primary-soft;
-        color: $primary;
-        flex-shrink: 0;
-
-        .material-symbols-outlined {
-            font-size: 19px;
-        }
-    }
 }
 
 // ── Kateqoriya akkordeonu ─────────────────────────────────────────────────────
@@ -60,8 +11,8 @@ $header-bg: #f8f9fc;
 
     .category-item {
         display: block;
-        border: 1px solid $border;
-        border-radius: 8px;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
         overflow: hidden;
 
         +.category-item {
@@ -70,23 +21,140 @@ $header-bg: #f8f9fc;
     }
 }
 
+.section-body {
+    min-height: 12rem;
+}
+
+// ── Görünüş alətləri: süzgəc və hamısını aç/bağla ─────────────────────────────
+.section-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2);
+    padding: 12px 12px 0;
+}
+
+.toolbar-spacer {
+    flex: 1;
+}
+
+.toolbar-toggle,
+.toolbar-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 34px;
+    padding: 0 var(--space-3);
+    border-radius: var(--radius-md);
+    font: inherit;
+    font-size: var(--fs-13);
+    font-weight: 500;
+    cursor: pointer;
+    transition: background var(--transition), border-color var(--transition), color var(--transition);
+
+    .material-symbols-outlined {
+        font-size: 18px;
+    }
+
+    &:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+    }
+
+    &:disabled {
+        opacity: .5;
+        cursor: not-allowed;
+    }
+}
+
+// Süzgəc açıq/bağlı vəziyyəti olan düymədir: açıq hal seçilmiş hal kimi vurğu rəngindədir
+.toolbar-toggle {
+    border: 1px solid var(--border-strong);
+    background: var(--surface);
+    color: var(--text);
+
+    &:hover:not(:disabled) {
+        background: var(--surface-muted);
+    }
+
+    &.is-on {
+        border-color: var(--accent);
+        background: var(--accent-soft);
+        color: var(--accent-text);
+    }
+}
+
+.toolbar-count {
+    min-width: 22px;
+    padding: 0 6px;
+    border-radius: var(--radius-sm);
+    background: var(--surface-subtle);
+    font-family: var(--font-mono);
+    font-size: var(--fs-12);
+    text-align: center;
+
+    .is-on & {
+        background: var(--surface);
+    }
+}
+
+.toolbar-link {
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--text-muted);
+
+    &:hover {
+        background: var(--surface-muted);
+        color: var(--text-strong);
+    }
+}
+
+.category-header__meta {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    flex-shrink: 0;
+}
+
+// "Xeyr" sayı statusdur: bal itirilib
+.no-count {
+    padding: 2px 8px;
+    border-radius: var(--radius-sm);
+    background: var(--danger-soft);
+    color: var(--danger-text);
+    font-size: var(--fs-12);
+    font-weight: 600;
+}
+
+// Kateqoriya başlığı `button`-dur: klaviatura ilə (Tab, Enter, Space) açılır
 .category-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 12px;
+    width: 100%;
     padding: 12px 16px;
-    background: #fbfcfe;
+    border: 0;
+    background: var(--surface-muted);
+    font: inherit;
+    text-align: left;
+    color: inherit;
     cursor: pointer;
     transition: background-color .15s ease;
 
     &:hover {
-        background: $primary-soft;
+        background: var(--surface-subtle);
+    }
+
+    // Kartın `overflow: hidden`-i xarici halqanı kəsir: fokus içəridə çəkilir
+    &:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: -2px;
     }
 
     &--open {
-        background: $header-bg;
-        border-bottom: 1px solid $border;
+        background: var(--surface-muted);
+        border-bottom: 1px solid var(--border);
     }
 
     &__left {
@@ -97,26 +165,15 @@ $header-bg: #f8f9fc;
     }
 
     &__chevron {
-        color: $primary;
+        color: var(--text-muted);
         font-size: 22px;
         flex-shrink: 0;
     }
 
     &__name {
         font-weight: 600;
-        color: #2b2f3a;
+        color: var(--text-strong);
         word-break: break-word;
-    }
-
-    &__count {
-        flex-shrink: 0;
-        font-size: 12px;
-        font-weight: 500;
-        color: $primary;
-        background: $primary-soft;
-        border-radius: 999px;
-        padding: 3px 10px;
-        white-space: nowrap;
     }
 }
 
@@ -126,44 +183,6 @@ $header-bg: #f8f9fc;
 
 // ── Sual cədvəli ──────────────────────────────────────────────────────────────
 .question-table {
-    width: 100%;
-
-    th.mat-mdc-header-cell {
-        font-size: 11.5px;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: .4px;
-        color: $muted;
-        background: $header-bg;
-        border-bottom: 1px solid $border;
-        padding: 10px 16px;
-    }
-
-    td.mat-mdc-cell {
-        padding: 12px 16px;
-        border-bottom: 1px solid #f0f2f7;
-        vertical-align: middle;
-        font-size: 13.5px;
-        color: #3a3f4d;
-    }
-
-    tr.mat-mdc-row:hover td.mat-mdc-cell {
-        background: #f7f9fd;
-    }
-
-    tr.mat-mdc-row:last-child td.mat-mdc-cell {
-        border-bottom: none;
-    }
-
-    .col-position {
-        width: 56px;
-        text-align: center;
-    }
-
-    .col-media {
-        width: 110px;
-    }
-
     .col-result {
         width: 34%;
         min-width: 220px;
@@ -172,20 +191,6 @@ $header-bg: #f8f9fc;
     .mat-column-comment {
         width: 20%;
     }
-}
-
-.row-index {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 26px;
-    height: 26px;
-    padding: 0 6px;
-    border-radius: 999px;
-    background: $primary-soft;
-    color: $primary;
-    font-size: 12px;
-    font-weight: 600;
 }
 
 .question-text {
@@ -199,47 +204,9 @@ $header-bg: #f8f9fc;
     display: inline-block;
     word-break: break-word;
     white-space: pre-line;
-    color: #5b6170;
+    color: var(--text);
     font-style: italic;
     line-height: 1.5;
-}
-
-.empty-dash {
-    color: #c2c7d4;
-}
-
-// ── Media düymələri ───────────────────────────────────────────────────────────
-.media-actions {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.media-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    padding: 4px 8px;
-    border: 1px solid $border;
-    border-radius: 8px;
-    background: #fff;
-    color: $primary;
-    cursor: pointer;
-    transition: background-color .15s ease, border-color .15s ease;
-
-    .material-symbols-outlined {
-        font-size: 18px;
-    }
-
-    &__count {
-        font-size: 12px;
-        font-weight: 600;
-    }
-
-    &:hover {
-        background: $primary-soft;
-        border-color: $primary;
-    }
 }
 
 // ── Cavablar ─────────────────────────────────────────────────────────────────
@@ -247,9 +214,9 @@ $header-bg: #f8f9fc;
     display: inline-flex;
     align-items: center;
     gap: 5px;
-    padding: 4px 12px;
-    border-radius: 999px;
-    font-size: 13px;
+    padding: 2px var(--space-2);
+    border-radius: var(--radius-sm);
+    font-size: var(--fs-13);
     font-weight: 600;
 
     .material-symbols-outlined {
@@ -257,13 +224,19 @@ $header-bg: #f8f9fc;
     }
 
     &--yes {
-        background: #e8f7ee;
-        color: #1d9e57;
+        background: var(--success-soft);
+        color: var(--success-text);
     }
 
     &--no {
-        background: #fdeceb;
-        color: #d64545;
+        background: var(--danger-soft);
+        color: var(--danger-text);
+    }
+
+    &--none {
+        background: var(--surface-subtle);
+        color: var(--text);
+        font-weight: 500;
     }
 }
 
@@ -278,11 +251,11 @@ $header-bg: #f8f9fc;
     align-items: center;
     gap: 4px;
     padding: 4px 12px;
-    border-radius: 999px;
-    border: 1px solid $border;
-    background: #fff;
-    color: $muted;
-    font-size: 12.5px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text-muted);
+    font-size: var(--fs-13);
     line-height: 1.4;
     word-break: break-word;
 
@@ -290,22 +263,22 @@ $header-bg: #f8f9fc;
         font-size: 15px;
     }
 
+    // Seçilmiş cavab — seçilmiş hal vurğu rəngindədir
     &--selected {
-        background: $primary;
-        border-color: $primary;
-        color: #fff;
+        background: var(--accent-soft);
+        border-color: var(--accent);
+        color: var(--accent-text);
         font-weight: 600;
-        box-shadow: 0 2px 6px rgba(97, 120, 250, .35);
     }
 }
 
 .answer-text {
     display: inline-block;
     padding: 6px 12px;
-    border-radius: 8px;
-    background: $header-bg;
-    border: 1px solid $border;
-    color: #3a3f4d;
+    border-radius: var(--radius-md);
+    background: var(--surface-muted);
+    border: 1px solid var(--border);
+    color: var(--text);
     word-break: break-word;
     white-space: pre-line;
 }

@@ -1,0 +1,36 @@
+@if (loaded() && hasSources()) {
+    <section class="attention" aria-labelledby="attention-title">
+        <header class="attention-header">
+            <h2 class="attention-title" id="attention-title">Diqqət tələb edir</h2>
+            <span class="attention-hint">Hazırda sizin növbənizdə olanlar · dövr filtrindən asılı deyil</span>
+        </header>
+
+        @if (items().length) {
+            <ul class="attention-list">
+                @for (item of items(); track item.key) {
+                    <li>
+                        <a class="attention-item" [class.is-danger]="item.tone === 'danger'"
+                           [routerLink]="item.link" [queryParams]="item.queryParams">
+                            <span class="material-symbols-outlined attention-icon" aria-hidden="true">{{ item.icon }}</span>
+                            <span class="attention-count">{{ item.count }}</span>
+                            <span class="attention-label">{{ item.label }}</span>
+                            <span class="material-symbols-outlined attention-go" aria-hidden="true">arrow_forward</span>
+                        </a>
+                    </li>
+                }
+            </ul>
+        } @else if (!partial()) {
+            <p class="attention-clear">
+                <span class="material-symbols-outlined" aria-hidden="true">task_alt</span>
+                Gözləyən iş yoxdur
+            </p>
+        }
+
+        @if (partial()) {
+            <p class="attention-note" role="status">
+                <span class="material-symbols-outlined" aria-hidden="true">info</span>
+                {{ items().length ? 'Bəzi saylar yüklənmədi.' : 'Saylar yüklənmədi.' }} Səhifəni yeniləyin.
+            </p>
+        }
+    </section>
+}

@@ -2,6 +2,17 @@
 export class PlanApprove {
     planId!: number;
     status!: number;
+    /** Rədd və geri qaytarmanın səbəbi (server `StatusChangeLogs`-a yazır). */
+    reason?: string;
+}
+
+/** `GET inspectionPlans/checklist/summaries`: onay siyahısında qərar üçün planın nəticəsi */
+export interface PlanChecklistSummary {
+    planId: number;
+    /** Checklist faizi; yoxlama aparılmayıbsa `null` */
+    result: number | null;
+    /** Rədd edilməmiş uyğunsuzluqlar */
+    disruptionCount: number;
 }
 
 

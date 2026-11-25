@@ -1,0 +1,65 @@
+// ============================================================================
+//  Tətbiq çərçivəsi: sidebar + header + məzmun (əsas tətbiq və admin eyni).
+// ============================================================================
+//  `--shell-*` ölçüləri buradan sidebar və header-ə miras keçir.
+//  `--shell-offset`: məzmunun və header-in soldan boşluğu.
+//    ≥1200px: tam panel və ya (`.is-rail`) ikon zolağı;
+//    <1200px: 0, sidebar backdrop ilə üstə açılan drawer-dir.
+// ============================================================================
+
+:host {
+    display: block;
+}
+
+.app-shell {
+    --shell-sidebar-w: 248px;
+    --shell-rail-w: 72px;
+    --shell-header-h: 64px;
+    --shell-offset: var(--shell-sidebar-w);
+
+    min-height: 100vh;
+    background: var(--bg);
+
+    &.is-rail {
+        --shell-offset: var(--shell-rail-w);
+    }
+}
+
+.main-content {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    // Enli məzmun səhifəni yana sürüşdürməsin. `clip` scroll konteyneri
+    // yaratmır, ona görə səhifələrdəki `position: sticky` işləyir.
+    overflow-x: clip;
+    padding: calc(var(--shell-header-h) + var(--space-6)) var(--space-6) var(--space-6)
+        calc(var(--shell-offset) + var(--space-6));
+    transition: padding-left var(--transition);
+}
+
+// Drawer açıq olanda səhifənin üstünü örtür; klik drawer-i bağlayır
+.shell-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 6;
+    background: color-mix(in srgb, var(--gray-900) 32%, transparent);
+}
+
+@media only screen and (max-width: 1199.98px) {
+    .app-shell,
+    .app-shell.is-rail {
+        --shell-offset: 0px;
+    }
+}
+
+@media only screen and (max-width: 767.98px) {
+    .main-content {
+        padding: calc(var(--shell-header-h) + var(--space-4)) var(--space-4) var(--space-4);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .main-content {
+        transition: none;
+    }
+}

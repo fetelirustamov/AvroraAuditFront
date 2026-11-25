@@ -1,0 +1,937 @@
+// Admin səhifələrinin ortaq forma və cədvəl stilləri.
+// Yalnız `.admin-area` daxilində təsir edir: shell bu sinfi area = 'admin' olanda qoyur.
+// Selektorlar köhnə `:host ::ng-deep` (AdminComponent) ilə eyni spesifiklikdədir:
+// `.admin-area` əvvəlki `[_nghost]` atributunun yerini tutur, səhifələrdəki üstələmələr dəyişmir.
+
+/* Global admin form input styles */
+::ng-deep .admin-area {
+
+    /* Consistent form field styling — 40px standard height */
+    .mat-mdc-form-field {
+        --mdc-outlined-text-field-container-shape: 8px;
+        --mdc-outlined-text-field-container-height: 40px;
+
+        .mat-mdc-form-field-infix {
+            padding-top: 8px !important;
+            padding-bottom: 8px !important;
+            min-height: 24px !important;
+        }
+
+        // Xəta sətri yalnız sahə xətalı olanda görünür
+        .mat-mdc-form-field-subscript-wrapper {
+            display: none !important;
+        }
+
+        &.mat-form-field-invalid .mat-mdc-form-field-subscript-wrapper {
+            display: block !important;
+            height: auto !important;
+        }
+
+        .mat-mdc-text-field-wrapper {
+            padding: 0 14px !important;
+            height: 40px !important;
+        }
+
+        .mat-mdc-form-field-icon-prefix,
+        .mat-mdc-form-field-icon-suffix {
+            padding: 0 6px !important;
+        }
+
+        .mdc-notched-outline {
+            height: 40px !important;
+        }
+
+        .mdc-notched-outline__leading,
+        .mdc-notched-outline__notch,
+        .mdc-notched-outline__trailing {
+            height: 40px !important;
+        }
+    }
+
+    /* Outline border colors */
+    .mat-mdc-form-field-appearance-outline {
+
+        .mdc-notched-outline__leading,
+        .mdc-notched-outline__notch,
+        .mdc-notched-outline__trailing {
+            border-color: var(--border) !important;
+            border-width: 1px !important;
+        }
+
+        .mdc-notched-outline__leading {
+            border-top-left-radius: 8px !important;
+            border-bottom-left-radius: 8px !important;
+        }
+
+        .mdc-notched-outline__trailing {
+            border-top-right-radius: 8px !important;
+            border-bottom-right-radius: 8px !important;
+        }
+
+        &.mat-focused {
+            .mdc-notched-outline__leading,
+            .mdc-notched-outline__notch,
+            .mdc-notched-outline__trailing {
+                border-color: var(--accent) !important;
+                border-width: 2px !important;
+            }
+        }
+    }
+
+    /* Select trigger — 40px */
+    .mat-mdc-select {
+        .mat-mdc-select-trigger {
+            height: 40px !important;
+            display: flex !important;
+            align-items: center !important;
+        }
+
+        .mat-mdc-select-value {
+            display: flex !important;
+            align-items: center !important;
+            line-height: 1 !important;
+        }
+
+        .mat-mdc-select-arrow {
+            color: var(--text-muted) !important;
+        }
+    }
+
+    /* Input text */
+    input.mat-mdc-input-element {
+        height: 22px !important;
+        line-height: 22px !important;
+        font-size: 14px !important;
+        color: var(--text-strong) !important;
+
+        &::placeholder {
+            color: var(--text-muted) !important;
+        }
+    }
+
+    /* Label */
+    .mat-mdc-form-field-label {
+        color: var(--text-muted) !important;
+        font-size: 14px !important;
+        font-weight: 500 !important;
+
+        &.mat-mdc-form-field-label-always-float {
+            color: var(--accent) !important;
+        }
+    }
+
+    /* Error */
+    .mat-mdc-form-field-error {
+        color: var(--danger) !important;
+        font-size: 12px !important;
+        margin-top: 4px !important;
+    }
+
+    /* Hard cap on outline-based fields (textarealara şamil olunmur) */
+    .mat-mdc-form-field:not(.mdc-text-field--textarea):not(.qa-question-text-field) .mat-mdc-text-field-wrapper,
+    .mat-mdc-form-field:not(.mdc-text-field--textarea):not(.qa-question-text-field) .mdc-notched-outline,
+    .mat-mdc-form-field:not(.mdc-text-field--textarea):not(.qa-question-text-field) .mdc-notched-outline__leading,
+    .mat-mdc-form-field:not(.mdc-text-field--textarea):not(.qa-question-text-field) .mdc-notched-outline__notch,
+    .mat-mdc-form-field:not(.mdc-text-field--textarea):not(.qa-question-text-field) .mdc-notched-outline__trailing {
+        height: 40px !important;
+        min-height: 40px !important;
+        max-height: 40px !important;
+    }
+
+    /* Çoxsətirli mətn: 40px limiti və input üçün mərkəzləşmə mətni gizlədir */
+    .mat-mdc-form-field.mdc-text-field--textarea,
+    .mat-mdc-form-field.qa-question-text-field {
+        .mat-mdc-text-field-wrapper {
+            height: auto !important;
+            min-height: 120px !important;
+            max-height: none !important;
+            align-items: flex-start !important;
+        }
+
+        .mat-mdc-form-field-flex {
+            height: auto !important;
+            align-items: flex-start !important;
+        }
+
+        .mat-mdc-form-field-infix {
+            align-items: flex-start !important;
+            min-height: 100px !important;
+        }
+
+        textarea.mat-mdc-input-element {
+            height: auto !important;
+            min-height: 96px !important;
+            resize: vertical !important;
+            align-self: flex-start !important;
+        }
+    }
+}
+
+/* Final override: use Locations input/select design in admin pages */
+::ng-deep .admin-area .admin-input-design {
+    .mat-mdc-form-field {
+        width: 100%;
+
+        // Outer wrapper: sabit hündürlük + border dizaynı
+        .mat-mdc-text-field-wrapper {
+            height: 40px !important;
+            min-height: 40px !important;
+            max-height: 40px !important;
+            border: 1px solid var(--border-strong) !important;
+            border-radius: 6px !important;
+            background-color: var(--surface) !important;
+            display: flex !important;
+            align-items: center !important;
+            padding: 0 14px !important;
+            box-sizing: border-box !important;
+        }
+
+        // Flex sıra: məzmunu şaquli mərkəzə gətirir
+        .mat-mdc-form-field-flex {
+            height: 40px !important;
+            display: flex !important;
+            align-items: center !important;
+        }
+
+        // İçindəki infix: paddinglər sıfır, mərkəz-hizalanmış
+        .mat-mdc-form-field-infix {
+            padding-top: 0 !important;
+            padding-bottom: 0 !important;
+            min-height: unset !important;
+            display: flex !important;
+            align-items: center !important;
+            border-top: 0 !important;
+        }
+
+        // MDC filled üçün input elementinin özü
+        .mdc-text-field__input,
+        input.mat-mdc-input-element {
+            padding-top: 0 !important;
+            padding-bottom: 0 !important;
+            margin-top: 0 !important;
+            height: 22px !important;
+            line-height: 22px !important;
+            align-self: center !important;
+        }
+
+        // Floating label-ı gizlət (placeholder işlədir)
+        .mdc-floating-label {
+            top: 50% !important;
+            transform: translateY(-50%) !important;
+            transition: none !important;
+        }
+
+        .mdc-floating-label--float-above {
+            display: none !important;
+        }
+
+        // Outline / line-ripple / focus overlay — gizlət
+        .mdc-notched-outline,
+        .mdc-line-ripple,
+        .mdc-line-ripple::before,
+        .mdc-line-ripple::after,
+        .mat-mdc-form-field-focus-overlay {
+            display: none !important;
+            border: 0 !important;
+            height: 0 !important;
+        }
+
+        .mat-mdc-form-field-subscript-wrapper {
+            display: none !important;
+        }
+
+        &.mat-form-field-invalid .mat-mdc-form-field-subscript-wrapper {
+            display: block !important;
+            height: auto !important;
+        }
+
+        &.mat-form-field-invalid .mat-mdc-text-field-wrapper {
+            border-color: var(--danger) !important;
+        }
+
+        &:hover .mat-mdc-text-field-wrapper {
+            border-color: var(--text-faint) !important;
+        }
+
+        &.mat-focused .mat-mdc-text-field-wrapper {
+            border-color: var(--accent) !important;
+            border-width: 2px !important;
+        }
+    }
+
+    // Textarea — ümumi 40px input stilləri mətn sahəsini əyir / gizlədir
+    .mat-mdc-form-field.mdc-text-field--textarea,
+    .mat-mdc-form-field.qa-question-text-field {
+        .mat-mdc-text-field-wrapper {
+            height: auto !important;
+            min-height: 120px !important;
+            max-height: none !important;
+            align-items: flex-start !important;
+            padding-top: 8px !important;
+            padding-bottom: 8px !important;
+        }
+
+        .mat-mdc-form-field-flex {
+            height: auto !important;
+            align-items: flex-start !important;
+        }
+
+        .mat-mdc-form-field-infix {
+            align-items: flex-start !important;
+            min-height: 100px !important;
+        }
+
+        textarea.mat-mdc-input-element,
+        textarea.mdc-text-field__input {
+            height: auto !important;
+            min-height: 96px !important;
+            line-height: 22px !important;
+            resize: vertical !important;
+            align-self: flex-start !important;
+        }
+
+        /* simvol sayı (mat-hint) — ümumi dizayn subscript-i gizlətdiyi üçün */
+        .mat-mdc-form-field-subscript-wrapper {
+            display: flex !important;
+            align-items: center;
+        }
+    }
+
+    // Select üçün tam hizalama zənciri
+    .mat-mdc-form-field.mat-mdc-form-field-type-mat-select {
+
+        // select elementi infix-in tam hündürlüyünü tutsun
+        .mat-mdc-select {
+            display: flex !important;
+            align-items: center !important;
+            width: 100% !important;
+            height: 40px !important;
+        }
+
+        .mat-mdc-select-trigger {
+            height: 40px !important;
+            display: flex !important;
+            align-items: center !important;
+            width: 100% !important;
+        }
+
+        .mat-mdc-select-value {
+            display: flex !important;
+            align-items: center !important;
+            color: var(--text-strong) !important;
+            line-height: 1 !important;
+            flex: 1 !important;
+        }
+
+        .mat-mdc-select-value-text,
+        .mat-mdc-select-min-line {
+            display: flex !important;
+            align-items: center !important;
+            line-height: 1 !important;
+        }
+
+        .mat-mdc-select-placeholder {
+            color: var(--text-faint) !important;
+            line-height: 1 !important;
+        }
+
+        .mat-mdc-select-arrow-wrapper {
+            display: flex !important;
+            align-items: center !important;
+            height: 40px !important;
+            transform: none !important;
+        }
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// GLOBAL ADMIN TABLE DESIGN SYSTEM
+// ═══════════════════════════════════════════════════════════════════
+::ng-deep .admin-area {
+
+    // ── Table wrapper ────────────────────────────────────────────────
+    .table-responsive {
+        overflow-x: auto;
+
+        table {
+            width: 100%;
+            min-width: 500px;
+        }
+    }
+
+    // ── mat-table base ───────────────────────────────────────────────
+    table.mat-mdc-table {
+        background: var(--white) !important;
+        border-collapse: collapse;
+    }
+
+    // ── Header row ───────────────────────────────────────────────────
+    tr.mat-mdc-header-row,
+    tr.mat-header-row {
+        background: var(--surface-muted) !important;
+        height: 44px !important;
+    }
+
+    th.mat-mdc-header-cell,
+    th.mat-header-cell {
+        font-size: var(--fs-12) !important;
+        font-weight: 600 !important;
+        letter-spacing: .04em !important;
+        text-transform: uppercase !important;
+        color: var(--text-muted) !important;
+        padding: 0 16px !important;
+        border-bottom: 1px solid var(--border-strong) !important;
+        white-space: nowrap;
+        background: transparent !important;
+
+        &:first-of-type {
+            padding-left: 24px !important;
+        }
+
+        &:last-of-type {
+            padding-right: 24px !important;
+        }
+
+        // Sort header button text styling
+        .mat-sort-header-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+
+            &:hover {
+                color: var(--accent) !important;
+            }
+        }
+
+        // Hide default Angular Material SVG arrow
+        .mat-sort-header-arrow {
+            display: none !important;
+        }
+
+        // Modern sort icon via ::after — Unicode codepoints (no ligature needed)
+        .mat-sort-header-container {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+
+            &::after {
+                font-family: 'Material Symbols Outlined';
+                content: '\e8d5'; // swap_vert — neutral state
+                font-size: 16px;
+                font-style: normal;
+                font-weight: 300;
+                line-height: 1;
+                color: var(--text-faint);
+                transition: color 0.15s ease;
+                font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 20;
+                flex-shrink: 0;
+            }
+        }
+
+        // Active ascending — arrow_upward
+        &[aria-sort='ascending'] .mat-sort-header-container::after {
+            content: '\e5d8' !important;
+            color: var(--accent) !important;
+            font-weight: 500;
+            font-variation-settings: 'FILL' 0, 'wght' 500, 'GRAD' 0, 'opsz' 20;
+        }
+
+        // Active descending — arrow_downward
+        &[aria-sort='descending'] .mat-sort-header-container::after {
+            content: '\e5db' !important;
+            color: var(--accent) !important;
+            font-weight: 500;
+            font-variation-settings: 'FILL' 0, 'wght' 500, 'GRAD' 0, 'opsz' 20;
+        }
+
+        // Hover on any sortable header
+        &:hover .mat-sort-header-container::after {
+            color: var(--accent) !important;
+        }
+    }
+
+    // ── Data rows ────────────────────────────────────────────────────
+    tr.mat-mdc-row,
+    tr.mat-row {
+        height: 52px !important;
+        transition: background 0.15s ease !important;
+
+        &:hover {
+            background: var(--surface-muted) !important;
+        }
+
+        &:last-child {
+            td.mat-mdc-cell,
+            td.mat-cell {
+                border-bottom: none !important;
+            }
+        }
+    }
+
+    // ── Data cells ───────────────────────────────────────────────────
+    td.mat-mdc-cell,
+    td.mat-cell {
+        font-size: var(--fs-14) !important;
+        color: var(--text) !important;
+        padding: 0 16px !important;
+        border-bottom: 1px solid var(--border) !important;
+        vertical-align: middle !important;
+
+        &:first-of-type {
+            padding-left: 24px !important;
+        }
+
+        &:last-of-type {
+            padding-right: 24px !important;
+        }
+    }
+
+    // ── Action buttons ───────────────────────────────────────────────
+    .action-buttons {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        justify-content: flex-start;
+
+        .mat-mdc-icon-button,
+        .mat-icon-button {
+            width: 34px !important;
+            height: 34px !important;
+            line-height: 34px !important;
+            border-radius: 8px !important;
+            transition: background var(--transition) !important;
+
+        }
+
+        button[color=primary]:hover,
+        button[color=accent]:hover {
+            background: var(--bg) !important;
+        }
+
+        button[color=warn]:hover {
+            background: var(--danger-soft) !important;
+        }
+
+        i.material-symbols-outlined,
+        mat-icon {
+            font-size: 18px !important;
+            transition: transform 0.15s ease;
+        }
+    }
+
+    // Action icon colors
+    .action-buttons button[color=primary] i,
+    .action-buttons .view-icon,
+    .action-buttons button[color=accent] i,
+    .action-buttons .edit-icon {
+        color: var(--text-muted);
+    }
+
+    .action-buttons button[color=warn] i,
+    .action-buttons .delete-icon {
+        color: var(--danger);
+    }
+
+    // ── No-data row ──────────────────────────────────────────────────
+    tr.mat-mdc-no-data-row,
+    tr.mat-row:has(.no-data-message) {
+        height: 180px !important;
+
+        td {
+            border-bottom: none !important;
+        }
+    }
+
+    .no-data-message {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 8px !important;
+        padding: 48px 20px !important;
+        text-align: center !important;
+
+        .material-symbols-outlined {
+            font-size: 42px !important;
+            width: auto !important;
+            height: auto !important;
+            color: var(--text-faint) !important;
+            margin-bottom: 4px !important;
+        }
+
+        p {
+            margin: 0 !important;
+            font-size: 14px !important;
+            font-weight: 600 !important;
+            color: var(--text-muted) !important;
+        }
+
+        small {
+            font-size: 12px !important;
+            color: var(--text-muted) !important;
+            opacity: 1 !important;
+        }
+    }
+
+    // ── Paginator ────────────────────────────────────────────────────
+    .mat-mdc-paginator,
+    .mat-paginator {
+        background: var(--surface) !important;
+        border-top: 1px solid var(--border) !important;
+
+        .mat-mdc-paginator-outer-container {
+            padding: 0 !important;
+        }
+
+        .mat-mdc-paginator-container {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            padding: 10px 20px !important;
+            min-height: 56px !important;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        // ── Page size section ─────────────────────────────────────────
+        .mat-mdc-paginator-page-size {
+            display: flex !important;
+            align-items: center !important;
+            gap: 10px !important;
+            margin: 0 !important;
+        }
+
+        .mat-mdc-paginator-page-size-label {
+            font-size: 12px !important;
+            font-weight: 500 !important;
+            color: var(--text-muted) !important;
+            white-space: nowrap !important;
+            margin: 0 !important;
+        }
+
+        .mat-mdc-paginator-page-size-select {
+            margin: 0 !important;
+            width: 76px !important;
+
+            .mat-mdc-text-field-wrapper {
+                background: var(--surface) !important;
+                border: 1px solid var(--border-strong) !important;
+                border-radius: 8px !important;
+                height: 34px !important;
+                min-height: 34px !important;
+                max-height: 34px !important;
+                padding: 0 10px !important;
+                display: flex !important;
+                align-items: center !important;
+            }
+
+            .mat-mdc-form-field-flex {
+                height: 34px !important;
+                display: flex !important;
+                align-items: center !important;
+            }
+
+            .mat-mdc-form-field-infix {
+                padding: 0 !important;
+                min-height: unset !important;
+                height: 34px !important;
+                display: flex !important;
+                align-items: center !important;
+            }
+
+            .mat-mdc-select {
+                display: flex !important;
+                align-items: center !important;
+            }
+
+            .mat-mdc-select-trigger {
+                height: 34px !important;
+                display: flex !important;
+                align-items: center !important;
+            }
+
+            .mat-mdc-select-value {
+                font-size: 13px !important;
+                font-weight: 600 !important;
+                color: var(--text-strong) !important;
+                display: flex !important;
+                align-items: center !important;
+                line-height: 1 !important;
+            }
+
+            .mat-mdc-select-value-text {
+                display: flex !important;
+                align-items: center !important;
+                line-height: 1 !important;
+            }
+
+            .mat-mdc-select-arrow-wrapper {
+                display: flex !important;
+                align-items: center !important;
+                height: 34px !important;
+            }
+
+            .mat-mdc-select-arrow {
+                color: var(--text-muted) !important;
+            }
+
+            .mdc-line-ripple,
+            .mdc-notched-outline,
+            .mat-mdc-form-field-subscript-wrapper {
+                display: none !important;
+            }
+        }
+
+        // ── Range actions ─────────────────────────────────────────────
+        .mat-mdc-paginator-range-actions {
+            display: flex !important;
+            align-items: center !important;
+            gap: 4px !important;
+        }
+
+        .mat-mdc-paginator-range-label,
+        .mat-paginator-range-label {
+            font-size: var(--fs-13) !important;
+            font-weight: 500 !important;
+            color: var(--text-muted) !important;
+            margin: 0 12px !important;
+            white-space: nowrap !important;
+
+            // Highlight numbers
+            strong {
+                font-weight: 700 !important;
+                color: var(--text-strong) !important;
+            }
+        }
+
+        // ── Navigation buttons ────────────────────────────────────────
+        .mat-mdc-paginator-navigation-first,
+        .mat-mdc-paginator-navigation-previous,
+        .mat-mdc-paginator-navigation-next,
+        .mat-mdc-paginator-navigation-last {
+            width: 34px !important;
+            height: 34px !important;
+            border-radius: 8px !important;
+            border: 1px solid var(--border-strong) !important;
+            background: var(--surface) !important;
+            color: var(--text-muted) !important;
+            transition: background var(--transition), border-color var(--transition),
+                        color var(--transition) !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+
+            .mat-mdc-button-touch-target {
+                width: 34px !important;
+                height: 34px !important;
+            }
+
+            mat-icon,
+            .mat-icon {
+                font-size: 18px !important;
+                width: 18px !important;
+                height: 18px !important;
+                line-height: 18px !important;
+            }
+
+            &:hover:not([disabled]) {
+                background: var(--accent) !important;
+                border-color: var(--accent) !important;
+                color: var(--on-accent) !important;
+            }
+
+            &[disabled] {
+                opacity: 0.32 !important;
+                cursor: not-allowed !important;
+            }
+        }
+    }
+
+    // ── Admin card header — global standard ──────────────────────────
+    .admin-card-header {
+        background: var(--white) !important;
+        border-bottom: 1px solid var(--border) !important;
+        margin: -16px -16px 16px -16px !important;
+        padding: 14px 20px !important;
+
+        // Angular Material MDC wraps title+subtitle in this div
+        .mat-mdc-card-header-text {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            width: 100% !important;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin: 0 !important;
+        }
+
+        .mat-mdc-card-title,
+        mat-card-title {
+            margin: 0 !important;
+            padding: 0 !important;
+            flex-shrink: 0;
+        }
+
+        .mat-mdc-card-subtitle,
+        mat-card-subtitle {
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        // Add button
+        .add-btn {
+            --mdc-filled-button-container-color: transparent;
+            --mat-filled-button-hover-state-layer-opacity: 0;
+            --mat-filled-button-focus-state-layer-opacity: 0;
+
+            background: var(--accent) !important;
+            background-image: none !important;
+            color: var(--on-accent) !important;
+            border-radius: 8px !important;
+            height: 36px !important;
+            padding: 0 16px !important;
+            font-size: var(--fs-14) !important;
+            font-weight: 600 !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 6px !important;
+            transition: background var(--transition) !important;
+
+            .mdc-button__label,
+            i.material-symbols-outlined {
+                color: var(--on-accent) !important;
+            }
+
+            i.material-symbols-outlined {
+                font-size: 18px !important;
+            }
+
+            &:hover {
+                background: var(--accent-hover) !important;
+                color: var(--on-accent) !important;
+
+                .mdc-button__label,
+                i.material-symbols-outlined {
+                    color: var(--on-accent) !important;
+                }
+            }
+        }
+
+        // Inline search box
+        .search-box {
+            position: relative;
+            display: flex;
+            align-items: center;
+
+            label {
+                position: absolute;
+                left: 11px;
+                top: 50%;
+                transform: translateY(-50%);
+                color: var(--text-muted);
+                display: flex;
+                align-items: center;
+                pointer-events: none;
+
+                i.material-symbols-outlined {
+                    font-size: 18px !important;
+                }
+            }
+
+            .input-search {
+                height: 36px !important;
+                padding: 0 14px 0 38px !important;
+                border: 1px solid var(--border-strong) !important;
+                border-radius: var(--radius-md) !important;
+                font-size: var(--fs-14) !important;
+                color: var(--text-strong) !important;
+                background: var(--surface) !important;
+                width: 260px;
+                transition: border-color var(--transition), width var(--transition) !important;
+
+                &::placeholder {
+                    color: var(--text-muted) !important;
+                }
+
+                &:focus {
+                    border-color: var(--accent) !important;
+                    width: 300px;
+                }
+            }
+        }
+
+        // "Ətraflı Axtarış" stroked button
+        .mat-mdc-button-base[mat-stroked-button] {
+            height: 36px !important;
+            border-radius: 8px !important;
+            border-color: var(--border-strong) !important;
+            font-size: var(--fs-14) !important;
+            font-weight: 500 !important;
+            color: var(--text-muted) !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 6px !important;
+            padding: 0 14px !important;
+            transition: border-color 0.15s ease, color 0.15s ease !important;
+
+            .material-symbols-outlined {
+                font-size: 18px !important;
+            }
+
+            &:hover {
+                border-color: var(--accent) !important;
+                color: var(--accent) !important;
+            }
+        }
+    }
+
+    // ── Status badges (user-permission) ──────────────────────────────
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 4px 10px !important;
+        border-radius: var(--radius-sm) !important;
+        font-size: var(--fs-12) !important;
+        font-weight: 600 !important;
+        letter-spacing: .02em !important;
+        text-transform: uppercase !important;
+
+        &.active {
+            background: var(--success-soft) !important;
+            color: var(--success-text) !important;
+        }
+
+        &.passive,
+        &:not(.active) {
+            background: var(--surface-subtle) !important;
+            color: var(--text) !important;
+        }
+    }
+
+    // ── Institution / Group tags ──────────────────────────────────────
+    .institution-tags,
+    .group-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px !important;
+
+        .tag {
+            padding: 3px 8px !important;
+            border-radius: 6px !important;
+            font-size: var(--fs-12) !important;
+            font-weight: 600 !important;
+            letter-spacing: 0.2px;
+        }
+
+        .institution-tag {
+            background: var(--surface-subtle) !important;
+            color: var(--text) !important;
+        }
+
+        .group-tag {
+            border: 1px solid var(--border-strong) !important;
+            background: transparent !important;
+            color: var(--text) !important;
+        }
+    }
+}

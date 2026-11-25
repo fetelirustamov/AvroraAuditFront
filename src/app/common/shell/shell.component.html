@@ -1,0 +1,24 @@
+<div class="app-shell" [class.is-rail]="rail()" [class.admin-area]="area === 'admin'">
+    <app-sidebar
+        [area]="area"
+        [menu]="menu()"
+        [activeLink]="activeLink()"
+        [rail]="rail()"
+        [open]="drawer()"
+        (closeRequest)="closeDrawer()" />
+
+    @if (drawer()) {
+        <div class="shell-backdrop" (click)="closeDrawer()" aria-hidden="true"></div>
+    }
+
+    <app-header
+        [area]="area"
+        [menu]="menu()"
+        [menuExpanded]="menuExpanded()"
+        (menuToggle)="toggleMenu()" />
+
+    <!-- `admin-input-design`: admin formalarının ortaq sahə dizaynı (admin-area.scss) -->
+    <div class="main-content" [class.admin-input-design]="area === 'admin'">
+        <router-outlet />
+    </div>
+</div>

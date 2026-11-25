@@ -1,268 +1,668 @@
-import { Component, HostListener, Renderer2, ViewChild } from '@angular/core';
-import { MatCardModule } from '@angular/material/card';
+import { AfterViewInit, Component, ElementRef, NgZone, OnDestroy, ViewChild, inject } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
+import { MatSelectModule } from '@angular/material/select';
 import { FullCalendarComponent, FullCalendarModule } from '@fullcalendar/angular';
-import { CalendarOptions, EventInput } from '@fullcalendar/core/index.js';
+import {
+  CalendarApi,
+  CalendarOptions,
+  DatesSetArg,
+  EventClickArg,
+  EventContentArg,
+  EventInput,
+  EventMountArg,
+  EventSourceFunc,
+} from '@fullcalendar/core';
+import azLocale from '@fullcalendar/core/locales/az';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import listPlugin from '@fullcalendar/list';
-import { CustomizerSettingsService } from '../../../customizer-settings/customizer-settings.service';
-import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { PlanService } from '../plan.service';
 import { NotificationService } from '../../../shared/services/notification.service';
-import { InspectionsService } from '../../inspections/inspections.service';
+import { isoDateAddDays, toBakuDisplay, toBakuWallClock } from '../../../shared/utils/date.util';
+import { StatusTone, planStatusMeta } from '../../../shared/status/status-meta';
+import { StatusChipComponent } from '../../../shared/status/status-chip.component';
+import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
+import { queryNumber, queryString, writeQueryState } from '../../../shared/utils/query-state';
 import { TableState } from '../../../models/table-state.model';
-import { Firm } from '../../inspections/firm.model';
-import { MatSelectModule } from '@angular/material/select';
-import { CommonModule, NgFor } from '@angular/common';
-import { finalize } from 'rxjs';
-import { PlanDetails } from '../plan.model';
-import { MatButtonModule } from '@angular/material/button';
 import { AuditLoadingOverlayComponent } from '../../components/audit-loading-overlay/audit-loading-overlay.component';
 import { TableService } from '../../services/table.service';
+import { PlanDetails } from '../plan.model';
+
+/** `color` zolaq/nöqtə/kənar xətti, `tint` açıq fon, `text` həmin fonda oxunan tünd mətn rəngidir. */
+interface PlanStatusOption {
+  value: number;
+  label: string;
+  color: string;
+  tint: string;
+  text: string;
+}
+
+/** Təqvimdə göstərilən plan statusları (DB-də real olan kodlar). */
+const PLAN_STATUS_CODES = [1, 2, 3, 4, 5, -1];
+
+/**
+ * Status tonunun təqvim rəngləri. Etiket və ton status-meta.ts-dən gəlir: təqvim, chip və
+ * cədvəllər eyni statusu eyni rənglə göstərir. Rənglər DOM-un inline stilinə yazılır, ona görə token-dir.
+ */
+function statusOption(value: number): PlanStatusOption {
+  const meta = planStatusMeta(value);
+  return { value, label: meta.label, ...toneColors(meta.tone) };
+}
+
+function toneColors(tone: StatusTone): Pick<PlanStatusOption, 'color' | 'tint' | 'text'> {
+  return tone === 'neutral'
+    ? { color: 'var(--gray-400)', tint: 'var(--surface-subtle)', text: 'var(--text)' }
+    : { color: `var(--${tone})`, tint: `var(--${tone}-soft)`, text: `var(--${tone}-text)` };
+}
+
+/** Bir günün status bölgüsü — ay görünüşündəki xülasə çipini qidalandırır. */
+interface DayStatusCount {
+  label: string;
+  color: string;
+  count: number;
+}
+
+/** Yan paneldə göstərilən bir plan sətri. */
+export interface DayPlanRow {
+  id: number;
+  locationName: string;
+  locationCode: number;
+  inspectorsName: string;
+  status: number;
+  statusColor: string;
+  timeRange: string;
+}
+
+/** Bir sorğuda gətirilən maksimum plan sayı — bundan çoxu üçün istifadəçiyə xəbərdarlıq göstərilir. */
+const MAX_ROWS = 1000;
+const FALLBACK_COLOR = 'var(--gray-300)';
+
+// Chrome-un ICU məlumatında Azərbaycan ay/gün adları yoxdur (Intl('az') "2026 M09" verir),
+// ona görə təqvimdə görünən bütün tarix mətnləri bu cədvəllərdən formatlanır.
+const AZ_MONTHS = [
+  'Yanvar', 'Fevral', 'Mart', 'Aprel', 'May', 'İyun',
+  'İyul', 'Avqust', 'Sentyabr', 'Oktyabr', 'Noyabr', 'Dekabr',
+];
+/** İndeks = getUTCDay(): 0 = Bazar. */
+const AZ_WEEKDAYS_SHORT = ['B.', 'B.E.', 'Ç.A.', 'Ç.', 'C.A.', 'C.', 'Ş.'];
+const AZ_WEEKDAYS_LONG = [
+  'Bazar', 'Bazar ertəsi', 'Çərşənbə axşamı', 'Çərşənbə',
+  'Cümə axşamı', 'Cümə', 'Şənbə',
+];
+
+type AzMarker = { year: number; month: number; day: number };
+
+/** FullCalendar-ın `{ year, month, day }` markerindən UTC Date qurur (month 0-dan başlayır). */
+function markerToUtc(marker: AzMarker): Date {
+  return new Date(Date.UTC(marker.year, marker.month, marker.day));
+}
+
+function monthTitle(marker: AzMarker): string {
+  return `${AZ_MONTHS[marker.month]} ${marker.year}`;
+}
+
+/**
+ * `titleFormat` çağırılanda FullCalendar aralığın sonundan 1 ms çıxarır, yəni
+ * `end` artıq son gündür (eksklyuziv deyil) — əlavə düzəliş etmək lazım deyil.
+ */
+function rangeTitle(start: AzMarker, end?: AzMarker): string {
+  const last = end ?? start;
+  const sameMonth = start.month === last.month && start.year === last.year;
+  if (sameMonth && start.day === last.day) {
+    return `${start.day} ${AZ_MONTHS[start.month]} ${start.year}`;
+  }
+  const from = sameMonth ? `${start.day}` : `${start.day} ${AZ_MONTHS[start.month]}`;
+  return `${from} – ${last.day} ${AZ_MONTHS[last.month]} ${last.year}`;
+}
+
+/** Date obyektinin *lokal* sahələrindən `yyyy-MM-dd` qurur (FullCalendar hücrə tarixləri lokaldır). */
+function localDateIso(date: Date): string {
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${date.getFullYear()}-${month}-${day}`;
+}
+
+/** `yyyy-MM-dd` → "7 Sentyabr 2026, Bazar ertəsi" */
+function azDayLabel(iso: string): string {
+  const [year, month, day] = iso.split('-').map(Number);
+  const utc = new Date(Date.UTC(year, month - 1, day));
+  return `${day} ${AZ_MONTHS[month - 1]} ${year}, ${AZ_WEEKDAYS_LONG[utc.getUTCDay()]}`;
+}
 
 @Component({
   selector: 'app-plan-calendar',
-  imports: [MatCardModule, FullCalendarModule, MatSelectModule, FormsModule, ReactiveFormsModule, MatButtonModule, NgFor, CommonModule, AuditLoadingOverlayComponent],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    MatSelectModule,
+    FullCalendarModule,
+    AuditLoadingOverlayComponent,
+    PageHeaderComponent,
+    StatusChipComponent,
+  ],
+  providers: [TableService],
   templateUrl: './plan-calendar.component.html',
-  styleUrl: './plan-calendar.component.scss'
+  styleUrl: './plan-calendar.component.scss',
 })
-export class PlanCalendarComponent {
-  @ViewChild('calendar') calendarComponent!: FullCalendarComponent;
+export class PlanCalendarComponent implements AfterViewInit, OnDestroy {
+  @ViewChild('calendar') calendarComponent?: FullCalendarComponent;
 
-  statusOptions = [
-    { label: 'Təsdiq gözləyənlər', value: 1 },
-    { label: 'Təsdiq olunmuşlar', value: 2 },
-    { label: 'Rədd olunmuşlar', value: -1 }
-  ];
+  /** Həm status filtrini, həm legend-i idarə edir. */
+  readonly planStatuses: PlanStatusOption[] = PLAN_STATUS_CODES.map(statusOption);
 
-  private statusColors: Record<number, string> = {
-    1: '#F59E0B',
-    2: '#10B981',
-    [-1]: '#EF4444',
-  };
+  calendarForm!: FormGroup;
 
   currentView = 'dayGridMonth';
   currentTitle = '';
+  isLoading = true;
+  /** Yüklənmiş plan sayı (mağaza filtri tətbiq olunduqdan sonra). */
   totalEvents = 0;
+  /** Backend-in bildirdiyi ümumi uyğun plan sayı. */
+  totalMatching = 0;
+  /** `true` olduqda nəticə `MAX_ROWS`-a görə kəsilib. */
+  truncated = false;
 
-  calendarOptions: CalendarOptions;
-  public firms: Firm[] = [];
-  calendarForm!: FormGroup;
-  public isLoading = false;
-  public searchTerm: string = '';
-  public pageSize: number = 10;
-  public status: number = 1;
-  private _tableState: TableState = new TableState();
-  public planDetails: PlanDetails[] = [];
-  private events: EventInput[] = [];
-  private tooltip: HTMLElement | null = null;
+  /** Seçilmiş günün ISO tarixi — yan panel bununla idarə olunur. */
+  selectedDay: string | null = null;
+  selectedDayLabel = '';
+  selectedDayPlans: DayPlanRow[] = [];
+
+  private canvasObserver?: ResizeObserver;
+  private lastCanvasWidth = 0;
+
+  /** Bakı divar saatı ilə gün → o günün planları. */
+  private plansByDay = new Map<string, PlanDetails[]>();
+
+  /**
+   * FullCalendar funksiya event source-u: görünən aralıq dəyişəndə FullCalendar
+   * özü çağırır, filtr dəyişəndə isə `refetchEvents()` təkrar işə salır.
+   */
+  private readonly fetchEvents: EventSourceFunc = (info, success, failure) => {
+    // `startStr`/`endStr` təqvimin öz offseti ilə qurulur — yenidən formatlamaq
+    // aralığı sürüşdürər. `endStr` onsuz da eksklyuzivdir.
+    const endIso = info.endStr.slice(0, 10);
+    // StartDate DB-də UTC saxlanılır, grid isə +04-də çəkilir: aşağı sərhədə bir gün pad.
+    const startIso = isoDateAddDays(info.startStr.slice(0, 10), -1);
+
+    const tableState = new TableState();
+    tableState.paginator.page = 0;
+    tableState.paginator.size = MAX_ROWS;
+    tableState.sorting.column = 'startDate';
+    tableState.sorting.direction = 'asc';
+    tableState.filter = { startDate: startIso, endDate: endIso };
+
+    const status = this.calendarForm.value.status;
+    if (status != null) {
+      tableState.filter['status'] = String(status);
+    }
+
+    this.tableService.api_url = 'inspectionPlans/getDetails';
+    this.tableService.fill(tableState).subscribe({
+      next: (response) => {
+        // TableService şəbəkə xətasını `success: false` cavabına çevirir, toast vermir
+        if (response && !response.success) {
+          this.notify.error('Təqvim yüklənmədi', { message: response.message });
+        }
+        const rows: PlanDetails[] = response?.data?.items ?? [];
+        const total = response?.data?.total ?? rows.length;
+        const visible = this.applyStoreFilter(rows);
+
+        this.plansByDay = this.groupByDay(visible);
+        // Ay görünüşündə hər gün üçün bir xülasə, digərlərində hər plan üçün bir event.
+        const monthly = (this.api?.view.type ?? this.currentView) === 'dayGridMonth';
+        success(monthly ? this.buildDaySummaryEvents() : visible.map((plan) => this.toPlanEvent(plan)));
+
+        this.fromCalendar(() => {
+          this.totalEvents = visible.length;
+          this.totalMatching = total;
+          this.truncated = total > rows.length;
+          this.refreshSelectedDay();
+        });
+      },
+      error: (err: unknown) => {
+        failure(err instanceof Error ? err : new Error('Plan sorğusu alınmadı'));
+        this.plansByDay = new Map();
+        this.fromCalendar(() => {
+          this.totalEvents = 0;
+          this.totalMatching = 0;
+          this.truncated = false;
+          this.refreshSelectedDay();
+          this.notify.error('Təqvim yüklənmədi', {
+            message: 'Planları gətirmək mümkün olmadı. Bir az sonra yenidən cəhd edin.',
+          });
+        });
+      },
+    });
+  };
+
+  private readonly handleLoading = (loading: boolean): void => {
+    this.fromCalendar(() => {
+      this.isLoading = loading;
+    });
+  };
+
+  private readonly handleDatesSet = (arg: DatesSetArg): void => {
+    this.fromCalendar(() => {
+      this.currentTitle = arg.view.title;
+      this.currentView = arg.view.type;
+      this.markSelectedCell();
+    });
+  };
+
+  /** Ay görünüşündə bütün hücrə klikləmə sahəsidir — boş günlər də panel açır. */
+  private readonly handleDayCellMount = (arg: { date: Date; el: HTMLElement }): void => {
+    const iso = localDateIso(arg.date);
+    arg.el.classList.add('cal-day-cell');
+    arg.el.addEventListener('click', () => this.zone.run(() => this.openDay(iso)));
+    if (iso === this.selectedDay) {
+      arg.el.classList.add('cal-day-selected');
+    }
+  };
+
+  private readonly renderEventContent = (arg: EventContentArg) => {
+    const dayIso = arg.event.extendedProps['dayIso'];
+    return {
+      domNodes: [
+        typeof dayIso === 'string' ? this.buildDaySummaryNode(arg) : this.buildPlanNode(arg),
+      ],
+    };
+  };
+
+  private readonly styleEvent = (info: EventMountArg): void => {
+    if (typeof info.event.extendedProps['dayIso'] === 'string') {
+      // Xülasə çipinin rəngi seqmentlərdən gəlir — konteyner şəffaf qalır.
+      info.el.style.background = 'transparent';
+      info.el.style.border = 'none';
+      info.el.style.padding = '0';
+      info.el.style.margin = '0';
+      return;
+    }
+    // Tünd mətn açıq fonda, status rəngi isə sol xətdə — ağ mətn kəhrəba/yaşıl fonda oxunmur.
+    const status = this.statusOption(Number(info.event.extendedProps['status']));
+    info.el.style.border = 'none';
+    info.el.style.borderLeft = `3px solid ${status.color}`;
+    info.el.style.backgroundColor = status.tint;
+    info.el.style.color = status.text;
+    info.el.style.fontSize = '12px';
+    info.el.style.padding = '2px 7px';
+    info.el.style.borderRadius = '5px';
+  };
+
+  // Stabil obyekt: `ngDoCheck` hər dəyişiklik dövründə açarları referansla müqayisə
+  // etdiyi üçün bu field heç vaxt yenidən yaradılmır.
+  readonly calendarOptions: CalendarOptions = {
+    plugins: [dayGridPlugin, listPlugin],
+    locale: azLocale,
+    dayHeaderContent: (arg) =>
+      arg.view.type === 'dayGridMonth'
+        ? AZ_WEEKDAYS_SHORT[arg.dow]
+        : `${AZ_WEEKDAYS_SHORT[arg.dow]} ${arg.date.getDate()}`,
+    listDayFormat: (arg) => `${arg.date.day} ${AZ_MONTHS[arg.date.month]} ${arg.date.year}`,
+    listDaySideFormat: (arg) => AZ_WEEKDAYS_LONG[markerToUtc(arg.date).getUTCDay()],
+    initialView: 'dayGridMonth',
+    initialDate: new Date(),
+    headerToolbar: false,
+    height: 'auto',
+    dayMaxEvents: 4,
+    lazyFetching: false,
+    views: {
+      dayGridMonth: { titleFormat: (arg) => monthTitle(arg.start) },
+      listMonth: { titleFormat: (arg) => monthTitle(arg.start) },
+      dayGridWeek: { titleFormat: (arg) => rangeTitle(arg.start, arg.end) },
+    },
+    events: this.fetchEvents,
+    loading: this.handleLoading,
+    datesSet: this.handleDatesSet,
+    dayCellDidMount: this.handleDayCellMount,
+    eventClick: (arg: EventClickArg) => this.handleEventClick(arg),
+    eventContent: this.renderEventContent,
+    eventDidMount: this.styleEvent,
+  };
+
+  private readonly router = inject(Router);
 
   constructor(
-    private inspectionService: InspectionsService,
-    private _tableService: TableService,
+    private tableService: TableService,
     private fb: FormBuilder,
-    private planService: PlanService,
     private notify: NotificationService,
-    public themeService: CustomizerSettingsService,
-    private renderer: Renderer2
+    private host: ElementRef<HTMLElement>,
+    private zone: NgZone,
+    route: ActivatedRoute,
   ) {
-    this.getFirms();
+    // Filtr URL-də saxlanır: təqvim ilk sorğunu artıq bu dəyərlərlə göndərir
+    const q = route.snapshot.queryParamMap;
+    this.calendarForm = this.fb.group({
+      status: [queryNumber(q, 'status')],
+      locationName: [queryString(q, 'store') ?? ''],
+    });
+  }
 
-    this._tableState = new TableState();
-    this._tableService.api_url = 'inspectionPlans/getDetails';
-    this._tableState.filter['status'] = '1';
-    this._tableState.paginator.page = 0;
-    this._tableState.sorting.direction = 'desc';
-    this._tableState.paginator.size = Number(this.pageSize);
-    this.createForm();
+  /**
+   * Təqvimin sütunu yan panel açılanda/bağlananda və breakpoint dəyişəndə daralır,
+   * FullCalendar isə yalnız pəncərə ölçüsünə baxır. `updateSize()`-i vaxta görə
+   * təxmin etmək işləmir (layout hələ tətbiq olunmamış olur), ona görə faktiki
+   * genişlik dəyişikliyini `ResizeObserver` izləyir.
+   */
+  ngAfterViewInit(): void {
+    const canvas = this.host.nativeElement.querySelector('.cal-canvas');
+    if (!canvas || typeof ResizeObserver === 'undefined') {
+      return;
+    }
 
-    this.calendarOptions = {
-      plugins: [dayGridPlugin, listPlugin],
-      initialView: 'dayGridMonth',
-      initialDate: new Date(),
-      dayMaxEvents: true,
-      headerToolbar: false,
-      events: this.events,
-      height: 'auto',
-      datesSet: (arg) => {
-        this.currentTitle = arg.view.title;
-        this.currentView = arg.view.type;
-      },
-      eventClick: this.handleEventClick.bind(this),
-      eventContent: (arg) => {
-        const container = document.createElement('div');
+    this.zone.runOutsideAngular(() => {
+      this.canvasObserver = new ResizeObserver((entries) => {
+        const width = Math.round(entries[0]?.contentRect.width ?? 0);
+        if (width === 0 || width === this.lastCanvasWidth) {
+          return;
+        }
+        this.lastCanvasWidth = width;
+        this.api?.updateSize();
+      });
+      this.canvasObserver.observe(canvas);
+    });
+  }
 
-        const titleEl = document.createElement('div');
-        titleEl.className = 'fc-event-title';
-        titleEl.innerHTML = arg.event.title;
-        container.appendChild(titleEl);
+  ngOnDestroy(): void {
+    this.canvasObserver?.disconnect();
+    this.plansByDay.clear();
+  }
 
-        const codeEl = document.createElement('div');
-        codeEl.className = 'fc-event-code';
-        codeEl.innerHTML = arg.event.extendedProps['locationCode'] || '';
-        container.appendChild(codeEl);
-
-        return { domNodes: [container] };
-      },
-      eventDidMount: (info) => {
-        info.el.style.backgroundColor = info.event.backgroundColor || this.statusColors[1];
-        info.el.style.borderColor = info.event.backgroundColor || this.statusColors[1];
-        info.el.style.color = 'white';
-        info.el.style.fontSize = '12px';
-        info.el.style.padding = '3px 8px';
-        info.el.style.borderRadius = '5px';
-        info.el.style.border = 'none';
-      },
-    };
-
-    this.fill();
+  private statusOption(status: number): PlanStatusOption {
+    return this.planStatuses.find((option) => option.value === status) ?? statusOption(status);
   }
 
   changeCalView(view: string): void {
-    this.currentView = view;
-    this.calendarComponent.getApi().changeView(view);
+    this.api?.changeView(view);
   }
 
   goPrev(): void {
-    this.calendarComponent.getApi().prev();
+    this.api?.prev();
   }
 
   goNext(): void {
-    this.calendarComponent.getApi().next();
+    this.api?.next();
   }
 
   goToday(): void {
-    this.calendarComponent.getApi().today();
+    this.api?.today();
   }
 
+  onSearch(): void {
+    this.writeFilters();
+    this.api?.refetchEvents();
+  }
+
+  /** Legend-dən statusa görə filtr — təkrar klik filtri götürür. */
   filterByStatus(status: number): void {
-    this.calendarForm.patchValue({ status });
-    this._tableState.filter['status'] = status.toString();
-    this.fill();
+    const next = this.calendarForm.value.status === status ? null : status;
+    this.calendarForm.patchValue({ status: next });
+    this.onSearch();
   }
 
-  handleEventClick(arg: any): void {
-    arg.jsEvent.stopPropagation();
-    this.removeTooltip();
+  clearFilters(): void {
+    this.calendarForm.reset({ status: null, locationName: '' });
+    this.onSearch();
+  }
 
-    this.tooltip = this.renderer.createElement('div');
-    this.renderer.addClass(this.tooltip, 'custom-tooltip');
-    this.renderer.setAttribute(this.tooltip!, 'data-event-id', arg.event.id);
+  private writeFilters(): void {
+    const { status, locationName } = this.calendarForm.value;
+    writeQueryState(this.router, { status, store: String(locationName ?? '').trim() });
+  }
 
-    const content = `
-      <div class="arrow-up"></div>
-      <h5>${arg.event.title}</h5>
-      <p><strong>Müfəttiş:</strong> ${arg.event.extendedProps['auditor'] || 'Məlumat yoxdur'}</p>
-      <p><strong>Başlama tarixi:</strong> ${arg.event.extendedProps['startDate']}</p>
-      <p><strong>Bitmə tarixi:</strong> ${arg.event.extendedProps['endDate']}</p>
-    `;
-    this.renderer.setProperty(this.tooltip, 'innerHTML', content);
+  isStatusActive(status: number): boolean {
+    return this.calendarForm.value.status === status;
+  }
 
-    const rect = arg.el.getBoundingClientRect();
-    let x = rect.right + 10;
-    let y = rect.top;
+  openDay(iso: string): void {
+    this.selectedDay = iso;
+    this.selectedDayLabel = azDayLabel(iso);
+    this.selectedDayPlans = this.buildDayRows(iso);
+    this.markSelectedCell();
+  }
 
-    const tooltipWidth = 260;
-    const tooltipHeight = 160;
-    const windowWidth = window.innerWidth;
-    const windowHeight = window.innerHeight;
-
-    if (x + tooltipWidth > windowWidth) {
-      x = rect.left - tooltipWidth - 10;
+  closeDayPanel(): void {
+    if (this.selectedDay == null) {
+      return;
     }
-    if (y + tooltipHeight > windowHeight) {
-      y = rect.top - tooltipHeight - 10;
+    this.selectedDay = null;
+    this.selectedDayLabel = '';
+    this.selectedDayPlans = [];
+    this.markSelectedCell();
+  }
+
+  private get api(): CalendarApi | null {
+    return this.calendarComponent?.getApi() ?? null;
+  }
+
+  /**
+   * FullCalendar callback-ləri uşaq komponentin `ngAfterViewInit`-i içində, cari
+   * dəyişiklik dövrü artıq yoxlanıldıqdan sonra işə düşür. Yazıları mikrotaska
+   * köçürmək NG0100 xətasının qarşısını alır.
+   */
+  private fromCalendar(fn: () => void): void {
+    queueMicrotask(fn);
+  }
+
+  /** Yeni məlumat gəldikdən sonra açıq panelin məzmununu yeniləyir. */
+  private refreshSelectedDay(): void {
+    if (this.selectedDay) {
+      this.selectedDayPlans = this.buildDayRows(this.selectedDay);
+    }
+    this.markSelectedCell();
+  }
+
+  /**
+   * Seçilmiş günü grid-də işarələyir. FullCalendar `dayCellClassNames`-i seçim
+   * dəyişəndə yenidən hesablamadığı üçün sinif birbaşa DOM-da dəyişilir.
+   */
+  private markSelectedCell(): void {
+    const root = this.host.nativeElement;
+    root.querySelectorAll('.cal-day-selected').forEach((el) => el.classList.remove('cal-day-selected'));
+    if (this.selectedDay) {
+      root
+        .querySelector(`.fc-daygrid-day[data-date="${this.selectedDay}"]`)
+        ?.classList.add('cal-day-selected');
+    }
+  }
+
+  /**
+   * Mağaza filtri client-side tətbiq olunur: backend-in `locationName` filtri
+   * INNER JOIN qurur və başqa firmaya bağlı location sətri olan planları itirir,
+   * halbuki aralıq onsuz da tam yüklənib. Həm ada, həm koda görə axtarır.
+   */
+  private applyStoreFilter(rows: PlanDetails[]): PlanDetails[] {
+    const term = String(this.calendarForm.value.locationName ?? '').trim().toLocaleLowerCase('az');
+    if (!term) {
+      return rows;
     }
 
-    this.renderer.setStyle(this.tooltip, 'top', `${y + window.scrollY}px`);
-    this.renderer.setStyle(this.tooltip, 'left', `${x}px`);
-    this.renderer.appendChild(document.body, this.tooltip);
+    return rows.filter(
+      (plan) =>
+        (plan.locationName ?? '').toLocaleLowerCase('az').includes(term) ||
+        String(plan.locationCode ?? '').includes(term)
+    );
   }
 
-  @HostListener('document:click', ['$event'])
-  onDocumentClick(event: MouseEvent): void {
-    if (this.tooltip && !this.tooltip.contains(event.target as Node)) {
-      this.removeTooltip();
-    }
-  }
-
-  private removeTooltip(): void {
-    if (this.tooltip) {
-      this.renderer.removeChild(document.body, this.tooltip);
-      this.tooltip = null;
-    }
-  }
-
-  createForm() {
-    this.calendarForm = this.fb.group({
-      firmId: [null, Validators.required],
-      status: [null, Validators.required],
-    });
-  }
-
-  getFirms() {
-    this.inspectionService.getFirms().subscribe((response) => {
-      this.firms = response.data;
-    });
-  }
-
-  onSearch() {
-    if (this.calendarForm.valid) {
-      const formData = this.calendarForm.value;
-      this.status = formData.status;
-
-      if (this.status != null) {
-        this._tableState.filter['status'] = this.status.toString();
+  /** Planları Bakı divar saatındaki günə görə qruplayır. */
+  private groupByDay(rows: PlanDetails[]): Map<string, PlanDetails[]> {
+    const map = new Map<string, PlanDetails[]>();
+    for (const plan of rows) {
+      const wall = toBakuWallClock(plan.startDate);
+      if (!wall) {
+        continue;
       }
-      if (formData.firmId != null) {
-        this._tableState.filter['firmId'] = formData.firmId.toString();
+      const iso = wall.slice(0, 10);
+      const bucket = map.get(iso);
+      if (bucket) {
+        bucket.push(plan);
+      } else {
+        map.set(iso, [plan]);
       }
-
-      this.fill();
     }
+    return map;
   }
 
-  private fill() {
-    this.isLoading = true;
-    this._tableState.paginator.size = Number(this.pageSize);
-    if (!this._tableState.filter) {
-      this._tableState.filter = {};
-    }
-    this._tableState.searchTerm = this.searchTerm;
-
-    this._tableService.fill(this._tableState).pipe(
-      finalize(() => this.isLoading = false)
-    ).subscribe((response) => {
-      this._tableState.paginator.total = response.data != null ? response.data.total : 0;
-      this.planDetails = response.data.items;
-
-      this.events = this.planDetails.map((item, index) => ({
-        id: item.id.toString() || `event-${index}`,
-        title: item.locationName,
-        start: item.startDate,
-        end: item.endDate,
+  /** Ay görünüşü: hər gün üçün bir xülasə event-i — hücrə heç vaxt daşmır. */
+  private buildDaySummaryEvents(): EventInput[] {
+    const events: EventInput[] = [];
+    for (const [iso, plans] of this.plansByDay) {
+      events.push({
+        id: `day-${iso}`,
+        start: iso,
+        allDay: true,
+        display: 'block',
+        backgroundColor: 'transparent',
+        borderColor: 'transparent',
         extendedProps: {
-          locationCode: item.locationCode,
-          auditor: item.inspectorsName,
-          startDate: this.convertUtcToBakuFormat(item.startDate),
-          endDate: this.convertUtcToBakuFormat(item.endDate),
+          dayIso: iso,
+          total: plans.length,
+          counts: this.countByStatus(plans),
         },
-        backgroundColor: this.statusColors[item.status] ?? '#6366F1',
-        borderColor: this.statusColors[item.status] ?? '#6366F1',
-      }));
-
-      this.totalEvents = this.events.length;
-      this.calendarOptions = { ...this.calendarOptions, events: this.events };
-    });
+      });
+    }
+    return events;
   }
 
-  convertUtcToBakuFormat(dateStr: string): string {
-    const utcDate = new Date(dateStr);
-    const bakuDate = new Date(utcDate.getTime() + 4 * 60 * 60 * 1000);
-    const year = bakuDate.getFullYear();
-    const month = String(bakuDate.getMonth() + 1).padStart(2, '0');
-    const day = String(bakuDate.getDate()).padStart(2, '0');
-    const hours = String(bakuDate.getHours()).padStart(2, '0');
-    const minutes = String(bakuDate.getMinutes()).padStart(2, '0');
-    return `${year}-${month}-${day} ${hours}:${minutes}`;
+  private countByStatus(plans: PlanDetails[]): DayStatusCount[] {
+    const counts: DayStatusCount[] = [];
+    for (const option of this.planStatuses) {
+      const count = plans.filter((plan) => plan.status === option.value).length;
+      if (count > 0) {
+        counts.push({ label: option.label, color: option.color, count });
+      }
+    }
+    const known = counts.reduce((sum, item) => sum + item.count, 0);
+    if (known < plans.length) {
+      counts.push({ label: 'Bilinmir', color: FALLBACK_COLOR, count: plans.length - known });
+    }
+    return counts;
+  }
+
+  private toPlanEvent(plan: PlanDetails): EventInput {
+    const status = this.statusOption(plan.status);
+
+    return {
+      id: String(plan.id),
+      title: plan.locationName || `Kod ${plan.locationCode}`,
+      start: toBakuWallClock(plan.startDate) ?? undefined,
+      end: toBakuWallClock(plan.endDate) ?? undefined,
+      // Siyahı görünüşünün nöqtəsi bu rəngləri götürür.
+      backgroundColor: status.color,
+      borderColor: status.color,
+      extendedProps: {
+        locationCode: plan.locationCode,
+        status: plan.status,
+        statusLabel: status.label,
+      },
+    };
+  }
+
+  /** Yan panel sətirləri — vaxtlar Bakı saatı ilə formatlanır. */
+  private buildDayRows(iso: string): DayPlanRow[] {
+    const plans = this.plansByDay.get(iso) ?? [];
+    return [...plans]
+      .sort(
+        (a, b) =>
+          (a.startDate ?? '').localeCompare(b.startDate ?? '') ||
+          (a.locationName ?? '').localeCompare(b.locationName ?? '', 'az')
+      )
+      .map((plan) => {
+        const from = toBakuDisplay(plan.startDate)?.slice(-5) ?? '—';
+        const to = toBakuDisplay(plan.endDate)?.slice(-5) ?? '—';
+        const status = this.statusOption(plan.status);
+
+        return {
+          id: plan.id,
+          locationName: plan.locationName || `Kod ${plan.locationCode}`,
+          locationCode: plan.locationCode,
+          inspectorsName: plan.inspectorsName || 'Müfəttiş təyin edilməyib',
+          status: plan.status,
+          statusColor: status.color,
+          timeRange: `${from} – ${to}`,
+        };
+      });
+  }
+
+  /** Ay görünüşündəki xülasə çipi: ümumi say + statuslara görə seqmentli zolaq. */
+  private buildDaySummaryNode(arg: EventContentArg): HTMLElement {
+    const total = Number(arg.event.extendedProps['total'] ?? 0);
+    const counts = (arg.event.extendedProps['counts'] ?? []) as DayStatusCount[];
+
+    const wrap = document.createElement('div');
+    wrap.className = 'cal-daysum';
+    wrap.title = counts.map((item) => `${item.count} ${item.label}`).join(' · ');
+
+    const top = document.createElement('div');
+    top.className = 'cal-daysum-top';
+    const num = document.createElement('span');
+    num.className = 'cal-daysum-count';
+    num.textContent = String(total);
+    const unit = document.createElement('span');
+    unit.className = 'cal-daysum-unit';
+    unit.textContent = 'plan';
+    top.append(num, unit);
+    wrap.appendChild(top);
+
+    const bar = document.createElement('div');
+    bar.className = 'cal-daysum-bar';
+    for (const item of counts) {
+      const segment = document.createElement('i');
+      segment.style.flexGrow = String(item.count);
+      segment.style.background = item.color;
+      bar.appendChild(segment);
+    }
+    wrap.appendChild(bar);
+
+    const legend = document.createElement('div');
+    legend.className = 'cal-daysum-legend';
+    for (const item of counts) {
+      const chip = document.createElement('span');
+      const dot = document.createElement('i');
+      dot.style.background = item.color;
+      chip.appendChild(dot);
+      chip.appendChild(document.createTextNode(String(item.count)));
+      legend.appendChild(chip);
+    }
+    wrap.appendChild(legend);
+
+    return wrap;
+  }
+
+  /** Həftə/siyahı görünüşündə bir sətirlik kompakt plan çipi. */
+  private buildPlanNode(arg: EventContentArg): HTMLElement {
+    const row = document.createElement('div');
+    row.className = 'cal-ev-row';
+
+    const title = document.createElement('span');
+    title.className = 'cal-ev-name';
+    title.textContent = arg.event.title;
+    row.appendChild(title);
+
+    const code = arg.event.extendedProps['locationCode'];
+    if (code != null) {
+      const codeEl = document.createElement('span');
+      codeEl.className = 'cal-ev-code';
+      codeEl.textContent = String(code);
+      row.appendChild(codeEl);
+    }
+
+    row.title = [arg.event.title, code, arg.event.extendedProps['statusLabel']]
+      .filter((part) => part != null && part !== '')
+      .join(' · ');
+
+    return row;
+  }
+
+  /** Hər klik günü açır: ay görünüşündə xülasə çipi, həftə/siyahıda planın günü. */
+  private handleEventClick(arg: EventClickArg): void {
+    arg.jsEvent.stopPropagation();
+    const dayIso = arg.event.extendedProps['dayIso'];
+    if (typeof dayIso === 'string') {
+      this.openDay(dayIso);
+      return;
+    }
+    if (arg.event.start) {
+      this.openDay(localDateIso(arg.event.start));
+    }
   }
 }

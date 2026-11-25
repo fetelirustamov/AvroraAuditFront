@@ -1,179 +1,84 @@
-<app-admin-breadcrumb
-    title="Səhifələr"
-    [crumbs]="[{label: 'Səlahiyyətlər'}, {label: 'Səhifələr'}]">
-</app-admin-breadcrumb>
+<app-page-header subtitle="Menyu səhifələri və onların icazə açarları">
+    <button headerActions type="button" class="g-search-btn" (click)="add()">
+        <span class="material-symbols-outlined" aria-hidden="true">add</span>
+        Yeni səhifə
+    </button>
+</app-page-header>
 
-<!-- Add / Edit Form Card -->
-<mat-card class="form-card mb-25 border-radius d-block bg-white border-0 shadow-none">
-    <mat-card-content>
-        <div class="form-header">
-            <div class="form-header-icon" [class.edit-mode]="isEditMode">
-                <i class="material-symbols-outlined">{{ isEditMode ? 'edit_note' : 'add_circle' }}</i>
-            </div>
-            <div class="form-header-text">
-                <h6 class="mb-0">{{ isEditMode ? 'Səhifəni Redaktə Et' : 'Yeni Səhifə Əlavə Et' }}</h6>
-                <p class="mb-0">{{ isEditMode ? 'Aşağıdakı məlumatları dəyişdirərək yeniləyin' : 'Sahələri dolduraraq yeni səhifə əlavə edin' }}</p>
-            </div>
+<section class="g-filter-card">
+    <div class="g-filter-grid">
+        <div class="g-filter-field-wide">
+            <label class="g-field-label" for="page-search">
+                <span class="material-symbols-outlined" aria-hidden="true">search</span>Axtarış
+            </label>
+            <mat-form-field appearance="outline" class="g-modern-field">
+                <input id="page-search" matInput type="search" [formControl]="searchControl"
+                    placeholder="Səhifə adı və ya açar">
+            </mat-form-field>
         </div>
+    </div>
+</section>
 
-        <form [formGroup]="form" (ngSubmit)="submit()">
-            <div class="form-row">
-                <div class="form-col">
-                    <label class="field-label">
-                        Səhifə Adı <span class="required">*</span>
-                    </label>
-                    <mat-form-field appearance="outline" class="w-100">
-                        <mat-icon matPrefix class="prefix-icon">article</mat-icon>
-                        <input matInput formControlName="name" placeholder="məs. Planlaşdırma">
-                        @if (form.get('name')?.hasError('required') && form.get('name')?.touched) {
-                            <mat-error>Səhifə adı tələb olunur</mat-error>
-                        }
-                        @if (form.get('name')?.hasError('minlength') && form.get('name')?.touched) {
-                            <mat-error>Ən az 2 simvol olmalıdır</mat-error>
-                        }
-                    </mat-form-field>
-                </div>
-
-                <div class="form-col">
-                    <label class="field-label">
-                        Səhifə Uzantısı <span class="required">*</span>
-                    </label>
-                    <mat-form-field appearance="outline" class="w-100">
-                        <mat-icon matPrefix class="prefix-icon">key</mat-icon>
-                        <input matInput formControlName="key" placeholder="məs. Planning">
-                        @if (form.get('key')?.hasError('required') && form.get('key')?.touched) {
-                            <mat-error>Uzantı tələb olunur</mat-error>
-                        }
-                        @if (form.get('key')?.hasError('minlength') && form.get('key')?.touched) {
-                            <mat-error>Ən az 2 simvol olmalıdır</mat-error>
-                        }
-                    </mat-form-field>
-                </div>
-
-                <div class="form-actions">
-                    <button type="submit" mat-flat-button class="submit-btn" [class.edit-btn]="isEditMode">
-                        <i class="material-symbols-outlined">{{ isEditMode ? 'save' : 'add' }}</i>
-                        {{ isEditMode ? 'Yadda Saxla' : 'Əlavə Et' }}
-                    </button>
-                    @if (isEditMode) {
-                        <button type="button" mat-stroked-button class="cancel-btn" (click)="resetForm()">
-                            <i class="material-symbols-outlined">close</i>
-                            Ləğv et
-                        </button>
-                    }
-                </div>
-            </div>
-        </form>
-    </mat-card-content>
-</mat-card>
-
-<!-- Table Card -->
-<mat-card class="page-table-card mb-25 border-radius d-block bg-white border-0 shadow-none audit-table-loading-shell"
-    [attr.aria-busy]="isLoading">
-    <mat-card-header class="table-card-header">
-        <mat-card-title>
-            <div class="table-title-row">
-                <div class="table-title-left">
-                    <i class="material-symbols-outlined title-icon">list_alt</i>
-                    <div>
-                        <span class="title-text">Səhifələrin Siyahısı</span>
-                        <span class="record-count">{{ dataSource.filteredData.length }} qeyd</span>
-                    </div>
-                </div>
-            </div>
-        </mat-card-title>
-        <mat-card-subtitle>
-            <div class="table-controls">
-                <div class="search-wrapper">
-                    <i class="material-symbols-outlined search-icon">search</i>
-                    <input
-                        class="search-input"
-                        type="text"
-                        placeholder="Axtarış..."
-                        (input)="applyFilter($event)"
-                    />
-                </div>
-            </div>
-        </mat-card-subtitle>
-    </mat-card-header>
-
-    <mat-card-content class="p-0" [class.audit-table-muted]="isLoading">
-        <div class="table-responsive">
-            <table mat-table [dataSource]="dataSource" matSort class="page-table">
-
-                <!-- Index Column -->
-                <ng-container matColumnDef="index">
-                    <th mat-header-cell *matHeaderCellDef mat-sort-header class="col-index">SIRA</th>
-                    <td mat-cell *matCellDef="let row; let i = index" class="col-index">
-                        <span class="row-number">{{ i + 1 }}</span>
-                    </td>
-                </ng-container>
-
-                <!-- Name Column -->
-                <ng-container matColumnDef="name">
-                    <th mat-header-cell *matHeaderCellDef mat-sort-header>SƏHİFƏ ADI</th>
-                    <td mat-cell *matCellDef="let row">
-                        <div class="name-cell">
-                            <span class="page-icon">
-                                <i class="material-symbols-outlined">web</i>
-                            </span>
-                            <span class="name-text">{{ row.name }}</span>
-                        </div>
-                    </td>
-                </ng-container>
-
-                <!-- Key Column -->
-                <ng-container matColumnDef="key">
-                    <th mat-header-cell *matHeaderCellDef mat-sort-header>UZANTI</th>
-                    <td mat-cell *matCellDef="let row">
-                        <code class="key-badge">{{ row.key }}</code>
-                    </td>
-                </ng-container>
-
-                <!-- Status Column -->
-                <ng-container matColumnDef="status">
-                    <th mat-header-cell *matHeaderCellDef mat-sort-header>STATUS</th>
-                    <td mat-cell *matCellDef="let row">
-                        <span class="status-chip" [class.active]="row.status === 1" [class.inactive]="row.status !== 1">
-                            <i class="material-symbols-outlined">{{ row.status === 1 ? 'check_circle' : 'cancel' }}</i>
-                            {{ getStatusLabel(row.status) }}
-                        </span>
-                    </td>
-                </ng-container>
-
-                <!-- Actions Column -->
-                <ng-container matColumnDef="actions">
-                    <th mat-header-cell *matHeaderCellDef class="col-actions">ƏMƏLİYYATLAR</th>
-                    <td mat-cell *matCellDef="let row" class="col-actions">
-                        <div class="action-buttons">
-                            <button mat-icon-button class="btn-edit" (click)="edit(row)" matTooltip="Redaktə Et" matTooltipPosition="above">
-                                <i class="material-symbols-outlined">edit</i>
-                            </button>
-                            <button mat-icon-button class="btn-delete" (click)="remove(row)" matTooltip="Sil" matTooltipPosition="above">
-                                <i class="material-symbols-outlined">delete</i>
-                            </button>
-                        </div>
-                    </td>
-                </ng-container>
-
-                <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-                <tr mat-row *matRowDef="let row; columns: displayedColumns;" [class.editing-row]="editingId === row.id"></tr>
-
-                <tr class="mat-row no-data-row" *matNoDataRow>
-                    <td class="mat-cell" colspan="5">
-                        <div class="no-data">
-                            <i class="material-symbols-outlined">search_off</i>
-                            <p>Heç bir məlumat tapılmadı</p>
-                        </div>
-                    </td>
-                </tr>
-            </table>
-        </div>
-
-        <mat-paginator [pageSizeOptions]="[10, 25, 50, 100]" showFirstLastButtons [disabled]="isLoading"></mat-paginator>
-    </mat-card-content>
+<div class="table-card" [attr.aria-busy]="isLoading">
     @if (isLoading) {
-        <app-audit-loading-overlay title="Səhifələr yüklənir"
-            hint="Siyahı hazırlanır…"></app-audit-loading-overlay>
+        <mat-progress-bar class="list-progress" mode="indeterminate" />
     }
-</mat-card>
+
+    @if (loadError) {
+        <app-list-state state="error" [errorMessage]="loadError" (retry)="load()" />
+    }
+
+    <div class="table-sticky" [hidden]="!!loadError">
+        <table mat-table [dataSource]="dataSource" matSort>
+            <ng-container matColumnDef="name">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>Səhifə adı</th>
+                <td mat-cell *matCellDef="let row">{{ row.name }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="key">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>Açar</th>
+                <td mat-cell *matCellDef="let row"><span class="mono">{{ row.key }}</span></td>
+            </ng-container>
+
+            <ng-container matColumnDef="status">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
+                <td mat-cell *matCellDef="let row">
+                    <span class="status-chip" [class.is-success]="row.status === 1" [class.is-neutral]="row.status !== 1">
+                        {{ row.status === 1 ? 'Aktiv' : 'Passiv' }}
+                    </span>
+                </td>
+            </ng-container>
+
+            <ng-container matColumnDef="actions">
+                <th mat-header-cell *matHeaderCellDef>Əməliyyatlar</th>
+                <td mat-cell *matCellDef="let row">
+                    <div class="action-buttons">
+                        <button type="button" class="action-btn" (click)="edit(row)"
+                            matTooltip="Redaktə et" aria-label="Redaktə et">
+                            <span class="material-symbols-outlined" aria-hidden="true">edit</span>
+                        </button>
+                        <button type="button" class="action-btn delete-btn" (click)="remove(row)"
+                            matTooltip="Sil" aria-label="Sil">
+                            <span class="material-symbols-outlined" aria-hidden="true">delete</span>
+                        </button>
+                    </div>
+                </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+
+            <tr class="mat-row" *matNoDataRow>
+                <td class="mat-cell" [attr.colspan]="displayedColumns.length">
+                    @if (loaded) {
+                        <app-list-state state="empty"
+                            [message]="dataSource.filter ? 'Axtarışa uyğun səhifə tapılmadı' : 'Hələ səhifə əlavə edilməyib'" />
+                    }
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <mat-paginator [hidden]="!!loadError" [pageSizeOptions]="[10, 25, 50, 100]" showFirstLastButtons
+        aria-label="Səhifələr siyahısının səhifəsini seç" (page)="urlState.writePage($event)"></mat-paginator>
+</div>

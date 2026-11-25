@@ -1,83 +1,99 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
-import { RouterLink, Router, ActivatedRoute } from '@angular/router';
-import { CustomizerSettingsService } from '../../customizer-settings/customizer-settings.service';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { CommonModule } from '@angular/common';
+import { Router, ActivatedRoute } from '@angular/router';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { finalize } from 'rxjs';
 import { AuthService } from '../../auth/auth.service';
 
 @Component({
     selector: 'app-sign-in',
-    imports: [MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, ReactiveFormsModule, CommonModule],
+    imports: [MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, ReactiveFormsModule],
     templateUrl: './sign-in.component.html',
     styleUrl: './sign-in.component.scss',
     standalone: true
 })
 export class SignInComponent implements OnInit {
-    // Password Hide
-    hide = true;
-    loginForm!: FormGroup;
+    private readonly fb = inject(FormBuilder);
+    private readonly router = inject(Router);
+    private readonly route = inject(ActivatedRoute);
+    private readonly authService = inject(AuthService);
+
+    @ViewChild('emailInput') private emailInput!: ElementRef<HTMLInputElement>;
+    @ViewChild('passwordInput') private passwordInput!: ElementRef<HTMLInputElement>;
+
+    readonly loginForm = this.fb.nonNullable.group({
+        email: ['', [Validators.required, Validators.email]],
+        password: ['', [Validators.required, Validators.minLength(5)]]
+    });
+
+    hidePassword = true;
     isLoading = false;
     errorMessage = '';
-    returnUrl: string = '/dashboard';
-
-    constructor(
-        public themeService: CustomizerSettingsService,
-        private fb: FormBuilder,
-        private router: Router,
-        private route: ActivatedRoute,
-        private authService: AuthService
-    ) { }
+    private returnUrl = '/dashboard';
 
     ngOnInit(): void {
-        this.createForm();
-        // Get return url from route parameters or default to '/dashboard'
         this.returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/dashboard';
     }
 
-    createForm() {
-        this.loginForm = this.fb.group({
-            email: ['', [Validators.required, Validators.email]],
-            password: ['', [Validators.required, Validators.minLength(5)]]
-        });
+    login(): void {
+        if (this.isLoading) return;
+        this.errorMessage = '';
+
+        // Düymə forma səhv olanda da aktivdir: xətaları göstər, ilk səhv sahəyə keç
+        if (this.loginForm.invalid) {
+            this.loginForm.markAllAsTouched();
+            this.focusFirstInvalid();
+            return;
+        }
+
+        this.isLoading = true;
+        const { email, password } = this.loginForm.getRawValue();
+
+        this.authService.login(email, password)
+            .pipe(finalize(() => this.isLoading = false))
+            .subscribe({
+                next: (response) => {
+                    if (response && response.token) {
+                        this.router.navigateByUrl(this.returnUrl);
+                    } else {
+                        this.errorMessage = 'Serverdən gözlənilməz cavab gəldi.';
+                    }
+                },
+                error: (error) => {
+                    this.errorMessage = this.loginErrorMessage(error);
+                }
+            });
     }
 
-    async login(): Promise<void> {
-        if (this.loginForm.valid) {
-            try {
-                this.isLoading = true;
-                this.errorMessage = '';
+    private focusFirstInvalid(): void {
+        const { email } = this.loginForm.controls;
+        (email.invalid ? this.emailInput : this.passwordInput).nativeElement.focus();
+    }
 
-                const email = this.loginForm.get('email')?.value;
-                const password = this.loginForm.get('password')?.value;
+    // Şəbəkə xətası, server xətası və yanlış parol fərqli səbəblərdir —
+    // hamısına "parolu yoxlayın" demək istifadəçini yanıldır.
+    private loginErrorMessage(error: any): string {
+        const status = error?.status;
 
-                this.authService.login(email, password).subscribe({
-                    next: (response) => {
-                        if (response && response.token) {
-                            // Navigate to return url after successful login
-                            this.router.navigateByUrl(this.returnUrl || '/dashboard');
-                        } else {
-                            this.errorMessage = 'Invalid response from server';
-                        }
-                    },
-                    error: (error) => {
-                        this.errorMessage = 'Xətalı giriş.Şifrənizi və ya istifadəçi adınızı yoxlayın.';
-                        this.isLoading = false;
-                    },
-                    complete: () => {
-                        this.isLoading = false;
-                    }
-                });
-            } catch (error) {
-                this.errorMessage = 'Xətalı giriş.Şifrənizi və ya istifadəçi adınızı yoxlayın.';
-                this.isLoading = false;
-            }
-        } else {
-            this.loginForm.markAllAsTouched();
-            this.errorMessage = 'İstifadəçi adı və şifrə boş ola bilməz və düzgün formatda olmalıdır.';
+        if (status === 0) {
+            return 'Serverə qoşulmaq mümkün olmadı. İnternet bağlantınızı yoxlayın.';
         }
+        if (status === 400 || status === 401) {
+            return 'E-poçt və ya parol yanlışdır.';
+        }
+        if (status === 403) {
+            return 'Bu hesabın sistemə girişi bağlanıb.';
+        }
+        // Şəbəkədən dəqiqədə 30-dan çox cəhd və ya hesaba 15 dəqiqədə 10 səhv parol.
+        if (status === 429) {
+            return 'Həddindən artıq giriş cəhdi. Bir neçə dəqiqə gözləyib yenidən cəhd edin.';
+        }
+        if (status >= 500) {
+            return 'Serverdə xəta baş verdi. Bir az sonra yenidən cəhd edin.';
+        }
+        return 'Giriş zamanı gözlənilməz xəta baş verdi. Yenidən cəhd edin.';
     }
 }

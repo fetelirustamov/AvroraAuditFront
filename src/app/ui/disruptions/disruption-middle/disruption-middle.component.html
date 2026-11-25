@@ -1,36 +1,45 @@
+<app-page-header subtitle="Təsdiq gözləyən uyğunsuzluqları olan planlar" />
+
 <div class="g-filter-card">
     <div class="g-filter-header">
-        <span class="material-symbols-outlined">filter_list</span>
+        <span class="material-symbols-outlined" aria-hidden="true">filter_list</span>
         <span>Filtrlər</span>
     </div>
-    <form [formGroup]="inspectionsForm" (ngSubmit)="onFormSubmit()">
+    <form [formGroup]="filtersForm" (ngSubmit)="onSearch()">
         <div class="g-filter-grid">
             <div class="g-filter-field">
-                <label class="g-field-label">
-                    <span class="material-symbols-outlined">business</span>
-                    Müəssisə
+                <label class="g-field-label" id="dm-firm">
+                    <span class="material-symbols-outlined" aria-hidden="true">business</span>
+                    Firma
                 </label>
                 <mat-form-field appearance="outline" class="g-modern-field">
-                    <mat-select formControlName="firmId" (selectionChange)="onSelectFirm($event.value)">
-                        <mat-option *ngFor="let firm of firms" [value]="firm.id">{{ firm.name }}</mat-option>
+                    <mat-select aria-labelledby="dm-firm" formControlName="firmId" placeholder="Hamısı" (selectionChange)="onSelectFirm($event.value)">
+                        <mat-option [value]="null">Hamısı</mat-option>
+                        @for (firm of firms; track firm.id) {
+                            <mat-option [value]="firm.id">{{ firm.name }}</mat-option>
+                        }
                     </mat-select>
                 </mat-form-field>
             </div>
             <div class="g-filter-field">
-                <label class="g-field-label">
-                    <span class="material-symbols-outlined">location_on</span>
-                    Lokasiya
+                <label class="g-field-label" id="dm-location">
+                    <span class="material-symbols-outlined" aria-hidden="true">location_on</span>
+                    Mağaza
                 </label>
                 <mat-form-field appearance="outline" class="g-modern-field">
-                    <mat-select formControlName="locationCode" (selectionChange)="onSelectLocation($event.value)">
-                        <mat-option *ngFor="let location of locations" [value]="location.locationCode">{{
-                            location.locationName }}</mat-option>
+                    <mat-select aria-labelledby="dm-location" formControlName="locationCode"
+                        [placeholder]="filtersForm.controls.firmId.value ? 'Hamısı' : 'Əvvəlcə firma seçin'">
+                        <mat-option [value]="null">Hamısı</mat-option>
+                        @for (location of locations; track location.locationCode) {
+                            <!-- Kod API-dən string gəlir, URL-dən rəqəm: eyni tipdə müqayisə olunsun -->
+                            <mat-option [value]="+location.locationCode">{{ location.locationCode }} · {{ location.locationName }}</mat-option>
+                        }
                     </mat-select>
                 </mat-form-field>
             </div>
             <div class="g-filter-field-wide">
                 <label class="g-field-label">
-                    <span class="material-symbols-outlined">date_range</span>
+                    <span class="material-symbols-outlined" aria-hidden="true">date_range</span>
                     Tarix aralığı
                 </label>
                 <mat-form-field appearance="outline" class="g-modern-field" formGroupName="dateRange">
@@ -44,124 +53,88 @@
             </div>
             <div class="g-filter-actions">
                 <button type="submit" class="g-search-btn">
-                    <span class="material-symbols-outlined">search</span>
+                    <span class="material-symbols-outlined" aria-hidden="true">search</span>
                     Axtar
+                </button>
+                <button type="button" class="g-secondary-btn" (click)="clearFilters()" [disabled]="!hasActiveFilters">
+                    <span class="material-symbols-outlined" aria-hidden="true">filter_alt_off</span>
+                    Təmizlə
                 </button>
             </div>
         </div>
     </form>
 </div>
-<mat-card class="mb-25 border-radius d-block bg-white border-0 shadow-none">
-    <div class="row align-items-center mb-25">
-        <div class="col-md-3">
-            <span>Page</span>
-            <select class="page-select" on required>
-                <option value="10">10</option>
-                <option value="20">20</option>
-                <option value="50">50</option>
-            </select>
+
+<div class="table-card" [attr.aria-busy]="isLoading">
+    <div class="table-card-header">
+        <div class="table-info">
+            <span class="material-symbols-outlined table-info-icon" aria-hidden="true">pending_actions</span>
+            <span class="table-title">Təsdiqinizi gözləyənlər</span>
+            @if (hasLoaded) {
+                <span class="result-badge">{{ total }} plan</span>
+            }
         </div>
     </div>
-    <mat-card-content class="audit-table-loading-shell">
-        <div class="table-responsive" [class.audit-table-muted]="isLoading">
-            <table mat-table [dataSource]="dataSource">
+    <div class="progress-slot">
+        @if (isLoading) {
+            <mat-progress-bar mode="indeterminate" class="list-progress" />
+        }
+    </div>
 
+    @if (loadError) {
+        <app-list-state state="error" [errorMessage]="loadError" (retry)="fill()" />
+    } @else if (hasLoaded && !rows.length) {
+        <app-list-state state="empty" message="Təsdiqinizi gözləyən uyğunsuzluq yoxdur" />
+    } @else if (rows.length) {
+        <div class="table-sticky">
+            <table mat-table [dataSource]="rows" class="modern-table">
                 <ng-container matColumnDef="position">
-                    <th mat-header-cell *matHeaderCellDef>#</th>
-                    <td mat-cell *matCellDef="let element; let i = index">
-                        {{ getRowNumber(i) }}
-                    </td>
+                    <th mat-header-cell *matHeaderCellDef>№</th>
+                    <td mat-cell *matCellDef="let row; let i = index"><span class="row-number">{{ rowNumber(i) }}</span></td>
                 </ng-container>
 
-                <!-- Agent Name Column -->
                 <ng-container matColumnDef="inspectorName">
-                    <th mat-header-cell *matHeaderCellDef>
-                        Auditor
-                    </th>
-                    <td mat-cell *matCellDef="let element">
-                        <div class="customer-info d-flex align-items-center">
-
-                            <span class="d-block text-black fw-medium">
-                                {{element.inspectorName}}
-                            </span>
-                        </div>
-                    </td>
+                    <th mat-header-cell *matHeaderCellDef>Müfəttiş</th>
+                    <td mat-cell *matCellDef="let row">{{ row.inspectorName }}</td>
                 </ng-container>
 
-                <!-- Total Tickets Column -->
                 <ng-container matColumnDef="locationCode">
-                    <th mat-header-cell *matHeaderCellDef>
-                        Ərazi Kodu
-                    </th>
-                    <td mat-cell *matCellDef="let element" class="text-body">
-                        {{element.locationCode}}
-                    </td>
+                    <th mat-header-cell *matHeaderCellDef>Mağaza kodu</th>
+                    <td mat-cell *matCellDef="let row"><span class="mono">{{ row.locationCode }}</span></td>
                 </ng-container>
 
-                <!-- Resolved Tickets Column -->
                 <ng-container matColumnDef="locationName">
-                    <th mat-header-cell *matHeaderCellDef>
-                        Ərazi
-                    </th>
-                    <td mat-cell *matCellDef="let element" class="text-body">
-                        {{element.locationName}}
-                    </td>
+                    <th mat-header-cell *matHeaderCellDef>Mağaza</th>
+                    <td mat-cell *matCellDef="let row">{{ row.locationName }}</td>
                 </ng-container>
 
-                <!-- Avg. Resolution Time Column -->
                 <ng-container matColumnDef="createdDate">
-                    <th mat-header-cell *matHeaderCellDef>
-                        Tarix
-                    </th>
-                    <td mat-cell *matCellDef="let element" class="text-body">
-                        {{element.createdDate | date: 'yyyy-MM-dd' : '+0400'}}
-                    </td>
-                </ng-container>
-
-                <!-- Action Column -->
-                <ng-container matColumnDef="details">
-                    <th mat-header-cell *matHeaderCellDef>
-                        Details
-                    </th>
-                    <td mat-cell *matCellDef="let element">
-                        <button mat-flat-button class="d-flex align-items-center btn-xs justify-content-center"
-                            style="gap: 6px;" (click)="onDetails(element)">
-                            <span class="material-symbols-outlined"
-                                style="font-size: 20px; margin-right: 5px;">visibility</span>
-                            <span>Detallar</span>
-                        </button>
-                    </td>
-                </ng-container>
-
-                <!-- <ng-container matColumnDef="action">
-                    <th mat-header-cell *matHeaderCellDef>
-                        Action
-                    </th>
-                    <td mat-cell *matCellDef="let element">
-                        <div class="action-buttons">
-                            <button type="button" class="action-btn approve-btn"
-                                (click)="changePlanStatus(element, disruptionApproveStatus)"
-                                matTooltip="Uyğunsuzluğu təsdiqlə" matTooltipPosition="above">
-                                <span class="material-symbols-outlined">check_circle</span>
-                            </button>
-                            <button type="button" class="action-btn reject-btn"
-                                (click)="changePlanStatus(element, -1)"
-                                matTooltip="Uyğunsuzluğu ləğv et" matTooltipPosition="above">
-                                <span class="material-symbols-outlined">cancel</span>
-                            </button>
+                    <th mat-header-cell *matHeaderCellDef>Yoxlama tarixi</th>
+                    <td mat-cell *matCellDef="let row">
+                        <div class="cell-stack">
+                            <span>{{ row.createdDate | appDate }}</span>
+                            @if (waitingLabel(row); as waiting) {
+                                <span class="cell-sub">{{ waiting }}</span>
+                            }
                         </div>
                     </td>
-                </ng-container> -->
+                </ng-container>
+
+                <ng-container matColumnDef="details">
+                    <th mat-header-cell *matHeaderCellDef><span class="cdk-visually-hidden">Əməliyyat</span></th>
+                    <td mat-cell *matCellDef="let row">
+                        <a class="action-btn view-btn" routerLink="/disruptions/middle-details" [queryParams]="detailParams(row)"
+                            aria-label="Bax" matTooltip="Bax">
+                            <span class="material-symbols-outlined" aria-hidden="true">visibility</span>
+                        </a>
+                    </td>
+                </ng-container>
 
                 <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
                 <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
-
             </table>
         </div>
-        <mat-paginator [pageSizeOptions]="[6]" showFirstLastButtons [disabled]="isLoading"></mat-paginator>
-
-        <app-audit-loading-overlay *ngIf="isLoading"></app-audit-loading-overlay>
-
-    </mat-card-content>
-
-</mat-card>
+        <mat-paginator [length]="total" [pageIndex]="pageIndex" [pageSize]="pageSize" [hidePageSize]="true"
+            showFirstLastButtons [disabled]="isLoading" (page)="onPage($event)"></mat-paginator>
+    }
+</div>

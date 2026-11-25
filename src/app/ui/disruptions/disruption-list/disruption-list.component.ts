@@ -1,337 +1,205 @@
-import { AfterViewInit, Component, OnInit, TemplateRef, ViewChild } from '@angular/core';
-import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { InspectionPlan } from '../../inspections/InpectionPlan.model';
-import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
-import { Firm } from '../../inspections/firm.model';
-import { Page, Sort, TableState } from '../../../models/table-state.model';
-import { finalize, Observable } from 'rxjs';
-import { InspectionsService } from '../../inspections/inspections.service';
-import { TableService } from '../../services/table.service';
-import { CommonModule, DatePipe, NgFor } from '@angular/common';
-import { Router } from '@angular/router';
-
-import { Location } from '../../inspections/location.model';
-import { MatCardModule } from '@angular/material/card';
-import { MatButtonModule } from '@angular/material/button';
-import { MatMenuModule } from '@angular/material/menu';
-import { MatTableModule } from '@angular/material/table';
-import { MatInputModule } from '@angular/material/input';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatSelectModule } from '@angular/material/select';
+import { Component, DestroyRef, OnInit, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatDatepickerModule } from '@angular/material/datepicker';
-import { MatNativeDateModule } from '@angular/material/core';
-import { NgxMaterialTimepickerModule } from 'ngx-material-timepicker';
-import { PlanApprove } from '../../plans/plan.model';
-import { SelectionModel } from '@angular/cdk/collections';
-import { FileUploadModule } from '@iplab/ngx-file-upload';
-import { MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
-import { AuditLoadingOverlayComponent } from '../../components/audit-loading-overlay/audit-loading-overlay.component';
-import { DisruptionListCacheService, DisruptionListSnapshot } from '../disruption-list-cache.service';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatSelectModule } from '@angular/material/select';
+import { MatTableModule } from '@angular/material/table';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { finalize } from 'rxjs';
+import { TableState } from '../../../models/table-state.model';
+import { ListStateComponent } from '../../../shared/components/list-state/list-state.component';
+import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
+import { AppDatePipe } from '../../../shared/pipes/app-date.pipe';
+import { NotificationService } from '../../../shared/services/notification.service';
+import { disruptionStatusLabel } from '../../../shared/status/status-meta';
+import { apiErrorMessage } from '../../../shared/utils/api-error';
+import { queryDate, queryNumber, toQueryDate, writeQueryState } from '../../../shared/utils/query-state';
+import { setFilter } from '../../../shared/utils/table-filter';
+import { Firm } from '../../inspections/firm.model';
+import { InspectionsService } from '../../inspections/inspections.service';
+import { Location } from '../../inspections/location.model';
+import { TableService } from '../../services/table.service';
+import { BACK_PARAM } from '../disruption-nav';
 
+/** `disruptions/plans` sətri: uyğunsuzluğu olan yekunlaşmış plan */
+interface DisruptionPlanRow {
+  inspectionPlanId: number;
+  inspectorName: string;
+  locationCode: number | string;
+  locationName: string;
+  createdDate: string;
+}
 
+const DEFAULT_STATUS = 2;
+const PAGE_SIZES = [10, 20, 50];
+
+// Yekun statuslu (təsdiqlənmiş / rədd edilmiş) uyğunsuzluqların planları. Onay işi "Müfəttiş təsdiqi"-ndədir.
 @Component({
   selector: 'app-disruption-list',
-  imports: [MatCardModule, MatButtonModule, MatMenuModule, MatTableModule, CommonModule, MatPaginatorModule, MatInputModule, MatFormFieldModule, MatSelectModule, MatDatepickerModule, MatNativeDateModule, FormsModule, ReactiveFormsModule, NgxMaterialTimepickerModule, NgFor, FileUploadModule, MatDialogModule, AuditLoadingOverlayComponent],
-  providers: [DatePipe],
+  standalone: true,
+  imports: [
+    ReactiveFormsModule, RouterLink,
+    MatFormFieldModule, MatInputModule, MatSelectModule, MatDatepickerModule,
+    MatTableModule, MatPaginatorModule, MatProgressBarModule, MatTooltipModule,
+    PageHeaderComponent, ListStateComponent, AppDatePipe,
+  ],
   templateUrl: './disruption-list.component.html',
   styleUrl: './disruption-list.component.scss'
 })
-export class DisruptionListComponent implements OnInit, AfterViewInit {
+export class DisruptionListComponent implements OnInit {
+  private readonly inspectionsService = inject(InspectionsService);
+  private readonly tableService = inject(TableService);
+  private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+  private readonly notify = inject(NotificationService);
+  private readonly destroyRef = inject(DestroyRef);
 
-  displayedColumns: string[] = ['position', 'inspectorName', 'locationCode', 'locationName', 'createdDate', 'details'];
-  public dataSource: InspectionPlan[] = [];
-  statusOptions = [
-    // { label: 'Təsdiq gözləyənlər', value: 1 },
-    { label: 'Təsdiq olunmuşlar', value: 2 },
-    { label: 'Rədd olunmuşlar', value: -1 }
-  ];
+  readonly displayedColumns = ['position', 'inspectorName', 'locationCode', 'locationName', 'createdDate', 'details'];
+  readonly statusOptions = [DEFAULT_STATUS, -1].map(value => ({ value, label: disruptionStatusLabel(value) }));
+  readonly pageSizeOptions = PAGE_SIZES;
 
-  @ViewChild('modalContent') modalContent!: TemplateRef<any>;
-  private dialogRef!: MatDialogRef<any>; //
-  @ViewChild(MatPaginator) paginator!: MatPaginator;
-
-
-  range = new FormGroup({
-    start: new FormControl<Date | null>(null),
-    end: new FormControl<Date | null>(null),
-  });
-
-  selection = new SelectionModel<InspectionPlan>(true, []);
-  allDataCount: number = 0;
-
-  // private planApproveList: PlanApprove[] = [];
-  // private planApprove: PlanApprove = new PlanApprove();
-  public selectedFirmId: number = 0;
-  public selectedLocationId: number = 0;
-  public disruptionStatus: number = 2; // Default status
-  public firms: Firm[] = [];
-  public locations: Location[] = [];
-  private _tableState: TableState = new TableState();
-  public pageSize: Number = 10;
-  public isLoading: boolean = false;
-  public rows$: Observable<any[]> = new Observable<any[]>();
-  public pageSizeOptions: number[] = [10, 20, 50];
-  classApplied = false;
-  private searchTerm: string = "";
-  private pendingPaginatorSync = false;
-  private skipPaginatorPageEventOnce = false;
-
-  constructor(private inspectionsService: InspectionsService, private _tableService: TableService, private datePipe: DatePipe, private router: Router,
-    public dialog: MatDialog,
-    private disruptionListCache: DisruptionListCacheService) {
-
-    this.getFirms();
-
-    this._tableState = new TableState();
-    this._tableService.api_url = "disruptions/plans";
-    this._tableState.paginator.page = 0;
-    this._tableState.sorting.direction = "desc";
-    this._tableState.paginator.size = Number(this.pageSize);
-
-  }
-
-  ngOnInit(): void {
-    const restored = this.disruptionListCache.consumeSnapshot();
-    if (restored) {
-      this.applySnapshot(restored);
-    }
-  }
-
-  ngAfterViewInit(): void {
-    this.paginator.page.subscribe(() => {
-      this._tableState.paginator.page = this.paginator.pageIndex;
-      this.pageSize = this.paginator.pageSize;
-      if (this.skipPaginatorPageEventOnce) {
-        this.skipPaginatorPageEventOnce = false;
-        return;
-      }
-      this.fill();
-    });
-
-    if (this.pendingPaginatorSync) {
-      this.pendingPaginatorSync = false;
-      this.skipPaginatorPageEventOnce = true;
-      queueMicrotask(() => {
-        if (!this.paginator) {
-          return;
-        }
-        this.paginator.pageIndex = this._tableState.paginator.page;
-        this.paginator.pageSize = Number(this._tableState.paginator.size);
-      });
-    }
-
-    setTimeout(() => {
-      this.skipPaginatorPageEventOnce = false;
-    }, 0);
-  }
-
-  isAllSelected() {
-    const numSelected = this.selection.selected.length;
-    const numRows = this.dataSource.length;
-    return numSelected === numRows;
-  }
-
-  getFirms() {
-    this.inspectionsService.getFirms().subscribe((response) => {
-      this.firms = response.data;
-    });
-  }
-
-
-  getLocations(firmId: number) {
-    this.inspectionsService.getLocationByFirmId(firmId).subscribe((response) => {
-      this.locations = response.data;
-    });
-  }
-
-  onSelectFirm(selectedFirmId: number) {
-    this.getLocations(selectedFirmId);
-  }
-
-  onSelectLocation(selectedLocationId: number) {
-    console.log(selectedLocationId);
-
-  }
-  toggleClass() {
-    this.classApplied = !this.classApplied;
-  }
-
-  onFormSubmit() {
-    if (this.inspectionsForm.valid) {
-      this.isLoading = true;
-      const formData = this.inspectionsForm.value;
-
-      const firmId = formData.firmId;
-      const locationCode = formData.locationCode;
-      this.disruptionStatus = formData.status ?? 2; // Default status is 2 if not provided
-      const status = formData.status;
-      const startDate = this.datePipe.transform(formData.dateRange?.start, 'yyyy-MM-dd');
-      const endDate = this.datePipe.transform(formData.dateRange?.end, 'yyyy-MM-dd');
-      if (startDate != null) {
-        this._tableState.filter['startDate'] = startDate;
-      }
-
-      if (endDate != null) {
-        this._tableState.filter['endDate'] = endDate;
-      }
-      if (this.disruptionStatus != null) {
-        this._tableState.filter['disruptionStatus'] = this.disruptionStatus.toString();
-      }
-
-      if (locationCode != null) {
-        this._tableState.filter['locationCode'] = locationCode.toString();
-      }
-
-      if (firmId != null) {
-        this._tableState.filter['firmId'] = firmId.toString();
-      }
-
-      // Backend çağırışı
-      this.fill();
-
-    } else {
-      console.log('Form düzgün doldurulmayıb.');
-    }
-  }
-
-
-  private fill() {
-    this.isLoading = true;
-    // this._tableState.paginator.page = 0;
-    this._tableState.paginator.size = Number(this.pageSize);
-    if (!this._tableState.filter) {
-      this._tableState.filter = {};
-    }
-    this._tableState.searchTerm = this.searchTerm;
-    this._tableService.fill(this._tableState).pipe(
-      finalize(() => this.isLoading = false)
-    ).subscribe((response) => {
-      this._tableState.paginator.total = response.data != null ? response.data.total : 0;
-      this.dataSource = response.data.items;
-      this.allDataCount = response.data.total;
-    });
-
-  }
-
-  public inspectionsForm = new FormGroup({
-    status: new FormControl<number | null>(null),
+  readonly filtersForm = new FormGroup({
     firmId: new FormControl<number | null>(null, { validators: [Validators.required] }),
     locationCode: new FormControl<number | null>(null),
-    eraziKodu: new FormControl<string>(''),
+    status: new FormControl<number>(DEFAULT_STATUS, { nonNullable: true }),
     dateRange: new FormGroup({
       start: new FormControl<Date | null>(null),
       end: new FormControl<Date | null>(null),
     }),
   });
 
-  getRowNumber(index: number): number {
-    return this.paginator ? index + 1 + (this.paginator.pageIndex * this.paginator.pageSize) : index + 1;
-  }
+  firms: Firm[] = [];
+  locations: Location[] = [];
 
-  onDetails(row: InspectionPlan) {
-    this.disruptionListCache.save(this.buildSnapshot());
-    row.disruptionStatus = 2; // Burada disruptionStatus-u 2 olaraq təyin edirik
-    this.router.navigate(['disruptions/details'], { state: { data: row, action: true, status: this.disruptionStatus } });
+  rows: DisruptionPlanRow[] = [];
+  total = 0;
+  pageIndex = 0;
+  pageSize = PAGE_SIZES[0];
 
-  }
+  searched = false;
+  isLoading = false;
+  loadError: string | null = null;
 
-  openModal(): void {
-    this.dialogRef = this.dialog.open(this.modalContent, {
-      width: '400px',
-      height: '100vh',
-      position: { right: '0' },
-      panelClass: 'right-panel'
+  private readonly tableState = new TableState();
+
+  ngOnInit(): void {
+    this.tableService.api_url = 'disruptions/plans';
+    this.tableState.sorting.direction = 'desc';
+    this.loadFirms();
+
+    // Filtr URL-dədir: geri qayıdanda və ya link paylaşılanda siyahı bərpa olunur
+    const q = this.route.snapshot.queryParamMap;
+    const firmId = queryNumber(q, 'firm');
+    this.pageIndex = queryNumber(q, 'page') ?? 0;
+    this.pageSize = queryNumber(q, 'size') ?? PAGE_SIZES[0];
+    if (firmId == null) return;
+
+    this.filtersForm.patchValue({
+      firmId,
+      locationCode: queryNumber(q, 'location'),
+      status: queryNumber(q, 'status') ?? DEFAULT_STATUS,
+      dateRange: { start: queryDate(q, 'from'), end: queryDate(q, 'to') },
     });
+    this.loadLocations(firmId);
+    this.applyFilter();
+    this.fill();
+  }
 
-    this.dialogRef.afterClosed().subscribe(result => {
-      console.log('Modal bağlandı:', result);
+  private loadFirms(): void {
+    this.inspectionsService.getFirms().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: response => this.firms = response.data ?? [],
+      error: error => this.notify.error(apiErrorMessage(error, 'Firmalar yüklənmədi'))
     });
   }
 
-  closeModal(): void {
-    if (this.dialogRef) {
-      this.dialogRef.close();
+  private loadLocations(firmId: number): void {
+    this.inspectionsService.getLocationByFirmId(firmId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: response => this.locations = response.data ?? [],
+      error: error => this.notify.error(apiErrorMessage(error, 'Mağazalar yüklənmədi'))
+    });
+  }
+
+  onSelectFirm(firmId: number): void {
+    this.filtersForm.controls.locationCode.setValue(null);
+    this.locations = [];
+    this.loadLocations(firmId);
+  }
+
+  onSearch(): void {
+    if (this.filtersForm.invalid) {
+      this.filtersForm.markAllAsTouched();
+      this.notify.warning('Firma seçin');
+      return;
     }
+    const v = this.filtersForm.getRawValue();
+    this.pageIndex = 0;
+    void writeQueryState(this.router, {
+      firm: v.firmId,
+      location: v.locationCode,
+      status: v.status === DEFAULT_STATUS ? null : v.status,
+      from: v.dateRange.start,
+      to: v.dateRange.end,
+      page: null,
+    });
+    this.applyFilter();
+    this.fill();
   }
 
-  public searchForm = new FormGroup({
-    inspectorName: new FormControl<string>(''),
-    locationCode: new FormControl<string>(''),
-    locationName: new FormControl<string>(''),
-    date: new FormControl<Date | null>(null),
-    firmId: new FormControl<number | null>(null, { validators: [Validators.required] }),
-  });
+  onPage(e: PageEvent): void {
+    this.pageIndex = e.pageIndex;
+    this.pageSize = e.pageSize;
+    void writeQueryState(this.router, { page: e.pageIndex || null, size: e.pageSize === PAGE_SIZES[0] ? null : e.pageSize });
+    this.fill();
+  }
 
+  private applyFilter(): void {
+    const v = this.filtersForm.getRawValue();
+    const filter = this.tableState.filter;
+    setFilter(filter, 'firmId', v.firmId);
+    setFilter(filter, 'locationCode', v.locationCode);
+    setFilter(filter, 'disruptionStatus', v.status);
+    setFilter(filter, 'startDate', v.dateRange.start ? toQueryDate(v.dateRange.start) : null);
+    setFilter(filter, 'endDate', v.dateRange.end ? toQueryDate(v.dateRange.end) : null);
+  }
 
-  onSearchSubmit() {
-    if (this.searchForm.valid) {
-      this.isLoading = true;
-      const formValue = this.searchForm.value as Record<string, any>;
-      Object.keys(formValue).forEach(key => {
-        const value = formValue[key];
-        if (value) {
-          if (key === 'date') {
-            this._tableState.filter[key] = this.datePipe.transform(value, 'yyyy-MM-dd')?.toString() ?? '';
-          } else {
-            this._tableState.filter[key] = String(value);
-          }
-        } else {
-          delete this._tableState.filter[key];
+  fill(): void {
+    this.searched = true;
+    this.isLoading = true;
+    this.loadError = null;
+    this.tableState.paginator.page = this.pageIndex;
+    this.tableState.paginator.size = this.pageSize;
+    this.tableService.fill(this.tableState).pipe(
+      finalize(() => this.isLoading = false),
+      takeUntilDestroyed(this.destroyRef),
+    ).subscribe({
+      next: response => {
+        // TableService xətanı udur və `success: false` qaytarır
+        if (response.success === false) {
+          this.loadError = response.message || 'Uyğunsuzluqlar yüklənmədi';
+          return;
         }
-      });
-      this.fill();
-    }
+        this.rows = (response.data?.items ?? []) as unknown as DisruptionPlanRow[];
+        this.total = response.data?.total ?? 0;
+      },
+      error: error => this.loadError = apiErrorMessage(error, 'Uyğunsuzluqlar yüklənmədi'),
+    });
   }
 
-  resetForm() {
-    this.searchForm.reset();
+  rowNumber(index: number): number {
+    return this.pageIndex * this.pageSize + index + 1;
   }
 
-  private buildSnapshot(): DisruptionListSnapshot {
+  detailParams(row: DisruptionPlanRow): Record<string, string | number> {
     return {
-      tableState: JSON.parse(JSON.stringify(this._tableState)) as TableState,
-      dataSource: JSON.parse(JSON.stringify(this.dataSource)) as InspectionPlan[],
-      allDataCount: this.allDataCount,
-      searchTerm: this.searchTerm,
-      pageSize: Number(this.pageSize),
-      disruptionStatus: this.disruptionStatus,
-      inspectionsFormValue: this.inspectionsForm.getRawValue(),
-      searchFormValue: this.searchForm.getRawValue(),
+      plan: row.inspectionPlanId,
+      // Axtarışda tətbiq olunmuş status (formda dəyişib axtarılmayan yox)
+      status: this.tableState.filter['disruptionStatus'] ?? DEFAULT_STATUS,
+      [BACK_PARAM]: this.router.url,
     };
   }
-
-  private applySnapshot(snap: DisruptionListSnapshot): void {
-    const raw = snap.tableState as unknown as {
-      filter: Record<string, string>;
-      paginator: Page;
-      sorting: Sort;
-      searchTerm: string;
-    };
-    this._tableState = new TableState();
-    this._tableState.filter = { ...raw.filter };
-    this._tableState.paginator = Object.assign(new Page(), raw.paginator);
-    this._tableState.sorting = Object.assign(new Sort(), raw.sorting);
-    this._tableState.searchTerm = raw.searchTerm ?? '';
-
-    this.dataSource = snap.dataSource;
-    this.allDataCount = snap.allDataCount;
-    this.searchTerm = snap.searchTerm;
-    this.pageSize = snap.pageSize;
-    this.disruptionStatus = snap.disruptionStatus;
-
-    this.inspectionsForm.patchValue(snap.inspectionsFormValue as any);
-    this.searchForm.patchValue(snap.searchFormValue as any);
-
-    const mainFirm = (snap.inspectionsFormValue as { firmId?: number } | null)?.firmId;
-    const searchFirm = (snap.searchFormValue as { firmId?: number } | null)?.firmId;
-    const firmId = mainFirm ?? searchFirm;
-    if (firmId) {
-      this.getLocations(firmId);
-    }
-    this.pendingPaginatorSync = true;
-  }
-
 }
-
-
-

@@ -7,11 +7,10 @@ export interface LocationDto {
     locationType?: number;
     contactNumber?: string;
     responsiblePersonId?: number;
-    regionId?: number;
+    /** API `Location.RegionID`-i camelCase ilə göndərir. Bölgənin adı burada yoxdur: `locations/regions/{firmId}`-dən alınır */
     regionID?: number;
     latitude?: string;
     longitude?: string;
-    RegionId?: number;
-    RegionName?: string;
+    radius?: number;
     status?: number;
 }

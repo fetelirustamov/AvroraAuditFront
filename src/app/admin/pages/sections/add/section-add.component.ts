@@ -1,116 +1,83 @@
-import { Component, Inject, Optional, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { MatCardModule } from '@angular/material/card';
-import { MatButtonModule } from '@angular/material/button';
+import { Component, OnInit, inject } from '@angular/core';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import { finalize } from 'rxjs';
 import { NotificationService } from '../../../../shared/services/notification.service';
-import { Router } from '@angular/router';
-import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { apiErrorMessage } from '../../../../shared/utils/api-error';
 import { SectionDto } from '../../../models/section.model';
 import { SectionService } from '../../../services/section.service';
 import { FirmService } from '../../../services/firm.service';
 import { FirmDto } from '../../../models/firm.model';
 
+/** Yeni şöbə seçilmiş firmada yaranır; `item` verilsə redaktə. */
+export interface SectionDialogData {
+    firmId: number;
+    item?: SectionDto;
+}
+
+/** Şöbə forması (dialoq). Nəticə: saxlanılıbsa `true`. */
 @Component({
     selector: 'app-section-add',
     standalone: true,
-    imports: [
-        CommonModule,
-        ReactiveFormsModule,
-        MatCardModule,
-        MatButtonModule,
-        MatFormFieldModule,
-        MatInputModule,
-        MatSelectModule
-    ],
+    imports: [ReactiveFormsModule, MatDialogModule, MatFormFieldModule, MatInputModule, MatSelectModule],
     templateUrl: './section-add.component.html',
     styleUrl: './section-add.component.scss'
 })
 export class SectionAddComponent implements OnInit {
-    form!: FormGroup;
+    private readonly notify = inject(NotificationService);
+    private readonly sectionService = inject(SectionService);
+    private readonly firmService = inject(FirmService);
+    private readonly dialogRef = inject<MatDialogRef<SectionAddComponent, boolean>>(MatDialogRef);
+    private readonly data = inject<SectionDialogData>(MAT_DIALOG_DATA);
+
+    readonly isEdit = !!this.data.item;
     firms: FirmDto[] = [];
+    isSaving = false;
 
-    pageTitle = 'Yeni Şöbə';
-    isEditMode = false;
-
-    constructor(
-        private fb: FormBuilder,
-        private router: Router,
-        private notify: NotificationService,
-        private sectionService: SectionService,
-        private firmService: FirmService,
-        @Optional() private dialogRef?: MatDialogRef<SectionAddComponent>,
-        @Optional() @Inject(MAT_DIALOG_DATA) public data?: SectionDto | { mode: 'edit', item: SectionDto }
-    ) {
-        this.form = this.fb.group({
-            firmId: [null, Validators.required],
-            sectionName: ['', Validators.required],
-            sectionDescription: ['']
-        });
-    }
+    readonly form = inject(FormBuilder).group({
+        firmId: [this.data.firmId as number | null, Validators.required],
+        sectionName: [this.data.item?.sectionName ?? '', Validators.required],
+        sectionDescription: [this.data.item?.sectionDescription ?? '']
+    });
 
     ngOnInit(): void {
-        this.loadFirms();
-
-        const dialogData: any = this.data as any;
-        if (dialogData?.mode === 'edit' && dialogData?.item) {
-            this.isEditMode = true;
-            this.pageTitle = 'Şöbəni Redaktə Et';
-            this.form.patchValue({
-                firmId: dialogData.item.firmId,
-                sectionName: dialogData.item.sectionName,
-                sectionDescription: dialogData.item.sectionDescription
-            });
-        }
-    }
-
-    private loadFirms() {
-        this.firmService.getAllFirms().subscribe(response => {
-            if (response.success) {
-                this.firms = response.data;
-            }
+        this.firmService.getAllFirms().subscribe({
+            next: response => this.firms = Array.isArray(response?.data) ? response.data : [],
+            error: err => this.notify.error(apiErrorMessage(err, 'Firmalar yüklənmədi'))
         });
     }
 
     submit(): void {
+        if (this.isSaving) return;
         if (this.form.invalid) {
             this.form.markAllAsTouched();
-            this.notify.warning('Forma tamamlanmayıb', { message: 'Zəhmət olmasa tələb olunan sahələri doldurun.' });
             return;
         }
-        const payload = this.form.getRawValue();
+        const raw = this.form.getRawValue();
+        const payload: Partial<SectionDto> = {
+            firmId: raw.firmId!,
+            sectionName: (raw.sectionName ?? '').trim(),
+            sectionDescription: raw.sectionDescription ?? ''
+        };
+        const item = this.data.item;
+        const request = item
+            ? this.sectionService.update({ ...payload, id: item.id })
+            : this.sectionService.create(payload);
 
-        if (this.isEditMode && (this.data as any)?.item?.id) {
-            const id = (this.data as any).item.id as number;
-            this.sectionService.update({ ...payload, id }).subscribe(res => {
-                this.notify.success('Şöbə uğurla redaktə edildi');
-                if (this.dialogRef) {
-                    this.dialogRef.close({ updated: true, data: res });
-                } else {
-                    this.router.navigate(['/admin/sections']);
-                }
-            });
-            return;
-        }
-
-        this.sectionService.create(payload).subscribe(response => {
-            this.notify.success('Şöbə uğurla əlavə edildi');
-            if (this.dialogRef) {
-                this.dialogRef.close({ created: true, data: response });
-            } else {
-                this.router.navigate(['/admin/sections']);
-            }
+        this.isSaving = true;
+        request.pipe(finalize(() => this.isSaving = false)).subscribe({
+            next: () => {
+                this.notify.success(item ? 'Şöbə yeniləndi' : 'Şöbə əlavə edildi');
+                this.dialogRef.close(true);
+            },
+            error: err => this.notify.error(apiErrorMessage(err, item ? 'Şöbə yenilənmədi' : 'Şöbə əlavə edilmədi'))
         });
     }
 
     cancel(): void {
-        if (this.dialogRef) {
-            this.dialogRef.close();
-        } else {
-            this.router.navigate(['/admin/sections']);
-        }
+        this.dialogRef.close(false);
     }
-} 
+}

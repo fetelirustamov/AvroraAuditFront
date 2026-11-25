@@ -1,0 +1,14 @@
+// Görünüş qlobal `.empty-state`-dən gəlir (_design-system.scss); burada yalnız xəta halı.
+:host {
+    display: block;
+}
+
+.is-error {
+    .empty-icon {
+        color: var(--danger);
+    }
+
+    p {
+        color: var(--text);
+    }
+}

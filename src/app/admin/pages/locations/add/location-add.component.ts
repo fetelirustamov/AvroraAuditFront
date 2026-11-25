@@ -1,14 +1,12 @@
-import { Component, Inject, Optional, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { MatCardModule } from '@angular/material/card';
-import { MatButtonModule } from '@angular/material/button';
+import { Component, OnInit, inject } from '@angular/core';
+import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import { Observable, catchError, finalize, map, of, switchMap } from 'rxjs';
 import { NotificationService } from '../../../../shared/services/notification.service';
-import { Router } from '@angular/router';
-import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { apiErrorMessage } from '../../../../shared/utils/api-error';
 import { MapPickerComponent } from '../map-picker/map-picker.component';
 import { FirmService } from '../../../services/firm.service';
 import { FirmDto } from '../../../models/firm.model';
@@ -17,345 +15,266 @@ import { LocationDto } from '../../../models/location.model';
 import { SectionService } from '../../../services/section.service';
 import { SectionDto } from '../../../models/section.model';
 
-interface LocationPayload {
+/** Yeni mağaza seçilmiş firmada yaranır; `item` verilsə redaktə. */
+export interface LocationDialogData {
     firmId: number;
-    regionId?: number;
-    locationCode?: number;
-    locationName: string;
-    locationAddress?: string;
-    locationType?: number;
-    contactNumber?: string;
-    responsiblePersonId?: number;
-    latitude?: string;
-    longitude?: string;
+    item?: LocationDto;
 }
 
+interface RegionOption {
+    id: number;
+    name: string;
+}
+
+const DEFAULT_LAT = 40.4093; // Bakı
+const DEFAULT_LNG = 49.8671;
+
+function toNullableNumber(value: unknown): number | null {
+    if (value === null || value === undefined || value === '') return null;
+    const n = Number(value);
+    return Number.isNaN(n) ? null : n;
+}
+
+/**
+ * Mağaza forması (dialoq). Nəticə: saxlanılıbsa `true`.
+ * Mağaza saxlanandan sonra şöbə təyinatı ayrıca sorğu ilə yazılır (LocationSections mağaza koduna bağlıdır).
+ */
 @Component({
     selector: 'app-location-add',
     standalone: true,
-    imports: [
-        CommonModule,
-        FormsModule,
-        ReactiveFormsModule,
-        MatCardModule,
-        MatButtonModule,
-        MatFormFieldModule,
-        MatInputModule,
-        MatSelectModule,
-        MapPickerComponent
-    ],
+    imports: [ReactiveFormsModule, MatDialogModule, MatFormFieldModule, MatInputModule, MatSelectModule, MapPickerComponent],
     templateUrl: './location-add.component.html',
     styleUrl: './location-add.component.scss'
 })
 export class LocationAddComponent implements OnInit {
-    form!: FormGroup;
+    private readonly notify = inject(NotificationService);
+    private readonly firmService = inject(FirmService);
+    private readonly locationService = inject(LocationService);
+    private readonly sectionService = inject(SectionService);
+    private readonly dialogRef = inject<MatDialogRef<LocationAddComponent, boolean>>(MatDialogRef);
+    private readonly data = inject<LocationDialogData>(MAT_DIALOG_DATA);
+    private readonly item = this.data.item;
+
+    readonly isEdit = !!this.item;
     firms: FirmDto[] = [];
-    regions: any[] = [];
-    private allRegions: any[] = [];
-    private allLocations: LocationDto[] = [];
+    regions: RegionOption[] = [];
     sections: SectionDto[] = [];
-    selectedSectionIds: number[] = [];
-    pageTitle = 'Yeni mağaza/location';
-    isEditMode = false;
-    initialLat: number = 40.4093;
-    initialLng: number = 49.8671;
+    isSaving = false;
+    regionsLoading = false;
+    regionsFailed = false;
+    sectionsLoading = false;
+    sectionsFailed = false;
 
-    constructor(
-        private fb: FormBuilder,
-        private router: Router,
-        private notify: NotificationService,
-        private firmService: FirmService,
-        private locationService: LocationService,
-        private sectionService: SectionService,
-        @Optional() private dialogRef?: MatDialogRef<LocationAddComponent>,
-        @Optional() @Inject(MAT_DIALOG_DATA) public data?: { mode?: 'edit'; item?: LocationDto }
-    ) {
-        this.form = this.fb.group({
-            firmId: [null, Validators.required],
-            regionId: [null, Validators.required],
-            locationCode: [null],
-            locationName: ['', Validators.required],
-            locationAddress: [''],
-            locationType: [null],
-            contactNumber: [''],
-            responsiblePersonId: [null],
-            latitude: [''],
-            longitude: ['']
-        });
+    readonly initialLat = this.coordinate(this.item?.latitude, DEFAULT_LAT);
+    readonly initialLng = this.coordinate(this.item?.longitude, DEFAULT_LNG);
 
-        if (data?.item) {
-            this.isEditMode = true;
-            this.pageTitle = 'Mağaza/location redaktə et';
-            this.form.patchValue({
-                ...data.item,
-                regionId: this.toNullableNumber(data.item.regionId ?? data.item.RegionId ?? data.item.regionID ?? null)
-            } as LocationDto);
+    readonly form = inject(FormBuilder).group({
+        firmId: [this.data.firmId as number | null, Validators.required],
+        // Region məcburi deyil: region təyin olunmamış mağazalar da yaradıla bilər
+        regionId: [toNullableNumber(this.item?.regionID)],
+        // Kod sistemin açarıdır (planlar, zəncir, şöbələr): məcburi, unikal, redaktədə dəyişmir
+        locationCode: [
+            { value: toNullableNumber(this.item?.locationCode), disabled: this.isEdit },
+            [Validators.required, Validators.min(1)]
+        ],
+        locationName: [this.item?.locationName ?? '', Validators.required],
+        locationAddress: [this.item?.locationAddress ?? ''],
+        contactNumber: [this.item?.contactNumber ?? ''],
+        latitude: [this.item?.latitude ?? ''],
+        longitude: [this.item?.longitude ?? ''],
+        radius: [toNullableNumber(this.item?.radius)]
+    });
 
-            const lat = parseFloat(data.item.latitude as string);
-            const lng = parseFloat(data.item.longitude as string);
-            if (!isNaN(lat)) this.initialLat = lat;
-            if (!isNaN(lng)) this.initialLng = lng;
-        }
+    readonly sectionsControl = new FormControl<number[]>([], { nonNullable: true });
+
+    /**
+     * Şöbə təyinatı yazıla bilərmi. Redaktədə mövcud təyinatlar oxunmayıbsa false qalır:
+     * əks halda boş siyahı göndərilib mağazanın mövcud şöbələri silinərdi.
+     */
+    private sectionAssignmentReady = !this.isEdit;
+
+    get regionEmptyMessage(): string {
+        if (this.regionsLoading) return 'Regionlar yüklənir…';
+        if (this.regionsFailed) return 'Regionlar yüklənmədi';
+        return 'Bu firmada region yoxdur';
+    }
+
+    get sectionEmptyMessage(): string {
+        if (this.sectionsLoading) return 'Şöbələr yüklənir…';
+        if (this.sectionsFailed) return 'Şöbələr yüklənmədi';
+        return 'Bu firmada şöbə yoxdur';
     }
 
     ngOnInit(): void {
-        this.loadFirms();
-        this.loadAllLocations();
-    }
-
-    private loadFirms(): void {
         this.firmService.getAllFirms().subscribe({
-            next: (response: any) => {
-
-                let firms: FirmDto[] = [];
-
-                // 1) RequestResponse<FirmDto>
-                if (response && Array.isArray(response.data)) {
-                    firms = response.data as FirmDto[];
-                }
-                // 2) Sadə array
-                else if (Array.isArray(response)) {
-                    firms = response as FirmDto[];
-                }
-                // 3) TableResponseData<{ items: FirmDto[] }>
-                else if (response?.data?.items && Array.isArray(response.data.items)) {
-                    firms = response.data.items as FirmDto[];
-                }
-
-                this.firms = firms;
-                const selectedFirmId = this.form.get('firmId')?.value as number | null;
-                if (selectedFirmId) {
-                    this.loadRegionsByFirmId(selectedFirmId);
-                }
-            },
-            error: (error) => {
-                console.error('Firmalar yüklənərkən xəta (location-add):', error);
-                this.firms = [];
-            }
+            next: response => this.firms = Array.isArray(response?.data) ? response.data : [],
+            error: err => this.notify.error(apiErrorMessage(err, 'Firmalar yüklənmədi'))
         });
+
+        // Dialoq firma konteksti ilə açılır: "firma dəyişdi" hadisəsi olmur, asılı siyahılar burada yüklənir
+        const firmId = this.form.controls.firmId.value;
+        if (firmId == null) return;
+        this.loadRegions(firmId);
+        this.loadSections(firmId);
+
+        const locationCode = toNullableNumber(this.item?.locationCode);
+        if (this.isEdit && locationCode != null && locationCode > 0) {
+            this.loadAssignedSections(firmId, locationCode);
+        }
     }
 
     onFirmChange(firmId: number | null): void {
-        this.form.patchValue({ regionId: null }, { emitEvent: false });
+        this.form.controls.regionId.setValue(null);
+        this.sectionsControl.setValue([]);
         this.regions = [];
-        this.allRegions = [];
         this.sections = [];
-        this.selectedSectionIds = [];
-
-        if (!firmId) return;
-        this.loadRegionsByFirmId(firmId);
-        this.loadSectionsByFirmId(firmId);
+        if (firmId == null) return;
+        this.loadRegions(firmId);
+        this.loadSections(firmId);
     }
 
-    private loadAllLocations(): void {
-        this.locationService.list().subscribe({
-            next: (response: any) => {
-                if (response && Array.isArray(response.data)) {
-                    this.allLocations = response.data as LocationDto[];
-                } else if (Array.isArray(response)) {
-                    this.allLocations = response as LocationDto[];
-                } else {
-                    this.allLocations = [];
-                }
-                this.applyRegionAvailability();
-            },
-            error: () => {
-                this.allLocations = [];
-            }
-        });
-    }
-
-    private resolveRegionId(location: LocationDto): number | null {
-        return this.toNullableNumber(location.regionId ?? location.RegionId ?? location.regionID);
-    }
-
-    private getOccupiedRegionIds(firmId: number, excludeLocationId?: number): Set<number> {
-        const occupied = new Set<number>();
-        for (const loc of this.allLocations) {
-            if (loc.firmId !== firmId) continue;
-            if (excludeLocationId != null && loc.id === excludeLocationId) continue;
-            const regionId = this.resolveRegionId(loc);
-            if (regionId != null) occupied.add(regionId);
-        }
-        return occupied;
-    }
-
-    private applyRegionAvailability(): void {
-        if (!this.allRegions.length) {
-            this.regions = [];
-            return;
-        }
-
-        const firmId = this.toNullableNumber(this.form.get('firmId')?.value);
-        if (!firmId) {
-            this.regions = [...this.allRegions];
-            return;
-        }
-
-        const excludeId = this.isEditMode ? this.data?.item?.id : undefined;
-        const occupied = this.getOccupiedRegionIds(firmId, excludeId);
-        this.regions = this.allRegions.filter(region => {
-            const regionId = this.toNullableNumber(region.id);
-            return regionId == null || !occupied.has(regionId);
-        });
-
-        const currentRegionId = this.toNullableNumber(this.form.get('regionId')?.value);
-        if (currentRegionId != null && !this.regions.some(r => this.toNullableNumber(r.id) === currentRegionId)) {
-            this.form.patchValue({ regionId: null }, { emitEvent: false });
-        }
-    }
-
-    private loadSectionsByFirmId(firmId: number): void {
-        this.sectionService.getByFirmId(firmId).subscribe({
-            next: (response: any) => {
-                if (response && Array.isArray(response.data)) {
-                    this.sections = response.data as SectionDto[];
-                } else if (Array.isArray(response)) {
-                    this.sections = response as SectionDto[];
-                } else {
+    private loadSections(firmId: number): void {
+        this.sectionsLoading = true;
+        this.sectionsFailed = false;
+        this.sectionService.getByFirmId(firmId)
+            .pipe(finalize(() => this.sectionsLoading = false))
+            .subscribe({
+                // Firmanın şöbəsi yoxdursa API 204 qaytarır: gövdə boşdur
+                next: response => this.sections = Array.isArray(response?.data) ? response.data : [],
+                error: () => {
+                    this.sectionsFailed = true;
                     this.sections = [];
                 }
+            });
+    }
+
+    /** Redaktədə mağazaya artıq təyin olunmuş şöbələri seçili gətirir. */
+    private loadAssignedSections(firmId: number, locationCode: number): void {
+        this.locationService.getSectionsByLocationCode(locationCode, firmId).subscribe({
+            next: response => {
+                const rows: any[] = Array.isArray(response?.data?.items)
+                    ? response.data.items
+                    : (Array.isArray(response?.data) ? response.data : []);
+                this.sectionsControl.setValue(rows
+                    .map(r => toNullableNumber(r.id))
+                    .filter((id): id is number => id != null));
+                this.sectionAssignmentReady = true;
             },
-            error: () => { this.sections = []; }
+            error: () => this.sectionsFailed = true
         });
     }
 
-    private loadRegionsByFirmId(firmId: number): void {
-        this.locationService.getRegionsByFirmId(firmId).subscribe({
-            next: (response: any) => {
-                const currentRegionId = this.toNullableNumber(this.form.get('regionId')?.value);
-
-                if (response && Array.isArray(response.data)) {
-                    this.allRegions = response.data.map((r: any) => ({
-                        ...r,
-                        id: this.toNullableNumber(r.id ?? r.regionId ?? r.RegionId ?? r.regionID)
-                    }));
-                } else if (Array.isArray(response)) {
-                    this.allRegions = response.map((r: any) => ({
-                        ...r,
-                        id: this.toNullableNumber(r.id ?? r.regionId ?? r.RegionId ?? r.regionID)
-                    }));
-                } else {
-                    this.allRegions = [];
+    private loadRegions(firmId: number): void {
+        this.regionsLoading = true;
+        this.regionsFailed = false;
+        this.locationService.getRegionsByFirmId(firmId)
+            .pipe(finalize(() => this.regionsLoading = false))
+            .subscribe({
+                next: response => {
+                    const rows: any[] = Array.isArray(response?.data) ? response.data : (Array.isArray(response) ? response : []);
+                    this.regions = rows
+                        .map(r => ({ id: toNullableNumber(r.id ?? r.regionId ?? r.RegionId ?? r.regionID), name: r.regionName || r.name || '—' }))
+                        .filter((r): r is RegionOption => r.id != null);
+                },
+                error: () => {
+                    this.regionsFailed = true;
+                    this.regions = [];
                 }
-
-                this.applyRegionAvailability();
-
-                if (currentRegionId != null) {
-                    const stillValid = this.regions.some(r => this.toNullableNumber(r.id) === currentRegionId);
-                    if (stillValid) {
-                        this.form.patchValue({ regionId: currentRegionId }, { emitEvent: false });
-                    }
-                }
-            },
-            error: (error) => {
-                console.error('Regionlar yüklənərkən xəta (location-add):', error);
-                this.allRegions = [];
-                this.regions = [];
-            }
-        });
+            });
     }
 
-    compareNumericIds = (a: any, b: any): boolean =>
-        this.toNullableNumber(a) === this.toNullableNumber(b);
-
-    private toNullableNumber(value: any): number | null {
-        if (value === null || value === undefined || value === '') return null;
-        const n = Number(value);
-        return Number.isNaN(n) ? null : n;
-    }
-
-    onPickCoord(e: { lat: number; lng: number }) {
+    onPickCoord(e: { lat: number; lng: number }): void {
         this.form.patchValue({ latitude: e.lat.toFixed(6), longitude: e.lng.toFixed(6) });
     }
 
     submit(): void {
+        if (this.isSaving) return;
         if (this.form.invalid) {
             this.form.markAllAsTouched();
-            this.notify.warning('Forma tamamlanmayıb', { message: 'Zəhmət olmasa tələb olunan sahələri doldurun.' });
             return;
         }
-        const raw: LocationPayload = this.form.getRawValue();
+        const raw = this.form.getRawValue();
+        const locationCode = toNullableNumber(raw.locationCode);
+        // Backend int sahələrə null qəbul etmir. Region seçilməyəndə 0 gedir: "region təyin olunmayıb"
+        const payload = {
+            ...raw,
+            firmId: raw.firmId!,
+            locationCode: locationCode!,
+            locationName: (raw.locationName ?? '').trim(),
+            locationAddress: raw.locationAddress ?? '',
+            contactNumber: raw.contactNumber ?? '',
+            latitude: raw.latitude ?? '',
+            longitude: raw.longitude ?? '',
+            radius: toNullableNumber(raw.radius) ?? 0,
+            regionId: raw.regionId ?? 0
+        };
+        const sectionIds = this.sectionsControl.value;
 
-        const firmId = this.toNullableNumber(raw.firmId);
-        const regionId = this.toNullableNumber(raw.regionId);
-        if (firmId != null && regionId != null) {
-            const excludeId = this.isEditMode ? this.data?.item?.id : undefined;
-            if (this.getOccupiedRegionIds(firmId, excludeId).has(regionId)) {
-                this.notify.warning(
-                    'Bu ərazi artıq bağlıdır',
-                    { message: 'Seçilmiş firma üçün bu əraziyə yalnız bir bağlantı verilə bilər.' }
-                );
-                return;
-            }
-        }
+        this.isSaving = true;
 
-        // Backend-də int sahələrə null göndərmək xətaya səbəb olur, null-ları çıxarırıq
-        const payload: any = { ...raw };
-        if (payload.locationType == null) {
-            delete payload.locationType;
-        }
-        if (payload.responsiblePersonId == null) {
-            delete payload.responsiblePersonId;
-        }
-
-        // Edit mode
-        if (this.isEditMode && this.data?.item?.id) {
-            const id = this.data.item.id as number;
-            const updatePayload: LocationDto = { ...this.data.item, ...payload, id };
-
-            this.locationService.update(updatePayload).subscribe({
-                next: (res) => {
-                    this.notify.success('Mağaza/location uğurla redaktə edildi');
-                    if (this.dialogRef) {
-                        this.dialogRef.close({ updated: true, data: res });
+        if (this.item?.id != null) {
+            // Formda olmayan sahələr olduğu kimi qayıdır (undefined JSON-a düşmür)
+            const updatePayload: LocationDto = {
+                ...payload,
+                id: this.item.id,
+                locationType: this.item.locationType,
+                responsiblePersonId: this.item.responsiblePersonId
+            };
+            // Təyinatlar oxunmayıbsa yazılmır: boş siyahı mövcud şöbələri silərdi
+            const assignCode = this.sectionAssignmentReady ? locationCode : null;
+            this.locationService.update(updatePayload).pipe(
+                switchMap(() => this.assignSections(assignCode, sectionIds)),
+                finalize(() => this.isSaving = false)
+            ).subscribe({
+                next: assigned => {
+                    if (assigned === false || (assigned === null && sectionIds.length > 0)) {
+                        this.notify.warning('Mağaza yeniləndi, şöbə təyinatı saxlanmadı', {
+                            message: 'Mağazanın mövcud şöbələri oxunmadı. Dialoqu yenidən açıb şöbələri yoxlayın.'
+                        });
                     } else {
-                        this.router.navigate(['/admin/locations']);
+                        this.notify.success('Mağaza yeniləndi');
                     }
-                }
+                    this.dialogRef.close(true);
+                },
+                error: err => this.notify.error(apiErrorMessage(err, 'Mağaza yenilənmədi'))
             });
             return;
         }
 
-        // Create mode
-        this.locationService.create(payload).subscribe({
-            next: (res) => {
-                const dataItem = Array.isArray(res?.data) ? res.data[0] : (res?.data as any);
-                const locationCode = dataItem?.locationCode ?? (res as any)?.locationCode ?? payload.locationCode;
-
-                if (this.selectedSectionIds.length > 0 && locationCode != null) {
-                    this.locationService.assignSections({ locationCode: Number(locationCode), sectionIds: this.selectedSectionIds }).subscribe({
-                        next: () => {
-                            this.notify.success('Mağaza/location uğurla əlavə edildi');
-                            if (this.dialogRef) {
-                                this.dialogRef.close({ created: true, data: res });
-                            } else {
-                                this.router.navigate(['/admin/locations']);
-                            }
-                        },
-                        error: () => {
-                            this.notify.warning('Location yaradıldı, lakin şöbələr assign edilmədi');
-                            if (this.dialogRef) {
-                                this.dialogRef.close({ created: true, data: res });
-                            } else {
-                                this.router.navigate(['/admin/locations']);
-                            }
-                        }
+        this.locationService.create(payload).pipe(
+            switchMap(() => this.assignSections(sectionIds.length ? locationCode : null, sectionIds)),
+            finalize(() => this.isSaving = false)
+        ).subscribe({
+            next: assigned => {
+                if (assigned === false) {
+                    this.notify.warning('Mağaza əlavə edildi, şöbələr təyin edilmədi', {
+                        message: 'Mağazanı redaktə edib şöbələri yenidən seçin.'
                     });
                 } else {
-                    this.notify.success('Mağaza/location uğurla əlavə edildi');
-                    if (this.dialogRef) {
-                        this.dialogRef.close({ created: true, data: res });
-                    } else {
-                        this.router.navigate(['/admin/locations']);
-                    }
+                    this.notify.success('Mağaza əlavə edildi');
                 }
-            }
+                this.dialogRef.close(true);
+            },
+            // 409: kod artıq istifadə olunub (silinmiş mağaza daxil)
+            error: err => this.notify.error(apiErrorMessage(err, 'Mağaza əlavə edilmədi'))
         });
     }
 
-    cancel(): void {
-        if (this.dialogRef) this.dialogRef.close();
-        else this.router.navigate(['/admin/locations']);
+    /** Nəticə: `null` yazılmadı, `true` uğurlu, `false` uğursuz (mağaza artıq saxlanıb). */
+    private assignSections(locationCode: number | null, sectionIds: number[]): Observable<boolean | null> {
+        if (locationCode == null) return of(null);
+        return this.locationService.assignSections({ locationCode, sectionIds }).pipe(
+            map(() => true),
+            catchError(() => of(false))
+        );
     }
-} 
+
+    private coordinate(value: string | undefined, fallback: number): number {
+        const n = parseFloat(value ?? '');
+        return Number.isNaN(n) ? fallback : n;
+    }
+
+    cancel(): void {
+        this.dialogRef.close(false);
+    }
+}

@@ -1,360 +1,493 @@
-<div class="location-structure-container">
-    <!-- Header Section -->
-    <mat-card class="header-card mb-4">
-        <mat-card-content>
-            <div class="row align-items-center">
-                <div class="col-md-8">
-                    <h2 class="mb-0">
-                        <span class="material-symbols-outlined me-2">store</span>
-                        Market Şəbəkəsi Onay Konfiqurasiyası
-                    </h2>
-                    <p class="text-muted mb-0">Market şəbəkəsi və mağaza üzrə onay prosesini konfiqurasiya edin</p>
-                </div>
-                <div class="col-md-4 text-end">
-                    <button mat-flat-button color="primary" (click)="saveChanges()" class="me-2">
-                        <span class="material-symbols-outlined">save</span>
-                        Dəyişiklikləri Saxla
-                    </button>
-                </div>
-            </div>
-        </mat-card-content>
-    </mat-card>
+<div class="ls-page">
 
-    <div class="audit-table-loading-shell location-structure-workspace" [attr.aria-busy]="workspaceBusy">
+    <app-page-header subtitle="Təşkilati struktur: Direktor › Satış müdiri › Mağaza müdiri › mağazalar">
+        <button headerActions type="button" class="g-export-btn" [matMenuTriggerFor]="tplMenu">
+            <span class="material-symbols-outlined" aria-hidden="true">download</span>
+            Şablon / İxrac
+            <span class="material-symbols-outlined g-arrow" aria-hidden="true">expand_more</span>
+        </button>
+        <button headerActions type="button" class="g-secondary-btn" (click)="toggleImport()" [attr.aria-expanded]="showImport">
+            <span class="material-symbols-outlined" aria-hidden="true">upload_file</span>
+            Excel idxal
+        </button>
+        @if (hasNetwork) {
+            <button headerActions type="button" class="g-search-btn" (click)="startNewBinding()">
+                <span class="material-symbols-outlined" aria-hidden="true">add_link</span>
+                Yeni bağlantı
+            </button>
+        }
+    </app-page-header>
+
+    <mat-menu #tplMenu="matMenu">
+        <button mat-menu-item (click)="downloadTemplate()">
+            <span class="material-symbols-outlined menu-icon" aria-hidden="true">description</span><span>Boş şablon (.xlsx)</span>
+        </button>
+        <button mat-menu-item (click)="exportCurrentStructure()" [disabled]="!hasNetwork">
+            <span class="material-symbols-outlined menu-icon" aria-hidden="true">table_chart</span><span>Strukturu ixrac et</span>
+        </button>
+    </mat-menu>
+
+    <div class="audit-table-loading-shell ls-workspace" [attr.aria-busy]="workspaceBusy">
         <div [class.audit-table-muted]="workspaceBusy">
 
-    <!-- Selection Controls -->
-    <mat-card class="selection-card mb-4">
-        <mat-card-content>
-            <div class="row g-3">
-                <!-- Market Network (Firm) Selection -->
-                <div class="col-12 col-sm-12 col-md-6 col-lg-6">
-                    <mat-form-field class="w-100">
-                        <mat-label>Market Şəbəkəsi</mat-label>
-                        <mat-select [(ngModel)]="selectedNetwork" (selectionChange)="onNetworkChange($event.value)"
-                            [disabled]="isLoadingFirms">
-                            <mat-option *ngFor="let network of marketNetworks" [value]="network">
-                                {{ network.name }}
-                            </mat-option>
-                        </mat-select>
-                        <span class="material-symbols-outlined matSuffix">business</span>
-                    </mat-form-field>
-                </div>
+            <!-- ── Toolbar (proyektin ortaq g-filter sistemi) ──────────────── -->
+            <section class="g-filter-card ls-toolbar">
+                <div class="g-filter-grid">
+                    <div class="g-filter-field">
+                        <label class="g-field-label" id="ls-firm-label"><span class="material-symbols-outlined" aria-hidden="true">business</span>Firma</label>
+                        <mat-form-field appearance="outline" class="g-modern-field">
+                            <mat-select [(ngModel)]="selectedNetwork" (selectionChange)="onNetworkChange($event.value)"
+                                aria-labelledby="ls-firm-label"
+                                [disabled]="isLoadingFirms" placeholder="Firma seçin">
+                                <mat-option *ngFor="let n of marketNetworks" [value]="n">{{ n.name }}</mat-option>
+                            </mat-select>
+                        </mat-form-field>
+                    </div>
 
-                <!-- Store (Location) Selection -->
-                <div class="col-12 col-sm-12 col-md-6 col-lg-6">
-                    <mat-form-field class="w-100">
-                        <mat-label>Mağaza</mat-label>
-                        <mat-select [(ngModel)]="selectedStore" (selectionChange)="onStoreChange($event.value)"
-                            [disabled]="!selectedNetwork || isLoadingLocations">
-                            <mat-option *ngFor="let store of getFilteredStores()" [value]="store">
-                                {{ store.locationName }} &nbsp;-&nbsp; Kod: {{ store.locationCode }}
-                            </mat-option>
-                        </mat-select>
-                        <span class="material-symbols-outlined matSuffix">storefront</span>
-                    </mat-form-field>
-                </div>
-
-            </div>
-        </mat-card-content>
-    </mat-card>
-
-    <!-- Main Content -->
-    <div class="row g-4 main-content">
-        <!-- Left Section - User Selection -->
-        <div class="col-12 col-lg-5">
-            <mat-card class="user-selection-card h-100">
-                <mat-card-header>
-                    <mat-card-title>
-                        <span class="material-symbols-outlined me-2">group</span>
-                        İstifadəçilər
-                    </mat-card-title>
-                </mat-card-header>
-
-                <mat-card-content>
-                    <!-- Search Filters -->
-                    <div class="row g-2 mb-3">
-                        <div class="col-12 col-sm-6 col-md-4">
-                            <mat-form-field class="w-100">
-                                <mat-label>Kod</mat-label>
-                                <input matInput [(ngModel)]="searchCode" (ngModelChange)="onSearchChange()"
-                                    placeholder="E-poçt ünvanı">
-                                <span matPrefix class="material-symbols-outlined">search</span>
-                            </mat-form-field>
-                        </div>
-                        <div class="col-12 col-sm-6 col-md-5">
-                            <mat-form-field class="w-100">
-                                <mat-label>Ad</mat-label>
-                                <input matInput [(ngModel)]="searchName" (ngModelChange)="onSearchChange()"
-                                    placeholder="İstifadəçi adı">
-                                <span matPrefix class="material-symbols-outlined">person</span>
-                            </mat-form-field>
-                        </div>
-                        <div class="col-12 col-sm-12 col-md-3 clear-btn-col">
-                            <button mat-stroked-button color="warn" (click)="clearFilters()" class="clear-filters-btn">
-                                <span class="material-symbols-outlined">filter_alt_off</span>
-                                Təmizlə
+                    <div class="g-filter-field-wide" *ngIf="hasNetwork">
+                        <label class="g-field-label" for="ls-search"><span class="material-symbols-outlined" aria-hidden="true">search</span>Axtarış</label>
+                        <mat-form-field appearance="outline" class="g-modern-field">
+                            <span matPrefix class="material-symbols-outlined field-pre" aria-hidden="true">search</span>
+                            <input id="ls-search" matInput type="text" [ngModel]="search" (ngModelChange)="onSearchChange($event)"
+                                placeholder="Ad, sicil və ya mağaza kodu">
+                            <button matSuffix type="button" class="field-clear" *ngIf="search" (click)="clearSearch()"
+                                matTooltip="Təmizlə" aria-label="Axtarışı təmizlə">
+                                <span class="material-symbols-outlined" aria-hidden="true">close</span>
                             </button>
+                        </mat-form-field>
+                    </div>
+
+                </div>
+            </section>
+
+            <!-- ── Stat chips ──────────────────────────────────────────────── -->
+            <div class="stat-strip" *ngIf="hasNetwork">
+                <!-- İstifadə olunmayan pillə göstərilmir: "0 Direktor" çipi
+                     normal vəziyyəti "data çatışmır" kimi oxudurdu -->
+                <span class="stat-chip" *ngIf="countDirectors > 0"><b>{{ countDirectors }}</b> Direktor</span>
+                <span class="stat-chip" *ngIf="countManagers > 0"><b>{{ countManagers }}</b> Satış müdiri</span>
+                <span class="stat-chip" *ngIf="countStoreManagers > 0"><b>{{ countStoreManagers }}</b> Mağaza müdiri</span>
+                <span class="stat-chip is-accent"><b>{{ countBoundStores }}</b> Bağlı mağaza</span>
+                <span class="stat-chip is-danger" *ngIf="countOrphans > 0"><b>{{ countOrphans }}</b> Rəhbərsiz</span>
+                <span class="stat-chip is-warn" *ngIf="conflictCount > 0"
+                    matTooltip="Bu şəxslərin rəhbəri mağazadan-mağazaya fərqlidir — ağacda yalnız biri görünür">
+                    <b>{{ conflictCount }}</b> Ziddiyyətli
+                </span>
+                <button type="button" class="help-link" (click)="toggleHelp()" [attr.aria-expanded]="showHelp">
+                    <span class="material-symbols-outlined" aria-hidden="true">help</span>Bu ekran necə işləyir?
+                </button>
+            </div>
+
+            <div class="scope-note" *ngIf="scopeNote && hasNetwork">
+                <span class="material-symbols-outlined">info</span>{{ scopeNote }}
+            </div>
+
+            <div class="help-note" *ngIf="showHelp && hasNetwork">
+                Təsdiq zənciri şəxs ağacına çevrilir: <b>1-ci təsdiq = Mağaza müdiri</b> (mağazanı idarə edir),
+                <b>2-ci təsdiq = Satış müdiri</b>, <b>3-cü təsdiq = Direktor</b>. Hər şəxs bir dəfə görünür; sağdakı paneldə
+                seçilən şəxsin komandası, seçilən mağazanın isə redaktə oluna bilən təsdiq zənciri açılır.
+                Ağacdakı mağazaya klikləyib zənciri dəyişə, ya da Excel ilə toplu idxal edə bilərsiniz.
+            </div>
+
+            <!-- ── Excel idxal paneli ──────────────────────────────────────── -->
+            <section class="import-panel" *ngIf="hasNetwork && showImport">
+                <div class="import-grid">
+                    <div class="panel-card dropzone-card">
+                        <!-- Fokuslana bilən əsl düymə: klaviatura ilə də açılır -->
+                        <button type="button" class="dropzone" (click)="fileInput.click()" [class.dragover]="isDragOver"
+                            [disabled]="isImporting"
+                            (dragover)="onDragOver($event)" (dragleave)="onDragLeave($event)" (drop)="onDrop($event)">
+                            <span class="material-symbols-outlined dz-icon" aria-hidden="true">cloud_upload</span>
+                            <span class="dz-title">Excel faylını buraya buraxın</span>
+                            <span class="dz-hint">və ya seçmək üçün klikləyin · .xlsx, .xls</span>
+                            <span class="dz-btn"><span class="material-symbols-outlined" aria-hidden="true">folder_open</span>Fayl seç</span>
+                        </button>
+                        <input #fileInput type="file" (change)="onFileSelected($event)" accept=".xlsx,.xls" hidden>
+                        <div class="tpl-actions">
+                            <button type="button" class="g-secondary-btn" (click)="downloadTemplate()"><span class="material-symbols-outlined" aria-hidden="true">description</span>Boş şablon</button>
+                            <button type="button" class="g-secondary-btn" (click)="exportCurrentStructure()" [disabled]="!hasNetwork"><span class="material-symbols-outlined" aria-hidden="true">table_chart</span>Strukturu ixrac et</button>
+                        </div>
+                        <div class="upload-progress" *ngIf="isImporting" role="status" aria-live="polite">
+                            <span>Təsdiq zəncirləri yazılır…</span>
+                            <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+                        </div>
+                    </div>
+                    <div class="panel-card guide-card">
+                        <div class="panel-head"><div class="panel-head-title"><span class="material-symbols-outlined">menu_book</span>Fayl formatı</div></div>
+                        <ul class="guide-list">
+                            <li><span class="g-num">1</span>İlk sətir başlıqdır: <b>Mağaza kodu, User 1, User 2, …</b></li>
+                            <li><span class="g-num">2</span>Hər sətir bir mağazanın təsdiq zənciridir</li>
+                            <li><span class="g-num">3</span>User 1 = Mağaza müdiri · User 2 = Satış müdiri · User 3 = Direktor</li>
+                            <li><span class="g-num">4</span>Boş xanalar ötürülür, dolular 1-dən nömrələnir</li>
+                        </ul>
+                        <div class="guide-warn"><span class="material-symbols-outlined">warning</span>Diqqət: mağazanın köhnə sxemi tamamilə əvəz olunur.</div>
+                    </div>
+                </div>
+                <div class="panel-card results-card" *ngIf="uploadResults">
+                    <div class="panel-head"><div class="panel-head-title"><span class="material-symbols-outlined">fact_check</span>Yükləmə nəticəsi</div></div>
+                    <div class="result-stats">
+                        <div class="stat success"><span class="material-symbols-outlined">check_circle</span><b>{{ uploadResults.successCount }}</b> uğurlu</div>
+                        <div class="stat warning" *ngIf="uploadResults.warningCount > 0"><span class="material-symbols-outlined">warning</span><b>{{ uploadResults.warningCount }}</b> xəbərdarlıq</div>
+                        <div class="stat error" *ngIf="uploadResults.errorCount > 0"><span class="material-symbols-outlined">error</span><b>{{ uploadResults.errorCount }}</b> xəta</div>
+                    </div>
+                    <ul class="issue-list" *ngIf="uploadResults.issues.length > 0">
+                        <li *ngFor="let issue of uploadResults.issues"><span class="issue-row">Sətir {{ issue.row }}</span>{{ issue.message }}</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- ── Gate ─────────────────────────────────────────────────────── -->
+            <div class="gate-card" *ngIf="!hasNetwork">
+                <span class="material-symbols-outlined">account_tree</span>
+                <h3>Firma seçin</h3>
+                <p>Firma seçildikdən sonra bütün təşkilati struktur — direktorlar, satış müdirləri, mağaza müdirləri və onların mağazaları ağac şəklində görünəcək.</p>
+            </div>
+
+            <!-- ── Struktur + detal ──────────────────────────────────────────── -->
+            <div class="struct-layout" *ngIf="hasNetwork && !workspaceBusy">
+
+                <!-- Sol: ağac -->
+                <div class="panel-card tree-card">
+                    <div class="panel-head">
+                        <div class="panel-head-title"><span class="material-symbols-outlined" aria-hidden="true">lan</span>Struktur</div>
+                        <div class="head-tools">
+                            <button type="button" class="tool-btn" (click)="expandAll()" aria-label="Hamısını aç">
+                                <span class="material-symbols-outlined" aria-hidden="true">unfold_more</span>
+                                <span class="tool-btn-text">Hamısını aç</span>
+                            </button>
+                            <button type="button" class="tool-btn" (click)="collapseAll()" aria-label="Hamısını yığ">
+                                <span class="material-symbols-outlined" aria-hidden="true">unfold_less</span>
+                                <span class="tool-btn-text">Hamısını yığ</span>
+                            </button>
+                            <span class="count-badge">{{ searching ? searchResultBadge : rootsBadge }}</span>
                         </div>
                     </div>
 
-                    <!-- Users Table -->
-                    <div class="table-container">
-                        <table mat-table [dataSource]="dataSource" class="w-100">
-                            <!-- Checkbox Column -->
-                            <ng-container matColumnDef="select">
-                                <th mat-header-cell *matHeaderCellDef>
-                                    <mat-checkbox (change)="$event ? toggleAllRows() : null"
-                                        [checked]="selection.hasValue() && isAllSelected()"
-                                        [indeterminate]="selection.hasValue() && !isAllSelected()"
-                                        [aria-label]="checkboxLabel()">
-                                    </mat-checkbox>
-                                </th>
-                                <td mat-cell *matCellDef="let row">
-                                    <mat-checkbox (click)="$event.stopPropagation()"
-                                        (change)="$event ? selection.toggle(row) : null"
-                                        [checked]="selection.isSelected(row)" [aria-label]="checkboxLabel(row)">
-                                    </mat-checkbox>
-                                </td>
-                            </ng-container>
+                    <p class="tree-model-note">
+                        <span class="material-symbols-outlined" aria-hidden="true">account_tree</span>
+                        Bu ağac mağaza təsdiq zəncirlərindən <b>hesablanır</b> — müstəqil struktur deyil.
+                        Şəxsə klikləyib onun zəncirlərinə keçə bilərsiniz.
+                    </p>
 
-                            <!-- ID Column -->
-                            <ng-container matColumnDef="id">
-                                <th mat-header-cell *matHeaderCellDef>ID</th>
-                                <td mat-cell *matCellDef="let user">{{ user.id }}</td>
-                            </ng-container>
+                    <div class="tree-scroll">
+                        <ng-container *ngFor="let r of displayRoots; trackBy: trackByNode">
+                            <ng-container *ngTemplateOutlet="nodeTpl; context: { node: r, depth: 0 }"></ng-container>
+                        </ng-container>
 
-                            <!-- Code Column (email) -->
-                            <ng-container matColumnDef="code">
-                                <th mat-header-cell *matHeaderCellDef>Kod</th>
-                                <td mat-cell *matCellDef="let user">{{ getUserCode(user) }}</td>
-                            </ng-container>
-
-                            <!-- Name Column -->
-                            <ng-container matColumnDef="name">
-                                <th mat-header-cell *matHeaderCellDef>Ad</th>
-                                <td mat-cell *matCellDef="let user">{{ getUserFullName(user) }}</td>
-                            </ng-container>
-
-                            <!-- Position Column (roleName) -->
-                            <ng-container matColumnDef="position">
-                                <th mat-header-cell *matHeaderCellDef>Vəzifə</th>
-                                <td mat-cell *matCellDef="let user">{{ getUserPosition(user) }}</td>
-                            </ng-container>
-
-                            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-                            <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
-
-                            <!-- No data row -->
-                            <tr class="mat-row" *matNoDataRow>
-                                <td class="mat-cell text-center" colspan="5">
-                                    <div class="no-data-message">
-                                        <span class="material-symbols-outlined">
-                                            {{ isLoadingUsers ? 'hourglass_empty' : 'search_off' }}
-                                        </span>
-                                        <p>{{ isLoadingUsers ? 'Yüklənir...' : 'Məlumat tapılmadı' }}</p>
-                                        <small *ngIf="!isLoadingUsers">Zəhmət olmasa axtarış kriteriyalarını dəyişin</small>
-                                    </div>
-                                </td>
-                            </tr>
-                        </table>
+                        <div class="mini-empty" *ngIf="displayRoots.length === 0 && displayOrphans.length === 0">
+                            <span class="material-symbols-outlined" aria-hidden="true">search_off</span>
+                            <p *ngIf="searching">Axtarışa uyğun nəticə tapılmadı</p>
+                            <p *ngIf="!searching && totalStructuresLoaded === 0">Heç bir bağlantı yoxdur</p>
+                            <p *ngIf="!searching && totalStructuresLoaded > 0">Bu firma üzrə bağlantı tapılmadı</p>
+                            <small *ngIf="!searching && totalStructuresLoaded > 0">Serverdə cəmi {{ totalStructuresLoaded }} struktur var, lakin heç biri seçilmiş firmanın mağazalarına/istifadəçilərinə uyğun gəlmir.</small>
+                        </div>
                     </div>
 
-                    <!-- Action Buttons -->
-                    <div class="text-center mt-3">
-                        <button mat-flat-button color="primary" (click)="addToApproval()"
-                            [disabled]="selection.selected.length === 0" class="me-2">
-                            <span class="material-symbols-outlined">arrow_forward</span>
-                            Onay Siyahısına Əlavə Et
+                    <!-- Rəhbərsiz (orphan) bölməsi -->
+                    <div class="orphan-block" *ngIf="displayOrphans.length > 0">
+                        <div class="orphan-head">
+                            <span class="material-symbols-outlined" aria-hidden="true">report</span>
+                            Rəhbəri təyin edilməyib ({{ displayOrphans.length }})
+                        </div>
+                        <p class="orphan-hint">Bu mağaza müdirləri heç bir satış müdirinə/direktora bağlı deyil — zənciri tək addımdan ibarətdir.</p>
+                        <button type="button" class="tree-row orphan" *ngFor="let o of displayOrphans; trackBy: trackByNode"
+                            (click)="selectPerson(o)" [class.selected]="selectedPerson?.userCode === o.userCode"
+                            [attr.aria-current]="selectedPerson?.userCode === o.userCode ? 'true' : null">
+                            <span class="avatar sm warn" aria-hidden="true">{{ getInitials(o.name) }}</span>
+                            <span class="node-role warn">{{ o.roleLabel }}</span>
+                            <span class="node-name">{{ o.name }}</span>
+                            <span class="node-code">{{ o.code }}</span>
+                            <span class="node-badge terr">{{ o.territories.length }} mağaza</span>
                         </button>
                     </div>
+                </div>
 
-                    <!-- Mobile Action Buttons -->
-                    <div class="d-lg-none mt-3">
-                        <div class="row g-2">
-                            <div class="col-6">
-                                <button mat-flat-button color="primary" (click)="addToApproval()"
-                                    [disabled]="selection.selected.length === 0" class="w-100">
-                                    <span class="material-symbols-outlined me-1">arrow_forward</span>
-                                    Əlavə Et
-                                </button>
+                <!-- Sağ: detal / redaktə -->
+                <div class="panel-card detail-card">
+
+                    <!-- Boş -->
+                    <div class="detail-empty" *ngIf="!selectedPerson && !selectedStore && !newBindingMode">
+                        <span class="material-symbols-outlined" aria-hidden="true">touch_app</span>
+                        <p>Soldakı ağacdan bir şəxs və ya mağaza seçin — məlumat və əməliyyatlar burada görünəcək. Yeni mağaza bağlamaq üçün yuxarıdakı <b>“Yeni bağlantı”</b> düyməsindən istifadə edin.</p>
+                    </div>
+
+                    <!-- Yeni bağlantı: mağaza seçimi -->
+                    <ng-container *ngIf="newBindingMode && !selectedStore">
+                        <div class="detail-head">
+                            <span class="store-dot lg" aria-hidden="true"><span class="material-symbols-outlined">add_business</span></span>
+                            <div class="detail-id">
+                                <div class="detail-name">Yeni bağlantı</div>
+                                <div class="detail-sub"><span class="detail-code">Bağlamaq üçün mağaza seçin</span></div>
                             </div>
-                            <div class="col-6">
-                                <button mat-flat-button color="warn" (click)="removeFromApproval()"
-                                    [disabled]="selection.selected.length === 0" class="w-100">
-                                    <span class="material-symbols-outlined me-1">arrow_back</span>
-                                    Çıxar
+                            <button type="button" class="icon-btn" (click)="clearSelection()" matTooltip="Bağla" aria-label="Paneli bağla"><span class="material-symbols-outlined" aria-hidden="true">close</span></button>
+                        </div>
+                        <div class="detail-section">
+                            <div class="detail-section-title">Mağaza seçin</div>
+                            <div class="search-input">
+                                <span class="material-symbols-outlined" aria-hidden="true">search</span>
+                                <input type="text" [(ngModel)]="newStoreSearch" placeholder="Mağaza adı və ya kodu"
+                                    aria-label="Mağaza axtar">
+                            </div>
+
+                            <!-- Boş / Bağlı filtri: əvvəl bütün mağazalar qarışıq idi və
+                                 "boş mağaza varmı?" sualına cavab vermək mümkün deyildi -->
+                            <div class="picker-filter" role="group" aria-label="Mağaza filtri">
+                                <button type="button" [class.on]="newStoreFilter === 'all'"
+                                    (click)="setNewStoreFilter('all')">Hamısı ({{ newStoreTotal }})</button>
+                                <button type="button" [class.on]="newStoreFilter === 'free'"
+                                    (click)="setNewStoreFilter('free')">Boş ({{ freeStoreCount }})</button>
+                                <button type="button" [class.on]="newStoreFilter === 'bound'"
+                                    (click)="setNewStoreFilter('bound')">Bağlı ({{ boundStoreOptionCount }})</button>
+                            </div>
+
+                            <div class="picker-note" *ngIf="freeStoreCount === 0">
+                                <span class="material-symbols-outlined" aria-hidden="true">info</span>
+                                Bu firmada bağlanmamış mağaza yoxdur — seçdiyiniz mağazanın mövcud təsdiq zənciri redaktə olunacaq.
+                            </div>
+
+                            <div class="store-picker">
+                                <button type="button" class="picker-row" *ngFor="let o of filteredNewStoreOptions; trackBy: trackByStoreCode"
+                                    (click)="chooseNewStore(o.code)">
+                                    <span class="store-dot" aria-hidden="true"><span class="material-symbols-outlined">storefront</span></span>
+                                    <span class="list-meta">
+                                        <span class="node-name">{{ o.name }}</span>
+                                        <span class="node-code">#{{ o.code }}</span>
+                                    </span>
+                                    <span class="link-badge" [class.on]="o.bound">{{ o.bound ? 'Bağlı' : 'Boş' }}</span>
+                                    <span class="material-symbols-outlined go" aria-hidden="true">chevron_right</span>
+                                </button>
+
+                                <div class="mini-empty" *ngIf="filteredNewStoreOptions.length === 0">
+                                    <span class="material-symbols-outlined" aria-hidden="true">search_off</span>
+                                    <p>Mağaza tapılmadı</p>
+                                </div>
+                            </div>
+                            <p class="new-hint">
+                                <span *ngIf="newStoreTotal > 60 && !newStoreSearch">{{ newStoreTotal }} mağazadan ilk 60-ı göstərilir — axtarışdan istifadə edin. </span>
+                                <b>Boş</b> mağaza seçsəniz zənciri sıfırdan quracaqsınız: 1-ci əlavə etdiyiniz Mağaza müdiri,
+                                2-ci Satış müdiri, 3-cü Direktor olacaq. <b>Bağlı</b> mağaza seçsəniz mövcud zəncir açılacaq.
+                            </p>
+                        </div>
+                    </ng-container>
+
+                    <!-- Şəxs detalı -->
+                    <ng-container *ngIf="selectedPerson as p">
+                        <div class="detail-head">
+                            <span class="avatar lg" aria-hidden="true">{{ getInitials(p.name) }}</span>
+                            <div class="detail-id">
+                                <div class="detail-name">{{ p.name }}</div>
+                                <div class="detail-sub">
+                                    <span class="node-role" [attr.data-level]="p.level">{{ p.roleLabel }}</span>
+                                    <span class="detail-code">Sicil {{ p.code }}</span>
+                                </div>
+                            </div>
+                            <button type="button" class="icon-btn" (click)="clearSelection()" matTooltip="Bağla" aria-label="Paneli bağla">
+                                <span class="material-symbols-outlined" aria-hidden="true">close</span>
+                            </button>
+                        </div>
+
+                        <div class="detail-metrics">
+                            <div class="metric"><span class="material-symbols-outlined" aria-hidden="true">groups</span><b>{{ p.children.length }}</b> tabeçilik</div>
+                            <!-- Əvvəl burada yalnız 1-ci pillədəki ("idarə etdiyi") ərazilər sayılırdı:
+                                 Satış müdiri 2 zəncirdə olsa belə "0 ərazi" yazırdı. -->
+                            <div class="metric"><span class="material-symbols-outlined" aria-hidden="true">storefront</span><b>{{ chainStoresFor(p).length }}</b> mağaza zənciri</div>
+                        </div>
+
+                        <div class="detail-section" *ngIf="p.children.length > 0">
+                            <div class="detail-section-title">Tabeçiliyindəki şəxslər</div>
+                            <button type="button" class="list-row" *ngFor="let c of p.children; trackBy: trackByNode" (click)="selectPerson(c)">
+                                <span class="avatar sm" aria-hidden="true">{{ getInitials(c.name) }}</span>
+                                <span class="list-meta"><span class="node-name">{{ c.name }}</span><span class="node-code">{{ c.roleLabel }} · {{ c.code }}</span></span>
+                                <span class="material-symbols-outlined go" aria-hidden="true">chevron_right</span>
+                            </button>
+                        </div>
+
+                        <!-- Rəhbər ziddiyyəti: ağac hər şəxsi bir dəfə göstərir, ona görə
+                             fərqli mağazalardakı fərqli rəhbərlər görünmür -->
+                        <div class="conflict-note" *ngIf="supervisorConflict(p) as votes">
+                            <div class="conflict-head">
+                                <span class="material-symbols-outlined" aria-hidden="true">warning</span>
+                                Bu şəxsin rəhbəri mağazadan-mağazaya fərqlidir
+                            </div>
+                            <p>Ağacda yalnız ən çox təkrarlanan rəhbər göstərilir. Faktiki vəziyyət:</p>
+                            <ul>
+                                <li *ngFor="let v of votes">
+                                    <b>{{ v.name }}</b> — {{ v.count }} mağazada
+                                </li>
+                            </ul>
+                        </div>
+
+                        <!-- Şəxsin BÜTÜN zəncirləri: əməliyyat yolu buradan keçir -->
+                        <div class="detail-section" *ngIf="chainStoresFor(p) as stores">
+                            <div class="detail-section-title">Zəncirində olduğu mağazalar ({{ stores.length }})</div>
+
+                            <p class="model-note">
+                                <span class="material-symbols-outlined" aria-hidden="true">info</span>
+                                Bu ağac mağaza təsdiq zəncirlərindən qurulur — özü redaktə olunmur.
+                                Dəyişiklik etmək üçün aşağıdakı mağazalardan birini açın.
+                            </p>
+
+                            <button type="button" class="list-row" *ngFor="let s of stores; trackBy: trackByChainStore"
+                                (click)="openChainStore(s)">
+                                <span class="store-dot" aria-hidden="true"><span class="material-symbols-outlined">storefront</span></span>
+                                <span class="list-meta">
+                                    <span class="node-name">{{ s.name }}</span>
+                                    <span class="node-code">#{{ s.code }} · {{ s.regionName }}</span>
+                                </span>
+                                <span class="node-role sm" [attr.data-level]="s.level">{{ s.level }}. {{ s.roleLabel }}</span>
+                                <span class="material-symbols-outlined go" aria-hidden="true">edit</span>
+                            </button>
+
+                            <div class="mini-empty" *ngIf="stores.length === 0">
+                                <span class="material-symbols-outlined" aria-hidden="true">storefront</span>
+                                <p>Heç bir mağaza zəncirində iştirak etmir</p>
+                            </div>
+                        </div>
+                    </ng-container>
+
+                    <!-- Mağaza zənciri (redaktə) -->
+                    <ng-container *ngIf="selectedStore as store">
+                        <div class="detail-head">
+                            <span class="store-dot lg" aria-hidden="true"><span class="material-symbols-outlined">storefront</span></span>
+                            <div class="detail-id">
+                                <div class="detail-name">{{ store.name }}</div>
+                                <div class="detail-sub">
+                                    <span class="detail-code">#{{ store.code }} · {{ store.regionName }}</span>
+                                    <span class="mode-tag" *ngIf="editingExistingChain">Mövcud zəncir</span>
+                                </div>
+                            </div>
+                            <span class="mini-spinner" *ngIf="store.saving" role="status" aria-label="Yadda saxlanılır"></span>
+                            <button type="button" class="icon-btn" (click)="clearSelection()" matTooltip="Bağla" aria-label="Paneli bağla"><span class="material-symbols-outlined" aria-hidden="true">close</span></button>
+                        </div>
+
+                        <div class="detail-section">
+                            <div class="detail-section-title">Təsdiq zənciri</div>
+
+                            <div class="edit-row" *ngFor="let m of store.members; trackBy: trackByMember">
+                                <span class="step-node" aria-hidden="true">{{ m.level }}</span>
+                                <span class="avatar sm" aria-hidden="true">{{ getInitials(m.name) }}</span>
+                                <div class="edit-meta">
+                                    <span class="node-name">{{ m.name }}</span>
+                                    <span class="node-code"><span class="node-role sm" [attr.data-level]="m.level">{{ m.roleLabel }}</span> · {{ m.code }}</span>
+                                </div>
+                                <div class="edit-actions">
+                                    <button type="button" class="icon-btn xs" (click)="moveMember(store, m, -1)" [disabled]="m.level === 1"
+                                        matTooltip="Yuxarı" [attr.aria-label]="m.name + ' — bir pillə yuxarı'"><span class="material-symbols-outlined" aria-hidden="true">arrow_upward</span></button>
+                                    <button type="button" class="icon-btn xs" (click)="moveMember(store, m, 1)" [disabled]="m.level === store.members.length"
+                                        matTooltip="Aşağı" [attr.aria-label]="m.name + ' — bir pillə aşağı'"><span class="material-symbols-outlined" aria-hidden="true">arrow_downward</span></button>
+                                    <button type="button" class="icon-btn xs danger" (click)="removeMember(store, m)"
+                                        matTooltip="Sil" [attr.aria-label]="m.name + ' — zəncirdən sil'"><span class="material-symbols-outlined" aria-hidden="true">close</span></button>
+                                </div>
+                            </div>
+
+                            <div class="edit-empty" *ngIf="store.members.length === 0">Təsdiq zənciri boşdur. Aşağıdan istifadəçi əlavə edin.</div>
+
+                            <!-- Axtarıla bilən siyahı: mat-select-də axtarış yox idi və
+                                 seçilən şəxsin vəzifəsi/hansı rola düşəcəyi görünmürdü.
+                                 Komponentin öz .search-input + .picker-row patterni işlənir. -->
+                            <div class="add-block">
+                                <div class="add-head">
+                                    <span class="g-field-label">
+                                        <span class="material-symbols-outlined" aria-hidden="true">person_add</span>Zəncirə şəxs əlavə et
+                                    </span>
+                                    <span class="next-level" [attr.data-level]="nextLevel(store)">
+                                        {{ nextLevel(store) }}-ci pillə → {{ nextLevelLabel(store) }}
+                                    </span>
+                                </div>
+
+                                <div class="search-input">
+                                    <span class="material-symbols-outlined" aria-hidden="true">search</span>
+                                    <input type="text" [(ngModel)]="addUserSearch" placeholder="Ad, sicil və ya vəzifə"
+                                        aria-label="İstifadəçi axtar">
+                                    <button type="button" class="field-clear inline" *ngIf="addUserSearch"
+                                        (click)="clearAddUserSearch()" aria-label="Axtarışı təmizlə">
+                                        <span class="material-symbols-outlined" aria-hidden="true">close</span>
+                                    </button>
+                                </div>
+
+                                <div class="user-picker">
+                                    <button type="button" class="picker-row" *ngFor="let u of addUserOptions(store); trackBy: trackByUserCode"
+                                        (click)="selectAddUser(store, u.userCode)"
+                                        [class.selected]="store.addUserCode === u.userCode"
+                                        [attr.aria-pressed]="store.addUserCode === u.userCode">
+                                        <span class="avatar sm" aria-hidden="true">{{ getInitials(u.name) }}</span>
+                                        <span class="list-meta">
+                                            <span class="node-name">{{ u.name }}</span>
+                                            <span class="node-code">
+                                                <span [class.no-position]="!u.position">{{ u.position || 'Vəzifə təyin edilməyib' }}</span> · {{ u.code }}
+                                            </span>
+                                        </span>
+                                        <span class="sys-badge" *ngIf="u.isSystem">Sistem</span>
+                                        <span class="material-symbols-outlined go" aria-hidden="true"
+                                            *ngIf="store.addUserCode === u.userCode">check_circle</span>
+                                    </button>
+
+                                    <div class="mini-empty" *ngIf="addUserOptions(store).length === 0">
+                                        <span class="material-symbols-outlined" aria-hidden="true">person_off</span>
+                                        <p *ngIf="addUserSearch">Axtarışa uyğun istifadəçi yoxdur</p>
+                                        <p *ngIf="!addUserSearch">Əlavə ediləcək istifadəçi qalmayıb</p>
+                                    </div>
+                                </div>
+
+                                <button type="button" class="g-search-btn add-confirm" (click)="addMember(store)"
+                                    [disabled]="store.addUserCode == null">
+                                    <span class="material-symbols-outlined" aria-hidden="true">add</span>
+                                    {{ nextLevelLabel(store) }} kimi əlavə et
                                 </button>
                             </div>
                         </div>
-                    </div>
-                </mat-card-content>
-            </mat-card>
-        </div>
-
-        <!-- Middle Section - Action Buttons -->
-        <div class="col-12 col-lg-2 d-none d-lg-block">
-            <div class="d-flex flex-column justify-content-center align-items-center h-100">
-                <button mat-fab color="primary" (click)="addToApproval()" [disabled]="selection.selected.length === 0"
-                    class="mb-3">
-                    <span class="material-symbols-outlined">arrow_forward</span>
-                </button>
-
-                <button mat-fab color="warn" (click)="removeFromApproval()"
-                    [disabled]="selection.selected.length === 0">
-                    <span class="material-symbols-outlined">arrow_back</span>
-                </button>
+                    </ng-container>
+                </div>
             </div>
         </div>
 
-        <!-- Right Section - Approval Scheme -->
-        <div class="col-12 col-lg-5">
-            <mat-card class="approval-scheme-card h-100">
-                <mat-card-header>
-                    <mat-card-title>
-                        <span class="material-symbols-outlined me-2">verified</span>
-                        Onay Sxemi
-                    </mat-card-title>
-                </mat-card-header>
-
-                <mat-card-content>
-                    <!-- Approval Users List -->
-                    <div class="approval-users-list" *ngIf="!isLoadingStructures && approvalUsers.length > 0; else emptyApproval">
-                        <div class="approval-user-item" *ngFor="let user of approvalUsers; trackBy: trackByUserId">
-                            <div class="user-info">
-                                <div class="order-badge">{{ user.order }}</div>
-                                <div class="user-details">
-                                    <div class="user-name">{{ user.name }}</div>
-                                    <div class="user-code">{{ user.code }}</div>
-                                    <div class="user-position">{{ user.position }}</div>
-                                </div>
-                            </div>
-
-                            <div class="user-actions">
-                                <button mat-icon-button color="primary" (click)="moveUp(user)"
-                                    [disabled]="user.order === 1" matTooltip="Yuxarı">
-                                    <span class="material-symbols-outlined">keyboard_arrow_up</span>
-                                </button>
-                                <button mat-icon-button color="primary" (click)="moveDown(user)"
-                                    [disabled]="user.order === approvalUsers.length" matTooltip="Aşağı">
-                                    <span class="material-symbols-outlined">keyboard_arrow_down</span>
-                                </button>
-                                <button mat-icon-button color="warn" (click)="removeUser(user)" matTooltip="Sil">
-                                    <span class="material-symbols-outlined">delete</span>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Empty State -->
-                    <ng-template #emptyApproval>
-                        <div class="empty-state text-center py-5" *ngIf="!isLoadingStructures">
-                            <span class="material-symbols-outlined empty-icon">verified</span>
-                            <h4 class="text-muted">Onay Sxemi Boşdur</h4>
-                            <p class="text-muted">Sol tərəfdən istifadəçiləri seçib onay sxeminə əlavə edin</p>
-                        </div>
-                    </ng-template>
-
-                    <!-- Excel Import Section -->
-                    <mat-divider class="my-4"></mat-divider>
-
-                    <div class="excel-import-section">
-                        <h6 class="mb-3">
-                            <span class="material-symbols-outlined me-2">upload_file</span>
-                            Excel ilə Yetki İdxalı
-                        </h6>
-
-                        <div class="excel-upload-area">
-                            <div class="upload-zone" (click)="fileInput.click()" [class.dragover]="isDragOver"
-                                (dragover)="onDragOver($event)" (dragleave)="onDragLeave($event)"
-                                (drop)="onDrop($event)">
-                                <div class="upload-content">
-                                    <span class="material-symbols-outlined upload-icon">cloud_upload</span>
-                                    <h5>Excel Faylını Seçin və ya Sürükləyin</h5>
-                                    <p class="text-muted">Dəstəklənən formatlar: .xlsx, .xls</p>
-                                    <button mat-stroked-button color="primary" class="mt-2">
-                                        <span class="material-symbols-outlined me-1">folder_open</span>
-                                        Fayl Seç
-                                    </button>
-                                </div>
-                                <input #fileInput type="file" (change)="onFileSelected($event)" accept=".xlsx,.xls"
-                                    style="display: none;">
-                            </div>
-
-                            <div class="upload-info mt-3">
-                                <div class="row g-3">
-                                    <div class="col-12 col-md-6">
-                                        <div class="info-card">
-                                            <div class="info-header">
-                                                <span class="material-symbols-outlined info-icon">info</span>
-                                                <h6>Excel Formatı</h6>
-                                            </div>
-                                            <ul class="info-list">
-                                                <li>1-ci sətir: Başlıqlar (ID, Ad, Kod, Vəzifə, Limit, Sıra)</li>
-                                                <li>2-ci sətirdən: Məlumatlar</li>
-                                                <li>Məcburi sütunlar: Ad, Kod, Vəzifə</li>
-                                            </ul>
-                                        </div>
-                                    </div>
-                                    <div class="col-12 col-md-6">
-                                        <div class="info-card">
-                                            <div class="info-header">
-                                                <span class="material-symbols-outlined info-icon">download</span>
-                                                <h6>Nümunə Fayl</h6>
-                                            </div>
-                                            <div class="template-download">
-                                                <p class="text-muted mb-2">Excel şablonunu yükləyin</p>
-                                                <button mat-stroked-button color="accent" (click)="downloadTemplate()">
-                                                    <span class="material-symbols-outlined me-1">file_download</span>
-                                                    Şablon Yüklə
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Upload Progress -->
-                            <div class="upload-progress mt-3" *ngIf="uploadProgress > 0 && uploadProgress < 100">
-                                <div class="progress-header">
-                                    <span>Fayl yüklənir...</span>
-                                    <span class="progress-percentage">{{ uploadProgress }}%</span>
-                                </div>
-                                <mat-progress-bar mode="determinate" [value]="uploadProgress"></mat-progress-bar>
-                            </div>
-
-                            <!-- Upload Results -->
-                            <div class="upload-results mt-3" *ngIf="uploadResults">
-                                <div class="results-header">
-                                    <span class="material-symbols-outlined me-2">check_circle</span>
-                                    <h6>Yükləmə Nəticəsi</h6>
-                                </div>
-                                <div class="results-content">
-                                    <div class="result-item success">
-                                        <span class="material-symbols-outlined">check</span>
-                                        <span>Uğurla əlavə edildi: {{ uploadResults.successCount }}</span>
-                                    </div>
-                                    <div class="result-item warning" *ngIf="uploadResults.warningCount > 0">
-                                        <span class="material-symbols-outlined">warning</span>
-                                        <span>Xəbərdarlıq: {{ uploadResults.warningCount }}</span>
-                                    </div>
-                                    <div class="result-item error" *ngIf="uploadResults.errorCount > 0">
-                                        <span class="material-symbols-outlined">error</span>
-                                        <span>Xəta: {{ uploadResults.errorCount }}</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </mat-card-content>
-            </mat-card>
-        </div>
-    </div>
-
-        </div>
         <app-audit-loading-overlay *ngIf="workspaceBusy"
-            [title]="workspaceLoadingTitle"
-            [hint]="workspaceLoadingHint"
+            [title]="workspaceLoadingTitle" [hint]="workspaceLoadingHint"
             [ariaLabel]="workspaceLoadingTitle"></app-audit-loading-overlay>
     </div>
 </div>
+
+<!-- ── Rekursiv ağac düyünü ───────────────────────────────────────────────── -->
+<ng-template #nodeTpl let-node="node" let-depth="depth">
+    <!-- Twisty artıq ayrıca düymədir (əvvəl <button> içində <span (click)> idi:
+         etibarsız HTML və klaviatura ilə açmaq mümkün deyildi) -->
+    <div class="tree-line" [style.paddingLeft.px]="14 + depth * 20">
+        <button type="button" class="twisty" *ngIf="hasChildrenOrTerritories(node)"
+            (click)="toggleNode(node, $event)"
+            [attr.aria-expanded]="isExpanded(node)"
+            [attr.aria-label]="node.name + (isExpanded(node) ? ' — yığ' : ' — aç')">
+            <span class="material-symbols-outlined" [class.open]="isExpanded(node)" aria-hidden="true">chevron_right</span>
+        </button>
+        <span class="twisty hidden" *ngIf="!hasChildrenOrTerritories(node)" aria-hidden="true"></span>
+
+        <button type="button" class="tree-row" (click)="selectPerson(node)"
+            [class.selected]="selectedPerson?.userCode === node.userCode"
+            [attr.aria-current]="selectedPerson?.userCode === node.userCode ? 'true' : null">
+            <span class="node-role" [attr.data-level]="node.level">{{ node.roleLabel }}</span>
+            <span class="node-name">{{ node.name }}</span>
+            <span class="node-code">{{ node.code }}</span>
+            <span class="node-badge people" *ngIf="node.children.length > 0">{{ node.children.length }} nəfər</span>
+            <span class="node-badge terr" *ngIf="node.territories.length > 0">{{ node.territories.length }} mağaza</span>
+            <span class="node-badge conflict" *ngIf="supervisorConflict(node)"
+                matTooltip="Rəhbəri mağazadan-mağazaya fərqlidir">!</span>
+        </button>
+    </div>
+
+    <ng-container *ngIf="isExpanded(node)">
+        <ng-container *ngFor="let c of node.children; trackBy: trackByNode">
+            <ng-container *ngTemplateOutlet="nodeTpl; context: { node: c, depth: depth + 1 }"></ng-container>
+        </ng-container>
+        <div class="tree-line" *ngFor="let t of node.territories; trackBy: trackByStoreRef"
+            [style.paddingLeft.px]="14 + (depth + 1) * 20">
+            <span class="twisty hidden" aria-hidden="true"></span>
+            <button type="button" class="tree-row territory"
+                (click)="selectStore(t)" [class.selected]="selectedStore?.code === t.code"
+                [attr.aria-current]="selectedStore?.code === t.code ? 'true' : null">
+                <span class="store-dot" aria-hidden="true"><span class="material-symbols-outlined">storefront</span></span>
+                <span class="node-name">{{ t.name }}</span>
+                <span class="node-code">#{{ t.code }}</span>
+                <span class="node-badge region">{{ t.regionName }}</span>
+            </button>
+        </div>
+    </ng-container>
+</ng-template>

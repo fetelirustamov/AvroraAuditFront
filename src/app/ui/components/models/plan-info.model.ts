@@ -1,18 +1,14 @@
-export class PlanInfo {
+export interface PlanInfo {
     inspectionPlanId: number;
     inspectorName: string;
     inspectorCode: string;
-    workStartDate: Date;
-    workEndDate: Date;
     locationCode: string;
     locationName: string;
-    constructor(inspectorName: string, inspectorCode: string, workStartDate: Date, workEndDate: Date, locationCode: string, locationName: string, inspectionPlanId: number) {
-        this.inspectorName = inspectorName;
-        this.inspectorCode = inspectorCode;
-        this.workStartDate = workStartDate;
-        this.workEndDate = workEndDate;
-        this.locationCode = locationCode;
-        this.locationName = locationName;
-        this.inspectionPlanId = inspectionPlanId;
-    }
+    status: number;
+    /** Planlaşdırılmış başlama/bitmə vaxtı */
+    startDate: string | null;
+    endDate: string | null;
+    /** Faktiki iş vaxtı (mobil yazır); yoxlama aparılmayıbsa null */
+    workStartDate: string | null;
+    workEndDate: string | null;
 }

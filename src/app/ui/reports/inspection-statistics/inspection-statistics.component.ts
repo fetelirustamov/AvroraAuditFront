@@ -1,53 +1,79 @@
-import { CommonModule, NgFor, NgIf } from '@angular/common';
-import { Component, ViewChild, AfterViewInit, OnDestroy } from '@angular/core';
+import { NgFor, NgIf, NgSwitch, NgSwitchCase, NgSwitchDefault } from '@angular/common';
+import { Component, DestroyRef, OnInit, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
-import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatSelectModule } from '@angular/material/select';
-import { MatTableModule, MatTableDataSource } from '@angular/material/table';
-import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
-import { MatTabsModule } from '@angular/material/tabs';
 import { MatMenuModule } from '@angular/material/menu';
-import * as XLSX from 'xlsx';
-import pdfMake from 'pdfmake/build/pdfmake';
-import pdfFonts from 'pdfmake/build/vfs_fonts';
-import { Subject, Subscription, forkJoin } from 'rxjs';
-import { debounceTime, finalize, takeUntil } from 'rxjs/operators';
+import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatSelectModule } from '@angular/material/select';
+import { MatTableDataSource, MatTableModule } from '@angular/material/table';
+import { MatTabsModule } from '@angular/material/tabs';
+import { ActivatedRoute, Router } from '@angular/router';
+import { Subject, firstValueFrom, forkJoin } from 'rxjs';
+import { debounceTime, finalize } from 'rxjs/operators';
 import { TableState } from '../../../models/table-state.model';
-import { ReportsService } from '../reports.service';
-import { InspectionsService } from '../../inspections/inspections.service';
-import { Firm } from '../../inspections/firm.model';
+import { ListStateComponent } from '../../../shared/components/list-state/list-state.component';
+import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
+import { FileExportService, datedFileName } from '../../../shared/services/file-export.service';
 import { NotificationService } from '../../../shared/services/notification.service';
-import { AuditLoadingOverlayComponent } from '../../components/audit-loading-overlay/audit-loading-overlay.component';
+import { apiErrorMessage } from '../../../shared/utils/api-error';
+import { chartColors } from '../../../shared/utils/chart-colors';
+import { queryNumber, writeQueryState } from '../../../shared/utils/query-state';
+import { Firm } from '../../inspections/firm.model';
+import { InspectionsService } from '../../inspections/inspections.service';
+import { MONTH_OPTIONS, PAGE_SIZES, REPORT_YEARS } from '../report-filters';
+import { ReportsService } from '../reports.service';
+
+/** Cari səhifənin sətirləri + bütün filtrlənmiş sətirlər üzrə cəmlər (API: InspectionReportResponse) */
+interface ReportPageWithTotals {
+    items?: unknown[];
+    total?: number;
+    plannedTotal?: number;
+    unPlannedTotal?: number;
+}
+
+type Tab = 'store' | 'employee';
+
+/** Hər tab üçün URL açarları: mağaza `page/size`, əməkdaş `epage/esize` */
+const PAGE_KEYS: Record<Tab, { page: string; size: string }> = {
+    store: { page: 'page', size: 'size' },
+    employee: { page: 'epage', size: 'esize' },
+};
 
 @Component({
     selector: 'app-yoxlama-statistikasi',
     standalone: true,
     imports: [
-        CommonModule, NgIf, NgFor, ReactiveFormsModule,
-        MatButtonModule, MatFormFieldModule, MatSelectModule,
-        MatTableModule, MatPaginatorModule,
-        MatTabsModule, MatMenuModule,
-        AuditLoadingOverlayComponent
+        NgIf, NgFor, NgSwitch, NgSwitchCase, NgSwitchDefault, ReactiveFormsModule,
+        MatFormFieldModule, MatSelectModule, MatTableModule, MatPaginatorModule, MatTabsModule, MatMenuModule,
+        MatProgressBarModule, PageHeaderComponent, ListStateComponent,
     ],
     templateUrl: './inspection-statistics.component.html',
     styleUrl: './inspection-statistics.component.scss'
 })
-export class YoxlamaStatistikasiComponent implements AfterViewInit, OnDestroy {
-    @ViewChild('storePaginator') storePaginator!: MatPaginator;
-    @ViewChild('employeePaginator') employeePaginator!: MatPaginator;
+export class YoxlamaStatistikasiComponent implements OnInit {
+    private readonly reportsService = inject(ReportsService);
+    private readonly inspectionsService = inject(InspectionsService);
+    private readonly notify = inject(NotificationService);
+    private readonly fileExport = inject(FileExportService);
+    private readonly router = inject(Router);
+    private readonly route = inject(ActivatedRoute);
+    private readonly destroyRef = inject(DestroyRef);
 
     storeColumns = [
         { key: 'row', label: '№' },
-        { key: 'magaza_kodu', label: 'Ərazi kodu' },
-        { key: 'magaza_adi', label: 'Ərazi adı' },
+        { key: 'magaza_kodu', label: 'Mağaza kodu' },
+        { key: 'magaza_adi', label: 'Mağaza adı' },
         { key: 'bolge', label: 'Bölgə' },
         { key: 'planli_say', label: 'Planlı yoxlama sayı' },
         { key: 'plandankanar_say', label: 'Plandankənar yoxlama sayı' },
     ];
     storeDisplayedColumns = this.storeColumns.map(c => c.key);
+    storeFilterColumns = this.storeColumns.map(c => c.key + '__filter');
     storeDataSource = new MatTableDataSource<any>([]);
     storeTotal = 0;
+    private storeSums = { planli_say: 0, plandankanar_say: 0 };
 
     employeeColumns = [
         { key: 'row', label: '№' },
@@ -57,44 +83,35 @@ export class YoxlamaStatistikasiComponent implements AfterViewInit, OnDestroy {
         { key: 'plandankanar_say', label: 'Plandankənar yoxlama sayı' },
     ];
     employeeDisplayedColumns = this.employeeColumns.map(c => c.key);
+    employeeFilterColumns = this.employeeColumns.map(c => c.key + '__filter');
     employeeDataSource = new MatTableDataSource<any>([]);
     employeeTotal = 0;
+    private employeeSums = { planli_say: 0, plandankanar_say: 0 };
 
-    filtersForm = new FormGroup({
-        year: new FormControl<number | null>(new Date().getFullYear()),
+    readonly years = REPORT_YEARS;
+    readonly months = MONTH_OPTIONS;
+    readonly pageSizes = PAGE_SIZES;
+    readonly filtersForm = new FormGroup({
+        year: new FormControl<number | null>(REPORT_YEARS[0]),
         month: new FormControl<number | null>(null),
         firmId: new FormControl<number | null>(null),
     });
-
-    years = Array.from({ length: 6 }, (_, i) => new Date().getFullYear() - i);
-    months = [
-        { value: 1, label: 'Yanvar' }, { value: 2, label: 'Fevral' },
-        { value: 3, label: 'Mart' }, { value: 4, label: 'Aprel' },
-        { value: 5, label: 'May' }, { value: 6, label: 'İyun' },
-        { value: 7, label: 'İyul' }, { value: 8, label: 'Avqust' },
-        { value: 9, label: 'Sentyabr' }, { value: 10, label: 'Oktyabr' },
-        { value: 11, label: 'Noyabr' }, { value: 12, label: 'Dekabr' }
-    ];
     firms: Firm[] = [];
 
     loadingStore = false;
     loadingEmployee = false;
+    loadError: string | null = null;
     activeTab = 0;
     searched = false;
 
-    private readonly destroy$ = new Subject<void>();
     private readonly storeColumnFilterTick$ = new Subject<void>();
     private readonly employeeColumnFilterTick$ = new Subject<void>();
 
-    private storeTableState = new TableState();
-    private employeeTableState = new TableState();
-    private storePaginatorSub?: Subscription;
-    private employeePaginatorSub?: Subscription;
+    readonly storeTableState = new TableState();
+    readonly employeeTableState = new TableState();
 
     storeColumnFilters: Record<string, string> = {};
     employeeColumnFilters: Record<string, string> = {};
-    get storeFilterColumns(): string[] { return this.storeColumns.map(c => c.key + '__filter'); }
-    get employeeFilterColumns(): string[] { return this.employeeColumns.map(c => c.key + '__filter'); }
 
     get hasStoreTableColumnFilters(): boolean {
         return Object.keys(this.storeColumnFilters).length > 0;
@@ -102,6 +119,10 @@ export class YoxlamaStatistikasiComponent implements AfterViewInit, OnDestroy {
 
     get hasEmployeeTableColumnFilters(): boolean {
         return Object.keys(this.employeeColumnFilters).length > 0;
+    }
+
+    get isLoading(): boolean {
+        return this.loadingStore || this.loadingEmployee;
     }
 
     private readonly storeColToApi: Record<string, string> = {
@@ -114,67 +135,45 @@ export class YoxlamaStatistikasiComponent implements AfterViewInit, OnDestroy {
         emekdas_adi: 'userName',
     };
 
-    constructor(
-        private reportsService: ReportsService,
-        private inspectionsService: InspectionsService,
-        private notify: NotificationService,
-    ) {
-        this.inspectionsService.getFirms().subscribe({
-            next: res => { this.firms = res.data ?? []; },
-            error: () => { this.notify.error('Firmalar yüklənmədi'); },
-        });
-    }
+    constructor() {
+        this.storeTableState.paginator.size = PAGE_SIZES[0];
+        this.employeeTableState.paginator.size = PAGE_SIZES[0];
 
-    ngAfterViewInit(): void {
-        this.storeDataSource.paginator = null as any;
-        this.employeeDataSource.paginator = null as any;
-
-        queueMicrotask(() => this.tryWirePaginators());
-
-        this.storeColumnFilterTick$.pipe(debounceTime(400), takeUntil(this.destroy$)).subscribe(() => {
+        this.storeColumnFilterTick$.pipe(debounceTime(400), takeUntilDestroyed()).subscribe(() => {
             if (!this.searched) { return; }
             this.storeTableState.paginator.page = 0;
-            if (this.storePaginator) { this.storePaginator.pageIndex = 0; }
             this.fetchStoreOnly();
         });
 
-        this.employeeColumnFilterTick$.pipe(debounceTime(400), takeUntil(this.destroy$)).subscribe(() => {
+        this.employeeColumnFilterTick$.pipe(debounceTime(400), takeUntilDestroyed()).subscribe(() => {
             if (!this.searched) { return; }
             this.employeeTableState.paginator.page = 0;
-            if (this.employeePaginator) { this.employeePaginator.pageIndex = 0; }
             this.fetchEmployeeOnly();
         });
     }
 
+    ngOnInit(): void {
+        this.inspectionsService.getFirms().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+            next: res => { this.firms = res.data ?? []; },
+            error: error => { this.notify.error(apiErrorMessage(error, 'Firmalar yüklənmədi')); },
+        });
+
+        // URL-də il varsa əvvəlki axtarış bərpa olunur
+        const q = this.route.snapshot.queryParamMap;
+        this.activeTab = queryNumber(q, 'tab') === 1 ? 1 : 0;
+        const year = queryNumber(q, 'year');
+        if (year == null) return;
+        this.filtersForm.patchValue({ year, month: queryNumber(q, 'month'), firmId: queryNumber(q, 'firm') });
+        this.storeTableState.paginator.page = queryNumber(q, PAGE_KEYS.store.page) ?? 0;
+        this.storeTableState.paginator.size = queryNumber(q, PAGE_KEYS.store.size) ?? PAGE_SIZES[0];
+        this.employeeTableState.paginator.page = queryNumber(q, PAGE_KEYS.employee.page) ?? 0;
+        this.employeeTableState.paginator.size = queryNumber(q, PAGE_KEYS.employee.size) ?? PAGE_SIZES[0];
+        this.fetchBoth();
+    }
+
     onTabIndexChange(index: number): void {
         this.activeTab = index;
-        queueMicrotask(() => this.tryWirePaginators());
-    }
-
-    private tryWirePaginators(): void {
-        if (this.storePaginator && !this.storePaginatorSub) {
-            this.storeTableState.paginator.size = this.storePaginator.pageSize;
-            this.storePaginatorSub = this.storePaginator.page.pipe(takeUntil(this.destroy$)).subscribe(() => {
-                if (!this.searched) { return; }
-                this.storeTableState.paginator.page = this.storePaginator.pageIndex;
-                this.storeTableState.paginator.size = this.storePaginator.pageSize;
-                this.fetchStoreOnly();
-            });
-        }
-        if (this.employeePaginator && !this.employeePaginatorSub) {
-            this.employeeTableState.paginator.size = this.employeePaginator.pageSize;
-            this.employeePaginatorSub = this.employeePaginator.page.pipe(takeUntil(this.destroy$)).subscribe(() => {
-                if (!this.searched) { return; }
-                this.employeeTableState.paginator.page = this.employeePaginator.pageIndex;
-                this.employeeTableState.paginator.size = this.employeePaginator.pageSize;
-                this.fetchEmployeeOnly();
-            });
-        }
-    }
-
-    ngOnDestroy(): void {
-        this.destroy$.next();
-        this.destroy$.complete();
+        void writeQueryState(this.router, { tab: index || null });
     }
 
     applyStoreFilter(event: Event, key: string): void {
@@ -194,7 +193,6 @@ export class YoxlamaStatistikasiComponent implements AfterViewInit, OnDestroy {
         document.querySelectorAll<HTMLInputElement>('.store-filter-input').forEach(i => { i.value = ''; });
         if (this.searched) {
             this.storeTableState.paginator.page = 0;
-            if (this.storePaginator) { this.storePaginator.pageIndex = 0; }
             this.fetchStoreOnly();
         }
     }
@@ -204,24 +202,48 @@ export class YoxlamaStatistikasiComponent implements AfterViewInit, OnDestroy {
         document.querySelectorAll<HTMLInputElement>('.emp-filter-input').forEach(i => { i.value = ''; });
         if (this.searched) {
             this.employeeTableState.paginator.page = 0;
-            if (this.employeePaginator) { this.employeePaginator.pageIndex = 0; }
             this.fetchEmployeeOnly();
         }
     }
 
     onSearch(): void {
-        this.searched = true;
         this.storeTableState.paginator.page = 0;
         this.employeeTableState.paginator.page = 0;
-        if (this.storePaginator) {
-            this.storePaginator.pageIndex = 0;
-            this.storeTableState.paginator.size = this.storePaginator.pageSize;
-        }
-        if (this.employeePaginator) {
-            this.employeePaginator.pageIndex = 0;
-            this.employeeTableState.paginator.size = this.employeePaginator.pageSize;
-        }
+        const { year, month, firmId } = this.filtersForm.getRawValue();
+        void writeQueryState(this.router, { year, month, firm: firmId, page: null, epage: null });
+        this.fetchBoth();
+    }
 
+    /** "Təmizlə": filtrlər standart dəyərə qayıdır, nəticə və URL təmizlənir */
+    clearAll(): void {
+        this.filtersForm.reset({ year: REPORT_YEARS[0], month: null, firmId: null });
+        this.storeColumnFilters = {};
+        this.employeeColumnFilters = {};
+        document.querySelectorAll<HTMLInputElement>('.store-filter-input, .emp-filter-input').forEach(i => { i.value = ''; });
+        this.searched = false;
+        this.loadError = null;
+        this.storeDataSource.data = [];
+        this.employeeDataSource.data = [];
+        this.storeTotal = 0;
+        this.employeeTotal = 0;
+        void writeQueryState(this.router, { year: null, month: null, firm: null, page: null, size: null, epage: null, esize: null });
+    }
+
+    onPage(tab: Tab, e: PageEvent): void {
+        const state = tab === 'store' ? this.storeTableState : this.employeeTableState;
+        state.paginator.page = e.pageIndex;
+        state.paginator.size = e.pageSize;
+        const keys = PAGE_KEYS[tab];
+        void writeQueryState(this.router, {
+            [keys.page]: e.pageIndex || null,
+            [keys.size]: e.pageSize === PAGE_SIZES[0] ? null : e.pageSize,
+        });
+        if (tab === 'store') { this.fetchStoreOnly(); } else { this.fetchEmployeeOnly(); }
+    }
+
+    fetchBoth(): void {
+        this.searched = true;
+        this.loadError = null;
         this.syncTableStatesFromForm();
         this.loadingStore = true;
         this.loadingEmployee = true;
@@ -233,18 +255,15 @@ export class YoxlamaStatistikasiComponent implements AfterViewInit, OnDestroy {
             finalize(() => {
                 this.loadingStore = false;
                 this.loadingEmployee = false;
-            })
+            }),
+            takeUntilDestroyed(this.destroyRef),
         ).subscribe({
             next: ({ store, employee }) => {
                 this.applyStoreResponse(store);
                 this.applyEmployeeResponse(employee);
             },
-            error: () => {
-                this.notify.error('Hesabat sorğusu uğursuz oldu', { message: 'Şəbəkə və ya icazəni yoxlayın.' });
-                this.storeDataSource.data = [];
-                this.employeeDataSource.data = [];
-                this.storeTotal = 0;
-                this.employeeTotal = 0;
+            error: error => {
+                this.loadError = apiErrorMessage(error, 'Hesabat yüklənmədi. İnternet bağlantısını və ya icazəni yoxlayın.');
             },
         });
     }
@@ -252,88 +271,69 @@ export class YoxlamaStatistikasiComponent implements AfterViewInit, OnDestroy {
     private fetchStoreOnly(): void {
         this.syncTableStatesFromForm();
         this.loadingStore = true;
+        this.loadError = null;
         this.reportsService.getInspectionDetailsByStoreRegion(this.storeTableState).pipe(
-            finalize(() => { this.loadingStore = false; })
+            finalize(() => { this.loadingStore = false; }),
+            takeUntilDestroyed(this.destroyRef),
         ).subscribe({
             next: res => this.applyStoreResponse(res),
-            error: () => {
-                this.notify.error('Ərazi hesabatı yüklənmədi');
-                this.storeDataSource.data = [];
-                this.storeTotal = 0;
-            },
+            error: error => { this.loadError = apiErrorMessage(error, 'Mağaza hesabatı yüklənmədi'); },
         });
     }
 
     private fetchEmployeeOnly(): void {
         this.syncTableStatesFromForm();
         this.loadingEmployee = true;
+        this.loadError = null;
         this.reportsService.getInspectionDetailsByInspector(this.employeeTableState).pipe(
-            finalize(() => { this.loadingEmployee = false; })
+            finalize(() => { this.loadingEmployee = false; }),
+            takeUntilDestroyed(this.destroyRef),
         ).subscribe({
             next: res => this.applyEmployeeResponse(res),
-            error: () => {
-                this.notify.error('Auditor hesabatı yüklənmədi');
-                this.employeeDataSource.data = [];
-                this.employeeTotal = 0;
-            },
+            error: error => { this.loadError = apiErrorMessage(error, 'Əməkdaş hesabatı yüklənmədi'); },
         });
     }
 
     private syncTableStatesFromForm(): void {
-        const v = this.filtersForm.getRawValue();
-        const storeFilter = this.buildStoreFilterRecord(v);
-        const employeeFilter = this.buildEmployeeFilterRecord(v);
-
-        this.storeTableState.filter = storeFilter;
+        const base = this.formFilters();
+        this.storeTableState.filter = { ...base, ...this.columnFilters(this.storeColumnFilters, this.storeColToApi) };
         this.storeTableState.searchTerm = '';
-        this.employeeTableState.filter = employeeFilter;
+        this.employeeTableState.filter = { ...base, ...this.columnFilters(this.employeeColumnFilters, this.employeeColToApi) };
         this.employeeTableState.searchTerm = '';
     }
 
-    private buildStoreFilterRecord(v: {
-        year: number | null; month: number | null; firmId: number | null;
-    }): Record<string, string> {
+    private formFilters(): Record<string, string> {
+        const { year, month, firmId } = this.filtersForm.getRawValue();
         const f: Record<string, string> = {};
-        if (v.year != null) { f['year'] = String(v.year); }
-        if (v.month != null) { f['month'] = String(v.month); }
-        if (v.firmId != null) { f['firmId'] = String(v.firmId); }
-        for (const [col, val] of Object.entries(this.storeColumnFilters)) {
-            const apiKey = this.storeColToApi[col];
+        if (year != null) { f['year'] = String(year); }
+        if (month != null) { f['month'] = String(month); }
+        if (firmId != null) { f['firmId'] = String(firmId); }
+        return f;
+    }
+
+    private columnFilters(values: Record<string, string>, toApi: Record<string, string>): Record<string, string> {
+        const f: Record<string, string> = {};
+        for (const [col, val] of Object.entries(values)) {
+            const apiKey = toApi[col];
             if (apiKey && val) { f[apiKey] = val; }
         }
         return f;
     }
 
-    private buildEmployeeFilterRecord(v: {
-        year: number | null; month: number | null; firmId: number | null;
-    }): Record<string, string> {
-        const f: Record<string, string> = {};
-        if (v.year != null) { f['year'] = String(v.year); }
-        if (v.month != null) { f['month'] = String(v.month); }
-        if (v.firmId != null) { f['firmId'] = String(v.firmId); }
-        for (const [col, val] of Object.entries(this.employeeColumnFilters)) {
-            const apiKey = this.employeeColToApi[col];
-            if (apiKey && val) { f[apiKey] = val; }
-        }
-        return f;
-    }
-
-    private applyStoreResponse(res: { data?: { items?: unknown[]; total?: number } }): void {
+    private applyStoreResponse(res: { data?: ReportPageWithTotals }): void {
         const items = res?.data?.items ?? [];
         this.storeTotal = res?.data?.total ?? items.length;
-        const page = this.storeTableState.paginator.page;
-        const size = this.storeTableState.paginator.size;
+        this.storeSums = { planli_say: res?.data?.plannedTotal ?? 0, plandankanar_say: res?.data?.unPlannedTotal ?? 0 };
+        const { page, size } = this.storeTableState.paginator;
         this.storeDataSource.data = items.map((raw, i) => this.normalizeStoreRow(raw, page * size + i + 1));
-        if (this.storePaginator) { this.storePaginator.length = this.storeTotal; }
     }
 
-    private applyEmployeeResponse(res: { data?: { items?: unknown[]; total?: number } }): void {
+    private applyEmployeeResponse(res: { data?: ReportPageWithTotals }): void {
         const items = res?.data?.items ?? [];
         this.employeeTotal = res?.data?.total ?? items.length;
-        const page = this.employeeTableState.paginator.page;
-        const size = this.employeeTableState.paginator.size;
+        this.employeeSums = { planli_say: res?.data?.plannedTotal ?? 0, plandankanar_say: res?.data?.unPlannedTotal ?? 0 };
+        const { page, size } = this.employeeTableState.paginator;
         this.employeeDataSource.data = items.map((raw, i) => this.normalizeEmployeeRow(raw, page * size + i + 1));
-        if (this.employeePaginator) { this.employeePaginator.length = this.employeeTotal; }
     }
 
     private normalizeStoreRow(item: any, rowNo: number): any {
@@ -365,48 +365,69 @@ export class YoxlamaStatistikasiComponent implements AfterViewInit, OnDestroy {
         };
     }
 
-    get storeCount(): number { return this.storeTotal; }
-    get employeeCount(): number { return this.employeeTotal; }
-
+    // Səhifələmə serverdədir: cədvəldə yalnız cari səhifə var, cəmlər isə bütün filtrlənmiş
+    // sətirlər üzrə serverdən gəlir.
     getStoreTotal(field: 'planli_say' | 'plandankanar_say'): number {
-        return this.storeDataSource.data.reduce((sum, r) => sum + (r[field] ?? 0), 0);
+        return this.storeSums[field];
     }
 
     getEmployeeTotal(field: 'planli_say' | 'plandankanar_say'): number {
-        return this.employeeDataSource.data.reduce((sum, r) => sum + (r[field] ?? 0), 0);
+        return this.employeeSums[field];
     }
 
-    exportExcel(tab: 'store' | 'employee'): void {
+    /** İxrac üçün cari səhifə yox, filtrə uyğun bütün sətirlər (page = -1 serverdə səhifələməni söndürür). */
+    private async fetchAllRows(tab: Tab): Promise<any[]> {
+        const source = tab === 'store' ? this.storeTableState : this.employeeTableState;
+        const state = { ...source, paginator: { ...source.paginator, page: -1 } } as TableState;
+        const res: { data?: ReportPageWithTotals } = await firstValueFrom(tab === 'store'
+            ? this.reportsService.getInspectionDetailsByStoreRegion(state)
+            : this.reportsService.getInspectionDetailsByInspector(state));
+        const items = res?.data?.items ?? [];
+        return tab === 'store'
+            ? items.map((raw, i) => this.normalizeStoreRow(raw, i + 1))
+            : items.map((raw, i) => this.normalizeEmployeeRow(raw, i + 1));
+    }
+
+    private get activeTabKey(): Tab {
+        return this.activeTab === 0 ? 'store' : 'employee';
+    }
+
+    async exportExcel(): Promise<void> {
+        const tab = this.activeTabKey;
+        const all = await this.fetchAllRows(tab);
         const data = tab === 'store'
-            ? this.storeDataSource.data.map((r: any) => ({
-                '№': r.row, 'Ərazi kodu': r.magaza_kodu, 'Ərazi adı': r.magaza_adi,
+            ? all.map((r: any) => ({
+                '№': r.row, 'Mağaza kodu': r.magaza_kodu, 'Mağaza adı': r.magaza_adi,
                 'Bölgə': r.bolge, 'Planlı yoxlama sayı': r.planli_say, 'Plandankənar yoxlama sayı': r.plandankanar_say,
             }))
-            : this.employeeDataSource.data.map((r: any) => ({
+            : all.map((r: any) => ({
                 '№': r.row, 'İstifadəçi kodu': r.user_kodu, 'Əməkdaş adı': r.emekdas_adi,
                 'Planlı yoxlama sayı': r.planli_say, 'Plandankənar yoxlama sayı': r.plandankanar_say,
             }));
-        const ws = XLSX.utils.json_to_sheet(data);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, tab === 'store' ? 'Ərazi bazında' : 'Əməkdaş bazında');
-        XLSX.writeFile(wb, `yoxlama-statistikasi-${tab}-${new Date().toISOString().slice(0, 10)}.xlsx`);
+        await this.fileExport.exportRowsToExcel(
+            data,
+            tab === 'store' ? 'Mağaza bazında' : 'Əməkdaş bazında',
+            datedFileName(`yoxlama-statistikasi-${tab}`, 'xlsx'),
+        );
     }
 
-    exportPdf(tab: 'store' | 'employee'): void {
-        const vfs: any = (pdfFonts as any).pdfMake ? (pdfFonts as any).pdfMake.vfs : (pdfFonts as any).vfs;
-        (pdfMake as any).vfs = vfs;
+    async exportPdf(): Promise<void> {
+        const tab = this.activeTabKey;
         const isStore = tab === 'store';
+        const all = await this.fetchAllRows(tab);
         const headers = isStore
-            ? ['№', 'Ərazi kodu', 'Ərazi adı', 'Bölgə', 'Planlı yoxlama sayı', 'Plandankənar yoxlama sayı']
+            ? ['№', 'Mağaza kodu', 'Mağaza adı', 'Bölgə', 'Planlı yoxlama sayı', 'Plandankənar yoxlama sayı']
             : ['№', 'İstifadəçi kodu', 'Əməkdaş adı və soyadı', 'Planlı yoxlama sayı', 'Plandankənar yoxlama sayı'];
         const rows = isStore
-            ? this.storeDataSource.data.map((r: any) => [r.row, r.magaza_kodu, r.magaza_adi, r.bolge, r.planli_say, r.plandankanar_say])
-            : this.employeeDataSource.data.map((r: any) => [r.row, r.user_kodu, r.emekdas_adi, r.planli_say, r.plandankanar_say]);
+            ? all.map((r: any) => [r.row, r.magaza_kodu, r.magaza_adi, r.bolge, r.planli_say, r.plandankanar_say])
+            : all.map((r: any) => [r.row, r.user_kodu, r.emekdas_adi, r.planli_say, r.plandankanar_say]);
+        // PDF-də başlıq neytraldır: rəng məna daşımır
+        const pdf = chartColors();
         const docDef: any = {
             content: [{ table: { headerRows: 1, body: [headers.map(h => ({ text: h, style: 'th' })), ...rows] }, layout: 'lightHorizontalLines' }],
-            styles: { th: { bold: true, color: '#fff', fillColor: '#605DFF', fontSize: 9 } },
+            styles: { th: { bold: true, color: pdf.textStrong, fillColor: pdf.surfaceSubtle, fontSize: 9 } },
             defaultStyle: { fontSize: 9 }
         };
-        pdfMake.createPdf(docDef).download(`yoxlama-statistikasi-${tab}-${new Date().toISOString().slice(0, 10)}.pdf`);
+        void this.fileExport.exportPdf(docDef, datedFileName(`yoxlama-statistikasi-${tab}`, 'pdf'));
     }
 }

@@ -1,7 +1,8 @@
 export class DisruptionApproveDto {
-    inspectionPlanId: number = 0;
     status!: number;
     disruptionId: number[] = [];
+    /** Rədd və müfəttişə qaytarmanın səbəbi (server `StatusChangeLogs`-a yazır). */
+    reason?: string;
 }
 
 export class DisruptionDto {
@@ -22,6 +23,9 @@ export class DisruptionDto {
     deadline!: number;
     createdDate!: Date;
     status!: number;
+    image!: number;
+    video!: number;
+    document?: number;
 }
 
 export class Disruption {
@@ -34,6 +38,6 @@ export class Disruption {
     createdDate: Date = new Date();
     description: string = '';
     deadline: number | null = null;
-    questionResultDetailsId: number = 0;
+    questionId: number | null = null;
     localId: string = '';
 }

@@ -1,22 +1,20 @@
-<div class="toast-wrapper" [ngClass]="data.type">
-  <!-- Left accent icon strip -->
-  <div class="toast-icon-strip">
-    <span class="toast-icon material-symbols-outlined">{{ icon }}</span>
-  </div>
+<div class="toast" [class]="'is-' + data.type">
+    <span class="toast-icon material-symbols-outlined" aria-hidden="true">{{ icon }}</span>
 
-  <!-- Content -->
-  <div class="toast-body">
-    <p class="toast-title">{{ data.title }}</p>
-    <p class="toast-message" *ngIf="data.message">{{ data.message }}</p>
-  </div>
+    <div class="toast-body">
+        <p class="toast-title">{{ data.title }}</p>
+        @if (data.message) {
+            <p class="toast-message">{{ data.message }}</p>
+        }
+    </div>
 
-  <!-- Close -->
-  <button class="toast-close" (click)="dismiss()" aria-label="Bağla">
-    <span class="material-symbols-outlined">close</span>
-  </button>
+    <button type="button" class="toast-close" aria-label="Bağla" (click)="dismiss()">
+        <span class="material-symbols-outlined" aria-hidden="true">close</span>
+    </button>
 
-  <!-- Progress bar -->
-  <div class="toast-progress">
-    <div class="toast-progress-bar" [style.animation-duration]="data.duration + 'ms'"></div>
-  </div>
+    @if (data.duration > 0) {
+        <div class="toast-progress" aria-hidden="true">
+            <div class="toast-progress-bar" [style.animation-duration.ms]="data.duration"></div>
+        </div>
+    }
 </div>

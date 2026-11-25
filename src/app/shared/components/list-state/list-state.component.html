@@ -1,0 +1,24 @@
+@switch (state()) {
+    @case ('idle') {
+        <div class="empty-state">
+            <span class="material-symbols-outlined empty-icon" aria-hidden="true">filter_alt</span>
+            <p>{{ message() || 'Filtr seçib «Axtar» düyməsini basın' }}</p>
+        </div>
+    }
+    @case ('empty') {
+        <div class="empty-state">
+            <span class="material-symbols-outlined empty-icon" aria-hidden="true">search_off</span>
+            <p>{{ message() || 'Bu filtrlərlə nəticə tapılmadı' }}</p>
+        </div>
+    }
+    @case ('error') {
+        <div class="empty-state is-error" role="alert">
+            <span class="material-symbols-outlined empty-icon" aria-hidden="true">error</span>
+            <p>{{ errorMessage() || 'Məlumat yüklənmədi' }}</p>
+            <button type="button" class="g-secondary-btn empty-action" (click)="retry.emit()">
+                <span class="material-symbols-outlined" aria-hidden="true">refresh</span>
+                Yenidən cəhd et
+            </button>
+        </div>
+    }
+}

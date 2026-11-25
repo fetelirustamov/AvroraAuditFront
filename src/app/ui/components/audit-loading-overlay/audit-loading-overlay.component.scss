@@ -1,249 +1,98 @@
 :host.app-audit-loading-overlay-host {
-
     position: absolute;
-
     inset: 0;
-
     z-index: 5;
-
     display: flex;
-
     align-items: center;
-
     justify-content: center;
-
     padding: 24px 16px;
-
     box-sizing: border-box;
-
     animation: audit-loading-host-in 0.35s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-
 }
 
-
-
 @keyframes audit-loading-host-in {
-
-    from {
-
-        opacity: 0;
-
-    }
-
-
-
-    to {
-
-        opacity: 1;
-
-    }
-
+    from { opacity: 0; }
+    to { opacity: 1; }
 }
 
 .audit-loading-backdrop {
-
     position: absolute;
-
     inset: 0;
-
     z-index: 0;
-
-    background: rgba(246, 247, 249, 0.88);
-
-    backdrop-filter: blur(10px);
-
-    -webkit-backdrop-filter: blur(10px);
-
+    background: color-mix(in srgb, var(--bg) 88%, transparent);
 }
 
-
-
+// Overlay kartı — kölgə yalnız üst qatda icazəlidir
 .audit-loading-card {
-
     position: relative;
-
     z-index: 1;
-
     width: 100%;
-
     max-width: 320px;
-
     padding: 28px 32px 24px;
-
     text-align: center;
-
-    border-radius: 16px;
-
-    background: #ffffff;
-
-    border: 1px solid #dde1e8;
-
-    box-shadow:
-
-        0 12px 40px rgba(30, 37, 51, 0.1),
-
-        0 4px 14px rgba(30, 37, 51, 0.06);
-
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-md);
 }
-
-
 
 .audit-loader-visual {
-
     position: relative;
-
-    width: 56px;
-
-    height: 56px;
-
+    width: 40px;
+    height: 40px;
     margin: 0 auto 18px;
-
 }
 
-
-
+// Tək spinner: neytral trek + vurğu seqmenti. Bəzək dairələri yoxdur.
 .audit-loader-ring {
-
     position: absolute;
-
     inset: 0;
-
     border-radius: 50%;
-
-    border: 3px solid transparent;
-
-    border-top-color: var(--primaryColor);
-
-    border-right-color: rgba(96, 93, 255, 0.22);
-
-    animation: audit-spin 1s cubic-bezier(0.55, 0.06, 0.29, 0.99) infinite;
-
-
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    animation: audit-spin 0.9s linear infinite;
 
     &--delayed {
-
-        inset: 9px;
-
-        border-top-color: var(--secondaryColor);
-
-        border-right-color: rgba(53, 132, 252, 0.2);
-
-        animation-duration: 1.35s;
-
-        animation-direction: reverse;
-
+        display: none;
     }
-
 }
-
-
 
 .audit-loader-core {
-
-    position: absolute;
-
-    inset: 18px;
-
-    border-radius: 50%;
-
-    background: linear-gradient(145deg, rgba(96, 93, 255, 0.14), rgba(53, 132, 252, 0.08));
-
-    animation: audit-core-pulse 1.6s ease-in-out infinite;
-
+    display: none;
 }
-
-
 
 @keyframes audit-spin {
-
-    to {
-
-        transform: rotate(360deg);
-
-    }
-
+    to { transform: rotate(360deg); }
 }
 
-
-
-@keyframes audit-core-pulse {
-
-
-
-    0%,
-
-    100% {
-
-        transform: scale(1);
-
-        opacity: 1;
-
+@media (prefers-reduced-motion: reduce) {
+    .audit-loader-ring {
+        animation-duration: 2.4s;
     }
-
-
-
-    50% {
-
-        transform: scale(0.88);
-
-        opacity: 0.72;
-
-    }
-
 }
-
-
 
 .audit-loading-title {
-
     margin: 0 0 6px;
-
-    font-size: 15px;
-
-    font-weight: 700;
-
-    color: var(--blackColor);
-
-    letter-spacing: -0.02em;
-
+    font-size: var(--fs-14);
+    font-weight: 600;
+    color: var(--text-strong);
 }
-
-
 
 .audit-loading-hint {
-
     margin: 0;
-
-    font-size: 12px;
-
+    font-size: var(--fs-12);
     line-height: 1.5;
-
-    color: var(--bodyColor);
-
+    color: var(--text-muted);
 }
-
-
 
 .audit-sr-only {
-
     position: absolute;
-
     width: 1px;
-
     height: 1px;
-
     padding: 0;
-
     margin: -1px;
-
     overflow: hidden;
-
     clip: rect(0, 0, 0, 0);
-
     white-space: nowrap;
-
     border: 0;
-
 }
-
-

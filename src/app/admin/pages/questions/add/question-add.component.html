@@ -1,263 +1,170 @@
-<!-- ① Visibility of system status: breadcrumb + mode badge -->
-<div class="breadcrumb-card mb-25 d-md-flex align-items-center justify-content-between">
+<app-page-header backLink="/admin/questions" backLabel="Suallara qayıt"
+    [subtitle]="viewMode ? 'Baxış rejimi: dəyişmək üçün «Redaktə et» düyməsini basın' : ''">
+    @if (viewMode && id) {
+        <a headerActions class="g-secondary-btn" [routerLink]="['/admin/questions/edit', id]">
+            <span class="material-symbols-outlined" aria-hidden="true">edit</span>
+            Redaktə et
+        </a>
+    }
+</app-page-header>
 
-    <div class="d-flex align-items-center gap-3">
-        <!-- Geri düyməsi -->
-        <button mat-icon-button class="qa-back-btn" (click)="cancel()"
-            matTooltip="Siyahıya qayıt">
-            <i class="material-symbols-outlined">arrow_back</i>
-        </button>
+@if (isLoading) {
+    <mat-progress-bar class="page-progress" mode="indeterminate" />
+}
 
-        <div>
-            <!-- Başlıq -->
-            <h5 class="mb-1">{{ pageTitle }}</h5>
-            <!-- ① Mode badge -->
-            <span class="qa-mode-badge"
-                [class.qa-mode-badge--add]="!editMode && !viewMode"
-                [class.qa-mode-badge--edit]="editMode"
-                [class.qa-mode-badge--view]="viewMode">
-                <i class="material-symbols-outlined">
-                    {{ viewMode ? 'visibility' : (editMode ? 'edit' : 'add_circle') }}
-                </i>
-                {{ viewMode ? 'Baxış rejimi' : (editMode ? 'Redaktə rejimi' : 'Yeni sual') }}
-            </span>
-        </div>
-    </div>
+<form [formGroup]="form" (ngSubmit)="submit()" novalidate [attr.aria-busy]="isLoading">
 
-    <!-- ③ User control: hər zaman görünən əməliyyat düymələri -->
-    <div class="d-flex align-items-center gap-3 mt-2 mt-md-0">
-        <ng-container *ngIf="!viewMode">
-            <button mat-stroked-button color="warn" (click)="cancel()">İmtina</button>
-            <button mat-flat-button color="primary" (click)="submit()"
-                [disabled]="form.invalid" class="qa-btn-save" style="margin-left: 16px;">
-                <i class="material-symbols-outlined">check</i>
-                {{ editMode ? 'Yadda saxla' : 'Əlavə et' }}
-            </button>
-        </ng-container>
-        <button *ngIf="viewMode" mat-flat-button color="primary" (click)="cancel()">
-            <i class="material-symbols-outlined">arrow_back</i>
-            Geri
-        </button>
-    </div>
-
-</div>
-
-<form [formGroup]="form" (ngSubmit)="submit()" novalidate>
-
-    <!-- ════════════════════════════════════════════════════
-         KART 1 — Sualın əsas parametrləri
-         ⑤ Error prevention: required fields clearly marked
-         ⑥ Recognition: type selection controls answer section
-    ════════════════════════════════════════════════════ -->
-    <mat-card class="qa-card mb-25">
-
-        <div class="qa-card__header">
-            <i class="material-symbols-outlined qa-card__icon">tune</i>
-            <h6 class="qa-card__title">Sual parametrləri</h6>
+    <section class="form-section" aria-labelledby="qa-params-title">
+        <div class="form-section-head">
+            <h2 class="form-section-title" id="qa-params-title">Sual parametrləri</h2>
         </div>
 
-        <div class="qa-card__body admin-input-design">
-            <div class="row g-3">
-
-                <!-- Kateqoriya -->
-                <div class="col-md-4">
-                    <div class="form-group">
-                        <label class="main-label">
-                            Kateqoriya
-                            <span class="qa-required" matTooltip="Məcburi sahə" aria-label="required">*</span>
-                        </label>
-                        <mat-form-field class="w-100">
-                            <mat-select formControlName="categoryId" placeholder="Seçin...">
-                                <mat-option *ngFor="let c of categories" [value]="c.id">
-                                    {{ c.categoryName }}
-                                </mat-option>
-                            </mat-select>
-                            <mat-error>Kateqoriya seçilməlidir</mat-error>
-                        </mat-form-field>
-                    </div>
-                </div>
-
-                <!-- ⑥ Recognition: tip seçimi cavab bölməsini aktivləşdirir -->
-                <div class="col-md-4">
-                    <div class="form-group">
-                        <label class="main-label">
-                            Sual tipi
-                            <span class="qa-required" matTooltip="Məcburi sahə" aria-label="required">*</span>
-                        </label>
-                        <mat-form-field class="w-100">
-                            <mat-select formControlName="type" placeholder="Seçin...">
-                                <mat-option *ngFor="let t of types" [value]="t">{{ t }}</mat-option>
-                            </mat-select>
-                            <mat-error>Tip seçilməlidir</mat-error>
-                        </mat-form-field>
-                        <!-- ① Status hint: tip seçiləndə cavab bölməsi haqqında məlumat -->
-                        <span class="qa-hint" *ngIf="isAnswerType()">
-                            <i class="material-symbols-outlined">info</i>
-                            Bu tip üçün cavab variantları tələb olunur
-                        </span>
-                    </div>
-                </div>
-
-                <!-- Sıra -->
-                <div class="col-md-2">
-                    <div class="form-group">
-                        <label class="main-label">Sıra №</label>
-                        <mat-form-field class="w-100">
-                            <input matInput formControlName="order" type="number" min="0" placeholder="0" />
-                            <mat-error>Rəqəm daxil edin</mat-error>
-                        </mat-form-field>
-                    </div>
-                </div>
-
-                <!-- Qiymət Normativi -->
-                <div class="col-md-2">
-                    <div class="form-group">
-                        <!-- ⑩ Help: tooltip izah edir -->
-                        <label class="main-label"
-                            matTooltip="Sualın keçid balı. 0-dan böyük olduqda aktiv sayılır.">
-                            Normativ bal
-                            <i class="material-symbols-outlined qa-label-info">help</i>
-                        </label>
-                        <mat-form-field class="w-100">
-                            <input matInput formControlName="valueNorm" type="number" min="0" placeholder="0" />
-                        </mat-form-field>
-                    </div>
-                </div>
-
-            </div>
-        </div>
-    </mat-card>
-
-    <!-- ════════════════════════════════════════════════════
-         KART 2 — Sual mətni
-         ⑧ Aesthetic: sual üçün ayrı geniş sahə
-    ════════════════════════════════════════════════════ -->
-    <mat-card class="qa-card mb-25">
-
-        <div class="qa-card__header">
-            <i class="material-symbols-outlined qa-card__icon qa-card__icon--question">help_outline</i>
-            <h6 class="qa-card__title">Sual mətni</h6>
-            <!-- ④ Consistency: Normativ checkbox sualın yanında məntiqi yerdir -->
-            <div class="qa-normativ ms-auto">
-                <mat-checkbox formControlName="normative" color="primary">
-                    Normativ
-                </mat-checkbox>
-                <span class="qa-hint-inline"
-                    matTooltip="İşarə olunarsa bu sual normativ standart kimi qeyd edilir">
-                    <i class="material-symbols-outlined">help</i>
-                </span>
-            </div>
-        </div>
-
-        <div class="qa-card__body admin-input-design">
-            <div class="form-group mb-0">
-                <label class="main-label">
-                    Sual
-                    <span class="qa-required" matTooltip="Məcburi sahə">*</span>
-                </label>
-                <mat-form-field class="w-100 qa-question-text-field" subscriptSizing="dynamic">
-                    <textarea matInput formControlName="question" rows="6"
-                        placeholder="Sualı bura daxil edin (bir neçə sətir ola bilər)..."
-                        cdkTextareaAutosize
-                        cdkAutosizeMinRows="6"
-                        cdkAutosizeMaxRows="24"></textarea>
-                    <mat-hint align="end">
-                        {{ form.get('question')?.value?.length || 0 }} simvol
-                    </mat-hint>
-                    <mat-error>Sual mətni tələb olunur</mat-error>
+        <div class="form-grid cols-3">
+            <div class="form-field">
+                <label class="g-field-label" id="qa-firm-label">Firma <span class="required-mark" aria-hidden="true">*</span></label>
+                <mat-form-field appearance="outline" class="g-modern-field">
+                    <mat-select formControlName="firmId" aria-labelledby="qa-firm-label" required placeholder="Firma seçin">
+                        @for (f of firms; track f.id) {
+                            <mat-option [value]="f.id">{{ f.name }}</mat-option>
+                        }
+                    </mat-select>
+                    <mat-error>Firmanı seçin</mat-error>
                 </mat-form-field>
             </div>
-        </div>
-    </mat-card>
 
-    <!-- ════════════════════════════════════════════════════
-         KART 3 — Cavab variantları
-         ⑥ Recognition: yalnız cavab tələb edən tiplər üçün göstərilir
-         ⑤ Error prevention: ən azı 1 cavab tələb olunur
-    ════════════════════════════════════════════════════ -->
-    <mat-card class="qa-card mb-25" *ngIf="isAnswerType()">
-
-        <div class="qa-card__header qa-card__header--answers">
-            <i class="material-symbols-outlined qa-card__icon qa-card__icon--answers">checklist</i>
-            <h6 class="qa-card__title">Cavab variantları</h6>
-            <span class="qa-answer-count">{{ answers.length }}</span>
-            <!-- ③ User control: add button always accessible in header -->
-            <button *ngIf="canShowAddAnswer()" mat-flat-button color="primary"
-                type="button" (click)="addAnswer()" class="qa-btn-add-answer ms-auto">
-                <i class="material-symbols-outlined">add</i>
-                Cavab əlavə et
-            </button>
-        </div>
-
-        <div class="qa-card__body">
-
-            <!-- ⑧ Minimalist: empty state yalnız lazım olanda -->
-            <div *ngIf="answers.length === 0" class="qa-empty-state">
-                <i class="material-symbols-outlined">format_list_bulleted_add</i>
-                <p>Hələ heç bir cavab əlavə edilməyib</p>
-                <small>Yuxarıdakı "Cavab əlavə et" düyməsindən istifadə edin</small>
+            <div class="form-field">
+                <label class="g-field-label" id="qa-category-label">Kateqoriya <span class="required-mark" aria-hidden="true">*</span></label>
+                <mat-form-field appearance="outline" class="g-modern-field">
+                    <mat-select formControlName="categoryId" aria-labelledby="qa-category-label" required
+                        [placeholder]="form.controls.firmId.value == null ? 'Əvvəlcə firma seçin' : 'Kateqoriya seçin'">
+                        @for (c of categoryOptions; track c.id) {
+                            <mat-option [value]="c.id">{{ c.path }}</mat-option>
+                        }
+                    </mat-select>
+                    <mat-error>Kateqoriyanı seçin</mat-error>
+                </mat-form-field>
+                @if (form.controls.firmId.value != null && !categoryOptions.length && !isLoading) {
+                    <p class="field-note is-warning">
+                        <span class="material-symbols-outlined" aria-hidden="true">warning</span>
+                        Bu firmada kateqoriya yoxdur. Əvvəlcə «Audit strukturu» səhifəsində kateqoriya əlavə edin.
+                    </p>
+                }
             </div>
 
-            <!-- ⑧ Minimalist: column headers yalnız cavablar varsa -->
-            <div class="qa-answers-header" *ngIf="answers.length > 0">
-                <span class="qa-answers-header__num">#</span>
-                <span class="qa-answers-header__text">Cavab mətni</span>
-                <span class="qa-answers-header__score">Qiymət (xal)</span>
-                <span class="qa-answers-header__del" *ngIf="!viewMode"></span>
+            <div class="form-field">
+                <label class="g-field-label" id="qa-type-label">Sual tipi <span class="required-mark" aria-hidden="true">*</span></label>
+                <mat-form-field appearance="outline" class="g-modern-field">
+                    <mat-select formControlName="type" aria-labelledby="qa-type-label" required placeholder="Tip seçin">
+                        @for (t of questionTypes; track t.id) {
+                            <mat-option [value]="t.id">{{ t.label }}</mat-option>
+                        }
+                    </mat-select>
+                    <mat-error>Sual tipini seçin</mat-error>
+                </mat-form-field>
+                @if (isAnswerType()) {
+                    <p class="field-note">
+                        <span class="material-symbols-outlined" aria-hidden="true">info</span>
+                        Bu tip üçün cavab variantları lazımdır
+                    </p>
+                }
             </div>
 
-            <div formArrayName="answers" class="admin-input-design">
-                <div class="qa-answer-row"
-                    *ngFor="let a of answers.controls; let i = index; let last = last"
-                    [formGroupName]="i"
-                    [class.qa-answer-row--last]="last">
+            <div class="form-field">
+                <label class="g-field-label" for="qa-order">Sıra</label>
+                <mat-form-field appearance="outline" class="g-modern-field">
+                    <input id="qa-order" matInput formControlName="order" type="number" min="0" placeholder="0">
+                    <mat-error>Tam rəqəm yazın</mat-error>
+                </mat-form-field>
+            </div>
 
-                    <span class="qa-answer-num">{{ i + 1 }}</span>
+            <div class="form-field">
+                <label class="g-field-label" for="qa-norm">Normativ bal</label>
+                <mat-form-field appearance="outline" class="g-modern-field">
+                    <input id="qa-norm" matInput formControlName="valueNorm" type="number" min="0" placeholder="0">
+                </mat-form-field>
+                <p class="field-note">Sualın keçid balı. 0-dan böyük olanda aktiv sayılır.</p>
+            </div>
 
-                    <div class="qa-answer-text">
-                        <mat-form-field class="w-100">
-                            <input matInput formControlName="text"
-                                placeholder="Cavabı daxil edin"
-                                [attr.aria-label]="'Cavab ' + (i+1)" />
-                            <!-- ⑨ Error recovery: dəqiq xəta mesajı -->
-                            <mat-error *ngIf="a.get('text')?.hasError('required')">
-                                Cavab mətni boş ola bilməz
-                            </mat-error>
-                        </mat-form-field>
-                    </div>
+            <div class="form-field normative-field">
+                <mat-checkbox formControlName="normative">Normativ sual</mat-checkbox>
+                <p class="field-note">İşarələnən sual normativ standart kimi qeyd olunur.</p>
+            </div>
+        </div>
+    </section>
 
-                    <div class="qa-answer-score">
-                        <mat-form-field class="w-100">
-                            <input matInput formControlName="score" type="number"
-                                min="0" placeholder="0"
-                                [attr.aria-label]="'Cavab ' + (i+1) + ' qiyməti'" />
-                            <mat-error *ngIf="a.get('score')?.hasError('pattern')">
-                                Müsbət rəqəm daxil edin
-                            </mat-error>
-                        </mat-form-field>
-                    </div>
+    <section class="form-section" aria-labelledby="qa-text-title">
+        <div class="form-section-head">
+            <h2 class="form-section-title" id="qa-text-title">
+                <label for="qa-text">Sual mətni <span class="required-mark" aria-hidden="true">*</span></label>
+            </h2>
+        </div>
+        <mat-form-field appearance="outline" class="g-modern-field qa-question-text-field">
+            <textarea id="qa-text" matInput formControlName="question" required
+                cdkTextareaAutosize cdkAutosizeMinRows="5" cdkAutosizeMaxRows="24"
+                placeholder="Sualı yazın (bir neçə sətir ola bilər)"></textarea>
+            <mat-hint align="end">{{ form.controls.question.value.length }} simvol</mat-hint>
+            <mat-error>Sual mətnini yazın</mat-error>
+        </mat-form-field>
+    </section>
 
-                    <!-- ③ User control: delete with confirmation -->
-                    <button *ngIf="!viewMode"
-                        mat-icon-button color="warn" type="button"
-                        class="qa-answer-del"
-                        (click)="removeAnswer(i)"
-                        matTooltip="Cavabı sil"
-                        aria-label="Cavabı sil">
-                        <i class="material-symbols-outlined">delete</i>
+    @if (isAnswerType()) {
+        <section class="form-section" aria-labelledby="qa-answers-title">
+            <div class="form-section-head">
+                <h2 class="form-section-title" id="qa-answers-title">Cavab variantları</h2>
+                <span class="answer-count">{{ answers.length }}</span>
+                @if (!viewMode) {
+                    <button type="button" class="g-secondary-btn answers-add" (click)="addAnswer()">
+                        <span class="material-symbols-outlined" aria-hidden="true">add</span>
+                        Cavab əlavə et
                     </button>
+                }
+            </div>
 
+            @if (answers.length) {
+                <div class="answers-head" aria-hidden="true">
+                    <span>#</span>
+                    <span>Cavab mətni</span>
+                    <span>Bal</span>
                 </div>
-            </div>
+            } @else {
+                <p class="answers-empty" [class.is-error]="answersMissing">
+                    <span class="material-symbols-outlined" aria-hidden="true">{{ answersMissing ? 'error' : 'format_list_bulleted_add' }}</span>
+                    Ən azı bir cavab variantı əlavə edin
+                </p>
+            }
 
-            <!-- ⑤ Error prevention: minimum cavab xəbərdarlığı -->
-            <div class="qa-answers-warning"
-                *ngIf="isAnswerType() && answers.length === 0 && form.touched">
-                <i class="material-symbols-outlined">warning</i>
-                Ən azı bir cavab əlavə edilməlidir
-            </div>
+            <div formArrayName="answers">
+                @for (a of answers.controls; track a; let i = $index) {
+                    <div class="answer-row" [formGroupName]="i">
+                        <span class="answer-num row-number">{{ i + 1 }}</span>
 
+                        <mat-form-field appearance="outline" class="g-modern-field">
+                            <input matInput formControlName="text" [attr.aria-label]="'Cavab ' + (i + 1)" placeholder="Cavab mətni">
+                            <mat-error>Cavab mətnini yazın</mat-error>
+                        </mat-form-field>
+
+                        <mat-form-field appearance="outline" class="g-modern-field">
+                            <input matInput formControlName="score" type="number" min="0"
+                                [attr.aria-label]="'Cavab ' + (i + 1) + ' balı'" placeholder="0">
+                            <mat-error>Müsbət rəqəm yazın</mat-error>
+                        </mat-form-field>
+
+                        @if (!viewMode) {
+                            <button type="button" class="action-btn delete-btn" (click)="removeAnswer(i)"
+                                matTooltip="Cavabı sil" [attr.aria-label]="'Cavab ' + (i + 1) + ' — sil'">
+                                <span class="material-symbols-outlined" aria-hidden="true">delete</span>
+                            </button>
+                        }
+                    </div>
+                }
+            </div>
+        </section>
+    }
+
+    @if (!viewMode) {
+        <div class="form-actions">
+            <button type="button" class="g-secondary-btn" (click)="cancel()">Ləğv et</button>
+            <button type="submit" class="g-search-btn" [disabled]="isSaving">{{ editMode ? 'Yadda saxla' : 'Əlavə et' }}</button>
         </div>
-    </mat-card>
-
+    }
 </form>

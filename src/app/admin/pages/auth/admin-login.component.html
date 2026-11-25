@@ -1,104 +1,119 @@
-<div class="admin-login-container">
-    <div class="admin-login-card">
-        <div class="login-header text-center mb-25">
-            <div class="brand mb-20">
-                <div class="brand-mark">
-                    <span></span>
-                    <span></span>
-                    <span></span>
-                    <span></span>
+<main class="auth auth-admin">
+    <!-- Səhnə: idarəetmə panelinin işi (icazə qrupları, təsdiq zənciri). İllüstrasiya dekorativdir. -->
+    <section class="auth-stage">
+        <span class="stage-mark tl" aria-hidden="true"></span>
+        <span class="stage-mark tr" aria-hidden="true"></span>
+        <span class="stage-mark bl" aria-hidden="true"></span>
+        <span class="stage-mark br" aria-hidden="true"></span>
+
+        <p class="stage-tag">İdarəetmə paneli</p>
+        <p class="stage-title">Sistemin quruluşu, icazələri və məlumatları <em>bir yerdən.</em></p>
+        <p class="stage-lead">Firmalar, mağazalar, istifadəçilər və icazə qrupları burada idarə olunur.</p>
+
+        <div class="stage-scene" aria-hidden="true">
+            <!-- İcazə matrisi: icazə qrupları × səhifələr -->
+            <div class="matrix">
+                <div class="matrix-head">
+                    <span class="matrix-title"><mat-icon>shield_person</mat-icon>İcazə qrupları</span>
+                    <span class="matrix-count">4 × 5</span>
                 </div>
-                <span class="brand-name">AuditPro</span>
+                <div class="matrix-grid">
+                    <span></span>
+                    <mat-icon class="mx-col">event_note</mat-icon>
+                    <mat-icon class="mx-col">fact_check</mat-icon>
+                    <mat-icon class="mx-col">report</mat-icon>
+                    <mat-icon class="mx-col">bar_chart</mat-icon>
+                    <mat-icon class="mx-col">settings</mat-icon>
+
+                    <span class="mx-row">Müfəttiş</span>
+                    <i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i>
+
+                    <span class="mx-row">Baş müfəttiş</span>
+                    <i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i>
+
+                    <span class="mx-row">Mağaza müdiri</span>
+                    <i></i><i></i><i class="on"></i><i class="on"></i><i></i>
+
+                    <span class="mx-row">Direktor</span>
+                    <i></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="new"></i>
+                </div>
             </div>
-            <h2 class="login-title mb-10">Giriş</h2>
-            <p class="login-subtitle">Hesabınıza daxil olun</p>
+
+            <!-- Təsdiq zəncirinin quruluşu -->
+            <div class="tree">
+                <span class="tree-label">Təsdiq zənciri</span>
+                <ol class="tree-steps">
+                    <li><span class="tree-no">3</span>Direktor</li>
+                    <li><span class="tree-no">2</span>Satış müdiri</li>
+                    <li><span class="tree-no">1</span>Mağaza müdiri</li>
+                </ol>
+            </div>
         </div>
+    </section>
 
-        <form [formGroup]="form" (ngSubmit)="submit()" novalidate class="login-form" autocomplete="on">
-            <!-- Email Field -->
-            <div class="form-field-group">
-                <label for="admin-email" class="field-label">
-                    E-poçt ünvanı
-                    <span class="required-indicator">*</span>
-                </label>
-                <mat-form-field appearance="fill" class="custom-form-field">
-                    <mat-icon matPrefix class="field-icon">email</mat-icon>
-                    <input
-                        matInput
-                        id="admin-email"
-                        formControlName="email"
-                        type="email"
-                        autocomplete="username"
-                        required
-                        placeholder="admin@example.com"
-                        aria-describedby="email-help"
-                    />
-                    <mat-hint id="email-help">Sistemə daxil olmaq üçün istifadə etdiyiniz e-poçt ünvanı.</mat-hint>
-                    <mat-error *ngIf="form.get('email')?.hasError('required') && form.get('email')?.touched">
-                        E-poçt ünvanı məcburidir.
-                    </mat-error>
-                    <mat-error *ngIf="form.get('email')?.hasError('email') && form.get('email')?.touched">
-                        Düzgün formatda e-poçt ünvanı daxil edin.
-                    </mat-error>
-                </mat-form-field>
-            </div>
+    <section class="auth-panel" aria-labelledby="admin-login-title">
+        <div class="auth-form-wrap">
+            <img src="images/logo-big.svg" alt="Loqo" class="auth-logo">
 
-            <!-- Password Field -->
-            <div class="form-field-group">
-                <label for="admin-password" class="field-label">
-                    Şifrə
-                    <span class="required-indicator">*</span>
-                </label>
-                <mat-form-field appearance="fill" class="custom-form-field">
-                    <mat-icon matPrefix class="field-icon">lock</mat-icon>
-                    <input
-                        matInput
-                        id="admin-password"
-                        [type]="hide ? 'password' : 'text'"
-                        formControlName="password"
-                        autocomplete="current-password"
-                        required
-                        minlength="5"
-                        placeholder="Şifrənizi daxil edin"
-                    />
-                    <button
-                        mat-icon-button
-                        matSuffix
-                        type="button"
-                        (click)="hide = !hide"
-                        [attr.aria-label]="hide ? 'Şifrəni göstər' : 'Şifrəni gizlət'"
-                        [attr.aria-pressed]="!hide"
-                        class="toggle-password-btn"
-                    >
-                        <mat-icon class="toggle-password-icon">
-                            {{ hide ? 'visibility_off' : 'visibility' }}
-                        </mat-icon>
-                    </button>
+            <span class="admin-badge"><mat-icon aria-hidden="true">admin_panel_settings</mat-icon>Admin</span>
+            <h1 id="admin-login-title" class="auth-title">İdarəetmə panelinə giriş</h1>
+            <p class="auth-lead">Yalnız admin hesabı ilə daxil olmaq mümkündür.</p>
 
-                    <mat-error *ngIf="form.get('password')?.hasError('required') && form.get('password')?.touched">
-                        Şifrə məcburidir.
-                    </mat-error>
-                    <mat-error *ngIf="form.get('password')?.hasError('minlength') && form.get('password')?.touched">
-                        Şifrə ən azı 5 simvoldan ibarət olmalıdır.
-                    </mat-error>
-                </mat-form-field>
-            </div>
+            <form [formGroup]="form" (ngSubmit)="submit()" novalidate autocomplete="on">
+                <div class="auth-field">
+                    <label for="admin-email" class="g-field-label">E-poçt</label>
+                    <mat-form-field appearance="outline" class="g-modern-field">
+                        <input matInput id="admin-email" formControlName="email" type="email"
+                            autocomplete="username" inputmode="email" spellcheck="false" required>
+                        @if (form.get('email')?.hasError('required') && form.get('email')?.touched) {
+                            <mat-error>E-poçt tələb olunur</mat-error>
+                        } @else if (form.get('email')?.hasError('email') && form.get('email')?.touched) {
+                            <mat-error>Düzgün e-poçt ünvanı daxil edin</mat-error>
+                        }
+                    </mat-form-field>
+                </div>
 
-            <button
-                class="login-btn w-100 mb-15"
-                mat-flat-button
-                color="primary"
-                type="submit"
-                [disabled]="loading || form.invalid"
-            >
-                <span *ngIf="!loading">Daxil ol</span>
-                <span *ngIf="loading">Gözləyin...</span>
-            </button>
+                <div class="auth-field">
+                    <label for="admin-password" class="g-field-label">Parol</label>
+                    <mat-form-field appearance="outline" class="g-modern-field">
+                        <input matInput id="admin-password" formControlName="password"
+                            [type]="hide ? 'password' : 'text'" autocomplete="current-password" required minlength="5">
+                        <button mat-icon-button matSuffix type="button" class="password-toggle"
+                            (click)="hide = !hide"
+                            [attr.aria-label]="hide ? 'Parolu göstər' : 'Parolu gizlət'"
+                            [attr.aria-pressed]="!hide">
+                            <mat-icon>{{ hide ? 'visibility' : 'visibility_off' }}</mat-icon>
+                        </button>
+                        @if (form.get('password')?.hasError('required') && form.get('password')?.touched) {
+                            <mat-error>Parol tələb olunur</mat-error>
+                        } @else if (form.get('password')?.hasError('minlength') && form.get('password')?.touched) {
+                            <mat-error>Parol ən azı 5 simvol olmalıdır</mat-error>
+                        }
+                    </mat-form-field>
+                </div>
 
-            <div class="error-message" *ngIf="error" role="alert" aria-live="polite">
-                <mat-icon class="ms-outlined">error</mat-icon>
-                <span>{{ error }}</span>
-            </div>
-        </form>
-    </div>
-</div>
+                @if (error) {
+                    <div class="auth-alert" role="alert">
+                        <mat-icon aria-hidden="true">error</mat-icon>
+                        <span>{{ error }}</span>
+                    </div>
+                }
+
+                <button type="submit" class="g-search-btn auth-submit" [disabled]="loading || form.invalid"
+                    [attr.aria-busy]="loading">
+                    @if (loading) {
+                        <span class="auth-spinner" aria-hidden="true"></span>
+                        Giriş edilir…
+                    } @else {
+                        Giriş et
+                    }
+                </button>
+            </form>
+
+            <p class="auth-note">
+                <mat-icon aria-hidden="true">info</mat-icon>
+                <span>Admin hüququ olmayan hesab bu paneldə açılmır. Gündəlik iş üçün əsas girişdən istifadə edin.</span>
+            </p>
+        </div>
+    </section>
+</main>

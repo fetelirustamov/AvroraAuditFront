@@ -1,37 +1,55 @@
-/* You can add global styles to this file, and also import other style files */
+@use "@angular/material" as mat;
+
+// Dizayn token-ləri: rəng, şrift, ölçü, boşluq (vahid mənbə)
+@use "./tokens";
+
 // Utilities CSS
 @use "./utilities";
 
-// Variable CSS
+// Material komponent token-ləri → dizayn token-ləri
 @use "./variable";
 
 // UI Kit CSS
 @use "./ui-kit";
 
-// Dark Mode CSS
-@use "./dark";
+// Paylaşılan dizayn qatı (səhifə başlığı, boş vəziyyət, status nişanları, cədvəl)
+@use "./design-system";
 
-// RTL CSS
-@use "./rtl";
-
-:root {
-    --fontFamily: "Inter", sans-serif;
-    --blackColor: #3A4252;
-    --whiteColor: #ffffff;
-    --bodyColor: #64748B;
-    --borderColor: #ECEEF2;
-    --transition: .5s;
-    --fontSize: 14px;
-    --primaryColor: #605DFF;
-    --secondaryColor: #3584FC;
-    --successColor: #25B003;
-    --dangerColor: #FF4023;
-    --warningColor: #ffc107;
-    --infoColor: #0dcaf0;
-    --lightColor: #f8f9fa;
-    --darkColor: #212529;
-    --purpleColor: #AD63F6;
-    --orangeColor: #FD5812;
+// ── Material teması ─────────────────────────────────────────────────────────
+// Palitra yalnız Material-in daxili hesablamaları üçündür. Görünən rənglər
+// aşağıdakı override-larla dizayn token-lərinə bağlanır.
+html {
+    color-scheme: light;
+    @include mat.theme((
+        color: (theme-type: light, primary: mat.$cyan-palette),
+        typography: (plain-family: var(--font-sans), brand-family: var(--font-sans)),
+        density: 0
+    ));
+    @include mat.theme-overrides((
+        primary: var(--accent),
+        on-primary: var(--on-accent),
+        primary-container: var(--accent-soft),
+        on-primary-container: var(--accent-text),
+        secondary-container: var(--accent-soft),
+        on-secondary-container: var(--accent-text),
+        error: var(--danger),
+        surface: var(--surface),
+        surface-container-lowest: var(--surface),
+        surface-container-low: var(--surface),
+        surface-container: var(--surface),
+        surface-container-high: var(--surface),
+        surface-container-highest: var(--surface-muted),
+        on-surface: var(--text-strong),
+        on-surface-variant: var(--text-muted),
+        outline: var(--border-strong),
+        outline-variant: var(--border),
+        corner-extra-small: var(--radius-sm),
+        corner-small: var(--radius-md),
+        corner-medium: var(--radius-lg),
+        corner-large: var(--radius-lg),
+        corner-extra-large: var(--radius-lg),
+        corner-full: 999px
+    ));
 }
 
 *,
@@ -43,12 +61,12 @@
 body {
     margin: 0;
     padding: 0;
-    color: var(--bodyColor);
-    background-color: #F6F7F9;
+    color: var(--text-muted);
+    background-color: var(--bg);
 
     font: {
-        size: var(--fontSize);
-        family: var(--fontFamily);
+        size: var(--fs-14);
+        family: var(--font-sans);
     }
 
     ;
@@ -56,18 +74,17 @@ body {
 
 a {
     transition: var(--transition);
-    color: var(--blackColor);
+    color: var(--text-strong);
     text-decoration: none;
-    outline: 0 !important;
 
     &:hover {
         text-decoration: none;
-        color: var(--primaryColor);
+        color: var(--accent);
     }
 }
 
 p {
-    color: var(--bodyColor);
+    color: var(--text-muted);
     line-height: 1.8;
 
     margin: {
@@ -96,8 +113,21 @@ img {
     height: auto;
 }
 
+// Fokus yalnız klaviatura ilə gəzəndə görünür (siçan klikində yox)
 :focus {
-    outline: 0 !important;
+    outline: none;
+}
+
+:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+// Kodlar və ID-lər (mağaza kodu, plan №) bərabər enli rəqəmlərlə
+.code,
+.mono {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
 }
 
 button {
@@ -138,81 +168,10 @@ button {
     padding-bottom: 120px;
 }
 
-// Section Title
-.section-title {
-    max-width: 785px;
-    margin-bottom: 90px;
-
-    .sub-title {
-        margin: {
-            bottom: 20px;
-            top: 10px;
-        }
-
-        ;
-
-        span {
-            border: 1px solid var(--purpleColor);
-            transform: rotate(-6.536deg);
-            padding: 7.5px 17.2px;
-
-            &::before {
-                width: 5px;
-                height: 5px;
-                content: '';
-                left: -3.5px;
-                bottom: -2.5px;
-                position: absolute;
-                transform: rotate(-6.536deg);
-                background: var(--purpleColor);
-            }
-
-            &::after {
-                width: 5px;
-                height: 5px;
-                content: '';
-                right: -3.5px;
-                bottom: -2.5px;
-                position: absolute;
-                transform: rotate(-6.536deg);
-                background: var(--purpleColor);
-            }
-        }
-
-        &::before {
-            top: 4.5px;
-            width: 5px;
-            height: 5px;
-            content: '';
-            left: -3.6px;
-            position: absolute;
-            transform: rotate(-6.536deg);
-            background: var(--purpleColor);
-        }
-
-        &::after {
-            right: 0;
-            width: 5px;
-            height: 5px;
-            content: '';
-            top: -9.5px;
-            position: absolute;
-            transform: rotate(-6.536deg);
-            background: var(--purpleColor);
-        }
-    }
-
-    h2 {
-        font-size: 36px;
-        letter-spacing: -1px;
-    }
-}
-
-
 // Card Bordered CSS
 .card-borderd {
     .mat-mdc-card {
-        border: 1px solid var(--borderColor) !important;
+        border: 1px solid var(--border) !important;
     }
 }
 
@@ -220,24 +179,6 @@ button {
 .card-without-border-radius {
     .mat-mdc-card {
         border-radius: 0 !important;
-    }
-}
-
-// Card With Box Shadow CSS
-.card-with-box-shadow {
-    .mat-mdc-card {
-        box-shadow: rgba(149, 157, 165, 0.2) 0px 8px 24px !important;
-
-        &.shadow-none {
-            box-shadow: rgba(149, 157, 165, 0.2) 0px 8px 24px !important;
-        }
-    }
-}
-
-// Card Box Shadow CSS
-.card-box-shadow {
-    .mat-mdc-card {
-        box-shadow: unset !important;
     }
 }
 
@@ -278,16 +219,6 @@ button {
         padding-bottom: 30px;
     }
 
-    // Section Title
-    .section-title {
-        max-width: 100%;
-        margin-bottom: 35px;
-
-        h2 {
-            font-size: 24px;
-            letter-spacing: -.5px;
-        }
-    }
 
 }
 
@@ -327,16 +258,6 @@ button {
         padding-bottom: 50px;
     }
 
-    // Section Title
-    .section-title {
-        max-width: 650px;
-        margin-bottom: 50px;
-
-        h2 {
-            font-size: 28px;
-            letter-spacing: -.6px;
-        }
-    }
 
 }
 
@@ -373,16 +294,6 @@ button {
         padding-bottom: 70px;
     }
 
-    // Section Title
-    .section-title {
-        max-width: 810px;
-        margin-bottom: 65px;
-
-        h2 {
-            font-size: 34px;
-            letter-spacing: -.8px;
-        }
-    }
 
 }
 
@@ -391,10 +302,6 @@ button {
 
 /* Min width 1600px */
 @media only screen and (min-width: 1600px) {}
-
-.green-snackbar {
-    background: #008000;
-}
 
 // Google Fonts Icons Global Styles
 .material-symbols-outlined {
@@ -433,42 +340,42 @@ button {
 
 // Icon colors
 .material-symbols-outlined.primary {
-    color: var(--primaryColor);
+    color: var(--accent);
 }
 
 .material-symbols-outlined.secondary {
-    color: var(--secondaryColor);
+    color: var(--info);
 }
 
 .material-symbols-outlined.success {
-    color: var(--successColor);
+    color: var(--success);
 }
 
 .material-symbols-outlined.danger {
-    color: var(--dangerColor);
+    color: var(--danger);
 }
 
 .material-symbols-outlined.warning {
-    color: var(--warningColor);
+    color: var(--warning);
 }
 
 .material-symbols-outlined.info {
-    color: var(--infoColor);
+    color: var(--info);
 }
 
 .material-symbols-outlined.light {
-    color: var(--lightColor);
+    color: var(--surface-muted);
 }
 
 .material-symbols-outlined.dark {
-    color: var(--darkColor);
+    color: var(--text-strong);
 }
 
 /* Global lighter borders for outlined form fields (keeps focus styling) */
 .mat-mdc-form-field-appearance-outline .mdc-notched-outline__leading,
 .mat-mdc-form-field-appearance-outline .mdc-notched-outline__notch,
 .mat-mdc-form-field-appearance-outline .mdc-notched-outline__trailing {
-    border-color: #E6E8EE;
+    border-color: var(--border-strong);
 }
 
 /* Modal Dialog Responsive Styles */
@@ -513,7 +420,7 @@ button {
 /* Global scroll bar stilləri */
 * {
     scrollbar-width: thin;
-    scrollbar-color: #c1c1c1 #f1f1f1;
+    scrollbar-color: var(--border-strong) transparent;
 }
 
 *::-webkit-scrollbar {
@@ -521,31 +428,32 @@ button {
 }
 
 *::-webkit-scrollbar-track {
-    background: #f1f1f1;
+    background: transparent;
     border-radius: 4px;
 }
 
 *::-webkit-scrollbar-thumb {
-    background: #c1c1c1;
+    background: var(--border-strong);
     border-radius: 4px;
 }
 
 *::-webkit-scrollbar-thumb:hover {
-    background: #a8a8a8;
+    background: var(--text-faint);
 }
 
 /* Admin Input Design - Matching Locations Advanced Search */
+// Sahələr arası boşluğu forma şəbəkəsi verir (`.form-grid` gap, admin/shared/_admin.scss): sahənin öz
+// alt boşluğu yoxdur, yoxsa kartın altı boş qalır və filtr düyməsi sahədən aşağı düşür
 .admin-input-design {
     .mat-mdc-form-field {
         width: 100%;
-        margin-bottom: 20px;
     }
 
     .main-label {
-        font-size: 15px;
+        font-size: var(--fs-14);
         font-weight: 500;
         margin-bottom: 8px;
-        color: #333;
+        color: var(--text-strong);
     }
 
     .form-group {
@@ -555,7 +463,6 @@ button {
     mat-form-field {
         display: grid;
         gap: 10px !important;
-        padding-bottom: 5px !important;
     }
 
     .mat-mdc-form-field {
@@ -567,9 +474,9 @@ button {
 
         .mat-mdc-text-field-wrapper {
             height: 40px !important;
-            border: 1px solid #EDF0F5 !important;
-            border-radius: 6px !important;
-            background-color: white !important;
+            border: 1px solid var(--border-strong) !important;
+            border-radius: var(--radius-md) !important;
+            background-color: var(--surface) !important;
             transition: border-color 0.2s ease;
         }
 
@@ -594,24 +501,28 @@ button {
             display: none !important;
         }
 
+        &.mat-form-field-invalid .mat-mdc-form-field-subscript-wrapper {
+            display: block !important;
+        }
+
         // Ensure input content is properly positioned
         .mat-mdc-input-element {
-            color: #333 !important;
-            font-size: 14px !important;
+            color: var(--text-strong) !important;
+            font-size: var(--fs-14) !important;
         }
 
         // Hover state
         &:hover .mat-mdc-text-field-wrapper {
-            border-color: #D0D7DE !important;
+            border-color: var(--text-faint) !important;
         }
 
         &.mat-focused .mat-mdc-text-field-wrapper {
-            border-color: var(--primary-color, #1976D2) !important;
+            border-color: var(--accent) !important;
             border-width: 2px !important;
         }
 
         &.mat-form-field-invalid .mat-mdc-text-field-wrapper {
-            border-color: #f44336 !important;
+            border-color: var(--danger) !important;
         }
     }
 
@@ -672,7 +583,7 @@ button {
         .mat-mdc-select-value {
             display: flex !important;
             align-items: center !important;
-            color: #333 !important;
+            color: var(--text-strong) !important;
             flex: 1 !important;
             line-height: 1 !important;
         }
@@ -685,7 +596,7 @@ button {
         }
 
         .mat-mdc-select-placeholder {
-            color: #999 !important;
+            color: var(--text-faint) !important;
             line-height: 1 !important;
         }
 
@@ -763,19 +674,40 @@ button {
         }
     }
 
+    // Kömək/xəta sətri boş halda yer tutmur; sahə xətalı olanda mat-error görünür
     .mat-mdc-form-field-subscript-wrapper {
         height: 0 !important;
         overflow: hidden;
     }
 
-    .mdc-floating-label:not(.mdc-floating-label--float-above) {
-        top: 50% !important;
-        transform: translateY(-50%) !important;
+    &.mat-form-field-invalid .mat-mdc-form-field-subscript-wrapper {
+        height: auto !important;
+        overflow: visible;
     }
 
-    .mdc-floating-label--float-above {
-        top: 50% !important;
-        transform: translateY(-130%) scale(0.75) !important;
+    .mat-mdc-form-field-bottom-align::before {
+        display: none;
+    }
+
+    .mat-mdc-form-field-error {
+        padding-top: var(--space-1);
+        font-size: var(--fs-12);
+        line-height: 1.4;
+        color: var(--danger-text);
+    }
+
+    // Kompakt etiket tək sətirli sahə üçündür. Çoxsətirli textarea-da Material-ın öz mövqeyi qalır:
+    // əks halda etiket yazılan mətnin altına düşür və çərçivədə boş kəsik qalır.
+    &:not(:has(textarea)) {
+        .mdc-floating-label:not(.mdc-floating-label--float-above) {
+            top: 50% !important;
+            transform: translateY(-50%) !important;
+        }
+
+        .mdc-floating-label--float-above {
+            top: 50% !important;
+            transform: translateY(-130%) scale(0.75) !important;
+        }
     }
 }
 
@@ -822,51 +754,39 @@ button.mat-mdc-button-base {
 }
 
 // ═══════════════════════════════════════════════════════════════
-//  Global Filter Card Design System
-//  Bütün səhifələrin filter bölməsi üçün ümumi dizayn
+//  Qlobal filtr kartı və düymə sistemi
+//  Bütün səhifələrin filtr bölməsi və əməliyyat düymələri buradan gəlir.
+//  Rəng yalnız token-lərdən: vurğu = əsas əməliyyat, status = təsdiq/rədd.
 // ═══════════════════════════════════════════════════════════════
 
-$gf-primary:       #605DFF;
-$gf-primary-light: #EEF0FF;
-$gf-primary-dark:  #4B48CC;
-$gf-surface:       #ffffff;
-$gf-surface-2:     #F6F7F9;
-$gf-border:        #ECEEF2;
-$gf-text-primary:  #1E2533;
-$gf-text-sec:      #64748B;
-$gf-shadow-sm:     0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
-$gf-radius-sm:     8px;
-$gf-radius-md:     12px;
-
 .g-filter-card {
-    background: $gf-surface;
-    border-radius: $gf-radius-md;
-    border: 1px solid $gf-border;
-    box-shadow: $gf-shadow-sm;
-    padding: 20px 24px 4px;
-    margin-bottom: 20px;
+    background: var(--surface);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border);
+    padding: var(--space-4) var(--space-5) 0;
+    margin-bottom: var(--space-5);
 }
 
 .g-filter-header {
     display: flex;
     align-items: center;
-    gap: 8px;
-    font-size: 12px;
-    font-weight: 700;
-    color: $gf-text-sec;
+    gap: var(--space-2);
+    font-size: var(--fs-12);
+    font-weight: 600;
+    color: var(--text-muted);
     text-transform: uppercase;
-    letter-spacing: .7px;
-    margin-bottom: 16px;
+    letter-spacing: .06em;
+    margin-bottom: var(--space-3);
 
-    .material-symbols-outlined { font-size: 17px; color: $gf-primary; }
+    .material-symbols-outlined { font-size: 16px; color: var(--text-muted); }
 }
 
 .g-filter-grid {
     display: flex;
     flex-wrap: wrap;
-    gap: 16px;
+    gap: var(--space-4);
     align-items: flex-end;
-    padding-bottom: 16px;
+    padding-bottom: var(--space-4);
 }
 
 .g-filter-field {
@@ -881,21 +801,31 @@ $gf-radius-md:     12px;
     max-width: 340px;
 }
 
+// Yer tutucu yazılmış dəyərdən seçilməlidir: açıq ton və adi qalınlıq (`--text-faint` məhz bunun üçündür)
+.g-modern-field {
+    input::placeholder,
+    textarea::placeholder {
+        color: var(--text-faint);
+        font-weight: 400;
+        opacity: 1;
+    }
+}
+
 .g-filter-actions {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding-top: 24px;
+    gap: var(--space-2);
+    padding-top: var(--space-6);
     flex-shrink: 0;
 }
 
 @media (max-width: 768px) {
     .g-filter-card {
-        padding: 16px 16px 4px;
+        padding: var(--space-4) var(--space-4) 0;
     }
 
     .g-filter-grid {
-        gap: 12px;
+        gap: var(--space-3);
     }
 
     .g-filter-field,
@@ -909,7 +839,7 @@ $gf-radius-md:     12px;
     .g-filter-actions {
         flex: 1 1 100%;
         width: 100%;
-        padding-top: 4px;
+        padding-top: var(--space-1);
         justify-content: flex-start;
     }
 
@@ -923,280 +853,206 @@ $gf-radius-md:     12px;
 .g-field-label {
     display: flex;
     align-items: center;
-    gap: 5px;
-    font-size: 12px;
-    font-weight: 600;
-    color: $gf-text-sec;
+    gap: var(--space-1);
+    font-size: var(--fs-12);
+    font-weight: 500;
+    color: var(--text-muted);
     margin-bottom: 6px;
 
-    .material-symbols-outlined { font-size: 14px; color: $gf-primary; }
+    .material-symbols-outlined { font-size: 14px; color: var(--text-faint); }
 }
 
 .g-modern-field {
     width: 100%;
+    min-width: 0;
 
     .mat-mdc-text-field-wrapper {
-        border-radius: $gf-radius-sm !important;
-        background: $gf-surface-2 !important;
+        border-radius: var(--radius-md) !important;
+        background: var(--surface) !important;
     }
+    // Material infix-ə sabit 180px en verir: dar sütunda sahə (və select oxu) qonşu sütuna daşır.
+    // En sütundan gəlsin.
     .mat-mdc-form-field-infix {
+        width: auto;
+        min-width: 0;
         padding: 8px 0 8px !important;
-        min-height: 44px;
+        min-height: 40px;
     }
-    .mdc-notched-outline__leading  { border-radius: $gf-radius-sm 0 0 $gf-radius-sm !important; }
-    .mdc-notched-outline__trailing { border-radius: 0 $gf-radius-sm $gf-radius-sm 0 !important; }
-    .mat-mdc-form-field-subscript-wrapper { display: none; }
+    .mdc-notched-outline__leading  { border-radius: var(--radius-md) 0 0 var(--radius-md) !important; }
+    .mdc-notched-outline__trailing { border-radius: 0 var(--radius-md) var(--radius-md) 0 !important; }
+
+    // Kömək/xəta sətri: qlobal .mat-mdc-form-field qaydası idarə edir
 
     &.mat-focused {
         .mdc-notched-outline__leading,
         .mdc-notched-outline__notch,
         .mdc-notched-outline__trailing {
-            border-color: $gf-primary !important;
+            border-color: var(--accent) !important;
             border-width: 2px !important;
+        }
+
+        // Material notch-un sol kənarını qəsdən şəffaf saxlayır (leading ilə arada boşluq qalmasın).
+        // Rənglənəndə etiketin yanında sahə boyu şaquli xətt çıxır, ən çox çoxsətirli textarea-da.
+        .mdc-notched-outline__notch {
+            border-left-color: transparent !important;
         }
     }
 }
 
+// ── Düymələr ────────────────────────────────────────────────────
+// Ortaq forma: 36px hündürlük, düz rəng, kölgəsiz. Deaktiv hal hamısında eyni.
+%g-btn-base {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    min-height: 36px !important;
+    height: auto !important;
+    line-height: normal !important;
+    padding: 0 var(--space-4);
+    border-radius: var(--radius-md);
+    font-family: var(--font-sans);
+    font-size: var(--fs-13);
+    font-weight: 500;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background var(--transition), border-color var(--transition), color var(--transition);
+
+    .material-symbols-outlined { font-size: 18px; }
+
+    &:disabled,
+    &[disabled] {
+        opacity: .5;
+        cursor: not-allowed;
+        pointer-events: none;
+    }
+}
+
 .g-search-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    background: linear-gradient(135deg, $gf-primary, $gf-primary-dark);
-    color: #fff;
-    border: none;
-    border-radius: $gf-radius-sm;
-    padding: 11px 22px;
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
-    white-space: nowrap;
-    transition: opacity .2s, transform .15s, box-shadow .2s;
-    box-shadow: 0 4px 12px rgba(96,93,255,.32);
-    height: auto !important; min-height: auto !important; line-height: normal !important;
+    @extend %g-btn-base;
+    background: var(--accent);
+    color: var(--on-accent);
+    border: 1px solid var(--accent);
 
-    &:hover { opacity: .9; transform: translateY(-1px); box-shadow: 0 6px 18px rgba(96,93,255,.42); }
-    .material-symbols-outlined { font-size: 18px; }
+    &:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
 }
 
-.g-secondary-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    background: $gf-surface;
-    color: $gf-text-sec;
-    border: 1.5px solid $gf-border;
-    border-radius: $gf-radius-sm;
-    padding: 10px 18px;
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
-    white-space: nowrap;
-    transition: border-color .2s, color .2s;
-    height: auto !important; min-height: auto !important; line-height: normal !important;
-
-    &:hover { border-color: $gf-primary; color: $gf-primary; }
-    .material-symbols-outlined { font-size: 18px; }
-}
-
+.g-secondary-btn,
 .g-export-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    background: $gf-surface;
-    color: $gf-text-sec;
-    border: 1.5px solid $gf-border;
-    border-radius: $gf-radius-sm;
-    padding: 10px 16px;
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
-    white-space: nowrap;
-    transition: border-color .2s, color .2s;
-    height: auto !important; min-height: auto !important; line-height: normal !important;
+    @extend %g-btn-base;
+    background: var(--surface);
+    color: var(--text-strong);
+    border: 1px solid var(--border-strong);
 
-    &:hover { border-color: $gf-primary; color: $gf-primary; }
-    .material-symbols-outlined { font-size: 18px; }
-    .g-arrow { font-size: 16px; opacity: .7; }
+    &:hover { background: var(--surface-muted); border-color: var(--text-faint); }
+    .material-symbols-outlined { color: var(--text-muted); }
+    .g-arrow { font-size: 16px; color: var(--text-faint); }
 }
 
 .g-approve-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    background: linear-gradient(135deg, #22C55E, #16A34A);
-    color: #fff;
-    border: none;
-    border-radius: $gf-radius-sm;
-    padding: 10px 18px;
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
-    white-space: nowrap;
-    transition: opacity .2s, transform .15s;
-    height: auto !important; min-height: auto !important; line-height: normal !important;
-    &:hover { opacity: .9; transform: translateY(-1px); }
-    .material-symbols-outlined { font-size: 17px; }
+    @extend %g-btn-base;
+    background: var(--success);
+    color: var(--white);
+    border: 1px solid var(--success);
+
+    &:hover { background: var(--success-text); border-color: var(--success-text); }
 }
 
 .g-reject-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    background: linear-gradient(135deg, #EF4444, #DC2626);
-    color: #fff;
-    border: none;
-    border-radius: $gf-radius-sm;
-    padding: 10px 18px;
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
-    white-space: nowrap;
-    transition: opacity .2s, transform .15s;
-    height: auto !important; min-height: auto !important; line-height: normal !important;
-    &:hover { opacity: .9; transform: translateY(-1px); }
-    .material-symbols-outlined { font-size: 17px; }
+    @extend %g-btn-base;
+    background: var(--surface);
+    color: var(--danger-text);
+    border: 1px solid var(--danger);
+
+    &:hover { background: var(--danger-soft); }
 }
 
 // ═══════════════════════════════════════════════════════════════
-//  Global Action Button System
-//  Bütün cədvəllərdəki action düymələri üçün vahid dizayn
+//  Cədvəl sətrindəki ikon düymələri
+//  Neytral fon, rəng yalnız ikonda və məna daşıyır (təsdiq / rədd / sil).
+//  Hər birinə aria-label lazımdır: tooltip ad vermir.
 // ═══════════════════════════════════════════════════════════════
 
 .action-buttons {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: var(--space-1);
 }
 
 .action-btn {
     display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
-    width: 34px !important;
-    height: 34px !important;
-    min-height: 34px !important;
+    width: 36px !important;
+    height: 36px !important;
+    min-height: 36px !important;
     line-height: 1 !important;
-    border-radius: 50% !important;
-    border: 1.5px solid transparent !important;
+    border-radius: var(--radius-md) !important;
+    border: 1px solid transparent !important;
+    background: transparent !important;
+    color: var(--text-muted) !important;
+    box-shadow: none !important;
     cursor: pointer;
-    transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+    transition: background var(--transition), color var(--transition), border-color var(--transition) !important;
     padding: 0 !important;
-    outline: none;
-    background: none;
-    box-shadow: none;
 
     .material-symbols-outlined {
         font-size: 20px !important;
         line-height: 1;
-        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-        transition: font-variation-settings 0.2s ease;
     }
 
     &:hover {
-        transform: scale(1.18);
-
-        .material-symbols-outlined {
-            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-        }
+        background: var(--surface-subtle) !important;
+        color: var(--text-strong) !important;
     }
 
-    &:active {
-        transform: scale(0.92) !important;
+    &:disabled,
+    &[disabled] {
+        opacity: .4;
+        cursor: not-allowed;
+        pointer-events: none;
     }
 }
 
 .approve-btn {
-    background-color: #f0faf0 !important;
-    color: #2e7d32 !important;
-    border-color: #a5d6a7 !important;
-    box-shadow: 0 1px 4px rgba(46, 125, 50, 0.15) !important;
+    color: var(--success-text) !important;
 
     &:hover {
-        background-color: #2e7d32 !important;
-        color: #fff !important;
-        border-color: #2e7d32 !important;
-        box-shadow: 0 4px 14px rgba(46, 125, 50, 0.35) !important;
+        background: var(--success-soft) !important;
+        color: var(--success-text) !important;
     }
 }
 
-.reject-btn {
-    background-color: #fff5f7 !important;
-    color: #c62828 !important;
-    border-color: #ef9a9a !important;
-    box-shadow: 0 1px 4px rgba(198, 40, 40, 0.12) !important;
-
-    &:hover {
-        background-color: #c62828 !important;
-        color: #fff !important;
-        border-color: #c62828 !important;
-        box-shadow: 0 4px 14px rgba(198, 40, 40, 0.32) !important;
-    }
-}
-
-.edit-btn {
-    background-color: #fff8e1 !important;
-    color: #e65100 !important;
-    border-color: #ffcc80 !important;
-    box-shadow: 0 1px 4px rgba(230, 81, 0, 0.12) !important;
-
-    &:hover {
-        background-color: #e65100 !important;
-        color: #fff !important;
-        border-color: #e65100 !important;
-        box-shadow: 0 4px 14px rgba(230, 81, 0, 0.32) !important;
-    }
-}
-
-.view-btn {
-    background-color: #e8f4fd !important;
-    color: #1565c0 !important;
-    border-color: #90caf9 !important;
-    box-shadow: 0 1px 4px rgba(21, 101, 192, 0.12) !important;
-
-    &:hover {
-        background-color: #1565c0 !important;
-        color: #fff !important;
-        border-color: #1565c0 !important;
-        box-shadow: 0 4px 14px rgba(21, 101, 192, 0.32) !important;
-    }
-}
-
+.reject-btn,
 .delete-btn {
-    background-color: #fff3f3 !important;
-    color: #b71c1c !important;
-    border-color: #ef9a9a !important;
-    box-shadow: 0 1px 4px rgba(183, 28, 28, 0.12) !important;
+    color: var(--danger-text) !important;
 
     &:hover {
-        background-color: #b71c1c !important;
-        color: #fff !important;
-        border-color: #b71c1c !important;
-        box-shadow: 0 4px 14px rgba(183, 28, 28, 0.32) !important;
+        background: var(--danger-soft) !important;
+        color: var(--danger-text) !important;
     }
 }
 
+// Redaktə, baxış, geri: neytral (rəng mənası yoxdur)
+.edit-btn,
+.view-btn,
 .back-btn {
-    background-color: #f3f0ff !important;
-    color: #5c35cc !important;
-    border-color: #b39ddb !important;
-    box-shadow: 0 1px 4px rgba(92, 53, 204, 0.12) !important;
-
-    &:hover {
-        background-color: #5c35cc !important;
-        color: #fff !important;
-        border-color: #5c35cc !important;
-        box-shadow: 0 4px 14px rgba(92, 53, 204, 0.28) !important;
-    }
+    color: var(--text-muted) !important;
 }
 
-// ─── AuditPro Custom Toast Notifications ────────────────────────────────────
+// ─── Toast bildirişləri (Material snackbar konteyneri sıfırlanır) ───────────
+// NotificationService yuxarı sağda açır: paginatoru və cədvəlin altını örtmür.
+// Görünüş toast-notification komponentindədir, burada yalnız konteyner sıfırlanır və yerləşir.
 .ap-toast-panel {
     // Reset Material snackbar container
     &.mat-mdc-snack-bar-container {
+        // Shell header-in (64px) altında çıxır: profil menyusunu örtmür.
+        // Overlay shell-dən kənardadır, --shell-header-h oraya miras keçmir.
+        margin: calc(64px + var(--space-2)) var(--space-4) var(--space-4) !important;
         padding: 0 !important;
         background: transparent !important;
         box-shadow: none !important;
-        border-radius: 14px !important;
+        border-radius: var(--radius-lg) !important;
         min-width: 0 !important;
         max-width: none !important;
     }
@@ -1205,7 +1061,7 @@ $gf-radius-md:     12px;
         padding: 0 !important;
         background: transparent !important;
         box-shadow: none !important;
-        border-radius: 14px !important;
+        border-radius: var(--radius-lg) !important;
         min-width: 0 !important;
     }
 
@@ -1214,7 +1070,27 @@ $gf-radius-md:     12px;
     }
 }
 
-.media-viewer-dialog {
-    border-radius: 12px;
+// Səhifə daxili popup və panellər (detal popup-ları, izləmə paneli) z-index 1000/1001 işlədir —
+// CDK-nin standart 1000-i ilə onların içindən açılan dialoq, select, tooltip popup-un altında qalırdı
+.cdk-overlay-container {
+    z-index: 1100;
+}
+
+// Tam ekran media baxışı (app-media-viewer) — səth şəffafdır, tünd fon backdrop-dan gəlir
+.media-viewer-panel .mat-mdc-dialog-surface {
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
     overflow: hidden;
+}
+
+.media-viewer-backdrop {
+    background: color-mix(in srgb, var(--gray-900) 94%, transparent);
+    backdrop-filter: blur(4px);
+}
+// ApexCharts hover: kitabxananın öz filtri söndürülüb (loadApexCharts, chart-colors.ts),
+// sütun və dilim yalnız bir az tündləşir, ağarıb itmir
+.apexcharts-bar-area:hover,
+.apexcharts-pie-area:hover {
+    filter: brightness(.9);
 }

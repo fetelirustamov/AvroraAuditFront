@@ -1,0 +1,159 @@
+// Admin səhifələrinin ortaq blokları. Komponentin SCSS-ində:
+//   @use '<nisbi yol>/admin/shared/admin';
+//   @include admin.list-page;     // siyahı: filtr kartı + cədvəl kartı
+//   @include admin.form-dialog;   // 8 sahəyə qədər forma (MatDialog)
+//   @include admin.form-page;     // böyük forma (səhifə): bölmə kartları + alt düymələr
+// Rəng, ölçü və boşluq yalnız token-lərdən gəlir (_tokens.scss).
+
+/// Siyahı səhifəsi: axtarış `.g-filter-card`-dadır, cədvəl `.table-card` içində.
+/// Yenidən yükləmədə köhnə sətirlər qalır, kartın üstündə nazik progress xətti görünür.
+@mixin list-page {
+    :host {
+        display: block;
+    }
+
+    .table-card {
+        position: relative;
+    }
+
+    // Ölçü qlobal `.list-progress`-dən; admin siyahısında xətt kartın başına yapışır, sətirləri itələmir
+    .list-progress {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 3;
+    }
+
+    .table-sticky table {
+        width: 100%;
+    }
+
+    // Axtarış sahəsinin önündəki ikon
+    .field-icon {
+        margin-right: var(--space-2);
+        font-size: 18px;
+        color: var(--text-muted);
+    }
+
+    // Çoxsətirli mətn sütunu: iki sətirdən sonra kəsilir, tam mətn `title`-dadır
+    .clamp-2 {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        white-space: normal;
+        line-height: 1.5;
+        word-break: break-word;
+    }
+
+    .muted {
+        color: var(--text-muted);
+    }
+}
+
+/// Forma dialoqu: başlıq, sürüşən məzmun, sağ altda "Ləğv et" → "Yadda saxla".
+@mixin form-dialog {
+    .form-dialog-title {
+        font-size: var(--fs-16);
+        font-weight: 600;
+        color: var(--text-strong);
+    }
+
+    @include form-grid;
+}
+
+/// Forma səhifəsi: məzmun bölmə kartlarındadır, düymələr formun sonunda sağdadır.
+@mixin form-page {
+    :host {
+        display: block;
+    }
+
+    .form-section {
+        margin-bottom: var(--space-5);
+        padding: var(--space-5);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        background: var(--surface);
+    }
+
+    .form-section-head {
+        display: flex;
+        align-items: center;
+        gap: var(--space-3);
+        margin-bottom: var(--space-4);
+    }
+
+    .form-section-title {
+        margin: 0;
+        font-size: var(--fs-14);
+        font-weight: 600;
+        color: var(--text-strong);
+    }
+
+    .form-section-hint {
+        margin: 0;
+        font-size: var(--fs-13);
+        color: var(--text-muted);
+    }
+
+    .form-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: var(--space-3);
+    }
+
+    // `.page-progress` qlobaldır (_design-system.scss)
+
+    @include form-grid;
+}
+
+/// Sahə şəbəkəsi: etiket üstdə (`.g-field-label`), sahə altda (`mat-form-field.g-modern-field`).
+@mixin form-grid {
+    .form-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: var(--space-4) var(--space-5);
+
+        &.cols-3 {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+    }
+
+    .form-field {
+        min-width: 0;
+    }
+
+    .form-field-full {
+        grid-column: 1 / -1;
+    }
+
+    .required-mark {
+        color: var(--danger-text);
+    }
+
+    .field-note {
+        display: flex;
+        align-items: flex-start;
+        gap: var(--space-2);
+        margin: var(--space-1) 0 0;
+        font-size: var(--fs-12);
+        line-height: 1.5;
+        color: var(--text-muted);
+
+        .material-symbols-outlined {
+            font-size: 16px;
+        }
+
+        &.is-warning {
+            color: var(--warning-text);
+        }
+    }
+
+    @media (max-width: 767px) {
+        .form-grid,
+        .form-grid.cols-3 {
+            grid-template-columns: minmax(0, 1fr);
+        }
+    }
+}

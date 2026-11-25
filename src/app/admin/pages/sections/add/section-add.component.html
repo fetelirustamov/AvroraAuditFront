@@ -1,63 +1,40 @@
-<div class="modal-like">
-    <mat-card>
-        <mat-card-header>
-            <div class="header-container">
-                <mat-card-title>{{pageTitle}}</mat-card-title>
-                <div class="top-actions">
-                    <button mat-flat-button color="primary" type="submit" (click)="submit()">Təsdiqlə</button>
-                    <button mat-stroked-button color="warn" type="button" (click)="cancel()">İmtina</button>
-                </div>
+<form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <h2 mat-dialog-title class="form-dialog-title">{{ isEdit ? 'Şöbəni redaktə et' : 'Yeni şöbə' }}</h2>
+
+    <mat-dialog-content>
+        <div class="form-grid">
+            <div class="form-field">
+                <label class="g-field-label" id="section-firm-label">Firma <span class="required-mark" aria-hidden="true">*</span></label>
+                <mat-form-field appearance="outline" class="g-modern-field">
+                    <mat-select formControlName="firmId" aria-labelledby="section-firm-label" required placeholder="Firma seçin">
+                        @for (f of firms; track f.id) {
+                            <mat-option [value]="f.id">{{ f.name }}</mat-option>
+                        }
+                    </mat-select>
+                    <mat-error>Firmanı seçin</mat-error>
+                </mat-form-field>
             </div>
-        </mat-card-header>
 
-        <mat-card-content>
-            <form [formGroup]="form" (ngSubmit)="submit()" class="row g-3 admin-input-design" novalidate>
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <label class="main-label">
-                            Firma
-                            <span class="text-danger">*</span>
-                        </label>
-                        <mat-form-field class="w-100">
-                            <mat-select formControlName="firmId" required placeholder="Firma">
-                                <mat-option *ngFor="let f of firms" [value]="f.id">{{ f.name }}</mat-option>
-                            </mat-select>
-                            <mat-error *ngIf="form.get('firmId')?.hasError('required') && form.get('firmId')?.touched">
-                                Firma seçilməlidir
-                            </mat-error>
-                        </mat-form-field>
-                    </div>
-                </div>
+            <div class="form-field">
+                <label class="g-field-label" for="section-name">Şöbə adı <span class="required-mark" aria-hidden="true">*</span></label>
+                <mat-form-field appearance="outline" class="g-modern-field">
+                    <input id="section-name" matInput formControlName="sectionName" required>
+                    <mat-error>Şöbə adını yazın</mat-error>
+                </mat-form-field>
+            </div>
 
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <label class="main-label">
-                            Şöbə Adı
-                            <span class="text-danger">*</span>
-                        </label>
-                        <mat-form-field class="w-100">
-                            <input matInput formControlName="sectionName" required
-                                placeholder="Şöbə adını daxil edin" />
-                            <mat-error
-                                *ngIf="form.get('sectionName')?.hasError('required') && form.get('sectionName')?.touched">
-                                Şöbə adı tələb olunur
-                            </mat-error>
-                        </mat-form-field>
-                    </div>
-                </div>
+            <div class="form-field form-field-full">
+                <label class="g-field-label" for="section-description">Açıqlama</label>
+                <mat-form-field appearance="outline" class="g-modern-field">
+                    <textarea id="section-description" matInput formControlName="sectionDescription" rows="3"
+                        placeholder="Qısa açıqlama"></textarea>
+                </mat-form-field>
+            </div>
+        </div>
+    </mat-dialog-content>
 
-                <div class="col-12">
-                    <div class="form-group">
-                        <label class="main-label">
-                            Şöbə Açıqlaması
-                        </label>
-                        <mat-form-field class="w-100">
-                            <textarea matInput formControlName="sectionDescription" rows="3"
-                                placeholder="Qısa açıqlama"></textarea>
-                        </mat-form-field>
-                    </div>
-                </div>
-            </form>
-        </mat-card-content>
-    </mat-card>
-</div>
+    <mat-dialog-actions align="end">
+        <button type="button" class="g-secondary-btn" (click)="cancel()">Ləğv et</button>
+        <button type="submit" class="g-search-btn" [disabled]="isSaving">{{ isEdit ? 'Yadda saxla' : 'Əlavə et' }}</button>
+    </mat-dialog-actions>
+</form>

@@ -1,0 +1,67 @@
+<div class="preview-dialog">
+  <h2 class="preview-title">
+    <span class="material-symbols-outlined icon" aria-hidden="true">error</span>
+    Təsdiq zəncirləri əvəz olunsun?
+  </h2>
+
+  <p class="preview-message">
+    "{{ data.networkName }}" firmasında <b>{{ data.rows.length }}</b> mağazanın təsdiq zənciri fayldakı ilə
+    tamamilə əvəz olunacaq. Köhnə zəncir saxlanmır.
+    @if (unchangedCount > 0) {
+      {{ unchangedCount }} mağazada zəncir dəyişmir.
+    }
+  </p>
+
+  <div class="preview-table-wrap">
+    <table class="preview-table">
+      <thead>
+        <tr>
+          <th scope="col">Mağaza</th>
+          <th scope="col">Hazırkı zəncir</th>
+          <th scope="col">Yeni zəncir</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of data.rows; track row.code) {
+          <tr [class.unchanged]="row.unchanged">
+            <td>
+              <span class="store-name">{{ row.name }}</span>
+              <span class="store-code">{{ row.code }}</span>
+            </td>
+            <td>
+              @if (row.current.length > 0) {
+                <ol class="chain">
+                  @for (person of row.current; track $index) { <li>{{ person }}</li> }
+                </ol>
+              } @else {
+                <span class="muted">Zəncir yoxdur</span>
+              }
+            </td>
+            <td>
+              <ol class="chain">
+                @for (person of row.next; track $index) { <li>{{ person }}</li> }
+              </ol>
+              @if (row.unchanged) { <span class="muted">dəyişmir</span> }
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  @if (data.issues.length > 0) {
+    <h3 class="issues-title">Ötürülən sətirlər ({{ data.issues.length }}) — göndərilməyəcək</h3>
+    <ul class="issue-list">
+      @for (issue of data.issues; track $index) {
+        <li><span class="issue-row">Sətir {{ issue.row }}</span>{{ issue.message }}</li>
+      }
+    </ul>
+  }
+
+  <div class="preview-actions">
+    <button class="g-secondary-btn" type="button" cdkFocusInitial (click)="cancel()">Ləğv et</button>
+    <button class="g-reject-btn" type="button" (click)="confirm()">
+      {{ data.rows.length }} mağazanın zəncirini əvəz et
+    </button>
+  </div>
+</div>

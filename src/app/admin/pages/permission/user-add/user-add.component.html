@@ -1,202 +1,131 @@
-<div class="user-add-container">
-    <!-- Breadcrumb -->
-    <app-admin-breadcrumb
-        [title]="isEditMode ? 'İstifadəçini redaktə et' : 'Yeni istifadəçi'"
-        icon="person_add"
-        [crumbs]="userAddCrumbs">
-    </app-admin-breadcrumb>
-
-    <div class="audit-table-loading-shell user-add-body-shell" [attr.aria-busy]="isLoading || isSaving">
-        <div [class.audit-table-muted]="isLoading || isSaving" class="user-add-form-stack">
-
-    <!-- Action Buttons -->
-    <div class="action-buttons d-flex justify-content-end">
-        <button mat-flat-button color="primary" (click)="saveUser()" [disabled]="isSaving || isLoading" class="me-2">
-            <span class="material-symbols-outlined">save</span>
-            {{ saveButtonLabel }}
+<app-page-header backLink="/admin/permissions/user-permission" backLabel="İstifadəçilərə qayıt"
+    [subtitle]="fullName ? fullName + ' · kod ' + userCode : ''">
+    @if (canResetPassword) {
+        <button headerActions type="button" class="g-secondary-btn" (click)="openPasswordDialog()">
+            <span class="material-symbols-outlined" aria-hidden="true">lock_reset</span>
+            Parolu sıfırla
         </button>
-        <button mat-stroked-button color="warn" (click)="cancel()" [disabled]="isSaving || isLoading">
-            <span class="material-symbols-outlined">cancel</span>
-            İmtina
-        </button>
+    }
+</app-page-header>
+
+@if (isLoading) {
+    <mat-progress-bar class="page-progress" mode="indeterminate" />
+}
+
+@if (loadError) {
+    <div class="table-card">
+        <app-list-state state="error" [errorMessage]="loadError" (retry)="load()" />
     </div>
-
-    <!-- User Search Section -->
-    <mat-card class="search-card">
-        <mat-card-header>
-            <mat-card-title>
-                <span class="material-symbols-outlined me-2">search</span>
-                İstifadəçi Seçimi
-            </mat-card-title>
-        </mat-card-header>
-        <mat-card-content>
-            <form [formGroup]="userForm">
-                <div class="row g-3">
-                    <div class="col-md-12">
-                        <mat-form-field class="w-100">
-                            <mat-select formControlName="selectedUser" (selectionChange)="onUserChange()"
-                                (openedChange)="onUserSelectOpened($event)">
-                                <mat-option class="select-search-option" (click)="$event.stopPropagation()">
-                                    <mat-icon class="me-2">search</mat-icon>
-                                    <input #userSearchInput matInput placeholder="Axtar: kod və ya ad"
-                                        [value]="userSearchTerm" (input)="onUserSearchInput($any($event.target).value)"
-                                        style="width: 80%" />
-                                </mat-option>
-                                <mat-option *ngIf="isLoadingUsers" disabled>Yüklənir…</mat-option>
-                                <mat-option *ngIf="!isLoadingUsers && filteredUsers.length === 0" disabled>
-                                    İstifadəçi tapılmadı
-                                </mat-option>
-                                <mat-option *ngFor="let user of filteredUsers" [value]="user">
-                                    {{user.id}} {{user.fullName}}
-                                </mat-option>
-                            </mat-select>
-                            <span matPrefix class="material-symbols-outlined">person</span>
-                            <button mat-icon-button matSuffix
-                                type="button"
-                                *ngIf="!isEditMode && getFormControl('selectedUser')?.value"
-                                (click)="$event.stopPropagation(); userForm.patchValue({selectedUser: ''}); selectedUser=null;">
-                                <span class="material-symbols-outlined">close</span>
-                            </button>
-                            <mat-error *ngIf="hasError('selectedUser', 'required')">İstifadəçi seçimi
-                                məcburidir</mat-error>
-                        </mat-form-field>
-                    </div>
+} @else {
+    <form [formGroup]="form" (ngSubmit)="save()" novalidate [attr.aria-busy]="isLoading">
+        <section class="form-section" aria-labelledby="user-profile-title">
+            <div class="form-section-head">
+                <h2 class="form-section-title" id="user-profile-title">Şəxsi məlumatlar</h2>
+            </div>
+            <div class="form-grid cols-3">
+                <div class="form-field">
+                    <label class="g-field-label" for="profile-name">Ad <span class="required-mark" aria-hidden="true">*</span></label>
+                    <mat-form-field appearance="outline" class="g-modern-field">
+                        <input id="profile-name" matInput formControlName="name" required>
+                        @if (form.controls.name.hasError('required')) {
+                            <mat-error>Adı yazın</mat-error>
+                        } @else {
+                            <mat-error>Ən çox 150 simvol</mat-error>
+                        }
+                    </mat-form-field>
                 </div>
-            </form>
-        </mat-card-content>
-    </mat-card>
-
-    <!-- User Details Section -->
-    <mat-card class="user-details-card" *ngIf="selectedUser">
-        <mat-card-header>
-            <mat-card-title>
-                <span class="material-symbols-outlined me-2">person</span>
-                İstifadəçi Məlumatları
-            </mat-card-title>
-        </mat-card-header>
-        <mat-card-content>
-            <div class="row g-4 align-items-center">
-                <div class="col-md-2">
-                    <div class="user-profile">
-                        <div class="profile-image">
-                            <img [src]="selectedUser.profileImage || 'assets/images/users/default-user.jpg'"
-                                alt="Profile Image" class="rounded-circle" />
-                        </div>
-                    </div>
+                <div class="form-field">
+                    <label class="g-field-label" for="profile-surname">Soyad <span class="required-mark" aria-hidden="true">*</span></label>
+                    <mat-form-field appearance="outline" class="g-modern-field">
+                        <input id="profile-surname" matInput formControlName="surName" required>
+                        @if (form.controls.surName.hasError('required')) {
+                            <mat-error>Soyadı yazın</mat-error>
+                        } @else {
+                            <mat-error>Ən çox 150 simvol</mat-error>
+                        }
+                    </mat-form-field>
                 </div>
-                <div class="col-md-7">
-                    <div class="user-details">
-                        <div class="info-item"><span class="material-symbols-outlined">tag</span><span
-                                class="label">ID:</span><span class="value">{{selectedUser.id}}</span></div>
-                        <div class="info-item"><span class="material-symbols-outlined">business</span><span
-                                class="label">Şöbə:</span><span class="value">{{selectedUser.department}}</span></div>
-                        <div class="info-item"><span class="material-symbols-outlined">person</span><span
-                                class="label">Ad/Soyad/Ata:</span><span class="value">{{selectedUser.fullName}}</span>
-                        </div>
-                        <div class="info-item"><span class="material-symbols-outlined">work</span><span
-                                class="label">Vəzifə:</span><span class="value">{{selectedUser.position}}</span></div>
-                        <div class="info-item" *ngIf="selectedUser.email"><span
-                                class="material-symbols-outlined">email</span><span class="label">Email:</span><span
-                                class="value">{{selectedUser.email}}</span></div>
-                        <div class="info-item" *ngIf="selectedUser.phone"><span
-                                class="material-symbols-outlined">phone</span><span class="label">Telefon:</span><span
-                                class="value">{{selectedUser.phone}}</span></div>
-                    </div>
+                <div class="form-field">
+                    <label class="g-field-label" for="profile-father">Ata adı</label>
+                    <mat-form-field appearance="outline" class="g-modern-field">
+                        <input id="profile-father" matInput formControlName="fatherName">
+                        <mat-error>Ən çox 150 simvol</mat-error>
+                    </mat-form-field>
                 </div>
-                <div class="col-md-3">
-                    <div class="user-details">
-                        <div class="info-item">
-                            <span class="label me-2">Status:</span>
-                            <form [formGroup]="userForm" class="d-inline">
-                                <mat-slide-toggle formControlName="userStatus">{{getFormControl('userStatus')?.value ?
-                                    'Aktiv' : 'Passiv'}}</mat-slide-toggle>
-                            </form>
-                        </div>
-                    </div>
+                <div class="form-field">
+                    <label class="g-field-label" for="profile-position">Vəzifə</label>
+                    <mat-form-field appearance="outline" class="g-modern-field">
+                        <input id="profile-position" matInput formControlName="position">
+                        <mat-error>Ən çox 150 simvol</mat-error>
+                    </mat-form-field>
+                </div>
+                <div class="form-field">
+                    <label class="g-field-label" for="profile-email">E-poçt <span class="required-mark" aria-hidden="true">*</span></label>
+                    <mat-form-field appearance="outline" class="g-modern-field">
+                        <input id="profile-email" matInput type="email" formControlName="email" required>
+                        @if (form.controls.email.hasError('required')) {
+                            <mat-error>E-poçtu yazın</mat-error>
+                        } @else if (form.controls.email.hasError('email')) {
+                            <mat-error>E-poçt formatı düzgün deyil</mat-error>
+                        } @else {
+                            <mat-error>Ən çox 150 simvol</mat-error>
+                        }
+                    </mat-form-field>
+                    <p class="field-note">E-poçt həm də giriş ünvanıdır.</p>
                 </div>
             </div>
-        </mat-card-content>
-    </mat-card>
+        </section>
 
-    <!-- Market Network Section -->
-    <mat-card #marketCard class="market-network-card" *ngIf="selectedUser">
-        <mat-card-header>
-            <mat-card-title><span class="material-symbols-outlined me-2">store</span>Market Şəbəkəsi</mat-card-title>
-        </mat-card-header>
-        <mat-card-content>
-            <form [formGroup]="userForm">
-                <div class="row g-3">
-                    <div class="col-md-12">
-                        <mat-form-field class="w-100">
-                            <mat-select formControlName="selectedMarket" multiple>
-                                <mat-select-trigger>
-                                    <mat-chip-listbox *ngIf="getFormControl('selectedMarket')?.value?.length"
-                                        class="inline-chips" [tabindex]="-1">
-                                        <mat-chip-option *ngFor="let m of getFormControl('selectedMarket')?.value"
-                                            selected disableRipple>{{m}}</mat-chip-option>
-                                    </mat-chip-listbox>
-                                    <span *ngIf="!getFormControl('selectedMarket')?.value?.length"
-                                        class="placeholder-text">Məs: BazarStore</span>
-                                </mat-select-trigger>
-                                <mat-option *ngIf="isLoadingFirms" disabled>Yüklənir…</mat-option>
-                                <mat-option *ngFor="let market of markets" [value]="market">{{market}}</mat-option>
-                            </mat-select>
-                            <span matPrefix class="material-symbols-outlined">shopping_cart</span>
-                            <button mat-icon-button matSuffix *ngIf="getFormControl('selectedMarket')?.value?.length"
-                                (click)="$event.stopPropagation(); clearSelectedMarkets();">
-                                <span class="material-symbols-outlined">close</span>
-                            </button>
-                            <mat-error *ngIf="hasError('selectedMarket', 'required')">Market seçimi
-                                məcburidir</mat-error>
-                        </mat-form-field>
-                    </div>
+        <section class="form-section" aria-labelledby="user-access-title">
+            <div class="form-section-head">
+                <h2 class="form-section-title" id="user-access-title">Giriş və təyinatlar</h2>
+            </div>
+            <div class="form-grid cols-3">
+                <div class="form-field">
+                    <span class="g-field-label">Status</span>
+                    <mat-slide-toggle formControlName="active">{{ form.controls.active.value ? 'Aktiv' : 'Passiv' }}</mat-slide-toggle>
+                    <p class="field-note">Passiv istifadəçi sistemə daxil ola bilmir, tarixçəsi qalır.</p>
                 </div>
-            </form>
-        </mat-card-content>
-    </mat-card>
-
-    <!-- Permission Group Section -->
-    <mat-card #permissionCard class="permission-group-card" *ngIf="selectedUser">
-        <mat-card-header>
-            <mat-card-title><span class="material-symbols-outlined me-2">security</span>Yetki Qrupu</mat-card-title>
-        </mat-card-header>
-        <mat-card-content>
-            <form [formGroup]="userForm">
-                <div class="row g-4">
-                    <div class="col-md-12">
-                        <mat-form-field class="w-100">
-                            <mat-select formControlName="selectedPermissionGroup">
-                                <mat-option *ngIf="isLoadingRoles" disabled>Yüklənir…</mat-option>
-                                <mat-option *ngFor="let group of permissionGroups"
-                                    [value]="group">{{group}}</mat-option>
-                            </mat-select>
-                            <span matPrefix class="material-symbols-outlined">lock</span>
-                            <button mat-icon-button matSuffix *ngIf="getFormControl('selectedPermissionGroup')?.value"
-                                (click)="$event.stopPropagation(); clearPermissionGroup();">
-                                <span class="material-symbols-outlined">close</span>
-                            </button>
-                            <mat-error *ngIf="hasError('selectedPermissionGroup', 'required')">Yetki qrupu seçimi
-                                məcburidir</mat-error>
-                        </mat-form-field>
-                    </div>
+                <div class="form-field">
+                    <label class="g-field-label" id="assign-firms-label">
+                        Firmalar
+                        @if (form.controls.active.value) {
+                            <span class="required-mark" aria-hidden="true">*</span>
+                        }
+                    </label>
+                    <mat-form-field appearance="outline" class="g-modern-field">
+                        <mat-select formControlName="firmIds" aria-labelledby="assign-firms-label" multiple placeholder="Firma seçin">
+                            @for (f of firms; track f.id) {
+                                <mat-option [value]="f.id">{{ f.name }}</mat-option>
+                            }
+                        </mat-select>
+                        <mat-error>Aktiv istifadəçi üçün ən azı bir firma seçin</mat-error>
+                    </mat-form-field>
                 </div>
-
-                <div class="selected-permissions mt-3" *ngIf="getFormControl('selectedPermissionGroup')?.value">
-                    <h6>Seçilmiş Səlahiyyətlər:</h6>
-                    <div class="permission-summary">
-                        <div class="permission-item" *ngFor="let market of getFormControl('selectedMarket')?.value">
-                            <strong>{{market}}</strong> - {{getFormControl('selectedPermissionGroup')?.value}}
-                        </div>
-                    </div>
+                <div class="form-field">
+                    <label class="g-field-label" id="assign-role-label">İcazə qrupu <span class="required-mark" aria-hidden="true">*</span></label>
+                    <mat-form-field appearance="outline" class="g-modern-field">
+                        <mat-select formControlName="roleId" aria-labelledby="assign-role-label" required placeholder="Qrup seçin">
+                            @for (r of roles; track r.id) {
+                                <mat-option [value]="r.id">{{ r.name }}</mat-option>
+                            }
+                        </mat-select>
+                        <mat-error>İcazə qrupunu seçin</mat-error>
+                    </mat-form-field>
                 </div>
-            </form>
-        </mat-card-content>
-    </mat-card>
+            </div>
 
+            @if (authType && !canResetPassword) {
+                <p class="field-note password-note">
+                    <span class="material-symbols-outlined" aria-hidden="true">shield_lock</span>
+                    Parol {{ authType }} tərəfindən idarə olunur, burada dəyişdirilmir.
+                </p>
+            }
+        </section>
+
+        <div class="form-actions">
+            <button type="button" class="g-secondary-btn" (click)="cancel()">Ləğv et</button>
+            <button type="submit" class="g-search-btn" [disabled]="isSaving || isLoading">Yadda saxla</button>
         </div>
-        <app-audit-loading-overlay *ngIf="isLoading || isSaving"
-            [title]="userAddOverlayTitle"
-            [hint]="userAddOverlayHint"
-            [ariaLabel]="userAddOverlayTitle"></app-audit-loading-overlay>
-    </div>
-</div>
+    </form>
+}

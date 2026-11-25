@@ -29,23 +29,29 @@ export class AuthService {
 
     private loadUserFromToken(): void {
         const token = this.getToken();
-        if (token) {
-            try {
-                const decodedToken: any = jwtDecode(token);
-                const roles = decodedToken.Role ? decodedToken.Role.split(',').map((role: string) => role.trim()) : [];
-
-                const user: User = {
-                    id: decodedToken.Id,
-                    email: decodedToken.Email,
-                    roles: roles
-                };
-
-                this.currentUserSubject.next(user);
-            } catch (error) {
-                this.logout();
-            }
+        if (!token) {
+            return;
         }
 
+        if (this.isTokenExpired(token)) {
+            this.clearSession();
+            return;
+        }
+
+        try {
+            const decodedToken: any = jwtDecode(token);
+            const roles = decodedToken.Role ? decodedToken.Role.split(',').map((role: string) => role.trim()) : [];
+
+            const user: User = {
+                id: decodedToken.Id,
+                email: decodedToken.Email,
+                roles: roles
+            };
+
+            this.currentUserSubject.next(user);
+        } catch (error) {
+            this.logout();
+        }
     }
 
 
@@ -61,8 +67,7 @@ export class AuthService {
     }
 
     logout(): void {
-        localStorage.removeItem(this.token);
-        this.currentUserSubject.next(null);
+        this.clearSession();
         this.router.navigate(['/login']);
     }
 
@@ -72,7 +77,18 @@ export class AuthService {
 
 
     isAuthenticated(): boolean {
-        return !!this.getToken();
+        const token = this.getToken();
+        if (!token) {
+            return false;
+        }
+
+        if (this.isTokenExpired(token)) {
+            // Vaxtı keçmiş token yaddaşda qalsa guard buraxır, sonra hər sorğu 401 verir.
+            this.clearSession();
+            return false;
+        }
+
+        return true;
     }
 
     hasRole(role: string): boolean {
@@ -89,7 +105,12 @@ export class AuthService {
 
     hasAllRoles(roles: string[]): boolean {
         const user = this.currentUserSubject.value;
-        return user?.roles.every(role => roles.includes(role)) || false;
+        if (!user) {
+            return false;
+        }
+
+        // Tələb olunan hər rol istifadəçidə olmalıdır — əksi yox.
+        return roles.every(role => user.roles.includes(role));
     }
 
     getUserInfo(): any {
@@ -101,5 +122,19 @@ export class AuthService {
         } catch {
             return null;
         }
+    }
+
+    private isTokenExpired(token: string): boolean {
+        try {
+            const { exp } = jwtDecode<{ exp?: number }>(token);
+            return exp == null || exp * 1000 <= Date.now();
+        } catch {
+            return true;
+        }
+    }
+
+    clearSession(): void {
+        localStorage.removeItem(this.token);
+        this.currentUserSubject.next(null);
     }
 }

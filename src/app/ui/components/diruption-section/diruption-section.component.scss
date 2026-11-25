@@ -1,3 +1,57 @@
-.primary {
-    color: #6178fa !important;
+@use '../section-panel' as *;
+
+.disruption-section-card.mat-mdc-card {
+    padding: 8px 0;
+}
+
+.disruption-accordion .section-panel+.section-panel {
+    margin-top: 10px;
+}
+
+.section-description {
+    justify-content: flex-end;
+    margin-right: 8px;
+}
+
+.section-table {
+    .col-date {
+        width: 150px;
+        white-space: nowrap;
+    }
+
+    .mat-column-description {
+        width: 34%;
+    }
+}
+
+.category-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px var(--space-2);
+    border-radius: var(--radius-sm);
+    background: var(--surface-subtle);
+    color: var(--text);
+    font-size: var(--fs-13);
+    font-weight: 600;
+    line-height: 1.4;
+    word-break: break-word;
+}
+
+.reason-text {
+    font-weight: 500;
+    color: var(--text-strong);
+    word-break: break-word;
+}
+
+.description-text {
+    display: inline-block;
+    word-break: break-word;
+    white-space: pre-line;
+    color: var(--text);
+    line-height: 1.5;
+}
+
+.date-text {
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
 }

@@ -5,8 +5,8 @@ import { Observable } from 'rxjs';
 import { User } from './user.model';
 import { InspectionPlan } from '../inspections/InpectionPlan.model';
 import { RequestResponse, RequestResponseOne } from '../../models/table-state.model';
-import { PlanApprove } from './plan.model';
-import { DailyDistanceReportRow, RoutePlanDto } from './route-plan.model';
+import { StatusChange } from '../../shared/status/status-reason.component';
+import { PlanApprove, PlanChecklistSummary } from './plan.model';
 
 @Injectable({
   providedIn: 'root'
@@ -17,13 +17,9 @@ export class PlanService {
 
   constructor(private http: HttpClient) { }
 
-  getInspectors(firmId: number, roleId?: number): Observable<RequestResponse<User>> {
-    let params = new HttpParams();
-
-    if (roleId !== undefined && roleId !== null) {
-      params = params.set('roleId', roleId.toString());
-    }
-    return this.http.get<RequestResponse<User>>(`${this.API_URL}/firms/${firmId}/users`, { params });
+  /** Plana təyin edilə bilən istifadəçilər — rol süzgəci backend-dədir (Inspector, HeadInspector). */
+  getInspectors(firmId: number): Observable<RequestResponse<User>> {
+    return this.http.get<RequestResponse<User>>(`${this.API_URL}/firms/${firmId}/inspectors`);
   }
 
   addPlan(plan: InspectionPlan): Observable<any> {
@@ -49,21 +45,15 @@ export class PlanService {
 
   }
 
-  getRoute(inspectorId: number, date: string): Observable<RequestResponseOne<RoutePlanDto>> {
-    const params = new HttpParams()
-      .set('date', date)
-      .set('inspectorId', inspectorId.toString());
-
-    return this.http.get<RequestResponseOne<RoutePlanDto>>(`${this.API_URL}/inspectionPlans/route`, { params });
+  /** Onay siyahısının sətirləri üçün checklist faizi və uyğunsuzluq sayı (bir sorğuda, ən çox 200 plan). */
+  getChecklistSummaries(planIds: readonly number[]): Observable<RequestResponse<PlanChecklistSummary>> {
+    const params = new HttpParams({ fromObject: { ids: planIds.map(String) } });
+    return this.http.get<RequestResponse<PlanChecklistSummary>>(`${this.API_URL}/inspectionPlans/checklist/summaries`, { params });
   }
 
-  getDailyDistanceReport(firmId: number, startDate: string, endDate: string): Observable<RequestResponseOne<DailyDistanceReportRow[]>> {
-    const params = new HttpParams()
-      .set('firmId', firmId.toString())
-      .set('startDate', startDate)
-      .set('endDate', endDate);
-
-    return this.http.get<RequestResponseOne<DailyDistanceReportRow[]>>(`${this.API_URL}/inspectionPlans/dailyDistanceReport`, { params });
+  /** Planın səbəbi yazılmış son status dəyişikliyi (rədd, mobilə qaytarma, yenidən açma); yoxdursa `data: null`. */
+  getStatusReason(planId: number): Observable<RequestResponseOne<StatusChange | null>> {
+    return this.http.get<RequestResponseOne<StatusChange | null>>(`${this.API_URL}/inspectionPlans/statusReason/${planId}`);
   }
 
 }

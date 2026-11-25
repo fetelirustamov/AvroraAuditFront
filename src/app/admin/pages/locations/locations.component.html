@@ -1,165 +1,109 @@
-<app-admin-breadcrumb
-    title="Mağazalar / Məkanlar"
-    [crumbs]="[{label: 'Parametrlər'}, {label: 'Mağazalar'}]">
-</app-admin-breadcrumb>
-
-<mat-card class="locations-card mb-25 border-radius d-block bg-white border-0 shadow-none">
-    <mat-card-header class="admin-card-header">
-        <mat-card-title>
-            <button class="add-btn" type="button" mat-flat-button color="primary" (click)="add()">
-                <i class="material-symbols-outlined">add</i>
-                Yeni Mağaza
-            </button>
-        </mat-card-title>
-        <mat-card-subtitle>
-            <button mat-stroked-button type="button" (click)="openModal(searchTpl)">
-                <span class="material-symbols-outlined">tune</span>
-                Ətraflı Axtarış
-            </button>
-        </mat-card-subtitle>
-    </mat-card-header>
-
-    <mat-card-content class="audit-table-loading-shell" [attr.aria-busy]="isLoading">
-        <div class="table-responsive" [class.audit-table-muted]="isLoading">
-            <table mat-table [dataSource]="dataSource" matSort>
-                <!-- Firm -->
-                <ng-container matColumnDef="firmName">
-                    <th mat-header-cell *matHeaderCellDef mat-sort-header> FİRMA </th>
-                    <td mat-cell *matCellDef="let r"> {{r.firmName}} </td>
-                </ng-container>
-
-                <!-- Code -->
-                <ng-container matColumnDef="locationCode">
-                    <th mat-header-cell *matHeaderCellDef mat-sort-header> KOD </th>
-                    <td mat-cell *matCellDef="let r"> {{r.locationCode || '—'}} </td>
-                </ng-container>
-
-                <!-- Name -->
-                <ng-container matColumnDef="locationName">
-                    <th mat-header-cell *matHeaderCellDef mat-sort-header> AD </th>
-                    <td mat-cell *matCellDef="let r"> {{r.locationName}} </td>
-                </ng-container>
-
-                <!-- Phone -->
-                <ng-container matColumnDef="contactNumber">
-                    <th mat-header-cell *matHeaderCellDef> ƏLAQƏ </th>
-                    <td mat-cell *matCellDef="let r"> {{r.contactNumber || '—'}} </td>
-                </ng-container>
-
-                <!-- Lat -->
-                <ng-container matColumnDef="latitude">
-                    <th mat-header-cell *matHeaderCellDef> LAT </th>
-                    <td mat-cell *matCellDef="let r"> {{r.latitude || '—'}} </td>
-                </ng-container>
-
-                <!-- Lng -->
-                <ng-container matColumnDef="longitude">
-                    <th mat-header-cell *matHeaderCellDef> LNG </th>
-                    <td mat-cell *matCellDef="let r"> {{r.longitude || '—'}} </td>
-                </ng-container>
-
-                <!-- Actions -->
-                <ng-container matColumnDef="actions">
-                    <th mat-header-cell *matHeaderCellDef> ƏMƏLİYYATLAR </th>
-                    <td mat-cell *matCellDef="let r">
-                        <div class="action-buttons">
-                            <button type="button" class="action-btn edit-btn" (click)="edit(r)" matTooltip="Redaktə Et" matTooltipPosition="above">
-                                <span class="material-symbols-outlined">edit</span>
-                            </button>
-                            <button type="button" class="action-btn delete-btn" (click)="remove(r)" matTooltip="Sil" matTooltipPosition="above">
-                                <span class="material-symbols-outlined">delete</span>
-                            </button>
-                        </div>
-                    </td>
-                </ng-container>
-
-                <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-                <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
-
-                <tr class="mat-row" *matNoDataRow>
-                    <td class="mat-cell text-center" colspan="7">Məlumat tapılmadı</td>
-                </tr>
-            </table>
+<section class="g-filter-card">
+    <div class="g-filter-grid">
+        <div class="g-filter-field">
+            <label class="g-field-label" id="location-region-label">
+                <span class="material-symbols-outlined" aria-hidden="true">map</span>Bölgə
+            </label>
+            <mat-form-field appearance="outline" class="g-modern-field">
+                <mat-select aria-labelledby="location-region-label" [formControl]="regionControl"
+                    [placeholder]="regions.length ? 'Hamısı' : 'Bölgə yoxdur'">
+                    <mat-option [value]="null">Hamısı</mat-option>
+                    @for (r of regions; track r.id) {
+                        <mat-option [value]="r.id">{{ r.name }}</mat-option>
+                    }
+                </mat-select>
+            </mat-form-field>
         </div>
-
-        <mat-paginator [pageSizeOptions]="[10,25,50,100]" showFirstLastButtons [disabled]="isLoading"></mat-paginator>
-        <app-audit-loading-overlay *ngIf="isLoading"
-            title="Mağazalar yüklənir"
-            hint="Məkan siyahısı hazırlanır…"></app-audit-loading-overlay>
-    </mat-card-content>
-</mat-card>
-
-<!-- Slide-over template -->
-<ng-template #searchTpl>
-    <div class="dialog-header">
-        <h2 mat-dialog-title class="search-title">Axtarış</h2>
-        <!-- <button mat-icon-button class=""> -->
-        <!-- <mat-icon>close</mat-icon> -->
-        <span class="material-symbols-outlined close-button" (click)="closeModal()">close</span>
-        <!-- </button> -->
+        <div class="g-filter-field-wide">
+            <label class="g-field-label" for="location-search">
+                <span class="material-symbols-outlined" aria-hidden="true">search</span>Axtarış
+            </label>
+            <mat-form-field appearance="outline" class="g-modern-field">
+                <input id="location-search" matInput type="search" [formControl]="searchControl"
+                    placeholder="Mağaza adı və ya kodu">
+            </mat-form-field>
+        </div>
+        <div class="g-filter-actions">
+            <button type="button" class="g-search-btn" (click)="add()">
+                <span class="material-symbols-outlined" aria-hidden="true">add</span>
+                Yeni mağaza
+            </button>
+        </div>
     </div>
-    <mat-dialog-content [formGroup]="searchForm">
+</section>
 
-        <div class="col-12">
-            <div class="form-group">
-                <label class="main-label">Müəsisələr</label>
-                <mat-form-field>
-                    <mat-label>Müəsisə</mat-label>
-                    <mat-select formControlName="firmId" (selectionChange)="onFirmChange($event.value)">
-                        <mat-option *ngFor="let firm of firms" [value]="firm.id">{{ firm.name }}</mat-option>
-                    </mat-select>
-                </mat-form-field>
-            </div>
-            <div class="form-group">
-                <label class="main-label">Ərazi</label>
-                <mat-form-field>
-                    <mat-label>Ərazi</mat-label>
-                    <mat-select formControlName="regionId" [disabled]="!regions.length">
-                        <mat-option *ngFor="let region of regions" [value]="region.id">
-                            {{ region.regionName || region.name }}
-                        </mat-option>
-                    </mat-select>
-                </mat-form-field>
-            </div>
-            <div class="col-12">
-                <div class="form-group">
-                    <label class="main-label d-block fw-medium ">
-                        Mağaza adı
-                    </label>
-                    <mat-form-field>
-                        <mat-label>
-                            Mağaza adı
-                        </mat-label>
-                        <input matInput formControlName="locationName">
-                    </mat-form-field>
-                </div>
-            </div>
-            <div class="col-12">
-                <div class="form-group">
-                    <label class="main-label d-block fw-medium ">
-                        Kod
-                    </label>
-                    <mat-form-field>
-                        <mat-label>
-                            Mağaza kodu
-                        </mat-label>
-                        <input matInput formControlName="locationCode">
-                    </mat-form-field>
-                </div>
-            </div>
+<div class="table-card" [attr.aria-busy]="isLoading">
+    @if (isLoading) {
+        <mat-progress-bar class="list-progress" mode="indeterminate" />
+    }
 
-            <div class="col-12 searchButtons">
-                <button mat-flat-button color="primary" class="mr-20" (click)="onSearchSubmit()">
-                    <span class="material-symbols-outlined">search</span>
-                    Axtar
-                </button>
-                <button mat-stroked-button color="warn" (click)="resetForm()">
-                    <span class="material-symbols-outlined">clear_all</span>
-                    Formu Təmizlə
-                </button>
-            </div>
+    @if (loadError) {
+        <app-list-state state="error" [errorMessage]="loadError" (retry)="load()" />
+    }
 
-        </div>
+    <div class="table-sticky" [hidden]="!!loadError">
+        <table mat-table [dataSource]="dataSource" matSort>
+            <ng-container matColumnDef="locationCode">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>Mağaza kodu</th>
+                <td mat-cell *matCellDef="let r"><span class="mono">{{ r.locationCode || '—' }}</span></td>
+            </ng-container>
 
-    </mat-dialog-content>
-</ng-template>
+            <ng-container matColumnDef="locationName">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>Mağaza adı</th>
+                <td mat-cell *matCellDef="let r">{{ r.locationName }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="region">
+                <th mat-header-cell *matHeaderCellDef>Bölgə</th>
+                <td mat-cell *matCellDef="let r">{{ regionName(r) }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="contactNumber">
+                <th mat-header-cell *matHeaderCellDef>Əlaqə nömrəsi</th>
+                <td mat-cell *matCellDef="let r">{{ r.contactNumber || '—' }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="coordinates">
+                <th mat-header-cell *matHeaderCellDef>Koordinat</th>
+                <td mat-cell *matCellDef="let r">
+                    @if (r.latitude && r.longitude) {
+                        <span class="mono">{{ r.latitude }}, {{ r.longitude }}</span>
+                    } @else {
+                        <span class="muted">—</span>
+                    }
+                </td>
+            </ng-container>
+
+            <ng-container matColumnDef="actions">
+                <th mat-header-cell *matHeaderCellDef>Əməliyyatlar</th>
+                <td mat-cell *matCellDef="let r">
+                    <div class="action-buttons">
+                        <button type="button" class="action-btn" (click)="edit(r)"
+                            matTooltip="Redaktə et" aria-label="Redaktə et">
+                            <span class="material-symbols-outlined" aria-hidden="true">edit</span>
+                        </button>
+                        <button type="button" class="action-btn delete-btn" (click)="remove(r)"
+                            matTooltip="Sil" aria-label="Sil">
+                            <span class="material-symbols-outlined" aria-hidden="true">delete</span>
+                        </button>
+                    </div>
+                </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+
+            <tr class="mat-row" *matNoDataRow>
+                <td class="mat-cell" [attr.colspan]="displayedColumns.length">
+                    @if (loaded) {
+                        <app-list-state state="empty"
+                            [message]="hasFilters ? 'Bu filtrlərlə mağaza tapılmadı' : 'Bu firmada hələ mağaza yoxdur'" />
+                    }
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <mat-paginator [hidden]="!!loadError" [pageSizeOptions]="[10, 25, 50, 100]" showFirstLastButtons
+        aria-label="Mağazalar siyahısının səhifəsini seç" (page)="urlState.writePage($event)"></mat-paginator>
+</div>

@@ -1,0 +1,114 @@
+<form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <h2 mat-dialog-title class="form-dialog-title">Yeni istifadəçi</h2>
+
+    <mat-dialog-content>
+        <div class="form-grid">
+            <div class="form-field">
+                <label class="g-field-label" for="user-code">İstifadəçi kodu <span class="required-mark" aria-hidden="true">*</span></label>
+                <mat-form-field appearance="outline" class="g-modern-field">
+                    <input id="user-code" matInput class="mono" type="number" formControlName="userCode" required placeholder="Məs: 10254">
+                    @if (form.controls.userCode.hasError('required')) {
+                        <mat-error>İstifadəçi kodunu yazın</mat-error>
+                    } @else if (form.controls.userCode.hasError('min')) {
+                        <mat-error>Kod 0-dan böyük olmalıdır</mat-error>
+                    }
+                </mat-form-field>
+            </div>
+
+            <div class="form-field">
+                <label class="g-field-label" for="user-email">E-poçt <span class="required-mark" aria-hidden="true">*</span></label>
+                <mat-form-field appearance="outline" class="g-modern-field">
+                    <input id="user-email" matInput type="email" formControlName="email" required
+                        autocomplete="off" placeholder="ad.soyad@sirket.az">
+                    @if (form.controls.email.hasError('required')) {
+                        <mat-error>E-poçtu yazın</mat-error>
+                    } @else {
+                        <mat-error>E-poçt formatı düzgün deyil</mat-error>
+                    }
+                </mat-form-field>
+                <p class="field-note">E-poçt həm də giriş ünvanıdır.</p>
+            </div>
+
+            <div class="form-field">
+                <label class="g-field-label" for="user-name">Ad <span class="required-mark" aria-hidden="true">*</span></label>
+                <mat-form-field appearance="outline" class="g-modern-field">
+                    <input id="user-name" matInput formControlName="name" required>
+                    <mat-error>Adı yazın</mat-error>
+                </mat-form-field>
+            </div>
+
+            <div class="form-field">
+                <label class="g-field-label" for="user-surname">Soyad <span class="required-mark" aria-hidden="true">*</span></label>
+                <mat-form-field appearance="outline" class="g-modern-field">
+                    <input id="user-surname" matInput formControlName="surName" required>
+                    <mat-error>Soyadı yazın</mat-error>
+                </mat-form-field>
+            </div>
+
+            <div class="form-field">
+                <label class="g-field-label" for="user-father">Ata adı</label>
+                <mat-form-field appearance="outline" class="g-modern-field">
+                    <input id="user-father" matInput formControlName="fatherName">
+                </mat-form-field>
+            </div>
+
+            <div class="form-field">
+                <label class="g-field-label" for="user-password">Parol <span class="required-mark" aria-hidden="true">*</span></label>
+                <mat-form-field appearance="outline" class="g-modern-field">
+                    <input id="user-password" matInput [type]="hidePassword ? 'password' : 'text'" formControlName="password"
+                        required autocomplete="new-password" placeholder="Ən azı 6 simvol">
+                    <button matSuffix type="button" class="action-btn" (click)="hidePassword = !hidePassword"
+                        [attr.aria-label]="hidePassword ? 'Parolu göstər' : 'Parolu gizlət'">
+                        <span class="material-symbols-outlined" aria-hidden="true">{{ hidePassword ? 'visibility' : 'visibility_off' }}</span>
+                    </button>
+                    @if (form.controls.password.hasError('required')) {
+                        <mat-error>Parolu yazın</mat-error>
+                    } @else {
+                        <mat-error>Parol ən azı 6 simvol olmalıdır</mat-error>
+                    }
+                </mat-form-field>
+            </div>
+
+            <div class="form-field">
+                <label class="g-field-label" id="user-firms-label">Firmalar <span class="required-mark" aria-hidden="true">*</span></label>
+                <mat-form-field appearance="outline" class="g-modern-field">
+                    <mat-select formControlName="firmIds" aria-labelledby="user-firms-label" multiple required placeholder="Firma seçin">
+                        @for (f of firms; track f.id) {
+                            <mat-option [value]="f.id">{{ f.name }}</mat-option>
+                        }
+                    </mat-select>
+                    <mat-error>Ən azı bir firma seçin</mat-error>
+                </mat-form-field>
+            </div>
+
+            <div class="form-field">
+                <label class="g-field-label" id="user-role-label">İcazə qrupu <span class="required-mark" aria-hidden="true">*</span></label>
+                <mat-form-field appearance="outline" class="g-modern-field">
+                    <mat-select formControlName="roleId" aria-labelledby="user-role-label" required placeholder="Qrup seçin">
+                        @for (r of roles; track r.id) {
+                            <mat-option [value]="r.id">{{ r.name }}</mat-option>
+                        }
+                    </mat-select>
+                    <mat-error>İcazə qrupunu seçin</mat-error>
+                </mat-form-field>
+            </div>
+        </div>
+
+        @if (authSettingsMissing) {
+            <p class="field-note is-warning">
+                <span class="material-symbols-outlined" aria-hidden="true">warning</span>
+                Sistemdə autentifikasiya növü tapılmadı, istifadəçi yaradıla bilməz. İT dəstəyi ilə əlaqə saxlayın.
+            </p>
+        } @else {
+            <p class="field-note">
+                <span class="material-symbols-outlined" aria-hidden="true">info</span>
+                İstifadəçi aktiv statusla yaradılır. Vəzifə və digər məlumatları sonra redaktə səhifəsində dəyişə bilərsiniz.
+            </p>
+        }
+    </mat-dialog-content>
+
+    <mat-dialog-actions align="end">
+        <button type="button" class="g-secondary-btn" (click)="cancel()">Ləğv et</button>
+        <button type="submit" class="g-search-btn" [disabled]="isSaving">Əlavə et</button>
+    </mat-dialog-actions>
+</form>

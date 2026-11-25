@@ -1,0 +1,417 @@
+// Tam ekran media baxışı — tünd səth `.media-viewer-backdrop`-dan gəlir (styles.scss)
+:host {
+    --mv-fg: color-mix(in srgb, var(--white) 92%, transparent);
+    --mv-fg-muted: color-mix(in srgb, var(--white) 60%, transparent);
+    --mv-fg-faint: color-mix(in srgb, var(--white) 28%, transparent);
+    --mv-control: color-mix(in srgb, var(--white) 8%, transparent);
+    --mv-control-hover: color-mix(in srgb, var(--white) 16%, transparent);
+    --mv-line: color-mix(in srgb, var(--white) 12%, transparent);
+    --mv-glass: color-mix(in srgb, var(--gray-900) 60%, transparent);
+    --mv-glass-strong: color-mix(in srgb, var(--gray-900) 85%, transparent);
+    --mv-gutter: 24px;
+
+    display: block;
+    height: 100%;
+    color: var(--mv-fg);
+}
+
+.mv {
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    height: 100%;
+}
+
+// ── Üst zolaq ───────────────────────────────────────────────────────────────
+.mv-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    min-height: 56px;
+    padding: 8px 12px 8px 20px;
+}
+
+.mv-meta {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    min-width: 0;
+}
+
+.mv-kind {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--mv-fg);
+}
+
+.mv-count {
+    padding: 2px 8px;
+    border-radius: 20px;
+    background: var(--mv-control);
+    font-size: var(--fs-13);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: var(--mv-fg);
+}
+
+.mv-name {
+    overflow: hidden;
+    font-size: var(--fs-13);
+    color: var(--mv-fg-muted);
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.mv-tools {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.mv-group {
+    display: flex;
+    gap: 2px;
+    padding: 2px;
+    border-radius: var(--radius-md);
+    background: var(--mv-control);
+}
+
+.mv-btn {
+    display: inline-grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--mv-fg);
+    text-decoration: none;
+    cursor: pointer;
+    transition: background-color .15s, color .15s, opacity .15s;
+
+    .material-symbols-outlined {
+        font-size: 22px;
+    }
+
+    &:hover:not(:disabled) {
+        background: var(--mv-control-hover);
+        color: var(--white);
+    }
+
+    &:disabled {
+        opacity: .35;
+        cursor: default;
+    }
+
+    &:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 1px;
+    }
+}
+
+.mv-close {
+    background: var(--mv-control);
+}
+
+.mv-spinner {
+    --mdc-circular-progress-active-indicator-color: var(--mv-fg);
+}
+
+// ── Səhnə ───────────────────────────────────────────────────────────────────
+.mv-stage {
+    position: relative;
+    overflow: hidden;
+}
+
+.mv-state {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: var(--mv-gutter);
+    font-size: 14px;
+    color: var(--mv-fg-muted);
+    text-align: center;
+
+    .material-symbols-outlined {
+        font-size: 56px;
+        color: var(--mv-fg-faint);
+    }
+}
+
+.mv-canvas {
+    position: absolute;
+    inset: 0;
+    touch-action: none;
+    user-select: none;
+    cursor: zoom-in;
+
+    &.is-zoomed {
+        cursor: grab;
+    }
+
+    &.is-zoomed.is-interacting {
+        cursor: grabbing;
+    }
+}
+
+.mv-image {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    max-width: none;
+    border-radius: 4px;
+    box-shadow: 0 12px 48px color-mix(in srgb, var(--gray-900) 45%, transparent);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .15s ease, width .18s ease, height .18s ease, transform .18s ease;
+
+    &.is-loaded {
+        opacity: 1;
+    }
+}
+
+// Sürükləmə, təkər və pinch zamanı şəkil barmağın/kursorun arxasınca gecikmədən getməlidir
+.mv-canvas.is-interacting .mv-image {
+    transition: opacity .15s ease;
+}
+
+.mv-center {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--mv-gutter) 88px;
+}
+
+.mv-video {
+    max-width: 100%;
+    max-height: 100%;
+    border-radius: var(--radius-md);
+    background: var(--gray-900);
+    box-shadow: 0 12px 48px color-mix(in srgb, var(--gray-900) 45%, transparent);
+}
+
+// ── Sənəd siyahısı ──────────────────────────────────────────────────────────
+.mv-docs {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: min(560px, 100%);
+    max-height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow-y: auto;
+    list-style: none;
+}
+
+.mv-doc {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 8px 8px 14px;
+    border: 1px solid var(--mv-line);
+    border-radius: var(--radius-md);
+    background: var(--mv-control);
+}
+
+.mv-doc-icon {
+    font-size: 26px;
+    color: var(--mv-fg-muted);
+}
+
+.mv-doc-name {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    font-size: var(--fs-14);
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.mv-doc-ext {
+    padding: 2px 7px;
+    border-radius: 6px;
+    background: var(--mv-control);
+    font-size: var(--fs-12);
+    font-weight: 700;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    color: var(--mv-fg-muted);
+}
+
+// ── Əvvəlki / növbəti ───────────────────────────────────────────────────────
+.mv-nav {
+    position: absolute;
+    top: 50%;
+    z-index: 1;
+    display: grid;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: var(--mv-glass);
+    box-shadow: inset 0 0 0 1px var(--mv-line);
+    backdrop-filter: blur(6px);
+    color: var(--mv-fg);
+    cursor: pointer;
+    transform: translateY(-50%);
+    transition: background-color .15s;
+
+    &.is-prev {
+        left: 16px;
+    }
+
+    &.is-next {
+        right: 16px;
+    }
+
+    .material-symbols-outlined {
+        font-size: 30px;
+    }
+
+    &:hover {
+        background: var(--mv-glass-strong);
+    }
+
+    &:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+    }
+}
+
+// ── Miniatür zolağı ─────────────────────────────────────────────────────────
+.mv-strip {
+    overflow-x: auto;
+    padding: 12px 16px 16px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--mv-control-hover) transparent;
+}
+
+// Zolaq daşanda `justify-content: center` sol miniatürləri əlçatmaz edir — mərkəzləmə margin ilə
+.mv-strip-track {
+    display: flex;
+    gap: 8px;
+    width: max-content;
+    margin-inline: auto;
+    padding: 3px;
+}
+
+.mv-thumb {
+    position: relative;
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 64px;
+    height: 64px;
+    padding: 0;
+    overflow: hidden;
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: var(--mv-control);
+    opacity: .55;
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+    cursor: pointer;
+    transition: opacity .15s, outline-color .15s;
+
+    img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .material-symbols-outlined {
+        font-size: 24px;
+        color: var(--mv-fg-muted);
+    }
+
+    &:hover {
+        opacity: .85;
+    }
+
+    &.is-active {
+        opacity: 1;
+        outline-color: var(--accent);
+    }
+
+    &:focus-visible {
+        opacity: 1;
+        outline-color: var(--mv-fg);
+    }
+}
+
+.mv-thumb-no {
+    position: absolute;
+    right: 5px;
+    bottom: 3px;
+    font-size: var(--fs-12);
+    font-weight: 700;
+    color: var(--mv-fg-muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .mv-image,
+    .mv-btn,
+    .mv-thumb {
+        transition: none;
+    }
+}
+
+// ── Telefon ─────────────────────────────────────────────────────────────────
+@media (max-width: 599px) {
+    :host {
+        --mv-gutter: 12px;
+    }
+
+    .mv-bar {
+        padding: 8px 8px 8px 12px;
+        gap: 8px;
+    }
+
+    // Telefonda zoom pinch və iki dəfə toxunma ilə edilir — düymələr zolağa sığmır
+    .mv-name,
+    .mv-zoom {
+        display: none;
+    }
+
+    .mv-tools {
+        gap: 4px;
+    }
+
+    .mv-btn {
+        width: 36px;
+        height: 36px;
+    }
+
+    .mv-nav {
+        width: 40px;
+        height: 40px;
+
+        &.is-prev {
+            left: 8px;
+        }
+
+        &.is-next {
+            right: 8px;
+        }
+    }
+
+    .mv-center {
+        padding: var(--mv-gutter);
+    }
+
+    .mv-thumb {
+        width: 48px;
+        height: 48px;
+    }
+}

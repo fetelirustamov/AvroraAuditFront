@@ -3,7 +3,7 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { RequestResponse } from '../../models/table-state.model';
-import { DisruptionAnswerApproveDto, DisruptionAnswerDTO } from './disruption-answer.model';
+import { DisruptionAnswerDTO } from './disruption-answer.model';
 
 @Injectable({
   providedIn: 'root'
@@ -14,18 +14,7 @@ export class DisruptionAnswerService {
 
   constructor(private http: HttpClient) { }
 
-
-  // AproveDisruptionAnswer(disruptionAnswerApproveList: DisruptionAnswerApproveDto): Observable<any> {
-  //   const url = `${this.API_URL}/disruptionAnswers/approveDisruptionAnswer`;
-
-  //   const config = {
-  //     headers: new HttpHeaders().set("Content-Type", "application/json"),
-  //   };
-
-  //   return this.http.post<any>(url, disruptionAnswerApproveList, config);
-
-  // }
-
+  /** Mağazanın cavabı və təsdiq/rədd qərarı eyni endpoint-ə gedir. */
   AddDisruptionAnswer(disruptionAnswer: any): Observable<any> {
     const url = `${this.API_URL}/disruptionAnswers`;
 
@@ -36,17 +25,8 @@ export class DisruptionAnswerService {
     return this.http.post<any>(url, disruptionAnswer, config);
   }
 
-
   GetDisruptionAnswerByDisruptionId(disruptionId: string): Observable<RequestResponse<DisruptionAnswerDTO>> {
     const url = `${this.API_URL}/disruptionAnswers/disruption/${disruptionId}`;
     return this.http.get<RequestResponse<DisruptionAnswerDTO>>(url);
   }
-
-
-
-
-
-
-
-
 }

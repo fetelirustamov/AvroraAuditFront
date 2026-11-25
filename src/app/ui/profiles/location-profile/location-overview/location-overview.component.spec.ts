@@ -14,6 +14,10 @@ describe('LocationOverviewComponent', () => {
 
     fixture = TestBed.createComponent(LocationOverviewComponent);
     component = fixture.componentInstance;
+    fixture.componentRef.setInput('profile', {
+      locationName: 'Mağaza', locationCode: 4335, summaries: [], avgPlanResult: 0,
+      totalDiscrepancies: 0, solved: 0, open: 0, lastInspectionDate: null,
+    });
     fixture.detectChanges();
   });
 

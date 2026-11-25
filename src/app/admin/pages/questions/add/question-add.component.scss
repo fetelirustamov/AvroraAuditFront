@@ -1,333 +1,80 @@
-// ═══════════════════════════════════════════════════════════════
-//  Question Add / Edit / View — Component Styles
-//  10 Usability Heuristics nəzərə alınaraq hazırlanmışdır
-// ═══════════════════════════════════════════════════════════════
+@use '../../../shared/admin';
 
-// ─── Breadcrumb içi elementlər ───────────────────────────────────
-.qa-back-btn {
-    background: var(--lightColor, #f4f5f8) !important;
-    border-radius: 8px !important;
-    color: var(--bodyColor, #555) !important;
-    width: 36px; height: 36px;
-    flex-shrink: 0;
-    &:hover { background: #e8eaf0 !important; }
+@include admin.form-page;
+
+// Checkbox digər sahələrin xətti ilə eyni hündürlükdə dursun
+.normative-field {
+    align-self: end;
 }
 
-// ① Mode badge — system status
-.qa-mode-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    font-size: 11px;
-    font-weight: 600;
-    padding: 3px 10px;
-    border-radius: 20px;
-    width: fit-content;
-
-    i { font-size: 13px; }
-
-    &--add  { background: #e8f5e9; color: #2e7d32; }
-    &--edit { background: #fff3e0; color: #e65100; }
-    &--view { background: #e3f2fd; color: #1565c0; }
-}
-
-// ─── Action Buttons ──────────────────────────────────────────────
-.qa-btn-save {
-    border-radius: 8px !important;
-    font-weight: 600 !important;
-    padding: 0 20px !important;
-    height: 40px;
-    gap: 6px;
-    i { font-size: 18px; }
-
-    &:disabled { opacity: 0.55; }
-}
-
-.qa-btn-cancel {
-    border-radius: 8px !important;
-    color: #666 !important;
-    border-color: #ddd !important;
-    height: 40px;
-    &:hover { background: #fafafa !important; }
-}
-
-.qa-btn-add-answer {
-    border-radius: 8px !important;
-    height: 36px;
-    font-size: 13px !important;
-    i { font-size: 18px; }
-}
-
-// ─── Cards ──────────────────────────────────────────────────────
-.qa-card {
-    border-radius: 12px !important;
-    box-shadow: 0 1px 6px rgba(0,0,0,.07) !important;
-    border: 1px solid #e8eaf2 !important;
-    overflow: hidden;
-    background: #fff !important;
-
-    &__header {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        padding: 12px 20px;
-        background: #f5f5ff;
-        border-bottom: 1px solid #e8eaf2;
-        border-left: 4px solid var(--primaryColor, #605dff);
-
-        &--answers {
-            background: #f5f5ff;
-            border-bottom-color: #e8eaf2;
-            border-left-color: var(--primaryColor, #605dff);
-        }
-    }
-
-    &__icon {
-        font-size: 20px;
-        color: var(--primaryColor, #605dff);
-
-        &--question { color: var(--primaryColor, #605dff); }
-        &--answers  { color: var(--primaryColor, #605dff); }
-    }
-
-    &__title {
-        font-size: 14px;
-        font-weight: 600;
-        color: #2d3748;
-        margin: 0;
-    }
-
-    &__body {
-        padding: 20px;
-        background: #fff;
-
-        // admin-input-design-in son form-group-u margin-siz olsun
-        .form-group:last-child { margin-bottom: 0; }
-    }
-}
-
-// ─── Required & Labels ───────────────────────────────────────────
-.qa-required {
-    color: #e53e3e;
-    margin-left: 3px;
+.form-section-title label {
     cursor: default;
 }
 
-.qa-label-info {
-    font-size: 14px !important;
-    color: #aaa;
-    vertical-align: middle;
-    cursor: help;
-    margin-left: 4px;
+.answer-count {
+    padding: 2px var(--space-2);
+    border-radius: var(--radius-sm);
+    background: var(--surface-subtle);
+    font-size: var(--fs-12);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: var(--text);
 }
 
-// ─── Hints ──────────────────────────────────────────────────────
-.qa-hint {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    font-size: 12px;
-    color: var(--primaryColor, #605dff);
-    margin-top: 2px;
-
-    i { font-size: 13px; }
+.answers-add {
+    margin-left: auto;
 }
 
-.qa-hint-inline {
-    color: #aaa;
-    cursor: help;
-    i { font-size: 16px; vertical-align: middle; }
+// Cavab sətri: nömrə · mətn · bal · sil
+.answers-head,
+.answer-row {
+    display: grid;
+    grid-template-columns: 32px minmax(0, 1fr) 140px 36px;
+    gap: var(--space-3);
+    align-items: start;
 }
 
-// ─── Normativ checkbox ───────────────────────────────────────────
-.qa-normativ {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    font-size: 14px;
+.answers-head {
+    padding-bottom: var(--space-2);
+    font-size: var(--fs-12);
+    font-weight: 600;
+    color: var(--text-muted);
 }
 
-// ─── Answer Count Badge ──────────────────────────────────────────
-.qa-answer-count {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 22px; height: 22px;
-    background: var(--primaryColor, #605dff);
-    color: #fff;
-    border-radius: 12px;
-    font-size: 11px;
-    font-weight: 700;
-    padding: 0 6px;
+.answer-row {
+    padding: var(--space-2) 0;
+    border-top: 1px solid var(--border);
 }
 
-// ─── Answers Table Header ────────────────────────────────────────
-.qa-answers-header {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 6px 20px 6px 20px;
-    background: #f5f5ff;
-    border-bottom: 1px solid #e8eaf2;
-    font-size: 11px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: .4px;
-    color: #999;
-
-    &__num   { width: 32px; flex-shrink: 0; text-align: center; }
-    &__text  { flex: 1; }
-    &__score { width: 140px; flex-shrink: 0; }
-    &__del   { width: 40px; flex-shrink: 0; }
-}
-
-// ─── Answer Rows ─────────────────────────────────────────────────
-.qa-answer-row {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 4px 20px;
-    border-bottom: 1px solid #f3f4f6;
-    transition: background .15s;
-    min-height: 52px;
-
-    &:hover { background: #fafbff; }
-    &--last { border-bottom: none; }
-}
-
-// mat-form-field-in xəta boşluğunu yalnız cavab sıralarında ləğv et
-// ki sol nömrə dairəsi və sağ silmə ikonu input ilə eyni hizada olsun
-:host ::ng-deep .qa-answer-row {
-    .mat-mdc-form-field-subscript-wrapper { display: none !important; }
-    .mat-mdc-form-field { margin-bottom: 0 !important; }
-}
-
-.qa-answer-num {
-    width: 28px; height: 28px;
-    min-width: 28px;
-    border-radius: 50%;
-    background: var(--primaryColor, #605dff);
-    color: #fff;
-    font-size: 12px;
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    align-self: center;
-}
-
-.qa-answer-text  { flex: 1; align-self: center; }
-.qa-answer-score { width: 140px; flex-shrink: 0; align-self: center; }
-
-.qa-answer-del {
-    flex-shrink: 0;
-    align-self: center;
-    color: #e53e3e !important;
-    &:hover { background: #fff5f5 !important; }
-}
-
-// ─── Empty State ─────────────────────────────────────────────────
-.qa-empty-state {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 40px 20px;
-    color: #b0bec5;
+.answer-num {
+    padding-top: 10px;
     text-align: center;
-
-    i { font-size: 48px; opacity: .4; margin-bottom: 12px; }
-    p { font-size: 14px; font-weight: 500; margin: 0 0 4px; color: #888; }
-    small { font-size: 12px; }
 }
 
-// ─── Warning (min answer validation) ────────────────────────────
-.qa-answers-warning {
+.answers-empty {
     display: flex;
     align-items: center;
-    gap: 6px;
-    margin: 12px 20px;
-    padding: 10px 14px;
-    background: #fff8e1;
-    border: 1px solid #ffe082;
-    border-radius: 8px;
-    font-size: 13px;
-    color: #f57f17;
+    gap: var(--space-2);
+    margin: 0;
+    font-size: var(--fs-13);
+    color: var(--text-muted);
 
-    i { font-size: 16px; }
-}
-
-// ─── Input vertical centering fix ───────────────────────────────
-// admin-input-design filled appearance üçün MDC default top padding-i ləğv et
-:host ::ng-deep .admin-input-design .mat-mdc-form-field:not(.qa-question-text-field) {
-
-    .mat-mdc-text-field-wrapper {
-        display: flex;
-        align-items: center;
+    .material-symbols-outlined {
+        font-size: 20px;
     }
 
-    .mat-mdc-form-field-infix {
-        padding-top: 10px !important;
-        padding-bottom: 10px !important;
-        min-height: unset !important;
-        display: flex;
-        align-items: center;
-    }
-
-    // Floating label-ı gizlət (label xaricdə .main-label ilə göstərilir)
-    .mdc-floating-label,
-    .mat-mdc-floating-label {
-        display: none !important;
-    }
-
-    // Select trigger-i mərkəzlə
-    .mat-mdc-select-trigger {
-        display: flex;
-        align-items: center;
-        height: 100%;
-    }
-
-    // Textarea üçün üstdən başlasın
-    &.mdc-text-field--textarea .mat-mdc-form-field-infix {
-        align-items: flex-start !important;
-        padding-top: 12px !important;
+    &.is-error {
+        color: var(--danger-text);
     }
 }
 
-// Sual mətni: çoxsətirli, admin-input-design-in təksətir stillərindən ayırılmış
-:host ::ng-deep .qa-question-text-field.mat-mdc-form-field {
-    width: 100%;
-
-    .mat-mdc-text-field-wrapper {
-        align-items: flex-start;
+@media (max-width: 767px) {
+    .answers-head {
+        display: none;
     }
 
-    .mat-mdc-form-field-infix {
-        align-items: flex-start !important;
-        padding-top: 12px !important;
-        padding-bottom: 12px !important;
-        min-height: 120px !important;
-        display: block !important;
+    .answer-row {
+        grid-template-columns: 24px minmax(0, 1fr) 88px 36px;
+        gap: var(--space-2);
     }
-
-    textarea.mat-mdc-input-element {
-        min-height: 120px;
-        line-height: 1.55;
-        resize: vertical;
-        box-sizing: border-box;
-    }
-}
-
-// ─── Responsive ──────────────────────────────────────────────────
-@media (max-width: 768px) {
-    .qa-breadcrumb {
-        flex-direction: column;
-        align-items: flex-start;
-        &__actions { width: 100%; justify-content: flex-end; }
-    }
-
-    .qa-answer-row { flex-wrap: wrap; }
-    .qa-answer-score { width: 100%; }
-    .qa-answers-header { display: none; }
 }

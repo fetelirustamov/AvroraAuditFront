@@ -2,7 +2,8 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { TableResponse, TableState } from '../../models/table-state.model';
+import { RequestResponseOne, TableResponse, TableState } from '../../models/table-state.model';
+import { NonconformityCategoryReportData } from './nonconformity-category-report/nonconformity-category-report.model';
 
 @Injectable({ providedIn: 'root' })
 export class ReportsService {
@@ -41,6 +42,16 @@ export class ReportsService {
     /** Yoxlama planı üzrə iş statusu hesabatı */
     getInspectionPlanWorkDetails(state: TableState): Observable<TableResponse<unknown>> {
         return this.http.post<TableResponse<unknown>>(`${this.baseUrl}/getInspectionPlanWorkDetails`, state, {
+            headers: new HttpHeaders({ 'Content-Type': 'application/json' }),
+        });
+    }
+
+    /** Uyğunsuzluq təsnifatı — məkan × şöbə × təsnifat üzrə saylar */
+    getNonconformityCategoryDetails(
+        state: TableState,
+    ): Observable<RequestResponseOne<NonconformityCategoryReportData>> {
+        return this.http.post<RequestResponseOne<NonconformityCategoryReportData>>(
+            `${this.baseUrl}/getNonconformityCategoryDetails`, state, {
             headers: new HttpHeaders({ 'Content-Type': 'application/json' }),
         });
     }

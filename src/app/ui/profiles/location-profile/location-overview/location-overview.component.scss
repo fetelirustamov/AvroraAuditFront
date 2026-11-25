@@ -1,147 +1,44 @@
-.kpi-grid {
-    .kpi-card {
-        background: var(--whiteColor, #fff);
-        border-radius: 16px;
-        padding: 22px 20px 20px;
-        border: 1px solid #ECEEF2;
-        border-top: 4px solid transparent;
-        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04), 0 4px 14px rgba(0, 0, 0, 0.05);
-        transition: transform 0.22s ease, box-shadow 0.22s ease;
-        cursor: default;
+// KPI kartları qlobal `.kpi-*`-dır (`_design-system.scss`). Yalnız orta nəticə (hədd) və gecikmə rənglənir.
 
-        &:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 28px rgba(0, 0, 0, 0.09);
-        }
+.store-head {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    margin-bottom: var(--space-4);
+}
 
-        &.kpi-blue   { border-top-color: #605DFF; }
-        &.kpi-orange { border-top-color: #FD7E14; }
-        &.kpi-green  { border-top-color: #28A745; }
-        &.kpi-purple { border-top-color: #9B59B6; }
+.store-icon {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-md);
+    background: var(--surface-subtle);
+    color: var(--text-muted);
 
-        .kpi-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 18px;
-        }
-
-        .kpi-icon {
-            width: 50px;
-            height: 50px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-
-            .material-symbols-outlined {
-                font-size: 26px;
-            }
-        }
-
-        &.kpi-blue   .kpi-icon { background: rgba(96, 93, 255, 0.10); color: #605DFF; }
-        &.kpi-orange .kpi-icon { background: rgba(253, 126, 20, 0.10); color: #FD7E14; }
-        &.kpi-green  .kpi-icon { background: rgba(40, 167, 69, 0.10);  color: #28A745; }
-        &.kpi-purple .kpi-icon { background: rgba(155, 89, 182, 0.10); color: #9B59B6; }
-
-        .kpi-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 2px;
-            font-size: 12px;
-            font-weight: 600;
-            padding: 4px 9px;
-            border-radius: 20px;
-            line-height: 1;
-
-            .material-symbols-outlined {
-                font-size: 13px;
-                line-height: 1;
-            }
-
-            &.badge-up   { color: #15803D; background: #DCFCE7; }
-            &.badge-down { color: #DC2626; background: #FEE2E2; }
-        }
-
-        .kpi-number {
-            font-size: 32px;
-            font-weight: 700;
-            color: var(--blackColor, #1A2332);
-            letter-spacing: -1px;
-            line-height: 1;
-            margin-bottom: 6px;
-        }
-
-        .kpi-label {
-            font-size: 14px;
-            font-weight: 500;
-            color: var(--bodyColor, #64748B);
-            margin-bottom: 3px;
-        }
-
-        .kpi-sub {
-            font-size: 12px;
-            color: #94A3B8;
-            margin-bottom: 16px;
-        }
-
-        .kpi-bar {
-            height: 4px;
-            background: #F1F5F9;
-            border-radius: 100px;
-            overflow: hidden;
-
-            .kpi-fill {
-                height: 100%;
-                border-radius: 100px;
-                transition: width 0.7s cubic-bezier(0.4, 0, 0.2, 1);
-            }
-        }
-
-        &.kpi-blue   .kpi-fill { background: linear-gradient(90deg, #605DFF, #3584FC); }
-        &.kpi-orange .kpi-fill { background: linear-gradient(90deg, #FD7E14, #FFBE3C); }
-        &.kpi-green  .kpi-fill { background: linear-gradient(90deg, #28A745, #20C997); }
-        &.kpi-purple .kpi-fill { background: linear-gradient(90deg, #9B59B6, #AD63F6); }
-    }
-
-    &.dark-theme {
-        .kpi-card {
-            background: #15203C;
-            border-color: #1E3461;
-
-            .kpi-number { color: #F1F5F9; }
-            .kpi-label  { color: #94A3B8; }
-            .kpi-bar    { background: #1E3461; }
-        }
+    .material-symbols-outlined {
+        font-size: 22px;
     }
 }
 
-/* Max width 767px */
-@media only screen and (max-width: 767px) {
-    .kpi-grid .kpi-card {
-        padding: 18px;
-
-        .kpi-number { font-size: 26px; }
-
-        .kpi-icon {
-            width: 44px;
-            height: 44px;
-
-            .material-symbols-outlined { font-size: 22px; }
-        }
-    }
+.store-name {
+    margin: 0;
+    font-size: var(--fs-16);
+    font-weight: 600;
+    color: var(--text-strong);
 }
 
-/* Min width 576px to Max width 767px */
-@media only screen and (min-width: 576px) and (max-width: 767px) {
-    .kpi-grid .kpi-card {
-        padding: 20px;
-    }
+.store-code {
+    margin-left: var(--space-1);
+    font-size: var(--fs-14);
+    font-weight: 500;
+    color: var(--text-muted);
 }
 
-/* Min width 768px to Max width 991px */
-@media only screen and (min-width: 768px) and (max-width: 991px) {
-    .kpi-grid .kpi-card .kpi-number {
-        font-size: 28px;
-    }
+.store-meta {
+    margin: 2px 0 0;
+    font-size: var(--fs-13);
+    color: var(--text-muted);
 }

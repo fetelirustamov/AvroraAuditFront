@@ -4,12 +4,16 @@ import { inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { catchError } from 'rxjs/operators';
 import { throwError } from 'rxjs';
+import { environment } from '../../environments/environment';
+
+// Token yalnız öz API-mizə gedir: başqa ünvana (xəritə plitələri, xarici fayl) sorğu getsə sızmasın.
+const apiOrigin = new URL(environment.apiUrl).origin;
 
 export const AuthInterceptor: HttpInterceptorFn = (req, next) => {
     const router = inject(Router); // inject Router for navigation
     const token = localStorage.getItem('auth_token');
 
-    if (token) {
+    if (token && new URL(req.url, window.location.origin).origin === apiOrigin) {
         req = req.clone({
             setHeaders: {
                 Authorization: `Bearer ${token}`

@@ -1,9 +1,9 @@
-.master-data-tabs {
-    ::ng-deep .mat-mdc-tab-body-content {
-        overflow: hidden;
-    }
+:host {
+    display: block;
 }
 
-.tab-content {
-    padding-top: 16px;
+// Tab məzmunu ilə tab zolağı arasında boşluq
+mat-tab-group ::ng-deep .mat-mdc-tab-body-content {
+    padding-top: var(--space-4);
+    overflow: hidden;
 }

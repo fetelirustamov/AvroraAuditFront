@@ -1,0 +1,401 @@
+// ============================================================================
+//  Paylaşılan dizayn qatı: təkrarlanan səhifə nümunələri
+// ============================================================================
+//  Token-lər `_tokens.scss`-dədir, burada yalnız onlar işlənir.
+//
+//  Angular komponent stillərinə atribut selektoru əlavə edir
+//  (`.kpi-card[_ngcontent-x]`), ona görə komponentin öz stili bu qlobal qatdan
+//  güclüdür. Səhifə öz təkrarlanan blokunu sildikcə avtomatik bu qata düşür.
+// ============================================================================
+
+// ── Səhifə başlığı ──────────────────────────────────────────────────────────
+// KÖHNƏLİB: yeni kodda `<app-page-header>` işlət (shared/components/page-header).
+// Ekranlar komponentə keçdikcə bu sinfin istifadəsi silinir, sonra qayda da silinəcək.
+.report-page-header {
+    padding: 0 0 var(--space-4);
+    margin-bottom: var(--space-5);
+    border-bottom: 1px solid var(--border);
+
+    .header-content {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: var(--space-4);
+    }
+
+    .page-title {
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+        margin: 0 0 var(--space-1);
+        font-size: var(--fs-20);
+        font-weight: 600;
+        line-height: 1.3;
+        color: var(--text-strong);
+
+        .title-icon {
+            font-size: 22px;
+            color: var(--text-muted);
+        }
+    }
+
+    .page-subtitle {
+        margin: 0;
+        font-size: var(--fs-13);
+        color: var(--text-muted);
+    }
+}
+
+// Başlıqdakı ikinci dərəcəli düymə (ixrac, əməliyyat)
+.export-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    min-height: 36px;
+    padding: 0 var(--space-4);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    color: var(--text-strong);
+    font-size: var(--fs-13);
+    font-weight: 500;
+    cursor: pointer;
+    transition: background var(--transition), border-color var(--transition);
+
+    &:hover {
+        background: var(--surface-muted);
+        border-color: var(--text-faint);
+    }
+    &:disabled {
+        opacity: .5;
+        cursor: not-allowed;
+    }
+    .arrow-icon {
+        font-size: 18px;
+        color: var(--text-muted);
+    }
+}
+
+// ── KPI sətri ───────────────────────────────────────────────────────────────
+.kpi-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-4);
+    margin-bottom: var(--space-5);
+}
+
+.kpi-card {
+    flex: 1;
+    min-width: 160px;
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-4);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+}
+
+.kpi-icon {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-md);
+    background: var(--surface-subtle);
+    color: var(--text-muted);
+
+    .material-symbols-outlined {
+        font-size: 22px;
+    }
+}
+
+.kpi-value {
+    font-size: var(--fs-24);
+    font-weight: 600;
+    line-height: 1.1;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-strong);
+}
+
+.kpi-label {
+    margin-top: var(--space-1);
+    font-size: var(--fs-12);
+    font-weight: 500;
+    color: var(--text-muted);
+}
+
+.kpi-hint {
+    margin-top: 2px;
+    font-size: var(--fs-12);
+    color: var(--text-muted);
+}
+
+// İkon yalnız göstəricinin həddi və ya statusu olanda rənglənir
+.kpi-icon {
+    &.tone-success { background: var(--success-soft); color: var(--success-text); }
+    &.tone-warning { background: var(--warning-soft); color: var(--warning-text); }
+    &.tone-danger  { background: var(--danger-soft);  color: var(--danger-text); }
+}
+
+// Süzülmüş siyahıya aparan KPI: bütün kart keçiddir, sağda ox
+a.kpi-card.is-link {
+    color: inherit;
+    text-decoration: none;
+    transition: border-color var(--transition), background var(--transition);
+
+    .kpi-body { flex: 1; min-width: 0; }
+
+    .kpi-go {
+        align-self: center;
+        font-size: 18px;
+        color: var(--text-muted);
+        transition: color var(--transition), transform var(--transition);
+    }
+
+    &:hover {
+        border-color: var(--border-strong);
+        background: var(--surface-muted);
+
+        .kpi-go { color: var(--accent); transform: translateX(2px); }
+    }
+}
+
+// ── Uyğunluq faizi nişanı ───────────────────────────────────────────────────
+// Rəng həddə görədir: `[ngClass]="'faiz-' + (value | complianceTone)"` (shared/utils/compliance.ts)
+.faiz-chip {
+    display: inline-block;
+    min-width: 50px;
+    padding: 2px var(--space-2);
+    border-radius: var(--radius-sm);
+    text-align: center;
+    font-size: var(--fs-12);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+.faiz-success { background: var(--success-soft); color: var(--success-text); }
+.faiz-warning { background: var(--warning-soft); color: var(--warning-text); }
+.faiz-danger  { background: var(--danger-soft);  color: var(--danger-text); }
+
+// ── Yenidən yükləmə xətti ───────────────────────────────────────────────────
+// Köhnə data yerində qalır, üstündə nazik xətt görünür (tam overlay yalnız ilk yükləmədə).
+// `.list-progress` kartın içində (cədvəlin üstündə), `.page-progress` bloklar arasında.
+.list-progress,
+.page-progress {
+    display: block;
+    height: 3px;
+}
+
+.page-progress {
+    margin-bottom: var(--space-3);
+}
+
+// Kartın içində sabit yer: xətt çıxıb-gedəndə cədvəl tərpənmir
+.progress-slot {
+    height: 3px;
+}
+
+// ── Cədvəl kartı ────────────────────────────────────────────────────────────
+.table-card {
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+}
+
+.table-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-5);
+    border-bottom: 1px solid var(--border);
+
+    .table-info {
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+    }
+    .table-info-icon {
+        font-size: 20px;
+        color: var(--text-muted);
+    }
+    .table-title {
+        font-size: var(--fs-14);
+        font-weight: 600;
+        color: var(--text-strong);
+    }
+    .result-badge {
+        padding: 2px var(--space-2);
+        border-radius: var(--radius-sm);
+        background: var(--surface-subtle);
+        color: var(--text);
+        font-size: var(--fs-12);
+        font-weight: 600;
+        font-variant-numeric: tabular-nums;
+    }
+}
+
+// Geniş cədvəllər səhifəni yan-yana sürüşdürməməlidir
+.table-responsive-wrapper {
+    overflow-x: auto;
+}
+
+// Sticky başlıq: cədvəli bu konteynerə sal (`.table-responsive-wrapper` əvəzinə).
+// Konteyner hər iki istiqamətdə özü sürüşür, ona görə başlıq uzun siyahıda yuxarıda qalır.
+// Hündürlüyü dəyişmək üçün: `style="--table-max-h: 480px"`.
+//
+// Cədvəl qaydaları:
+// - ikon düymələri `.action-btn`-dir (styles.scss, 36px) və hər birində azərbaycanca
+//   `aria-label` olur, düymədəki feli təkrarlayır: aria-label="Redaktə et", "Sil", "Bax".
+//   Tooltip ad vermir, ekran oxuyucusu onu oxumur;
+// - kod və ID sütunları `.mono`, rəqəmlər `font-variant-numeric: tabular-nums`;
+// - status `<app-status-chip>`, boş/xəta halı `<app-list-state>`.
+.table-sticky {
+    max-height: var(--table-max-h, 70vh);
+    overflow: auto;
+
+    thead th,
+    .mat-mdc-header-cell {
+        position: sticky;
+        top: 0;
+        z-index: 2;
+        background: var(--surface);
+        // Sürüşəndə başlığın alt xətti sətirlərlə birlikdə getməsin
+        box-shadow: inset 0 -1px 0 var(--border);
+    }
+}
+
+.modern-table {
+    width: 100%;
+
+    th,
+    td {
+        white-space: nowrap;
+    }
+}
+
+.row-number {
+    font-family: var(--font-mono);
+    font-size: var(--fs-12);
+    font-variant-numeric: tabular-nums;
+    color: var(--text-muted);
+}
+
+// ── Media düyməsi ───────────────────────────────────────────────────────────
+// Cədvəl sətrində şəkil/sənəd açan düymə, yanında say:
+// <button class="media-btn" aria-label="Şəkillər (3)"><span class="material-symbols-outlined">image</span>
+//   <span class="media-btn__count">3</span></button>
+.media-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    min-height: 32px;
+    padding: var(--space-1) var(--space-2);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    color: var(--accent-text);
+    cursor: pointer;
+    transition: background-color var(--transition), border-color var(--transition);
+
+    .material-symbols-outlined {
+        font-size: 18px;
+    }
+
+    &__count {
+        font-size: var(--fs-12);
+        font-weight: 600;
+        font-variant-numeric: tabular-nums;
+    }
+
+    &:hover {
+        background: var(--accent-soft);
+        border-color: var(--accent);
+    }
+}
+
+// ── Status nişanları ────────────────────────────────────────────────────────
+// Rəng yalnız mənadır. Mətn öz fonu üzərində ən azı 4.5:1 kontrast verir.
+// Yeni kodda `<app-status-chip>` işlət (shared/status): etiket və ton status-meta.ts-dən gəlir.
+// Bu qlobal sinif ekranlar komponentə keçənə qədər qalır.
+.status-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    min-width: 50px;
+    padding: 2px var(--space-2);
+    border: 1px solid transparent;
+    border-radius: var(--radius-sm);
+    text-align: center;
+    font-size: var(--fs-12);
+    font-weight: 600;
+    line-height: 18px;
+    white-space: nowrap;
+
+    &.is-success {
+        background: var(--success-soft);
+        color: var(--success-text);
+    }
+    &.is-warning {
+        background: var(--warning-soft);
+        color: var(--warning-text);
+    }
+    &.is-danger {
+        background: var(--danger-soft);
+        color: var(--danger-text);
+    }
+    &.is-info {
+        background: var(--info-soft);
+        color: var(--info-text);
+    }
+    &.is-neutral {
+        background: var(--surface-subtle);
+        color: var(--text);
+    }
+}
+
+// ── Boş vəziyyət ────────────────────────────────────────────────────────────
+// Siyahılarda `<app-list-state>` işlət: "hələ axtarılmayıb", "nəticə yoxdur", "yüklənmədi".
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 56px var(--space-6);
+    text-align: center;
+    color: var(--text-muted);
+
+    .empty-icon {
+        margin-bottom: var(--space-3);
+        font-size: 44px;
+        color: var(--text-faint);
+    }
+    p {
+        margin: 0;
+        font-size: var(--fs-14);
+        color: var(--text-muted);
+    }
+    .empty-action {
+        margin-top: var(--space-4);
+    }
+}
+
+// ── Mobil ───────────────────────────────────────────────────────────────────
+@media only screen and (max-width: 767px) {
+    .report-page-header {
+        .header-content {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        .page-title {
+            font-size: 18px;
+        }
+    }
+
+    .kpi-card {
+        min-width: 100%;
+    }
+}

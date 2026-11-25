@@ -1,1041 +1,634 @@
-// ── Clear button inner label ──────────────────────────────────────────────────
-:host ::ng-deep .clear-filters-btn .mdc-button__label {
+// ════════════════════════════════════════════════════════════════════════════
+//  Ərazi Bağlantıları — təşkilati struktur ağacı (şəxs-mərkəzli)
+//  Direktor › Satış müdiri › Mağaza müdiri › əraziləri. Sağ paneldə detal/redaktə.
+//  Paylaşılan dizayn qatının token-ləri üzərinə tikilib (_design-system.scss).
+// ════════════════════════════════════════════════════════════════════════════
+
+// Kənar boşluğu və en çərçivədən (shell) gəlir: digər admin səhifələri ilə eyni xətdən başlayır
+.ls-page { padding-bottom: 64px; }
+
+.panel-card {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+}
+.panel-head {
     display: flex;
     align-items: center;
-    justify-content: center;
-    white-space: nowrap;
-    gap: 4px;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 13px 18px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface-muted);
+    .panel-head-title {
+        display: flex; align-items: center; gap: 9px;
+        font-size: 14px; font-weight: 700; color: var(--text-strong);
+        .material-symbols-outlined { font-size: 20px; color: var(--text-muted); }
+    }
+}
+.count-badge {
+    padding: 2px 8px; border-radius: var(--radius-sm);
+    background: var(--surface-subtle); color: var(--text);
+    font-size: var(--fs-12); font-weight: 600; font-variant-numeric: tabular-nums;
 }
 
-// ── MDC form-field normalization ─────────────────────────────────────────────
-:host ::ng-deep .mat-mdc-form-field {
+// Ağac panelinin sağ tərəfi — aç/yığ nəzarətləri + say nişanı.
+// Düymələr ikon + görünən mətnlə qalır (yalnız ikon variantı kəşfedilə bilənliyi azaldırdı).
+.head-tools {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
+    .count-badge { margin-left: 2px; }
+}
+.tool-btn {
+    display: inline-flex; align-items: center; gap: 5px;
+    min-height: 30px; padding: 4px 10px;
+    border: 1px solid var(--border); border-radius: var(--radius-sm);
+    background: var(--surface); color: var(--gray-600);
+    font-family: inherit; font-size: 12px; font-weight: 600; white-space: nowrap;
+    cursor: pointer; transition: border-color .15s, color .15s, background .15s;
 
-    .mat-mdc-form-field-underline,
-    .mat-mdc-form-field-subscript-wrapper,
-    .mat-mdc-form-field-focus-overlay {
-        display: none !important;
+    .material-symbols-outlined { font-size: 17px; }
+    &:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+    &:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+}
+
+// Toolbar proyektin ortaq .g-filter-* sistemindən istifadə edir (styles.scss).
+// Səhifəyə xas yalnız bir kiçik boşluq düzəlişi:
+.ls-toolbar { margin-bottom: 14px; }
+
+// ── Stat zolağı ──────────────────────────────────────────────────────────────
+.stat-strip {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 14px;
+}
+.stat-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 12px; border-radius: 20px;
+    background: var(--surface); border: 1px solid var(--border);
+    font-size: var(--fs-13); font-weight: 600; color: var(--text-muted);
+    b { font-size: var(--fs-14); font-weight: 800; color: var(--text-strong); }
+    &.is-accent { background: var(--accent-soft); border-color: transparent; color: var(--accent); b { color: var(--accent); } }
+    &.is-danger { background: var(--danger-soft); border-color: transparent; color: var(--danger-text); b { color: var(--danger-text); } }
+}
+.help-link {
+    display: inline-flex; align-items: center; gap: 5px; margin-left: auto;
+    border: none; background: transparent; color: var(--accent);
+    font-size: var(--fs-13); font-weight: 600; font-family: inherit; cursor: pointer;
+    .material-symbols-outlined { font-size: 17px; }
+    &:hover { text-decoration: underline; }
+}
+.scope-note {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 14px; padding: 11px 14px;
+    border: 1px solid var(--border); border-left: 3px solid var(--warning);
+    border-radius: var(--radius-sm); background: var(--warning-soft);
+    font-size: var(--fs-13); font-weight: 600; color: var(--warning-text);
+    .material-symbols-outlined { font-size: 18px; }
+}
+
+.help-note {
+    margin-bottom: 14px; padding: 14px 16px;
+    border: 1px solid var(--border); border-left: 3px solid var(--accent);
+    border-radius: var(--radius-sm); background: var(--accent-soft);
+    font-size: var(--fs-13); line-height: 1.55; color: var(--gray-700);
+    b { color: var(--text-strong); font-weight: 700; }
+}
+
+// ══ STRUKTUR + DETAL ═════════════════════════════════════════════════════════
+.struct-layout {
+    display: grid;
+    grid-template-columns: 1.15fr 1fr;
+    gap: 16px;
+    align-items: start;
+}
+
+// ── Sol: ağac ────────────────────────────────────────────────────────────────
+.tree-card { max-height: calc(100vh - 220px); }
+// Dərin səviyyələr üfüqi kəsilirdi (yalnız overflow-y var idi) — indi üfüqi scroll var.
+.tree-scroll { overflow: auto; padding: 6px; flex: 1; }
+
+// Twisty + sətir yan-yana. Twisty artıq sətirin İÇİNDƏ yox, QARDAŞIdır:
+// <button> içində <button> etibarsızdır və klaviatura ilə açmaq mümkün olmurdu.
+.tree-line {
+    display: flex; align-items: center; gap: 4px;
+    min-width: max-content;   // dərin sətirlər daralıb sıxılmasın, scroll olsun
+}
+
+.tree-row {
+    display: flex; align-items: center; gap: 8px;
+    flex: 1; min-width: 0;
+    padding: 7px 12px; border: none; border-radius: var(--radius-sm);
+    background: transparent; cursor: pointer; font-family: inherit; text-align: left;
+    transition: background .12s;
+
+    &:hover { background: var(--surface-muted); }
+    &.selected { background: var(--accent-soft); box-shadow: inset 2px 0 0 var(--accent); }
+    &.territory .node-name { font-weight: 500; }
+    // Görünən xəbərdarlıq konturu: --danger-soft fon çalarıdır, ağ üzərində praktiki
+    // olaraq görünmürdü (≈1.05:1). Sərhəd üçün güclü rəngin şəffaf variantı.
+    &.orphan {
+        width: 100%; flex: none;
+        border: 1px solid color-mix(in srgb, var(--danger-text) 35%, transparent);
+        margin-top: 6px;
     }
+    &:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+}
+.twisty {
+    flex-shrink: 0; width: 24px; height: 24px; padding: 0;
+    display: inline-flex; align-items: center; justify-content: center;
+    border: none; background: transparent; color: var(--gray-500);
+    border-radius: 4px; cursor: pointer;
+    .material-symbols-outlined { font-size: 20px; transition: transform .18s; &.open { transform: rotate(90deg); } }
+    &:hover { background: var(--surface-subtle); color: var(--text-strong); }
+    &:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+    &.hidden { visibility: hidden; }
+}
 
-    .mdc-notched-outline,
-    .mdc-notched-outline__leading,
-    .mdc-notched-outline__notch,
-    .mdc-notched-outline__trailing {
-        border-color: #E6E9EF !important;
+// Rol nişanı — mərtəbəyə görə rəng
+.node-role {
+    flex-shrink: 0; padding: 2px 9px; border-radius: 6px;
+    font-size: var(--fs-12); font-weight: 700; white-space: nowrap;
+    background: var(--surface-subtle); color: var(--gray-600);
+    &[data-level="3"] { background: var(--accent-soft); color: var(--accent); }
+    &[data-level="2"] { background: var(--success-soft); color: var(--success-text); }
+    &[data-level="1"] { background: var(--surface-subtle); color: var(--gray-600); }
+    &.warn { background: var(--danger-soft); color: var(--danger-text); }
+    &.sm { padding: 1px 7px; font-size: var(--fs-12); }
+}
+.node-name {
+    font-size: var(--fs-14); font-weight: 600; color: var(--text-strong);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.node-code { font-size: var(--fs-12); color: var(--gray-400); white-space: nowrap; }
+.node-badge {
+    flex-shrink: 0; margin-left: auto; padding: 2px 9px; border-radius: 20px;
+    font-size: var(--fs-12); font-weight: 700; white-space: nowrap;
+    &.people { background: var(--success-soft); color: var(--success-text); }
+    &.terr   { background: var(--accent-soft); color: var(--accent); }
+    &.region { background: var(--surface-subtle); color: var(--gray-500); font-weight: 600; }
+}
+
+.store-dot {
+    flex-shrink: 0; width: 26px; height: 26px;
+    display: inline-flex; align-items: center; justify-content: center;
+    border-radius: 7px; background: var(--surface-subtle); color: var(--gray-500);
+    .material-symbols-outlined { font-size: 16px; }
+    &.lg { width: 46px; height: 46px; border-radius: var(--radius-sm); background: var(--accent-soft); color: var(--accent); .material-symbols-outlined { font-size: 24px; } }
+}
+
+// ── Orphan bölməsi ───────────────────────────────────────────────────────────
+.orphan-block {
+    border-top: 1px solid var(--border); background: var(--surface-muted); padding: 12px 14px;
+    .orphan-head {
+        display: flex; align-items: center; gap: 7px;
+        font-size: 13px; font-weight: 700; color: var(--danger-text);
+        .material-symbols-outlined { font-size: 19px; }
     }
+    .orphan-hint { margin: 6px 0 8px; font-size: var(--fs-12); color: var(--text-muted); }
+    .tree-row.orphan { background: var(--surface); }
+}
 
-    &:hover {
-        .mdc-notched-outline,
-        .mdc-notched-outline__leading,
-        .mdc-notched-outline__notch,
-        .mdc-notched-outline__trailing {
-            border-color: #D0D7DE !important;
-        }
+// ── Sağ: detal ───────────────────────────────────────────────────────────────
+// container: .add-row-un öz eninə görə cavab verməsi üçün (viewport-a yox)
+.detail-card { position: sticky; top: 12px; min-height: 320px; container: detailpanel / inline-size; }
+
+.detail-empty {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    flex: 1; padding: 60px 28px; text-align: center; color: var(--text-muted);
+    .material-symbols-outlined { font-size: 44px; margin-bottom: 12px; color: var(--text-faint); }
+    p { margin: 0; font-size: var(--fs-14); max-width: 300px; }
+    // (Boş vəziyyətdəki CTA düyməsi yoxdur — ona aid ölü qaydalar silindi.)
+}
+
+.detail-head {
+    display: flex; align-items: center; gap: 12px;
+    padding: 16px 18px; border-bottom: 1px solid var(--border);
+    .detail-id { flex: 1; min-width: 0; }
+    .detail-name { font-size: 15px; font-weight: 700; color: var(--text-strong); }
+    .detail-sub { display: flex; align-items: center; gap: 8px; margin-top: 3px; }
+    .detail-code { font-size: 12px; color: var(--text-muted); }
+}
+
+.detail-metrics {
+    display: flex; flex-wrap: wrap; gap: 10px; padding: 14px 18px; border-bottom: 1px solid var(--border);
+    .metric {
+        flex: 1 1 140px; display: flex; align-items: center; gap: 8px;
+        padding: 10px 14px; border-radius: var(--radius-sm); background: var(--surface-muted);
+        font-size: var(--fs-13); color: var(--text-muted);
+        b { font-size: 16px; font-weight: 800; color: var(--text-strong); }
+        .material-symbols-outlined { font-size: 20px; color: var(--text-muted); }
     }
+}
 
-    &.mat-focused {
-        .mdc-notched-outline,
-        .mdc-notched-outline__leading,
-        .mdc-notched-outline__notch,
-        .mdc-notched-outline__trailing {
-            border-color: var(--primaryColor, #667eea) !important;
-            border-width: 2px !important;
-        }
+.detail-section {
+    padding: 14px 18px;
+    &:not(:last-child) { border-bottom: 1px solid var(--border); }
+    .detail-section-title {
+        font-size: var(--fs-12); font-weight: 700; letter-spacing: .5px; text-transform: uppercase;
+        color: var(--gray-400); margin-bottom: 10px;
     }
+}
 
-    .mdc-notched-outline,
-    .mdc-notched-outline__leading,
-    .mdc-notched-outline__trailing {
-        height: 40px;
+.list-row {
+    display: flex; align-items: center; gap: 11px; width: 100%;
+    padding: 9px 12px; margin-bottom: 6px;
+    border: 1px solid var(--border); border-radius: var(--radius-sm);
+    background: var(--surface); cursor: pointer; font-family: inherit; text-align: left;
+    transition: border-color .15s, background .15s;
+    &:hover { border-color: var(--accent); background: var(--accent-soft); }
+    .list-meta { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+    .go { font-size: 18px; color: var(--gray-400); }
+}
+
+// ── Redaktə sətirləri ────────────────────────────────────────────────────────
+.edit-row {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 11px; padding: 8px 10px; margin-bottom: 8px;
+    border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface-muted);
+    .step-node {
+        flex-shrink: 0; width: 26px; height: 26px;
+        display: flex; align-items: center; justify-content: center; border-radius: 50%;
+        background: var(--surface-subtle); color: var(--text); font-size: var(--fs-12); font-weight: 600;
     }
+    .edit-meta { flex: 1 1 120px; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+    .edit-actions { display: flex; gap: 2px; flex-shrink: 0; margin-left: auto; }
+}
+.edit-empty {
+    padding: 14px; border: 1px dashed var(--gray-300); border-radius: var(--radius-sm);
+    font-size: var(--fs-13); color: var(--text-muted); text-align: center; margin-bottom: 12px;
+}
+// Ortaq .g-filter-grid patterni üzərində qurulub (styles.scss) — düymə
+// .g-filter-actions xanasında alt kənardan hizalanır, sabit hündürlük YOXDUR
+// (əvvəlki `height: 46px` sehrli rəqəmi sahənin real 40px hündürlüyünə uyğun
+// gəlmirdi və düymə çıxıntı verirdi).
+//
+// ƏSAS: paylaşılan .g-filter-* sistemi VIEWPORT eninə görə sınır, bu blok isə
+// dar detal panelinin içindədir. Viewport eni = konteyner eni fərziyyəsi yanlışdır,
+// ona görə davranışı konteyner eninə bağlayırıq (aşağıdakı @container).
+// ── Modelin dürüst çərçivəsi ────────────────────────────────────────────────
+// Ağac müstəqil struktur deyil, mağaza zəncirlərindən hesablanır. Bunu gizlətmək
+// istifadəçidə "buradan idarə edirəm" yanlış modelini yaradırdı.
+.tree-model-note {
+    display: flex; align-items: flex-start; gap: 8px;
+    margin: 0; padding: 10px 14px;
+    border-bottom: 1px solid var(--border); background: var(--surface-muted);
+    font-size: var(--fs-12); line-height: 1.5; color: var(--text-muted);
+    b { color: var(--text-strong); font-weight: 700; }
+    .material-symbols-outlined { font-size: 16px; color: var(--accent); flex-shrink: 0; margin-top: 1px; }
+}
+.model-note {
+    display: flex; align-items: flex-start; gap: 8px;
+    margin: 0 0 10px; padding: 9px 12px;
+    border-radius: var(--radius-sm); background: var(--accent-soft);
+    font-size: var(--fs-12); line-height: 1.5; color: var(--gray-700);
+    .material-symbols-outlined { font-size: 16px; color: var(--accent); flex-shrink: 0; margin-top: 1px; }
+}
 
-    .mdc-notched-outline__notch {
-        display: flex;
-        align-items: center;
+// Rəhbər ziddiyyəti xəbərdarlığı
+.conflict-note {
+    margin: 14px 18px 0; padding: 12px 14px;
+    border: 1px solid color-mix(in srgb, var(--warning) 35%, transparent);
+    border-left: 3px solid var(--warning);
+    border-radius: var(--radius-sm); background: var(--warning-soft);
+    .conflict-head {
+        display: flex; align-items: center; gap: 7px;
+        font-size: var(--fs-13); font-weight: 700; color: var(--warning-text);
+        .material-symbols-outlined { font-size: 18px; }
     }
+    p { margin: 6px 0 6px; font-size: var(--fs-12); color: var(--gray-700); }
+    ul { margin: 0; padding-left: 18px; }
+    li { font-size: var(--fs-12); color: var(--gray-700); line-height: 1.6; }
+    b { color: var(--text-strong); }
+}
 
+// ── Zəncirə şəxs əlavə etmə bloku ───────────────────────────────────────────
+// mat-select əvəzinə axtarıla bilən siyahı: axtarış, vəzifə və hansı rola
+// düşəcəyi görünür. Beləliklə select↔düymə hizalanma problemi də aradan qalxır.
+.add-block { margin-top: 14px; }
+
+.add-head {
+    display: flex; flex-wrap: wrap; align-items: baseline;
+    justify-content: space-between; gap: 8px; margin-bottom: 8px;
+    .g-field-label { margin-bottom: 0; }
+}
+.next-level {
+    padding: 2px 10px; border-radius: 20px;
+    background: var(--surface-subtle); color: var(--gray-600);
+    font-size: var(--fs-12); font-weight: 700; white-space: nowrap;
+    &[data-level="3"] { background: var(--accent-soft); color: var(--accent); }
+    &[data-level="2"] { background: var(--success-soft); color: var(--success-text); }
+}
+
+.user-picker {
+    margin-top: 10px; max-height: 210px; overflow-y: auto;
+    display: flex; flex-direction: column; gap: 6px;
+    &::-webkit-scrollbar { width: 8px; }
+    &::-webkit-scrollbar-thumb { background: var(--gray-300); border-radius: 8px; }
+
+    .picker-row.selected {
+        border-color: var(--accent);
+        background: var(--accent-soft);
+        box-shadow: inset 2px 0 0 var(--accent);
+    }
+    .picker-row .go { color: var(--accent); }
+    .no-position { color: var(--gray-400); font-style: italic; }
+    .mini-empty { padding: 26px 12px; }
+}
+
+// Sistem hesabı nişanı — gizlədilmir, sadəcə fərqləndirilir və sona sıralanır
+.sys-badge {
+    flex-shrink: 0; padding: 2px 9px; border-radius: 20px;
+    background: var(--warning-soft); color: var(--warning-text);
+    font-size: var(--fs-12); font-weight: 700; white-space: nowrap;
+}
+
+.add-confirm { width: 100%; justify-content: center; margin-top: 12px; }
+
+// Panel daxili axtarışın təmizlə düyməsi
+.search-input .field-clear.inline {
+    position: absolute; right: 8px;
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 26px; height: 26px; border: none; border-radius: 50%;
+    background: transparent; color: var(--gray-400); cursor: pointer;
+    .material-symbols-outlined { font-size: 18px; }
+    &:hover { background: var(--surface-subtle); color: var(--text-strong); }
+}
+.new-hint { margin: 14px 0 0; font-size: 12px; line-height: 1.5; color: var(--text-muted); }
+
+// Mağaza seçicisinin "Hamısı / Boş / Bağlı" filtri
+.picker-filter {
+    display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px;
+    button {
+        padding: 5px 11px; border-radius: 20px; cursor: pointer;
+        border: 1px solid var(--border); background: var(--surface);
+        color: var(--gray-600); font-family: inherit; font-size: 12px; font-weight: 600;
+        transition: border-color .15s, color .15s, background .15s;
+        &:hover { border-color: var(--accent); color: var(--accent); }
+        &.on { background: var(--accent-soft); border-color: transparent; color: var(--accent); }
+        &:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+    }
+}
+.picker-note {
+    display: flex; align-items: flex-start; gap: 8px; margin-top: 10px; padding: 10px 12px;
+    border-radius: var(--radius-sm); background: var(--warning-soft); color: var(--warning-text);
+    font-size: 12px; font-weight: 600; line-height: 1.45;
+    .material-symbols-outlined { font-size: 17px; flex-shrink: 0; }
+}
+// "Mövcud zəncir" nişanı — yeni qurmaqla redaktəni ayırd edir
+.mode-tag {
+    padding: 2px 9px; border-radius: 20px;
+    background: var(--warning-soft); color: var(--warning-text);
+    font-size: var(--fs-12); font-weight: 700; white-space: nowrap;
+}
+
+.store-picker {
+    margin-top: 12px;
+    max-height: 360px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+
+    &::-webkit-scrollbar { width: 8px; }
+    &::-webkit-scrollbar-thumb { background: var(--gray-300); border-radius: 8px; }
+}
+.picker-row {
+    display: flex; align-items: center; gap: 11px; width: 100%;
+    padding: 9px 12px;
+    border: 1px solid var(--border); border-radius: var(--radius-sm);
+    background: var(--surface); cursor: pointer; font-family: inherit; text-align: left;
+    transition: border-color .15s, background .15s;
+    &:hover { border-color: var(--accent); background: var(--accent-soft); }
+    .list-meta { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+    .go { font-size: 18px; color: var(--gray-400); }
+}
+
+// Mağaza seçicisində "Bağlı / Boş" nişanı. Bu sinfin heç bir yerdə stili yox idi —
+// mətn tamamilə stilsiz görünürdü və [class.on] fərqi görünmürdü.
+.link-badge {
+    flex-shrink: 0; padding: 2px 9px; border-radius: 20px;
+    font-size: var(--fs-12); font-weight: 700; white-space: nowrap;
+    background: var(--surface-subtle); color: var(--gray-500);
+    &.on { background: var(--success-soft); color: var(--success-text); }
+}
+
+// ── Avatarlar ────────────────────────────────────────────────────────────────
+.avatar {
+    flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+    border-radius: 50%; background: var(--accent-soft); color: var(--accent);
+    font-weight: 700; letter-spacing: .3px;
+    &.sm { width: 30px; height: 30px; font-size: var(--fs-12); }
+    &.lg { width: 46px; height: 46px; font-size: 15px; }
+    &.warn { background: var(--danger-soft); color: var(--danger-text); }
+}
+
+.mini-spinner {
+    width: 16px; height: 16px; border: 2px solid var(--accent-soft);
+    border-top-color: var(--accent); border-radius: 50%; animation: spin .7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.mini-empty {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 48px 16px; text-align: center; color: var(--text-muted);
+    .material-symbols-outlined { font-size: 40px; opacity: .5; margin-bottom: 8px; }
+    p { margin: 0; font-size: var(--fs-14); font-weight: 600; color: var(--text-muted); }
+    small { margin-top: 6px; font-size: 12px; max-width: 340px; line-height: 1.5; }
+}
+
+// ══ EXCEL PANEL ═════════════════════════════════════════════════════════════
+.import-panel { margin-bottom: 14px; }
+.import-grid { display: grid; grid-template-columns: 1.3fr 1fr; gap: 16px; align-items: start; margin-bottom: 16px; }
+.dropzone-card { padding: 18px; }
+// İndi əsl <button>-dur (əvvəl <div (click)> idi — klaviatura ilə tamamilə əlçatmaz).
+.dropzone {
+    display: flex; flex-direction: column; align-items: center; text-align: center;
+    width: 100%; font-family: inherit;
+    padding: 40px 24px; border: 2px dashed var(--gray-300); border-radius: var(--radius-md);
+    background: var(--surface-muted); cursor: pointer; transition: border-color .2s, background .2s, transform .15s;
+    &:hover:not(:disabled), &.dragover { border-color: var(--accent); background: var(--accent-soft); }
+    &.dragover { transform: scale(1.01); }
+    &:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    &:disabled { opacity: .6; cursor: progress; }
+
+    .dz-icon { font-size: 44px; color: var(--text-faint); margin-bottom: 10px; }
+    .dz-title { font-size: 15px; font-weight: 700; color: var(--text-strong); margin-bottom: 4px; }
+    .dz-hint { font-size: var(--fs-13); color: var(--text-muted); margin-bottom: 16px; }
+    // Düymə görünüşlü etiket — artıq saxta düymə deyil, sadəcə vizual nişandır
+    .dz-btn {
+        display: inline-flex; align-items: center; gap: 8px;
+        padding: 11px 22px; border-radius: var(--radius-sm);
+        background: var(--accent);
+        color: var(--on-accent); font-size: var(--fs-13); font-weight: 500;
+        .material-symbols-outlined { font-size: 18px; }
+    }
+}
+.tpl-actions { display: flex; gap: 10px; margin-top: 16px; }
+.upload-progress {
+    margin-top: 16px; padding: 14px 16px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface);
+    span { display: block; margin-bottom: 10px; font-size: var(--fs-13); font-weight: 600; color: var(--text-strong); }
+}
+.guide-list {
+    list-style: none; margin: 0; padding: 14px 18px;
+    li { display: flex; align-items: flex-start; gap: 10px; padding: 8px 0; font-size: 13px; color: var(--text-muted); line-height: 1.45; b { color: var(--text-strong); font-weight: 600; } }
+    .g-num { flex-shrink: 0; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: var(--accent-soft); color: var(--accent); font-size: var(--fs-12); font-weight: 700; margin-top: 1px; }
+}
+.guide-warn {
+    display: flex; align-items: center; gap: 8px; margin: 0 18px 18px; padding: 11px 14px;
+    border-radius: var(--radius-sm); background: var(--warning-soft); color: var(--warning-text); font-size: var(--fs-13); font-weight: 600;
+    .material-symbols-outlined { font-size: 18px; }
+}
+.result-stats {
+    display: flex; flex-wrap: wrap; gap: 10px; padding: 16px 18px;
+    .stat {
+        display: flex; align-items: center; gap: 7px; padding: 8px 14px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600;
+        b { font-size: 15px; font-weight: 800; } .material-symbols-outlined { font-size: 18px; }
+        &.success { background: var(--success-soft); color: var(--success-text); }
+        &.warning { background: var(--warning-soft); color: var(--warning-text); }
+        &.error { background: var(--danger-soft); color: var(--danger-text); }
+    }
+}
+.issue-list {
+    list-style: none; margin: 0; padding: 4px 18px 18px; max-height: 260px; overflow-y: auto;
+    li { display: flex; align-items: baseline; gap: 8px; padding: 7px 0; font-size: var(--fs-13); color: var(--text-muted); border-top: 1px solid var(--border); }
+    .issue-row { flex-shrink: 0; padding: 1px 8px; border-radius: 6px; background: var(--surface-subtle); color: var(--gray-600); font-size: var(--fs-12); font-weight: 700; }
+}
+
+// ── Gate ─────────────────────────────────────────────────────────────────────
+.gate-card {
+    display: flex; flex-direction: column; align-items: center; text-align: center;
+    padding: 54px 24px; border: 1.5px dashed var(--border); border-radius: var(--radius-lg); background: var(--surface-muted);
+    > .material-symbols-outlined { font-size: 46px; color: var(--accent); opacity: .7; margin-bottom: 12px; }
+    h3 { margin: 0 0 6px; font-size: 16px; font-weight: 700; color: var(--text-strong); }
+    p { margin: 0; font-size: 13px; color: var(--text-muted); max-width: 460px; }
+}
+
+// ── Düymələr ─────────────────────────────────────────────────────────────────
+// Əsas/ikinci düymələr proyektin ortaq .g-search-btn / .g-secondary-btn sinifləridir.
+// Yalnız qlobalda olmayan disabled vəziyyəti və Excel panelində bərabər en üçün əlavə:
+:host ::ng-deep .g-search-btn:disabled,
+:host ::ng-deep .g-search-btn[disabled] {
+    opacity: .5; cursor: not-allowed; box-shadow: none; transform: none;
+}
+.tpl-actions .g-secondary-btn { flex: 1; justify-content: center; }
+
+// Panel daxili sürətli axtarış qutusu (yeni bağlantı — mağaza filtri)
+.search-input {
+    position: relative; display: flex; align-items: center;
+    > .material-symbols-outlined { position: absolute; left: 12px; font-size: 18px; color: var(--gray-400); pointer-events: none; }
+    input {
+        width: 100%; height: 44px; padding: 0 40px 0 38px;
+        border: 1px solid var(--border); border-radius: var(--radius-sm);
+        background: var(--surface-muted); font-size: var(--fs-14); color: var(--text-strong); font-family: inherit;
+        &::placeholder { color: var(--gray-400); }
+        &:focus { outline: none; border-color: var(--accent); background: var(--surface); }
+    }
+}
+
+.icon-btn {
+    display: inline-flex; align-items: center; justify-content: center; width: 38px; height: 38px;
+    border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface); color: var(--gray-500); cursor: pointer;
+    transition: background .15s, color .15s, border-color .15s;
+    .material-symbols-outlined { font-size: 20px; }
+    &:hover:not(:disabled) { background: var(--surface-muted); color: var(--text-strong); }
+    &:disabled { opacity: .4; cursor: not-allowed; }
+    &:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+    &.xs {
+        width: 32px; height: 32px; border-color: transparent; background: transparent;
+        .material-symbols-outlined { font-size: 18px; }
+        &:hover:not(:disabled) { background: var(--surface-subtle); }
+        &.danger:hover:not(:disabled) { background: var(--danger-soft); color: var(--danger); }
+    }
+}
+
+// ── g-modern-field əlavələri (Axtarış prefiksi + təmizlə düyməsi + font) ──────
+// Sahələrin baseline/hündürlüyü qlobal .g-modern-field-dən gəlir (styles.scss).
+:host ::ng-deep .g-modern-field {
+    .mat-mdc-select-value, input.mat-mdc-input-element { font-size: var(--fs-14); color: var(--text-strong); }
+    input.mat-mdc-input-element::placeholder { color: var(--gray-400); }
+
+    .field-pre { font-size: 18px; color: var(--gray-400); margin-right: 4px; }
+    .field-clear {
+        display: inline-flex; align-items: center; justify-content: center;
+        width: 26px; height: 26px; border: none; border-radius: 50%;
+        background: transparent; color: var(--gray-400); cursor: pointer;
+        .material-symbols-outlined { font-size: 18px; }
+        &:hover { background: var(--surface-subtle); color: var(--text-strong); }
+    }
+}
+:host ::ng-deep .modern-menu .menu-icon { margin-right: 10px; font-size: 19px; color: var(--accent); vertical-align: middle; }
+
+// ── "Əlavə et" sətrindəki sahə: DƏQİQ 40px ──────────────────────────────────
+// Material sahə elementinin daxilində/altında öz boşluğunu saxlayır (subscript
+// qalığı + `margin: 0 0 0 4px`). Bu boşluq düyməni aşağı itələyirdi.
+// Burada sahə düymə ilə eyni — 40px — hündürlüyə məcbur edilir, beləliklə
+// hizalanma Material-ın daxili ölçülərindən ÜMUMİYYƏTLƏ asılı olmur.
+// Eyni üsul proyektdə artıq `.admin-input-design` blokunda işlənir (styles.scss).
+:host ::ng-deep .add-row-field {
+    margin: 0 !important;
+
+    .mat-mdc-text-field-wrapper,
     .mat-mdc-form-field-flex {
-        display: flex;
-        align-items: center;
-    }
-
-    .mat-mdc-form-field-infix {
-        display: flex;
-        align-items: center;
-        height: 40px;
-        padding: 8px 0 !important;
-        min-height: 24px !important;
-    }
-
-    .mat-mdc-form-field-icon-prefix,
-    .mat-mdc-form-field-icon-suffix {
-        display: flex;
-        align-items: center;
-        height: 40px;
-    }
-}
-
-// ── Select trigger alignment ──────────────────────────────────────────────────
-:host ::ng-deep .mat-mdc-form-field.mat-mdc-form-field-type-mat-select {
-    .mat-mdc-select-trigger {
-        min-height: 40px;
-        display: flex;
-        align-items: center;
-        padding-bottom: 0;
-    }
-
-    .mat-mdc-select-value,
-    .mat-mdc-select-placeholder {
-        display: flex;
-        align-items: center;
-        font-size: 14px;
-        color: #333;
-        line-height: 1.2;
-    }
-
-    .mat-mdc-select-arrow-wrapper {
-        display: flex;
-        align-items: center;
-    }
-
-    .mat-mdc-select-arrow {
-        align-self: center;
-    }
-}
-
-// ── Input element alignment ───────────────────────────────────────────────────
-:host ::ng-deep input.mat-mdc-input-element {
-    height: 24px;
-    line-height: 24px;
-    font-size: 14px;
-    color: #333;
-}
-// ─────────────────────────────────────────────────────────────────────────────
-
-.location-structure-container {
-    padding: 20px 20px 80px 20px; // Top, Right, Bottom, Left
-    background-color: #f8f9fa;
-    min-height: calc(100vh - 120px); // Adjust for header and padding
-    width: 100%;
-    box-sizing: border-box;
-    overflow-y: auto; // Add vertical scroll for the entire container
-    max-height: 100vh; // Limit height to viewport height
-
-    .header-card {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-
-        h2 {
-            color: white;
-            font-weight: 600;
-        }
-
-        .text-muted {
-            color: rgba(255, 255, 255, 0.8) !important;
-        }
-
-        .material-symbols-outlined {
-            color: white;
-            font-weight: 400;
-        }
-    }
-
-    .selection-card {
-        background: white;
-        border: 1px solid #e9ecef;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-
-        .material-symbols-outlined {
-            color: #6c757d;
-            font-weight: 400;
-        }
-
-        // Responsive form fields
-        @media (max-width: 768px) {
-            .mat-form-field {
-                margin-bottom: 15px;
-            }
-        }
-
-        @media (max-width: 576px) {
-            .mat-form-field {
-                margin-bottom: 10px;
-            }
-        }
-    }
-
-    .user-selection-card,
-    .approval-scheme-card {
-        background: white;
-        border: 1px solid #e9ecef;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-        height: auto; // Change from 100% to auto
-        margin-bottom: 20px; // Add bottom margin for footer spacing
-        max-height: none; // Remove max-height restriction
-        overflow: visible; // Show all content
-        display: block; // Change from flex to block
-
-        // Responsive card heights
-        @media (max-width: 992px) {
-            height: auto;
-            min-height: 400px;
-            max-height: none;
-        }
-
-        @media (max-width: 768px) {
-            min-height: 350px;
-            max-height: none;
-        }
-
-        .mat-card-header {
-            background: #f8f9fa;
-            border-bottom: 1px solid #e9ecef;
-            margin: -16px -16px 16px -16px;
-            padding: 16px;
-            flex-shrink: 0; // Prevent header from shrinking
-
-            .mat-card-title {
-                margin: 0;
-                font-size: 1.1rem;
-                font-weight: 600;
-                color: #495057;
-            }
-
-            .material-symbols-outlined {
-                color: #495057;
-                font-weight: 400;
-            }
-        }
-
-        .mat-card-content {
-            padding: 20px;
-            overflow: visible; // Show all content without scroll
-            min-height: auto; // Remove min-height restriction
-        }
-    }
-
-    // Search fields with left icons - REMOVED
-    // .search-field {
-    //     .matPrefix {
-    //         color: #6c757d;
-    //         margin-right: 8px;
-    //         font-size: 1.2rem;
-    //     }
-
-    //     .mat-form-field-wrapper {
-    //         padding-left: 0;
-    //     }
-
-    //     .mat-form-field-infix {
-    //         padding-left: 8px;
-    //     }
-    // }
-
-    // Clear filters button alignment & styling
-    .clear-btn-col {
-        display: flex;
-        align-items: flex-end;
-        padding-bottom: 20px;
-    }
-
-    .clear-filters-btn {
-        height: 40px;
-        width: 100%;
-        border-radius: 8px !important;
-        border-width: 1.5px !important;
-        font-size: 13px;
-        font-weight: 500;
-        letter-spacing: 0;
-        white-space: nowrap;
-        transition: background 0.2s ease, color 0.2s ease;
-
-        .material-symbols-outlined {
-            font-size: 17px;
-            line-height: 1;
-            vertical-align: middle;
-            margin-right: 4px;
-            flex-shrink: 0;
-        }
-
-        &:hover {
-            background-color: rgba(220, 53, 69, 0.06) !important;
-        }
-    }
-
-
-    .table-container {
-        max-height: 400px; // Restore original height
-        overflow-y: auto;
-        border: 1px solid #e9ecef;
-        border-radius: 4px;
-        flex-shrink: 0; // Prevent table from shrinking
-
-        // Responsive table
-        @media (max-width: 768px) {
-            overflow-x: auto;
-            max-height: 300px; // Keep mobile height
-
-            table {
-                min-width: 600px;
-            }
-        }
-
-        table {
-            .mat-header-row {
-                background: #f8f9fa;
-
-                .mat-header-cell {
-                    font-weight: 600;
-                    color: #495057;
-                    border-bottom: 2px solid #dee2e6;
-                }
-            }
-
-            .mat-row {
-                &:hover {
-                    background: #f8f9fa;
-                }
-
-                .mat-cell {
-                    border-bottom: 1px solid #e9ecef;
-                    padding: 12px 8px;
-                }
-            }
-        }
-    }
-
-    .approval-users-list {
-        max-height: 350px; // Restore original height
-        overflow-y: auto;
-        flex-shrink: 0; // Prevent list from shrinking
-
-        .approval-user-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 12px;
-            margin-bottom: 8px;
-            background: #f8f9fa;
-            border: 1px solid #e9ecef;
-            border-radius: 8px;
-            transition: all 0.2s ease;
-
-            &:hover {
-                background: #e9ecef;
-                border-color: #adb5bd;
-            }
-
-            .user-info {
-                display: flex;
-                align-items: center;
-                flex: 1;
-
-                .order-badge {
-                    background: #007bff;
-                    color: white;
-                    width: 32px;
-                    height: 32px;
-                    border-radius: 50%;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    font-weight: 600;
-                    margin-right: 12px;
-                    flex-shrink: 0;
-                }
-
-                .user-details {
-                    flex: 1;
-
-                    .user-name {
-                        font-weight: 600;
-                        color: #495057;
-                        margin-bottom: 2px;
-                    }
-
-                    .user-code {
-                        font-size: 0.85rem;
-                        color: #6c757d;
-                        margin-bottom: 2px;
-                    }
-
-                    .user-position {
-                        font-size: 0.8rem;
-                        color: #adb5bd;
-                        margin-bottom: 4px;
-                    }
-
-                    .user-limits {
-                        small {
-                            font-size: 0.75rem;
-                            color: #6c757d;
-                        }
-                    }
-                }
-            }
-
-            .user-actions {
-                display: flex;
-                gap: 4px;
-
-                .mat-icon-button {
-                    width: 36px;
-                    height: 36px;
-                    line-height: 36px;
-                }
-            }
-        }
-    }
-
-    .empty-state {
-        .empty-icon {
-            font-size: 4rem;
-            width: 4rem;
-            height: 4rem;
-            color: #adb5bd;
-            margin-bottom: 16px;
-        }
-
-        h4 {
-            margin-bottom: 8px;
-        }
-    }
-
-    .no-data-message {
-        padding: 40px 20px;
-        text-align: center;
-
-        .material-symbols-outlined {
-            font-size: 3rem;
-            width: 3rem;
-            height: 3rem;
-            color: #adb5bd;
-            margin-bottom: 16px;
-        }
-
-        p {
-            margin: 0 0 8px 0;
-            color: #6c757d;
-            font-weight: 500;
-        }
-
-        small {
-            color: #adb5bd;
-            font-size: 0.85rem;
-        }
-    }
-
-    .excel-import-section {
-        h6 {
-            color: #495057;
-            font-weight: 600;
-            margin-bottom: 16px;
-            display: flex;
-            align-items: center;
-        }
-
-        // Add bottom margin for footer spacing
-        margin-bottom: 20px;
-        flex-shrink: 0; // Prevent section from shrinking
-    }
-
-    .excel-upload-area {
-        .upload-zone {
-            border: 2px dashed #dee2e6;
-            border-radius: 12px;
-            padding: 40px 20px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            background: #f8f9fa;
-
-            &:hover {
-                border-color: #007bff;
-                background: #e3f2fd;
-            }
-
-            &.dragover {
-                border-color: #007bff;
-                background: #e3f2fd;
-                transform: scale(1.02);
-            }
-
-            .upload-content {
-                .upload-icon {
-                    font-size: 3rem;
-                    color: #6c757d;
-                    margin-bottom: 16px;
-                }
-
-                h5 {
-                    color: #495057;
-                    margin-bottom: 8px;
-                }
-
-                p {
-                    color: #6c757d;
-                    margin-bottom: 16px;
-                }
-            }
-        }
-
-        .upload-info {
-            .info-card {
-                background: white;
-                border: 1px solid #e9ecef;
-                border-radius: 8px;
-                padding: 16px;
-                height: 100%;
-
-                .info-header {
-                    display: flex;
-                    align-items: center;
-                    margin-bottom: 12px;
-
-                    .info-icon {
-                        color: #007bff;
-                        margin-right: 8px;
-                    }
-
-                    h6 {
-                        margin: 0;
-                        color: #495057;
-                        font-weight: 600;
-                    }
-                }
-
-                .info-list {
-                    list-style: none;
-                    padding: 0;
-                    margin: 0;
-
-                    li {
-                        padding: 4px 0;
-                        color: #6c757d;
-                        font-size: 0.9rem;
-                        border-bottom: 1px solid #f1f3f4;
-
-                        &:last-child {
-                            border-bottom: none;
-                        }
-                    }
-                }
-
-                .template-download {
-                    text-align: center;
-                }
-            }
-        }
-
-        .upload-progress {
-            background: white;
-            border: 1px solid #e9ecef;
-            border-radius: 8px;
-            padding: 16px;
-
-            .progress-header {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                margin-bottom: 12px;
-
-                .progress-percentage {
-                    font-weight: 600;
-                    color: #007bff;
-                }
-            }
-        }
-
-        .upload-results {
-            background: white;
-            border: 1px solid #e9ecef;
-            border-radius: 8px;
-            padding: 16px;
-
-            .results-header {
-                display: flex;
-                align-items: center;
-                margin-bottom: 16px;
-
-                h6 {
-                    margin: 0;
-                    color: #495057;
-                    font-weight: 600;
-                }
-            }
-
-            .results-content {
-                .result-item {
-                    display: flex;
-                    align-items: center;
-                    padding: 8px 0;
-                    border-bottom: 1px solid #f1f3f4;
-
-                    &:last-child {
-                        border-bottom: none;
-                    }
-
-                    &.success {
-                        color: #28a745;
-                    }
-
-                    &.warning {
-                        color: #ffc107;
-                    }
-
-                    &.error {
-                        color: #dc3545;
-                    }
-
-                    .material-symbols-outlined {
-                        margin-right: 8px;
-                    }
-                }
-            }
-        }
-    }
-
-    // Mobile Actions
-    .mobile-actions {
-        display: none;
-
-        .row {
-            margin: 0;
-        }
-
-        .col-6 {
-            padding: 0 5px;
-        }
-
-        button {
-            height: 40px;
-            font-size: 0.9rem;
-        }
-    }
-
-    // Responsive Design
-    @media (max-width: 1200px) {
-        .selection-card {
-            .row {
-                margin: 0;
-            }
-        }
-    }
-
-    @media (max-width: 992px) {
-        .selection-card {
-            .col-lg-4 {
-                margin-bottom: 15px;
-            }
-        }
-
-        .main-content {
-            .col-lg-5 {
-                margin-bottom: 20px;
-            }
-
-            .row {
-                margin-bottom: 20px; // Add bottom margin for footer spacing
-            }
-        }
-
-        // Enable scrolling for main content on smaller screens
-        .user-selection-card,
-        .approval-scheme-card {
-            .mat-card-content {
-                overflow-y: visible; // Disable scroll on larger screens
-            }
-        }
-    }
-
-    @media (max-width: 768px) {
-        padding: 15px 15px 70px 15px; // Top, Right, Bottom, Left
-        overflow-y: visible; // Disable container scroll on mobile
-
-        .header-card {
-            .row {
-                text-align: center;
-            }
-
-            .col-md-4 {
-                margin-top: 15px;
-            }
-        }
-
-        .selection-card {
-            .row {
-                margin: 0;
-            }
-
-            .col-12 {
-                margin-bottom: 15px;
-            }
-        }
-
-        .main-content {
-            .row {
-                margin: 0;
-                margin-bottom: 20px; // Add bottom margin for footer spacing
-            }
-
-            .col-12 {
-                margin-bottom: 20px;
-            }
-        }
-
-        .user-selection-card,
-        .approval-scheme-card {
-            height: auto;
-            min-height: 400px;
-            max-height: none;
-            overflow: visible; // Disable overflow on mobile
-
-            .mat-card-content {
-                overflow-y: visible; // Disable scroll on mobile
-            }
-        }
-
-        .table-container {
-            max-height: 300px; // Keep mobile height
-        }
-
-        .approval-users-list {
-            max-height: 250px; // Keep mobile height
-        }
-
-        .approval-user-item {
-            flex-direction: column;
-            align-items: flex-start;
-
-            .user-info {
-                margin-bottom: 10px;
-            }
-
-            .user-actions {
-                margin-top: 12px;
-                width: 100%;
-                justify-content: space-between;
-            }
-        }
-
-        .mobile-actions {
-            display: block;
-        }
-
-        // Search fields responsive - REMOVED
-        // .search-field {
-        //     .matPrefix {
-        //         font-size: 1rem;
-        //         margin-right: 6px;
-        //     }
-
-        //     .mat-form-field-infix {
-        //         padding-left: 6px;
-        //     }
-        // }
-    }
-
-    @media (max-width: 576px) {
-        padding: 10px 10px 60px 10px; // Top, Right, Bottom, Left
-        overflow-y: visible; // Disable container scroll on small mobile
-
-        .header-card {
-            h2 {
-                font-size: 1.5rem;
-            }
-
-            p {
-                font-size: 0.9rem;
-            }
-        }
-
-        .selection-card {
-            .mat-form-field {
-                margin-bottom: 10px;
-            }
-        }
-
-        .user-selection-card,
-        .approval-scheme-card {
-            .mat-card-header {
-                padding: 12px;
-
-                .mat-card-title {
-                    font-size: 1rem;
-                }
-            }
-        }
-
-        .table-container {
-            max-height: 250px; // Keep small mobile height
-        }
-
-        .approval-users-list {
-            max-height: 200px; // Keep small mobile height
-        }
-
-        .approval-user-item {
-            padding: 8px;
-
-            .user-info {
-                .user-name {
-                    font-size: 0.9rem;
-                }
-
-                .user-code,
-                .user-position {
-                    font-size: 0.8rem;
-                }
-            }
-
-            .user-actions {
-                .mat-icon-button {
-                    width: 32px;
-                    height: 32px;
-                    line-height: 32px;
-                }
-            }
-        }
-
-        .excel-import-section {
-            h6 {
-                font-size: 1rem;
-            }
-
-            .upload-zone {
-                padding: 20px 15px;
-
-                .upload-content {
-                    .upload-icon {
-                        font-size: 2rem;
-                    }
-
-                    h5 {
-                        font-size: 1rem;
-                    }
-
-                    p {
-                        font-size: 0.9rem;
-                    }
-                }
-            }
-
-            .upload-info {
-                .info-card {
-                    padding: 12px;
-                    margin-bottom: 15px;
-
-                    .info-list {
-                        li {
-                            font-size: 0.8rem;
-                        }
-                    }
-                }
-            }
-        }
-
-        // Add bottom margin for footer spacing on small mobile
-        .main-content {
-            .row {
-                margin-bottom: 20px;
-            }
-        }
-    }
-
-    // Enhanced scrollbar styling for better visibility
-    .table-container::-webkit-scrollbar,
-    .approval-users-list::-webkit-scrollbar {
-        width: 8px; // Increase width for better usability
-    }
-
-    .table-container::-webkit-scrollbar-track,
-    .approval-users-list::-webkit-scrollbar-track {
-        background: #f1f1f1;
-        border-radius: 4px;
-    }
-
-    .table-container::-webkit-scrollbar-thumb,
-    .approval-users-list::-webkit-scrollbar-thumb {
-        background: #c1c1c1;
-        border-radius: 4px;
-
-        &:hover {
-            background: #a8a8a8;
-        }
-    }
-
-    // Remove smooth scrolling since we're not using content scroll anymore
-    // .mat-card-content {
-    //     scroll-behavior: smooth;
-    // }
-
-    // Animation classes
-    .approval-user-item {
-        animation: slideIn 0.3s ease-out;
-    }
-
-    @keyframes slideIn {
-        from {
-            opacity: 0;
-            transform: translateX(20px);
-        }
-
-        to {
-            opacity: 1;
-            transform: translateX(0);
-        }
-    }
-
-    // Button styles
-    .mat-flat-button {
-        border-radius: 8px;
-        font-weight: 500;
-        text-transform: none;
-
-        &.mat-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        }
-    }
-
-    .mat-fab {
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-
-        &:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
-        }
-    }
-
-    // Legacy form field (kept for compatibility)
-    .mat-form-field {
-        .mat-form-field-wrapper {
-            padding-bottom: 0;
-        }
-
-        .mat-form-field-underline {
-            background-color: #e9ecef;
-        }
-
-        .mat-form-field-ripple {
-            background-color: #667eea;
-        }
-    }
-
-
-    // Card enhancements
-    .mat-card {
-        border-radius: 12px;
-        overflow: hidden;
-
-        .mat-card-content {
-            padding: 20px;
-        }
-    }
-
-    // Icon styles
-    .mat-icon {
-        &.me-2 {
-            margin-right: 8px;
-        }
-    }
-
-    // Utility classes
-    .text-center {
-        text-align: center;
-    }
-
-    .text-muted {
-        color: #6c757d !important;
-    }
-
-    .mb-0 {
-        margin-bottom: 0 !important;
-    }
-
-    .mb-2 {
-        margin-bottom: 0.5rem !important;
-    }
-
-    .mb-3 {
-        margin-bottom: 1rem !important;
-    }
-
-    .mb-4 {
-        margin-bottom: 1.5rem !important;
-    }
-
-    .me-2 {
-        margin-right: 0.5rem !important;
-    }
-
-    .mt-3 {
-        margin-top: 1rem !important;
-    }
-
-    .py-5 {
-        padding: 3rem 0 !important;
-    }
-
-    .w-100 {
-        width: 100% !important;
-    }
-
-    .h-100 {
-        height: 100% !important;
-    }
-
-    .d-flex {
+        height: 40px !important;
         display: flex !important;
-    }
-
-    .flex-column {
-        flex-direction: column !important;
-    }
-
-    .justify-content-center {
-        justify-content: center !important;
-    }
-
-    .align-items-center {
         align-items: center !important;
     }
 
-    .justify-content-between {
-        justify-content: space-between !important;
+    .mat-mdc-form-field-infix {
+        display: flex !important;
+        align-items: center !important;
+        height: 40px !important;
+        min-height: unset !important;
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+        border-top: 0 !important;
     }
 
-    .flex-shrink-0 {
-        flex-shrink: 0 !important;
+    .mat-mdc-select,
+    .mat-mdc-select-trigger {
+        height: 40px !important;
+        display: flex !important;
+        align-items: center !important;
+        width: 100% !important;
     }
 
-    .d-block {
-        display: block !important;
-    }
-
-    .position-relative {
-        position: relative !important;
-    }
-
-    .border-radius {
-        border-radius: 0.375rem !important;
-    }
-
-    .bg-white {
-        background-color: #fff !important;
-    }
-
-    .border-0 {
-        border: 0 !important;
-    }
-
-    .shadow-none {
-        box-shadow: none !important;
-    }
-
-    .border {
-        border: 1px solid #dee2e6 !important;
-    }
-
-    .shadow-sm {
-        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075) !important;
-    }
+    .mat-mdc-form-field-subscript-wrapper { display: none !important; }
 }
+
+// ── Skroll bar ───────────────────────────────────────────────────────────────
+.tree-scroll::-webkit-scrollbar, .issue-list::-webkit-scrollbar { width: 8px; }
+.tree-scroll::-webkit-scrollbar-thumb, .issue-list::-webkit-scrollbar-thumb { background: var(--gray-300); border-radius: 8px; &:hover { background: var(--gray-400); } }
+
+// ── Responsiv ────────────────────────────────────────────────────────────────
+// Sınma nöqtələri paylaşılan qata uyğunlaşdırılıb: .g-filter-* sistemi 768px-də
+// (styles.scss), <app-page-header> isə 767px-də mobilə keçir.
+@media (max-width: 960px) {
+    .struct-layout { grid-template-columns: 1fr; }
+    .import-grid { grid-template-columns: 1fr; }
+    .tree-card { max-height: 480px; }
+    .detail-card { position: static; }
+}
+@media (max-width: 768px) {
+    .ls-page { padding-bottom: 48px; }
+    .tpl-actions { flex-direction: column; }
+    .tree-card { max-height: 420px; }
+}
+@media (max-width: 560px) {
+    .node-code { display: none; }
+    .head-tools .tool-btn-text { display: none; }   // dar ekranda yalnız ikon
+    .head-tools .tool-btn { padding: 4px 7px; }
+}
+
+// Ziddiyyət nişanları (stat çipi + ağac sətri)
+.stat-chip.is-warn {
+    background: var(--warning-soft); border-color: transparent; color: var(--warning-text);
+    b { color: var(--warning-text); }
+}
+.node-badge.conflict {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 18px; height: 18px; margin-left: 4px; padding: 0 5px;
+    background: var(--warning-soft); color: var(--warning-text); font-size: var(--fs-12);
+}
+// Zəncir sətrindəki pillə nişanı sağa dayansın
+.list-row .node-role.sm { margin-left: auto; flex-shrink: 0; }

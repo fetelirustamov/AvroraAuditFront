@@ -1,78 +1,84 @@
-import { Component, HostListener } from '@angular/core';
-import { NavigationEnd, Router } from '@angular/router';
+import { Component, ElementRef, computed, inject, input, output, signal, viewChild } from '@angular/core';
+import { Router, RouterLink } from '@angular/router';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
-import { MatButtonModule } from '@angular/material/button';
-import { ToggleService } from './toggle.service';
-import { NgClass } from '@angular/common';
-import { CustomizerSettingsService } from '../../customizer-settings/customizer-settings.service';
-import { filter } from 'rxjs/operators';
 import { AuthService } from '../../auth/auth.service';
+import { UserProfileService } from '../../auth/user-profile.service';
+import { MenuLink, MenuSection } from '../menu/menu.model';
+import { ShellArea } from '../shell/shell.model';
 
+interface SearchItem {
+    link: MenuLink;
+    /** Bəndin yeri: qrup adı, qrup yoxdursa bölmə adı. Axtarışa da daxildir. */
+    context: string;
+}
+
+/** Az dilinə uyğun kiçik hərf: "İ" → "i", "I" → "ı". */
+const normalize = (text: string) => text.toLocaleLowerCase('az');
+
+/**
+ * Shell header-i: menyu düyməsi, səhifə başlığı, menyu üzrə axtarış və profil.
+ * Axtarış route-dan qurulan menyunu (data.menu) işlədir, ayrıca siyahı yoxdur.
+ */
 @Component({
     selector: 'app-header',
-    imports: [MatButtonModule, MatMenuModule, NgClass],
+    imports: [MatMenuModule, MatIconModule, MatAutocompleteModule, RouterLink],
     templateUrl: './header.component.html',
-    styleUrl: './header.component.scss'
+    styleUrl: './header.component.scss',
 })
 export class HeaderComponent {
+    private readonly router = inject(Router);
+    private readonly authService = inject(AuthService);
+    readonly profile = inject(UserProfileService);
 
-    // isSidebarToggled
-    isSidebarToggled = false;
+    readonly area = input.required<ShellArea>();
+    readonly menu = input.required<MenuSection[]>();
+    /** Desktop-da panel tam açıqdır, mobil-də drawer açıqdır. */
+    readonly menuExpanded = input(false);
 
-    // isToggled
-    isToggled = false;
-    public userInfo: any;
-    constructor(
-        private toggleService: ToggleService,
-        public themeService: CustomizerSettingsService,
-        private authService: AuthService,
-        private router: Router
-    ) {
-        this.toggleService.isSidebarToggled$.subscribe(isSidebarToggled => {
-            this.isSidebarToggled = isSidebarToggled;
-        });
-        // Subscribe to router events to toggle the sidebar on navigation
-        this.router.events.pipe(
-            filter(event => event instanceof NavigationEnd)
-        ).subscribe(() => {
-            // Check if the sidebar is currently toggled and if so, toggle it
-            if (this.isSidebarToggled) {
-                this.toggleService.toggle(); // Close the sidebar if it's open
-            }
-        });
-        this.themeService.isToggled$.subscribe(isToggled => {
-            this.isToggled = isToggled;
-        });
+    readonly menuToggle = output<void>();
 
-        this.userInfo = this.authService.getUserInfo();
-        // console.log('User Info:', this.userInfo);
+    private readonly menuButton = viewChild.required<ElementRef<HTMLButtonElement>>('menuButton');
+
+    /** AdminGuard ilə eyni yoxlama: admin panelinə keçid yalnız oraya buraxılan istifadəçiyə göstərilir. */
+    readonly canSwitchArea = this.authService.hasRole('Admin');
+
+    readonly query = signal('');
+
+    private readonly searchItems = computed<SearchItem[]>(() =>
+        this.menu().flatMap(section => section.entries.flatMap(entry =>
+            entry.kind === 'group'
+                ? entry.items.map(link => ({ link, context: entry.title }))
+                : [{ link: entry, context: section.label }]
+        ))
+    );
+
+    readonly results = computed(() => {
+        const q = normalize(this.query().trim());
+        if (!q) return [];
+        return this.searchItems().filter(item =>
+            normalize(item.link.title).includes(q) || normalize(item.context).includes(q)
+        );
+    });
+
+    /** Seçimdən sonra sahə boşalır (autocomplete dəyəri inputa yazmasın). */
+    readonly clearInput = () => '';
+
+    onSearchInput(event: Event): void {
+        this.query.set((event.target as HTMLInputElement).value);
     }
 
-    // Burger Menu Toggle
-    toggle() {
-        this.toggleService.toggle();
+    goTo(link: MenuLink): void {
+        this.query.set('');
+        this.router.navigateByUrl(link.path);
     }
 
-    // Settings Button Toggle
-    settingsButtonToggle() {
-        this.themeService.toggle();
+    focusMenuButton(): void {
+        this.menuButton().nativeElement.focus();
     }
 
-    // Header Sticky
-    isSticky: boolean = false;
-    @HostListener('window:scroll')
-    checkScroll() {
-        const scrollPosition = window.scrollY || document.documentElement.scrollTop || document.body.scrollTop || 0;
-        if (scrollPosition >= 50) {
-            this.isSticky = true;
-        } else {
-            this.isSticky = false;
-        }
-    }
-
-    logout() {
-
+    logout(): void {
         this.authService.logout();
     }
-
 }
