@@ -33,10 +33,10 @@ import { InspectionPlanWorkResponseData, InspectionPlanWorkRow } from './inspect
 const COLUMN_TO_API_FILTER: Record<string, string> = {
     magaza_kodu: 'locationCode',
     istifadeci: 'userName',
-    status: 'status',
+    status: 'work',
 };
 
-// Menyuda deyil: yalnız URL ilə açılır (Admin, HeadInspector).
+// Datanı API yalnız Admin və baş müfəttişə verir (RolePolicies.AdminOrHeadInspector).
 @Component({
     selector: 'app-inspection-plan-work',
     standalone: true,
@@ -72,8 +72,10 @@ export class InspectionPlanWorkComponent implements OnInit {
     get filterColumns(): string[] { return this.columns.map(c => c.key + '__filter'); }
     dataSource = new MatTableDataSource<InspectionPlanWorkRow>([]);
     allCount = 0;
-    status2Count = 0;
-    status34Count = 0;
+    /** Status 2 və 5: təsdiqlənib, yoxlama aparılmayıb. */
+    notWorkedCount = 0;
+    /** Status 3 və 4: mobil yoxlamanı bitirib. */
+    workedCount = 0;
 
     readonly pageSizes = PAGE_SIZES;
     readonly filtersForm = new FormGroup({
@@ -96,11 +98,11 @@ export class InspectionPlanWorkComponent implements OnInit {
     isExporting = false;
     loadError: string | null = null;
 
-    /** Bazada real mövcud olan status dəyərləri: 2 və 4 (-1 soft-delete-dir, backend onu süzür). */
+    /** API filtri `work`: hesabat yalnız təsdiqlənmiş planları göstərir (2, 3, 4, 5). */
     readonly statusOptions = [
         { value: '', label: 'Hamısı' },
-        { value: '2', label: 'İşlənilməyib' },
-        { value: '4', label: 'İşlənilib' },
+        { value: 'notWorked', label: 'İşlənilməyib' },
+        { value: 'worked', label: 'İşlənilib' },
     ];
 
     get hasActiveColumnFilters(): boolean {
@@ -236,8 +238,8 @@ export class InspectionPlanWorkComponent implements OnInit {
                 next: res => {
                     const data = this.normalizeResponseData(res);
                     this.allCount = data.total;
-                    this.status2Count = data.status2Count;
-                    this.status34Count = data.status34Count;
+                    this.notWorkedCount = data.notWorkedCount;
+                    this.workedCount = data.workedCount;
                     const page = this.tableState.paginator.page;
                     const size = this.tableState.paginator.size;
                     this.dataSource.data = data.items.map((item, idx) => this.mapApiRow(item, page * size + idx + 1));
@@ -251,17 +253,17 @@ export class InspectionPlanWorkComponent implements OnInit {
     private resetSummary(): void {
         this.dataSource.data = [];
         this.allCount = 0;
-        this.status2Count = 0;
-        this.status34Count = 0;
+        this.notWorkedCount = 0;
+        this.workedCount = 0;
     }
 
     private normalizeResponseData(res: unknown): InspectionPlanWorkResponseData {
         const raw = (res as { data?: Record<string, unknown> })?.data ?? {};
         const items = (raw['items'] ?? raw['Items'] ?? []) as Record<string, unknown>[];
         const total = this.toCount(raw['total'] ?? raw['Total'], items.length);
-        const status2Count = this.toCount(raw['status2Count'] ?? raw['Status2Count']);
-        const status34Count = this.toCount(raw['status34Count'] ?? raw['Status34Count']);
-        return { items, total, status2Count, status34Count };
+        const notWorkedCount = this.toCount(raw['notWorkedCount']);
+        const workedCount = this.toCount(raw['workedCount']);
+        return { items, total, notWorkedCount, workedCount };
     }
 
     private toCount(value: unknown, fallback = 0): number {
@@ -289,12 +291,14 @@ export class InspectionPlanWorkComponent implements OnInit {
 
     /**
      * Hesabatın öz anlayışı: plan işi görülübmü. Plan statusunun etiketi deyil —
-     * 3 və 4 birlikdə "İşlənilib" sayılır (KPI və sütun filtri də belədir).
+     * 3 və 4 birlikdə "İşlənilib", 2 və 5 "İşlənilməyib" sayılır (KPI və sütun filtri də belədir).
+     * 5-də vaxt keçib: plan artıq işlənməyəcək, ona görə ayrıca etiket alır.
      */
     private resolveWork(status: number): { label: string; tone: StatusTone } {
         if (status === 2) return { label: 'İşlənilməyib', tone: 'warning' };
+        if (status === 5) return { label: 'Vaxtı bitib', tone: 'danger' };
         if (status === 3 || status === 4) return { label: 'İşlənilib', tone: 'success' };
-        return { label: `Naməlum (${status})`, tone: 'neutral' };
+        return { label: `Status ${status}`, tone: 'neutral' };
     }
 
     exportExcel(): void {

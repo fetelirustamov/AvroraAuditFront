@@ -22,6 +22,6 @@ export interface InspectionPlanWorkRow {
 export interface InspectionPlanWorkResponseData {
     items: Record<string, unknown>[];
     total: number;
-    status2Count: number;
-    status34Count: number;
+    notWorkedCount: number;
+    workedCount: number;
 }
