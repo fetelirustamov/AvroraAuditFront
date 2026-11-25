@@ -41,7 +41,7 @@
 }
 
 .disruption-id {
-    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
+    font-family: var(--font-mono);
     font-size: 13px;
     font-weight: 700;
     color: var(--accent-hover);
@@ -62,7 +62,12 @@
     .material-symbols-outlined { font-size: 14px; }
 }
 
-.close-btn { margin-left: auto; }
+// Əvvəlki/növbəti və bağla sağda bir qrupdur
+.nav-btns {
+    display: inline-flex;
+    gap: 2px;
+    margin-left: auto;
+}
 
 .panel-title {
     margin: 12px 0 4px;
@@ -156,6 +161,25 @@
     margin-top: 6px;
     font-size: 12px;
     color: var(--gray-500);
+
+    .material-symbols-outlined { font-size: 15px; }
+}
+
+// Cari istifadəçinin növbəsidirsə: təsdiq / rədd / müfəttişə qaytar
+.holder-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin-top: var(--space-3);
+}
+
+.holder-note {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: var(--space-2);
+    font-size: var(--fs-12);
+    color: var(--text-muted);
 
     .material-symbols-outlined { font-size: 15px; }
 }

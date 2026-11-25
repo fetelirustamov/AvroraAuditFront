@@ -95,6 +95,8 @@ export interface DisruptionTrackingData {
 
 export interface DisruptionTrackingHeader extends DisruptionTrackingItem {
     planEndDate: string | null;
+    /** `InspectionPlans.Status`: paneldən təsdiq yalnız yekunlaşmış (4) planda */
+    planStatus: number;
     questionText: string | null;
 }
 

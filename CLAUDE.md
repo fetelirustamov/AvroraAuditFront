@@ -27,7 +27,7 @@ npx ng build --configuration production # dist/avrora-audit, bundle limiti 2.5 M
   - `-1`: rədd.
 
   Backend-dəki `Statuses` enum-u köhnəlib, ona güvənmə.
-- **`Disruptions.Status`:** `0` müfəttiş, `1` baş müfəttiş, `2` təsdiqlənmiş, `-1` rədd. Onay axınında rol ayrılığı frontdadır (`disruption-middle*`). Rol məntiqini burada dəyiş, backend-də yox.
+- **`Disruptions.Status`:** `0` müfəttiş, `1` baş müfəttiş, `2` təsdiqlənmiş, `-1` rədd. Onay axınında rol ayrılığı frontdadır: `ui/disruptions/disruption-approval.ts` (kim hansı statusda nə edə bilər, təsdiqin nəticə statusu). "Müfəttiş təsdiqi" ekranı və izləmə paneli onu işlədir. Rol məntiqini burada dəyiş, backend-də yox. Təsdiq yalnız yekunlaşmış (4) planın uyğunsuzluğuna verilir.
 - **Onay zənciri (`Structures`):** level 1 = mağaza müdiri, 2 = satış müdiri, 3 = direktor. Rol adları zəncirdəki mərtəbədən gəlir, istifadəçinin rolundan yox.
 - **Uyğunsuzluq mediası** iki modulda saxlanır: `Disruption (1)` və `ChecklistDisruption (4)`. Hər ikisinin `RefId`-si uyğunsuzluğun ID-sidir. `media.component.ts`-dəki `STORAGE_MODULES` xəritəsinə bax.
 - **Ərazi bağlantılarının Excel idxalı** wide formatdadır (`Mağaza | User 1 | User 2 …`). Hər sətir mağazanın bütün zəncirini əvəz edir. Bu qəsdən dağıdıcıdır: merge-ə çevirməzdən əvvəl soruş.

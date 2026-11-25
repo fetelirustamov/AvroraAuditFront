@@ -26,14 +26,14 @@ import { MediaComponent } from '../../../components/media/media.component';
 import { TableService } from '../../../services/table.service';
 import { backLinkFromQuery } from '../../disruption-nav';
 import { DisruptionApproveDto, DisruptionDto } from '../../disruption.model';
+import { DISRUPTION_STATUS, approverFromAuth, nextApproveStatus } from '../../disruption-approval';
 import { DisruptionService } from '../../disruption.service';
 import { DisruptionEditDialogComponent } from './disruption-edit-dialog.component';
 
 const PAGE_SIZES = [10, 20, 50];
 
-/** Status kodları (`Disruptions.Status`): 0 müfəttiş, 1 baş müfəttiş, 2 təsdiqlənib, -1 rədd */
-const STATUS_REJECTED = -1;
-const STATUS_INSPECTOR = 0;
+const STATUS_REJECTED = DISRUPTION_STATUS.REJECTED;
+const STATUS_INSPECTOR = DISRUPTION_STATUS.INSPECTOR;
 
 /**
  * Planın təsdiq gözləyən uyğunsuzluqları. Plan URL-dədir (`?plan=…`).
@@ -203,10 +203,11 @@ export class DisruptionMiddleDetailsComponent implements OnInit {
 
   // ── Status əməliyyatları ────────────────────────────────────────────────
 
-  /** Admin hər iki təsdiqi verir: müfəttiş təsdiqi (0→1), sonra yekun təsdiq (1→2) */
+  private readonly approver = approverFromAuth(this.authService);
+
+  /** Rol qaydası `disruption-approval.ts`-dədir: izləmə paneli də onu işlədir */
   approveStatus(row: DisruptionDto): number {
-    if (this.isAdmin) return row.status == 0 ? 1 : 2;
-    return this.isHeadInspector ? 2 : 1;
+    return nextApproveStatus(Number(row.status), this.approver);
   }
 
   approve(rows: DisruptionDto[]): void {

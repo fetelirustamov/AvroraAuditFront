@@ -379,4 +379,5 @@
     }
 </div>
 
-<app-tracking-detail-panel [disruptionId]="selectedId" (closed)="closePanel()"></app-tracking-detail-panel>
+<app-tracking-detail-panel [disruptionId]="selectedId" [hasPrev]="hasPrev" [hasNext]="hasNext"
+    (closed)="closePanel()" (step)="step($event)" (changed)="fetch()"></app-tracking-detail-panel>

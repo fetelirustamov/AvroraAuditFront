@@ -206,8 +206,13 @@
 >   - URL-dən açılanda mağaza seçimi boş qalırdı, düzəldildi.
 > - **İzləmə (5):** "Kimdədir" sütunu mərhələdə qalma müddətinə görə sıralanır (`stageSince`). Birinci klik ən çox gözləyəni üstə çıxarır, tarixi olmayanlar sonda qalır.
 >
-> **Qalanlar:**
-> - **İzləmə (5):** yan paneldə ↑/↓ ilə keçid, paneldə təsdiq/rədd.
+> - **İzləmə paneli (5):**
+>   - ↑/↓ (və başlıqdakı oxlar) ilə cari səhifənin əvvəlki/növbəti qeydi açılır.
+>   - Cari onaylayıcıya "Təsdiqlə", "Rədd et" və "Müfəttişə qaytar" düymələri görünür. Rol qaydası "Müfəttiş təsdiqi" ilə eynidir və bir yerdədir (`ui/disruptions/disruption-approval.ts`).
+>   - Təsdiq yalnız yoxlaması yekunlaşmış planda verilir. Bunun üçün API izləmə detalına `planStatus` qaytarır.
+>   - Mağaza zənciri mərhələlərində (cavab, zəncir təsdiqi) paneldə əməliyyat yoxdur: onlar cavab ekranlarında aparılır.
+>
+> **Mərhələ 3-də ekran işi qalmadı.**
 > - **Yoxlanmayıb:** yeni summaries SQL-i lokal AUDITDB-də xətasız işləyir, amma baza boşdur. Real rəqəmlər VPN ilə və ya deploy-dan sonra yoxlanmalıdır.
 > - **Əsas səhifə (1):** dövr KPI-larının siyahıya linki yoxdur. İzləmənin süzgəcləri "açıq" tərifi ilə tam üst-üstə düşmür.
 > - **Yoxlanmayıb:** real datada (VPN) baxılmayıb. Bütün yoxlamalar saxta API cavabları ilə brauzerdə aparılıb.

@@ -527,6 +527,25 @@ export class DisruptionTrackingComponent implements OnInit {
         void writeQueryState(this.router, { open: null });
     }
 
+    private get selectedIndex(): number {
+        return this.rows.findIndex(r => r.disruptionId === this.selectedId);
+    }
+
+    get hasPrev(): boolean {
+        return this.selectedIndex > 0;
+    }
+
+    get hasNext(): boolean {
+        const i = this.selectedIndex;
+        return i >= 0 && i < this.rows.length - 1;
+    }
+
+    /** Paneldə ↑/↓: cari səhifənin əvvəlki/növbəti sətri açılır */
+    step(delta: number): void {
+        const next = this.rows[this.selectedIndex + delta];
+        if (this.selectedIndex >= 0 && next) { this.open(next); }
+    }
+
     // ── Excel ───────────────────────────────────────────────────────────────
 
     exportExcel(): void {

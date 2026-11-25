@@ -15,6 +15,16 @@
                         </span>
                     }
                 }
+                <span class="nav-btns">
+                    <button type="button" class="action-btn" (click)="step.emit(-1)" [disabled]="!hasPrev()"
+                        aria-label="Əvvəlki uyğunsuzluq" title="Əvvəlki (↑)">
+                        <span class="material-symbols-outlined" aria-hidden="true">keyboard_arrow_up</span>
+                    </button>
+                    <button type="button" class="action-btn" (click)="step.emit(1)" [disabled]="!hasNext()"
+                        aria-label="Növbəti uyğunsuzluq" title="Növbəti (↓)">
+                        <span class="material-symbols-outlined" aria-hidden="true">keyboard_arrow_down</span>
+                    </button>
+                </span>
                 <button type="button" class="action-btn close-btn" (click)="closed.emit()" aria-label="Bağla">
                     <span class="material-symbols-outlined" aria-hidden="true">close</span>
                 </button>
@@ -56,6 +66,25 @@
                     } @else {
                         <span class="holder-name">{{ stageMeta(h.stageCode).label }}</span>
                         <span class="holder-role">Gözləyən təsdiq yoxdur</span>
+                    }
+
+                    @if (actions.length) {
+                        <div class="holder-actions" role="group" aria-label="Sizin növbənizdədir">
+                            @for (a of actions; track a.key) {
+                                <button type="button" (click)="apply(a)" [disabled]="isSaving"
+                                    [class.g-approve-btn]="a.tone === 'success'"
+                                    [class.g-reject-btn]="a.tone === 'danger'"
+                                    [class.g-secondary-btn]="a.tone !== 'success' && a.tone !== 'danger'">
+                                    <span class="material-symbols-outlined" aria-hidden="true">{{ a.icon }}</span>
+                                    {{ a.label }}
+                                </button>
+                            }
+                        </div>
+                    } @else if (waitsForPlan) {
+                        <span class="holder-note">
+                            <span class="material-symbols-outlined" aria-hidden="true">info</span>
+                            Yoxlama yekunlaşandan sonra təsdiqlənə bilər
+                        </span>
                     }
                 </section>
 
