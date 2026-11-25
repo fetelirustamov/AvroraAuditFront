@@ -880,6 +880,12 @@ button.mat-mdc-button-base {
             border-color: var(--accent) !important;
             border-width: 2px !important;
         }
+
+        // Material notch-un sol kənarını qəsdən şəffaf saxlayır (leading ilə arada boşluq qalmasın).
+        // Rənglənəndə etiketin yanında sahə boyu şaquli xətt çıxır, ən çox çoxsətirli textarea-da.
+        .mdc-notched-outline__notch {
+            border-left-color: transparent !important;
+        }
     }
 }
 
