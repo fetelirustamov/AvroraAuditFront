@@ -88,6 +88,26 @@
     --info-soft: #E6EEF6;
     --info-text: #234A70;
 
+    // ── Qrafik seriyaları ───────────────────────────────────────────────────
+    //  Yalnız qrafiklər üçün (chart-colors.ts). Sıra sabitdir və rəng korluğu
+    //  yoxlamasından keçib (dataviz validate_palette, ağ fon): ardıcıl cütlər
+    //  ΔE ≥ 12, ilk üçü bütün cütlərdə ΔE ≥ 15. Sıranı dəyişmə, yeni rəng
+    //  əlavə etməzdən əvvəl yenidən yoxla. Rəng varlığa bağlıdır, sıraya yox:
+    //  yoxlama həmişə 1, uyğunsuzluq həmişə 2, uyğunluq faizi həmişə 3.
+    //  4-cü (sarı) ağ fonda 3:1-dən aşağıdır: yalnız legend/etiketlə işlət.
+    --chart-1: #0091A6;
+    --chart-1-soft: #8CCBD5;        // eyni ölçünün əvvəlki dövrü
+    --chart-2: #E0533D;             // mərcan: uyğunsuzluq
+    --chart-3: #6250D6;
+    --chart-4: #D99A00;
+    --chart-5: #2A78D6;
+    --chart-6: #D2508A;
+    // Uyğunsuzluq sıxlığı (istilik xəritəsi): chart-2-nin açıqdan tündə şkalası
+    --chart-heat-1: #FADCD6;
+    --chart-heat-2: #F09A8A;
+    --chart-heat-3: #E0533D;
+    --chart-heat-4: #A8331F;
+
     // ── Forma, kölgə, fokus ─────────────────────────────────────────────────
     --radius-sm: 4px;
     --radius-md: 6px;

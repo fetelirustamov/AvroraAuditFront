@@ -441,9 +441,11 @@ export class UiDashboardComponent implements OnInit, OnDestroy {
 
         await this.visuals.renderTrend(
             'dash_trend',
+            'dash_trend_compliance',
             data.monthlyTrend.map(m => m.inspections),
             data.monthlyTrend.map(m => m.findings),
-            data.monthlyTrend.map(m => m.compliance)
+            // Yoxlama olmayan ayda nəticə yoxdur, 0% deyil: xətt həmin aylarda kəsilir
+            data.monthlyTrend.map(m => m.inspections > 0 ? m.compliance : null)
         );
 
         const sections = this.topSections();

@@ -153,13 +153,16 @@
                 <span class="material-symbols-outlined panel-icon">insights</span>
                 <div>
                     <h2 class="panel-title">Aylıq dinamika</h2>
-                    <p class="panel-hint">Yoxlama və uyğunsuzluq sayı sütunlarla, uyğunluq faizi xətlə — {{ overview.period.year }}</p>
+                    <p class="panel-hint">Yoxlama və uyğunsuzluq sayı, altında uyğunluq faizi — {{ overview.period.year }}</p>
                 </div>
             </div>
         </header>
         <div class="panel-body">
             <div id="dash_trend" class="chart-area" role="img"
-                 aria-label="Aylar üzrə yoxlama sayı, uyğunsuzluq sayı və uyğunluq faizi"></div>
+                 aria-label="Aylar üzrə yoxlama və uyğunsuzluq sayı"></div>
+            <h3 class="chart-subtitle">Uyğunluq faizi</h3>
+            <div id="dash_trend_compliance" class="chart-area chart-area--short" role="img"
+                 aria-label="Aylar üzrə uyğunluq faizi"></div>
         </div>
     </section>
 

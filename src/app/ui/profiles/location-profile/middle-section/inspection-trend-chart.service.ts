@@ -1,6 +1,6 @@
 import { Injectable, OnDestroy } from '@angular/core';
 
-import { chartColors } from '../../../../shared/utils/chart-colors';
+import { chartColors, loadApexCharts } from '../../../../shared/utils/chart-colors';
 
 export interface TrendPoint {
     /** X oxundakı etiket (yoxlama tarixi) */
@@ -30,7 +30,7 @@ export class InspectionTrendChartService implements OnDestroy {
         const generation = this.generation;
         if (!points.length) { return; }
 
-        const ApexCharts = (await import('apexcharts')).default;
+        const ApexCharts = await loadApexCharts();
         if (generation !== this.generation) { return; }
 
         const c = chartColors();
@@ -52,7 +52,8 @@ export class InspectionTrendChartService implements OnDestroy {
             ...base,
             chart: { ...base.chart, type: 'line' },
             series: [{ name: 'Nəticə', data: points.map(p => Math.round(p.result * 10) / 10) }],
-            colors: [c.accent],
+            // Nəticə uyğunluq faizidir: dashboard-dakı uyğunluq xətti ilə eyni rəng
+            colors: [c.series[2]],
             stroke: { width: 2, curve: 'straight' },
             markers: { size: 4, strokeColors: c.surface, strokeWidth: 2 },
             yaxis: { min: 0, max: 100, tickAmount: 4, labels: { ...axisLabels, formatter: (v: number) => `${Math.round(v)}%` } },

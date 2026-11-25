@@ -95,6 +95,17 @@
     min-height: 260px;
 }
 
+.chart-area--short {
+    min-height: 170px;
+}
+
+.chart-subtitle {
+    margin: var(--space-2) 0 0 var(--space-3);
+    font-size: var(--fs-13);
+    font-weight: 600;
+    color: var(--text);
+}
+
 .panel-empty {
     display: flex;
     align-items: center;

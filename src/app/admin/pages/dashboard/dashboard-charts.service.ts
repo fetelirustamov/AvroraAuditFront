@@ -1,7 +1,7 @@
 import { Injectable, Inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 
-import { chartColors } from '../../../shared/utils/chart-colors';
+import { chartColors, loadApexCharts } from '../../../shared/utils/chart-colors';
 
 @Injectable({ providedIn: 'root' })
 export class DashboardChartsService {
@@ -17,15 +17,15 @@ export class DashboardChartsService {
         if (!this.isBrowser) return;
         const el = document.querySelector('#adm_chart_user_roles');
         if (!el) return;
-        const ApexCharts = (await import('apexcharts')).default;
+        const ApexCharts = await loadApexCharts();
         const c = chartColors();
         const total = series.reduce((a, b) => a + b, 0);
         const options: any = {
             series,
             labels,
             chart: { type: 'donut', height: 280, fontFamily: 'inherit', animations: { enabled: true, speed: 600 } },
-            // Qrupların mənası yoxdur: vurğu + açıq neytral şkala (gray-700 dilimi qara görünürdü)
-            colors: [c.accent, ...c.neutral.slice(1)],
+            // Qrupların mənası yoxdur: kateqoriya rəngləri sabit sıra ilə
+            colors: c.series,
             plotOptions: {
                 pie: {
                     donut: {
@@ -70,7 +70,7 @@ export class DashboardChartsService {
         if (!this.isBrowser) return;
         const el = document.querySelector('#adm_chart_activity');
         if (!el) return;
-        const ApexCharts = (await import('apexcharts')).default;
+        const ApexCharts = await loadApexCharts();
         const c = chartColors();
         const isMany = categories.length > 6;
         const dynamicHeight = isMany ? Math.max(260, categories.length * 34) : 260;
@@ -83,7 +83,7 @@ export class DashboardChartsService {
                 toolbar: { show: false },
                 animations: { enabled: true, speed: 500 }
             },
-            colors: [c.accent],
+            colors: [c.series[0]],
             plotOptions: {
                 bar: {
                     columnWidth: '45%',

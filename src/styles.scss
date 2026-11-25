@@ -1088,3 +1088,9 @@ button.mat-mdc-button-base {
     background: color-mix(in srgb, var(--gray-900) 94%, transparent);
     backdrop-filter: blur(4px);
 }
+// ApexCharts hover: kitabxananın öz filtri söndürülüb (loadApexCharts, chart-colors.ts),
+// sütun və dilim yalnız bir az tündləşir, ağarıb itmir
+.apexcharts-bar-area:hover,
+.apexcharts-pie-area:hover {
+    filter: brightness(.9);
+}

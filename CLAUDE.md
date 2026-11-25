@@ -62,7 +62,8 @@ npx ng build --configuration production # dist/avrora-audit, bundle limiti 2.5 M
 - Rəng, şrift ölçüsü, boşluq, radius və kölgə yalnız `src/_tokens.scss`-dəki CSS dəyişənlərindən gəlir (`--accent`, `--text-*`, `--surface-*`, `--border`, `--success|warning|danger|info` + `-soft`/`-text`, `--fs-*`, `--space-*`). Birbaşa hex yazma. Lazım olan rəng yoxdursa, əvvəl orada token yarat.
 - Rəng yalnız məna daşıyır. Bir vurğu rəngi (`--accent`) əsas əməliyyat, aktiv və seçilmiş hal üçündür. Status rəngləri yalnız status üçündür. Qradient, dekorativ rəng və rəngli kölgə işlətmə. Məhsul neytraldır: müştəri adı və ya brendi mətndə yazılmır.
 - Şriftlər IBM Plex Sans/Mono-dur (`@fontsource`, `angular.json`-da). Kod və ID üçün `.mono` sinfi var. 12px-dən kiçik mətn yoxdur.
-- Qrafik rəngləri `shared/utils/chart-colors.ts` ilə token-lərdən oxunur.
+- Qrafik rəngləri `shared/utils/chart-colors.ts` ilə `--chart-*` token-lərindən oxunur. Rəng varlığa bağlıdır: yoxlama `series[0]`, uyğunsuzluq `series[1]` (mərcan), uyğunluq faizi `series[2]`. Vəziyyət (həll edilmiş/açıq, risk) status rəngindədir. Palitra sırası rəng korluğu yoxlamasından keçib, dəyişəndə yenidən yoxla.
+- ApexCharts-ı yalnız `loadApexCharts()` ilə yüklə: o, kitabxananın hover filtrini söndürür (`lighten` sütunu ağardıb itirirdi). Say oxu üçün `chart-axis.ts` (`integerAxis`). İki fərqli şkalanı bir qrafikdə iki y-oxu ilə göstərmə, ayrı qrafik qur.
 - Mətnlər `docs/design/glossary.md`-yə uyğun olmalıdır: Firma, Mağaza, Şöbə, Parol, təsdiq; cümlə registri.
 - Təkrarlanan səhifə blokları `src/_design-system.scss`-dədir (`.kpi-*`, `.table-card`, `.table-sticky`). Yeni səhifədə bunları sıfırdan yazma.
   - KPI kartı süzülmüş siyahıya aparırsa, `<a class="kpi-card is-link">` + `.kpi-go` oxu işlət. KPI ikonu yalnız həddi olan göstəricidə `tone-success|warning|danger` alır.

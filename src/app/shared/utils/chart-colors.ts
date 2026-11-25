@@ -5,33 +5,32 @@
  * ona görə dəyər render anında `:root`-dan götürülür. DOM elementinin `style`-ına
  * yazılan rənglər üçün bu helper lazım deyil, birbaşa `var(--…)` yaz.
  *
- * Qayda: mənası olmayan seriya → `accent` və ya `neutral`; status/risk → `success`,
- * `warning`, `danger`, `info`. Mətn həmişə mətn token-indədir, seriya rəngində yox.
+ * Qayda:
+ * - seriyanın kimliyi → `series` (sabit sıra, rəng varlığa bağlıdır):
+ *   `series[0]` yoxlama/əsas ölçü, `series[1]` uyğunsuzluq, `series[2]` uyğunluq faizi;
+ * - vəziyyət (həll edilmiş/açıq, risk zonası) → `success`, `warning`, `danger`;
+ * - uyğunsuzluq sıxlığı → `heat` şkalası.
+ * Mətn həmişə mətn token-indədir, seriya rəngində yox.
  */
 export interface ChartColors {
-    accent: string;
-    accentSoft: string;
+    /** Kateqoriya rəngləri, sabit sıra ilə (`--chart-1` … `--chart-6`) */
+    series: string[];
+    /** `series[0]`-ın açıq variantı: eyni ölçünün əvvəlki dövrü */
+    seriesSoft: string;
+    /** Uyğunsuzluq sıxlığı, açıqdan tündə */
+    heat: string[];
 
     success: string;
-    successSoft: string;
     warning: string;
-    warningSoft: string;
     danger: string;
-    dangerSoft: string;
-    info: string;
-    infoSoft: string;
 
     textStrong: string;
     text: string;
     textMuted: string;
-    /** Ox xətləri, grid, radial trek */
+    /** Ox xətləri, grid */
     border: string;
     surface: string;
-    surfaceMuted: string;
     surfaceSubtle: string;
-
-    /** Mənasız kateqoriyalar üçün neytral şkala, tündən açığa, sabit sıra ilə */
-    neutral: string[];
 }
 
 function token(styles: CSSStyleDeclaration, name: string): string {
@@ -42,26 +41,43 @@ function token(styles: CSSStyleDeclaration, name: string): string {
 export function chartColors(): ChartColors {
     const s = getComputedStyle(document.documentElement);
     return {
-        accent: token(s, '--accent'),
-        accentSoft: token(s, '--accent-soft'),
+        series: [1, 2, 3, 4, 5, 6].map(i => token(s, `--chart-${i}`)),
+        seriesSoft: token(s, '--chart-1-soft'),
+        heat: [1, 2, 3, 4].map(i => token(s, `--chart-heat-${i}`)),
 
         success: token(s, '--success'),
-        successSoft: token(s, '--success-soft'),
         warning: token(s, '--warning'),
-        warningSoft: token(s, '--warning-soft'),
         danger: token(s, '--danger'),
-        dangerSoft: token(s, '--danger-soft'),
-        info: token(s, '--info'),
-        infoSoft: token(s, '--info-soft'),
 
         textStrong: token(s, '--text-strong'),
         text: token(s, '--text'),
         textMuted: token(s, '--text-muted'),
         border: token(s, '--border'),
         surface: token(s, '--surface'),
-        surfaceMuted: token(s, '--surface-muted'),
         surfaceSubtle: token(s, '--surface-subtle'),
-
-        neutral: ['--gray-700', '--gray-500', '--gray-400', '--gray-300'].map(name => token(s, name)),
     };
+}
+
+let apexLoad: Promise<any> | undefined;
+
+/**
+ * ApexCharts-ı dinamik yükləyir və ortaq defaultları bir dəfə qoyur.
+ * Hər qrafik bunu işlətməlidir, `import('apexcharts')`-i birbaşa çağırma.
+ *
+ * Hover/aktiv filtri söndürülür: kitabxananın `lighten`-i parlaqlığı 2 dəfə
+ * artırır (sütun ağarıb itir), `darken`-i 0.3-ə salır (qaralır). Hover
+ * işarəsini `styles.scss`-dəki yüngül CSS filtri verir.
+ */
+export function loadApexCharts(): Promise<any> {
+    apexLoad ??= import('apexcharts').then(module => {
+        (window as any).Apex = {
+            chart: { fontFamily: 'inherit', toolbar: { show: false } },
+            states: {
+                hover: { filter: { type: 'none' } },
+                active: { filter: { type: 'none' } }
+            }
+        };
+        return module.default;
+    });
+    return apexLoad;
 }
