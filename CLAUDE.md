@@ -41,7 +41,7 @@ npx ng build --configuration production # dist/avrora-audit, bundle limiti 2.5 M
 - Aktiv bənd URL-in ən uzun prefiksinə görə seçilir. Başqa bəndə aid detal səhifəsi üçün həmin bəndə `data.menu.activeAlso` yaz. Səhifə adı brauzer tabında və header-də `data.menu.title`-dan gəlir.
 - İcazələr `PermissionService` vasitəsilə `GET /api/me/permissions`-dan gəlir; Admin bütün yoxlamaları keçir. `pageKey` bazadakı `Pages.[Key]` ilə dəqiq uyğun olmalıdır. Açar dəyişsə, həm SQL seed, həm route dəyişməlidir. Yeni açar üçün front deploy-dan **əvvəl** baza seed-i və rol icazələri lazımdır.
 - `permissionGuard` və `*hasPermission` mövcuddur. Köhnə `RoleGuard` / `*hasRole` / `data.roles` hələ bir neçə yerdə qalır. Yeni kodda onları yox, icazə qatını işlət.
-- `ui.routes.ts` pageKey-i olan hər UI səhifəsinə `permissionGuard` qoşur, menyudan gizlənən səhifə URL ilə də açılmır. Əsas Səhifə (`dashboard`) istisnadır: girişdən sonra hamı ora yönləndirilir.
+- `ui.routes.ts` icazə açarı olan hər UI səhifəsinə, uşaq route-lar da daxil, `permissionGuard` qoşur, menyudan gizlənən səhifə URL ilə də açılmır. Açarı valideynə yox, səhifənin öz route-una yaz (bölmənin siyahısı `''` uşağındadır), yoxsa alt səhifə bölmənin icazəsini tələb edər. Menyusuz səhifə (detal, forma) `data.pageKey` alır; bir neçə siyahıdan açılırsa massiv ver, birinə icazə kifayətdir. `ui.routes.spec.ts` bunu yoxlayır. Əsas Səhifə (`dashboard`) istisnadır: girişdən sonra hamı ora yönləndirilir.
 - `AuthInterceptor` token-i yalnız `environment.apiUrl` origin-inə göndərir.
 
 ## Server cavabları və formalar

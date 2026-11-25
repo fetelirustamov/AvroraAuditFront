@@ -92,6 +92,7 @@ export const uiPageRoutes: Routes = [
             {
                 path: '',
                 loadComponent: () => import('./plans/plan-user-list/plan-user-list.component').then(m => m.PlanUserListComponent),
+                data: { pageKey: 'plans' },
             },
             {
                 path: 'checked',
@@ -133,6 +134,7 @@ export const uiPageRoutes: Routes = [
                 path: 'create',
                 title: 'Yeni plan',
                 loadComponent: () => import('./plans/plan-user-list/plan-create/plan-create.component').then(m => m.PlanCreateComponent),
+                data: { pageKey: 'plans' },
             },
             {
                 path: 'calendar',
@@ -151,17 +153,17 @@ export const uiPageRoutes: Routes = [
     {
         path: 'inspections',
         loadComponent: () => import('./inspections/inspections.component').then(m => m.InspectionsComponent),
-        data: {
-            menu: {
-                area: 'app', section: 'İş axını', order: 20,
-                group: 'Yoxlama', groupIcon: 'fact_check', groupOrder: 20,
-                title: 'Yoxlamalar', pageKey: 'inspections'
-            }
-        },
         children: [
             {
                 path: '',
                 loadComponent: () => import('./inspections/inspections-list/inspections-list.component').then(m => m.InspectionsListComponent),
+                data: {
+                    menu: {
+                        area: 'app', section: 'İş axını', order: 20,
+                        group: 'Yoxlama', groupIcon: 'fact_check', groupOrder: 20,
+                        title: 'Yoxlamalar', pageKey: 'inspections'
+                    }
+                },
             },
             {
                 path: 'approve',
@@ -179,6 +181,8 @@ export const uiPageRoutes: Routes = [
                 path: 'details',
                 title: 'Yoxlama detalı',
                 loadComponent: () => import('./inspections/inspection-details/inspection-details.component').then(m => m.InspectionDetailsComponent),
+                // Detal bu siyahıların hər birindən açılır: birinə icazə kifayətdir
+                data: { pageKey: ['inspections', 'inspection-approve', 'plan-checked', 'plan-actions'] },
             },
         ],
     },
@@ -187,17 +191,17 @@ export const uiPageRoutes: Routes = [
     {
         path: 'disruptions',
         loadComponent: () => import('./disruptions/disruptions.component').then(m => m.DisruptionsComponent),
-        data: {
-            menu: {
-                area: 'app', section: 'İş axını', order: 40,
-                group: 'Uyğunsuzluqlar', groupIcon: 'report', groupOrder: 40,
-                title: 'Uyğunsuzluqlar', pageKey: 'disruptions'
-            }
-        },
         children: [
             {
                 path: '',
                 loadComponent: () => import('./disruptions/disruption-list/disruption-list.component').then(m => m.DisruptionListComponent),
+                data: {
+                    menu: {
+                        area: 'app', section: 'İş axını', order: 40,
+                        group: 'Uyğunsuzluqlar', groupIcon: 'report', groupOrder: 40,
+                        title: 'Uyğunsuzluqlar', pageKey: 'disruptions'
+                    }
+                },
             },
             {
                 path: 'middle',
@@ -229,13 +233,14 @@ export const uiPageRoutes: Routes = [
                 path: 'details',
                 title: 'Uyğunsuzluq detalı',
                 loadComponent: () => import('./disruptions/disruption-details/disruption-details.component').then(m => m.DisruptionDetailsComponent),
+                data: { pageKey: 'disruptions' },
             },
             {
                 path: 'middle-details',
                 title: 'Təsdiq gözləyən uyğunsuzluqlar',
                 loadComponent: () => import('./disruptions/disruption-middle/disruption-middle-details/disruption-middle-details.component').then(m => m.DisruptionMiddleDetailsComponent),
                 canActivate: [RoleGuard],
-                data: { roles: ['Inspector', 'HeadInspector', 'Admin'] },
+                data: { roles: ['Inspector', 'HeadInspector', 'Admin'], pageKey: 'disruption-middle' },
             },
         ],
     },
@@ -243,22 +248,23 @@ export const uiPageRoutes: Routes = [
     // ── Cavablar ────────────────────────────────────────────────────
     {
         path: 'answers',
-        data: {
-            menu: {
-                area: 'app', section: 'İş axını', order: 50,
-                group: 'Cavablar', groupIcon: 'border_color', groupOrder: 50,
-                title: 'Cavabla', pageKey: 'answers'
-            }
-        },
         children: [
             {
                 path: '',
                 loadComponent: () => import('./answers/answers.component').then(m => m.AnswersComponent),
+                data: {
+                    menu: {
+                        area: 'app', section: 'İş axını', order: 50,
+                        group: 'Cavablar', groupIcon: 'border_color', groupOrder: 50,
+                        title: 'Cavabla', pageKey: 'answers'
+                    }
+                },
             },
             {
                 path: 'details',
                 title: 'Uyğunsuzluğa cavab',
                 loadComponent: () => import('./answers/answer-details/answer-details.component').then(m => m.AnswerDetailsComponent),
+                data: { pageKey: 'answers' },
             },
             {
                 path: 'approve',
@@ -276,6 +282,7 @@ export const uiPageRoutes: Routes = [
                 path: 'approve-details',
                 title: 'Cavab təsdiqi',
                 loadComponent: () => import('./answers/answer-approve/answer-approve-details/answer-approve-details.component').then(m => m.AnswerApproveDetailsComponent),
+                data: { pageKey: 'answer-approve' },
             },
         ],
     },
@@ -287,6 +294,7 @@ export const uiPageRoutes: Routes = [
     {
         path: 'profiles',
         loadComponent: () => import('./profiles/location-profile/location-profile.component').then(m => m.LocationProfileComponent),
+        data: { pageKey: 'location-profile' },
     },
     {
         path: 'profiles/location',
