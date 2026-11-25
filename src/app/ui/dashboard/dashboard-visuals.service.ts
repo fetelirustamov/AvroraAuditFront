@@ -70,8 +70,9 @@ export class DashboardVisualsService {
                 toolbar: { show: false },
                 fontFamily: 'inherit'
             },
-            // Sayların mənası yoxdur → neytral; əsas göstərici (uyğunluq) → vurğu
-            colors: [c.neutral[2], c.neutral[0], c.accent],
+            // Yoxlama sayı mənasız say → açıq neytral; uyğunsuzluq risk göstəricisidir → status (danger);
+            // əsas göstərici (uyğunluq) → vurğu. Tünd neytral (gray-700) ekranda qara görünürdü.
+            colors: [c.neutral[2], c.danger, c.accent],
             stroke: { width: [0, 0, 2], curve: 'smooth' },
             plotOptions: { bar: { columnWidth: '52%', borderRadius: 4 } },
             fill: { opacity: [1, 1, 1] },
@@ -159,8 +160,11 @@ export class DashboardVisualsService {
         await this.render(elementId, {
             series: [{ name: 'Uyğunsuzluq', data: items.map(i => i.value) }],
             chart: { type: 'bar', height: 340, toolbar: { show: false }, fontFamily: 'inherit' },
-            // Kateqoriyanın özünün mənası yoxdur: tək neytral ton, müqayisə uzunluqladır
-            colors: [c.neutral[0]],
+            // Uyğunsuzluq sayı riskdir → danger ailəsi. On tam tünd qırmızı sütun ağır görünməsin deyə
+            // dolğu yarı şəffaf, kənar tam rəngdədir; müqayisə uzunluqladır, rəng hamısında eynidir.
+            colors: [c.danger],
+            fill: { opacity: 0.45 },
+            stroke: { show: true, width: 1, colors: [c.danger] },
             plotOptions: { bar: { horizontal: true, barHeight: '58%', borderRadius: 4, dataLabels: { position: 'top' } } },
             dataLabels: {
                 enabled: true,

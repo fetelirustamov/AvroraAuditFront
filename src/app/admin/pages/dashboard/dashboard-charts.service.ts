@@ -24,8 +24,8 @@ export class DashboardChartsService {
             series,
             labels,
             chart: { type: 'donut', height: 280, fontFamily: 'inherit', animations: { enabled: true, speed: 600 } },
-            // Rolların mənası yoxdur: vurğu + neytral şkala
-            colors: [c.accent, ...c.neutral],
+            // Qrupların mənası yoxdur: vurğu + açıq neytral şkala (gray-700 dilimi qara görünürdü)
+            colors: [c.accent, ...c.neutral.slice(1)],
             plotOptions: {
                 pie: {
                     donut: {
