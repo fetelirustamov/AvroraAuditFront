@@ -114,6 +114,7 @@ export const uiPageRoutes: Routes = [
             },
             {
                 path: 'create',
+                title: 'Yeni plan',
                 loadComponent: () => import('./plans/plan-user-list/plan-create/plan-create.component').then(m => m.PlanCreateComponent),
             },
             {
@@ -158,6 +159,7 @@ export const uiPageRoutes: Routes = [
             },
             {
                 path: 'details',
+                title: 'Yoxlama detalı',
                 loadComponent: () => import('./inspections/inspection-details/inspection-details.component').then(m => m.InspectionDetailsComponent),
             },
         ],
@@ -207,10 +209,12 @@ export const uiPageRoutes: Routes = [
             },
             {
                 path: 'details',
+                title: 'Uyğunsuzluq detalı',
                 loadComponent: () => import('./disruptions/disruption-details/disruption-details.component').then(m => m.DisruptionDetailsComponent),
             },
             {
                 path: 'middle-details',
+                title: 'Təsdiq gözləyən uyğunsuzluqlar',
                 loadComponent: () => import('./disruptions/disruption-middle/disruption-middle-details/disruption-middle-details.component').then(m => m.DisruptionMiddleDetailsComponent),
                 canActivate: [RoleGuard],
                 data: { roles: ['Inspector', 'HeadInspector', 'Admin'] },
@@ -235,6 +239,7 @@ export const uiPageRoutes: Routes = [
             },
             {
                 path: 'details',
+                title: 'Uyğunsuzluğa cavab',
                 loadComponent: () => import('./answers/answer-details/answer-details.component').then(m => m.AnswerDetailsComponent),
             },
             {
@@ -251,6 +256,7 @@ export const uiPageRoutes: Routes = [
             },
             {
                 path: 'approve-details',
+                title: 'Cavab təsdiqi',
                 loadComponent: () => import('./answers/answer-approve/answer-approve-details/answer-approve-details.component').then(m => m.AnswerApproveDetailsComponent),
             },
         ],

@@ -1,32 +1,40 @@
 import { DatePipe } from '@angular/common';
-import { Component, DestroyRef, OnInit, ViewChild, inject } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { MatPaginator, MatPaginatorModule, PageEvent } from '@angular/material/paginator';
+import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSelectModule } from '@angular/material/select';
-import { MatSortModule, Sort } from '@angular/material/sort';
+import { MatSortModule, Sort, SortDirection } from '@angular/material/sort';
 import { MatTableModule } from '@angular/material/table';
+import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { finalize } from 'rxjs';
 import { LocationService } from '../../../admin/services/location.service';
 import { SectionService } from '../../../admin/services/section.service';
 import { UserService } from '../../../admin/services/user.service';
 import { TableState } from '../../../models/table-state.model';
+import { ListStateComponent } from '../../../shared/components/list-state/list-state.component';
+import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
+import { AppDatePipe } from '../../../shared/pipes/app-date.pipe';
 import { FileExportService, datedFileName } from '../../../shared/services/file-export.service';
 import { NotificationService } from '../../../shared/services/notification.service';
+import { StatusChipComponent } from '../../../shared/status/status-chip.component';
+import { apiErrorMessage } from '../../../shared/utils/api-error';
 import { levelRoleLabel } from '../../../shared/utils/approval-level';
 import { BAKU_TZ, parseApiUtcDate } from '../../../shared/utils/date.util';
+import { QueryValue, queryDate, queryNumber, queryString, toQueryDate, writeQueryState } from '../../../shared/utils/query-state';
 import { AuditLoadingOverlayComponent } from '../../components/audit-loading-overlay/audit-loading-overlay.component';
 import { Firm } from '../../inspections/firm.model';
 import { InspectionsService } from '../../inspections/inspections.service';
 import { PlanService } from '../../plans/plan.service';
 import { DisruptionService } from '../disruption.service';
 import {
-    DisruptionStageCount, DisruptionTrackingItem, STAGE_OPTIONS, StageCode, TrackState,
-    currentHolder, stageMeta, stageTrack,
+    DisruptionStageCount, DisruptionTrackingItem, Holder, STAGE_OPTIONS, StageCode, TrackState,
+    currentHolder, overdueLabel, stageAgeLabel, stageMeta, stageTrack,
 } from './disruption-tracking.model';
 import { DisruptionCategoryOption, DisruptionTrackingService } from './disruption-tracking.service';
 import { TrackingDetailPanelComponent } from './tracking-detail-panel/tracking-detail-panel.component';
@@ -51,13 +59,22 @@ const OPTION_RENDER_LIMIT = 150;
 /** Seçimləri firmadan yüklənən filtrlər — firma seçilməyəndə deaktivdir */
 const FIRM_DEPENDENT = ['regionId', 'locationCode', 'inspectorId', 'approverUserCode', 'categoryId', 'sectionId'] as const;
 
+const DEFAULT_PAGE_SIZE = 25;
+const DEFAULT_SORT = 'createdDate';
+const DEFAULT_DIRECTION = 'desc';
+
+/**
+ * Uyğunsuzluq izləmə. Filtrlər, səhifə, sıralama və açıq detal paneli URL-dədir
+ * (`?firm=…&stage=…&page=…&open=…`): səhifə yenilənəndə və link paylaşılanda eyni görünüş açılır.
+ */
 @Component({
     selector: 'app-disruption-tracking',
     standalone: true,
     imports: [
-        DatePipe, ReactiveFormsModule, FormsModule,
+        ReactiveFormsModule, FormsModule,
         MatFormFieldModule, MatInputModule, MatSelectModule, MatDatepickerModule,
-        MatCheckboxModule, MatTableModule, MatSortModule, MatPaginatorModule,
+        MatCheckboxModule, MatTableModule, MatSortModule, MatPaginatorModule, MatProgressBarModule,
+        PageHeaderComponent, ListStateComponent, StatusChipComponent, AppDatePipe,
         AuditLoadingOverlayComponent, TrackingDetailPanelComponent,
     ],
     providers: [DatePipe],
@@ -65,9 +82,9 @@ const FIRM_DEPENDENT = ['regionId', 'locationCode', 'inspectorId', 'approverUser
     styleUrl: './disruption-tracking.component.scss',
 })
 export class DisruptionTrackingComponent implements OnInit {
-    @ViewChild(MatPaginator) paginator?: MatPaginator;
-
     private readonly destroyRef = inject(DestroyRef);
+    private readonly router = inject(Router);
+    private readonly route = inject(ActivatedRoute);
     private readonly trackingService = inject(DisruptionTrackingService);
     private readonly inspectionsService = inject(InspectionsService);
     private readonly locationService = inject(LocationService);
@@ -79,11 +96,11 @@ export class DisruptionTrackingComponent implements OnInit {
     private readonly notify = inject(NotificationService);
     private readonly datePipe = inject(DatePipe);
 
-    readonly tz = BAKU_TZ;
     readonly stageMeta = stageMeta;
     readonly stageOptions = STAGE_OPTIONS;
     readonly levelOptions = [1, 2, 3].map(l => ({ value: l, label: `${l}-ci təsdiq · ${levelRoleLabel(l)}` }));
     readonly displayedColumns = ['disruptionId', 'location', 'reason', 'stage', 'holder', 'track', 'createdDate', 'deadlineDate', 'open'];
+    readonly pageSizeOptions = [10, 25, 50, 100];
 
     readonly filtersForm = new FormGroup({
         firmId: new FormControl<number | null>(null),
@@ -126,33 +143,102 @@ export class DisruptionTrackingComponent implements OnInit {
     activeKpi: KpiKey = 'all';
 
     isLoading = false;
+    /** İlk cavab gələnə qədər tam overlay, sonrakı yükləmələrdə köhnə sətirlər üstündə nazik xətt */
+    hasLoaded = false;
+    loadError: string | null = null;
     isExporting = false;
     selectedId: number | null = null;
 
     ngOnInit(): void {
-        this.tableState.paginator.page = 0;
-        this.tableState.paginator.size = 25;
-        this.tableState.sorting.column = 'createdDate';
-        this.tableState.sorting.direction = 'desc';
+        const q = this.route.snapshot.queryParamMap;
+        this.tableState.paginator.page = queryNumber(q, 'page') ?? 0;
+        this.tableState.paginator.size = queryNumber(q, 'size') ?? DEFAULT_PAGE_SIZE;
+        this.tableState.sorting.column = queryString(q, 'sort') ?? DEFAULT_SORT;
+        this.tableState.sorting.direction = queryString(q, 'dir') === 'asc' ? 'asc' : DEFAULT_DIRECTION;
+        this.selectedId = queryNumber(q, 'open');
 
         this.setFirmDependentEnabled(false);
         this.filtersForm.controls.reasonId.disable({ emitEvent: false });
         this.watchCascades();
+        const hasUrlFirm = this.restoreFilters(q);
+
         this.inspectionsService.getFirms()
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: res => {
                     this.firms = res?.data ?? [];
-                    if (this.firms.length === 1) {
+                    if (!hasUrlFirm && this.firms.length === 1) {
                         this.filtersForm.controls.firmId.setValue(this.firms[0].id);
                     }
-                    this.search();
+                    this.fetch();
                 },
-                error: () => {
-                    this.notify.error('Firma siyahısı yüklənmədi');
-                    this.search();
+                error: error => {
+                    this.notify.error(apiErrorMessage(error, 'Firma siyahısı yüklənmədi'));
+                    this.fetch();
                 },
             });
+    }
+
+    // ── URL ──────────────────────────────────────────────────────────────────
+
+    /** Filtrləri URL-dən forma köçürür. URL-də firma varsa `true`. */
+    private restoreFilters(q: ParamMap): boolean {
+        const c = this.filtersForm.controls;
+        const firmId = queryNumber(q, 'firm');
+        const stages = q.getAll('stage')
+            .flatMap(v => v.split(','))
+            .filter((s): s is StageCode => STAGE_OPTIONS.includes(s as StageCode));
+
+        this.filtersForm.patchValue({
+            stages,
+            dateRange: { start: queryDate(q, 'from'), end: queryDate(q, 'to') },
+            search: queryString(q, 'q') ?? '',
+            level: queryNumber(q, 'level'),
+            overdueOnly: q.get('overdue') === '1',
+        }, { emitEvent: false });
+
+        if (firmId != null) {
+            // Firma dəyişəndə asılı siyahılar yüklənir və asılı filtrlər sıfırlanır: dəyərlər ondan sonra qoyulur
+            c.firmId.setValue(firmId);
+            this.filtersForm.patchValue({
+                regionId: queryNumber(q, 'region'),
+                locationCode: queryNumber(q, 'location'),
+                inspectorId: queryNumber(q, 'inspector'),
+                approverUserCode: queryNumber(q, 'approver'),
+                sectionId: queryNumber(q, 'section'),
+            }, { emitEvent: false });
+            const categoryId = queryNumber(q, 'category');
+            if (categoryId != null) {
+                c.categoryId.setValue(categoryId);
+                c.reasonId.setValue(queryNumber(q, 'reason'), { emitEvent: false });
+            }
+        }
+
+        this.showAdvanced = this.advancedCount > 0;
+        this.activeKpi = this.resolveKpi();
+        return firmId != null;
+    }
+
+    private writeFilters(): void {
+        const v = this.filtersForm.getRawValue();
+        const values: Record<string, QueryValue> = {
+            firm: v.firmId,
+            region: v.regionId,
+            location: v.locationCode,
+            stage: v.stages,
+            from: v.dateRange.start,
+            to: v.dateRange.end,
+            q: v.search.trim(),
+            inspector: v.inspectorId,
+            approver: v.approverUserCode,
+            level: v.level,
+            category: v.categoryId,
+            reason: v.reasonId,
+            section: v.sectionId,
+            overdue: v.overdueOnly ? 1 : null,
+            page: null,
+        };
+        void writeQueryState(this.router, values);
     }
 
     // ── Kaskad filtrlər ──────────────────────────────────────────────────────
@@ -331,20 +417,35 @@ export class DisruptionTrackingComponent implements OnInit {
 
     search(): void {
         this.tableState.paginator.page = 0;
-        this.paginator?.firstPage();
+        this.writeFilters();
         this.fetch();
     }
 
     onPage(e: PageEvent): void {
         this.tableState.paginator.page = e.pageIndex;
         this.tableState.paginator.size = e.pageSize;
+        void writeQueryState(this.router, {
+            page: e.pageIndex || null,
+            size: e.pageSize === DEFAULT_PAGE_SIZE ? null : e.pageSize,
+        });
         this.fetch();
     }
 
     onSort(sort: Sort): void {
-        this.tableState.sorting.column = sort.direction ? sort.active : 'createdDate';
-        this.tableState.sorting.direction = sort.direction || 'desc';
-        this.search();
+        this.tableState.sorting.column = sort.direction ? sort.active : DEFAULT_SORT;
+        this.tableState.sorting.direction = sort.direction || DEFAULT_DIRECTION;
+        const isDefault = this.tableState.sorting.column === DEFAULT_SORT && this.tableState.sorting.direction === DEFAULT_DIRECTION;
+        this.tableState.paginator.page = 0;
+        void writeQueryState(this.router, {
+            sort: isDefault ? null : this.tableState.sorting.column,
+            dir: isDefault ? null : this.tableState.sorting.direction,
+            page: null,
+        });
+        this.fetch();
+    }
+
+    get sortDirection(): SortDirection {
+        return this.tableState.sorting.direction;
     }
 
     private buildFilter(): Record<string, string> {
@@ -364,41 +465,43 @@ export class DisruptionTrackingComponent implements OnInit {
         if (v.stages.length) { f['stages'] = v.stages.join(','); }
         if (v.overdueOnly) { f['overdueOnly'] = 'true'; }
         if (v.search.trim()) { f['search'] = v.search.trim(); }
-        const start = this.datePipe.transform(v.dateRange.start, 'yyyy-MM-dd');
-        const end = this.datePipe.transform(v.dateRange.end, 'yyyy-MM-dd');
-        if (start) { f['startDate'] = start; }
-        if (end) { f['endDate'] = end; }
+        if (v.dateRange.start) { f['startDate'] = toQueryDate(v.dateRange.start); }
+        if (v.dateRange.end) { f['endDate'] = toQueryDate(v.dateRange.end); }
         return f;
     }
 
-    private fetch(): void {
+    fetch(): void {
         this.tableState.filter = this.buildFilter();
         this.isLoading = true;
+        this.loadError = null;
         this.trackingService.list(this.tableState)
             .pipe(finalize(() => { this.isLoading = false; }), takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: res => {
+                    this.hasLoaded = true;
                     this.rows = res.data?.items ?? [];
                     this.total = res.data?.total ?? 0;
                     this.stageCounts = res.data?.stages ?? [];
                 },
-                error: () => {
-                    this.rows = [];
-                    this.total = 0;
-                    this.stageCounts = [];
-                    this.notify.error('Uyğunsuzluqlar yüklənmədi', { message: 'İnternet bağlantısını və ya icazəni yoxlayın.' });
+                error: error => {
+                    this.hasLoaded = true;
+                    this.loadError = apiErrorMessage(error, 'Uyğunsuzluqlar yüklənmədi. İnternet bağlantısını və ya icazəni yoxlayın.');
                 },
             });
     }
 
     // ── Cədvəl köməkçiləri ──────────────────────────────────────────────────
 
-    date(value: string | null | undefined): string | null {
-        return parseApiUtcDate(value);
+    holder(row: DisruptionTrackingItem): Holder | null {
+        return currentHolder(row);
     }
 
-    holder(row: DisruptionTrackingItem) {
-        return currentHolder(row);
+    stageAge(row: DisruptionTrackingItem): string | null {
+        return stageAgeLabel(row);
+    }
+
+    overdue(row: DisruptionTrackingItem): string | null {
+        return overdueLabel(row);
     }
 
     track(row: DisruptionTrackingItem): TrackState[] {
@@ -411,8 +514,17 @@ export class DisruptionTrackingComponent implements OnInit {
         return steps[0] === 'void' ? '—' : `${done}/${steps.length}`;
     }
 
+    // ── Detal paneli ────────────────────────────────────────────────────────
+    // Fokus paneldə tələyə düşür (cdkTrapFocus); bağlananda CDK fokusu klik edilən sətrə qaytarır.
+
     open(row: DisruptionTrackingItem): void {
         this.selectedId = row.disruptionId;
+        void writeQueryState(this.router, { open: row.disruptionId });
+    }
+
+    closePanel(): void {
+        this.selectedId = null;
+        void writeQueryState(this.router, { open: null });
     }
 
     // ── Excel ───────────────────────────────────────────────────────────────
@@ -433,12 +545,13 @@ export class DisruptionTrackingComponent implements OnInit {
             .pipe(finalize(() => { this.isExporting = false; }), takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: res => this.writeExcel(res.data?.items ?? []),
-                error: () => this.notify.error('İxrac üçün məlumat yüklənmədi'),
+                error: error => this.notify.error(apiErrorMessage(error, 'İxrac üçün məlumat yüklənmədi')),
             });
     }
 
     private writeExcel(items: DisruptionTrackingItem[]): void {
-        const fmt = (v: string | null, pattern: string) => v ? this.datePipe.transform(this.date(v), pattern, this.tz) ?? '' : '';
+        const fmt = (v: string | null, pattern: string) =>
+            v ? this.datePipe.transform(parseApiUtcDate(v), pattern, BAKU_TZ) ?? '' : '';
         const data = items.map(r => {
             const h = currentHolder(r);
             return {

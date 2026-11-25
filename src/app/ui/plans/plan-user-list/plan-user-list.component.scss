@@ -1,188 +1,33 @@
-::ng-deep {
-    .dt-recent-leads-card {
-        .mat-mdc-card-content {
-            .mat-mdc-table {
-                &.mdc-data-table__table {
-                    .mat-mdc-header-row {
-                        .mat-mdc-header-cell {
-                            &:first-child {
-                                padding-right: 0;
-                            }
+// Cədvəl görünüşü qlobal `.table-card` / `.table-sticky` / `.modern-table`-dən gəlir.
 
-                            &:nth-child(2) {
-                                padding-left: 15px;
-                            }
-                        }
-                    }
-
-                    .mdc-data-table__content {
-                        .mat-mdc-row {
-                            .mat-mdc-cell {
-                                &:first-child {
-                                    padding-right: 0;
-                                }
-
-                                &:nth-child(2) {
-                                    padding-left: 15px;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
+.table-progress {
+    height: 4px;
 }
 
-.plan-user-empty {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 8px;
-    padding: 48px 24px;
-    text-align: center;
+.col-select {
+    width: 48px;
+}
+
+.col-name {
+    font-weight: 500;
+    color: var(--text-strong);
+}
+
+.col-email {
     color: var(--text-muted);
-    font-size: var(--fs-14);
-
-    &__icon {
-        font-size: 36px;
-        color: var(--text-faint);
-    }
 }
 
-.plan-inspector-card {
-    &__header {
-        padding: 20px 25px 0;
-        display: flex;
-        align-items: baseline;
-        justify-content: space-between;
-
-        h5 {
-            font-size: 16px;
-            font-weight: 600;
-        }
-
-        .mat-mdc-card-subtitle {
-            margin: 0;
-            font-size: var(--fs-13);
-            color: var(--text-muted);
-        }
-    }
+.col-stat {
+    width: 110px;
+    text-align: center;
 }
 
-.inspector-cell {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    min-width: 0;
-
-    &__name {
-        display: block;
-        font-weight: 500;
-        color: var(--text-strong);
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-}
-
-.sicil-badge {
-    display: inline-block;
-    font-size: 12px;
-    font-weight: 600;
-    font-variant-numeric: tabular-nums;
-    font-family: var(--font-mono);
-    color: var(--text);
-    background: var(--surface-subtle);
-    padding: 2px var(--space-2);
-    border-radius: var(--radius-sm);
-    white-space: nowrap;
-}
-
-.stat-badge {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 28px;
-    height: 28px;
-    padding: 0 8px;
-    border-radius: var(--radius-sm);
-    font-size: var(--fs-13);
-    font-weight: 600;
-    font-variant-numeric: tabular-nums;
-
-    // Plan statusu ilə eyni məna (təqvimlə uyğun): gözləyir → warning,
-    // təsdiqlənib → info, yekunlaşıb → success, vaxtı bitib → neytral
-    &--planned {
-        color: var(--warning-text);
-        background: var(--warning-soft);
-    }
-
-    &--confirmed {
-        color: var(--info-text);
-        background: var(--info-soft);
-    }
-
-    &--expired {
-        color: var(--text-muted);
-        background: var(--surface-subtle);
-    }
-
-    &--finished {
-        color: var(--success-text);
-        background: var(--success-soft);
-    }
-}
-
-:host ::ng-deep .plan-inspector-table {
-    .col-select {
-        width: 48px;
-        padding-right: 0 !important;
-    }
-
-    .col-sicil {
-        width: 110px;
-        white-space: nowrap;
-    }
-
-    .col-inspector {
-        min-width: 200px;
-    }
-
-    .col-email {
-        min-width: 180px;
-        font-size: var(--fs-13);
-        color: var(--text-muted);
-    }
-
-    .col-stat {
-        text-align: center;
-        width: 100px;
-        white-space: nowrap;
-
-        &.mat-mdc-header-cell {
-            text-align: center;
-            font-size: 12px;
-        }
-    }
-
-    .plan-inspector-row {
-        transition: background-color 0.15s ease;
-
-        &:hover {
-            background-color: var(--surface-muted);
-        }
-
-        &--selected {
-            background-color: var(--accent-soft);
-        }
-    }
+tr.is-selected td {
+    background: var(--accent-soft);
 }
 
 @media only screen and (max-width: 991px) {
-    :host ::ng-deep .plan-inspector-table {
-        .col-email {
-            display: none;
-        }
+    .col-email {
+        display: none;
     }
 }

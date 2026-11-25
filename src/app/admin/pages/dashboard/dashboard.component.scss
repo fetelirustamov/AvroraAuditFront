@@ -13,47 +13,22 @@
   gap: var(--space-6);
 }
 
-// ─── Başlıq: sadə, rəngsiz (.report-page-header ilə eyni dil) ───────────────
-.hero-banner {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: var(--space-5);
-  padding: 0 0 var(--space-4);
-  border-bottom: 1px solid var(--border);
+// Başlıqdakı sakit məlumat (aktiv istifadəçi sayı)
+.header-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--fs-13);
+  color: var(--text-muted);
 
-  .hero-left {
-    h1 {
-      margin: 0 0 var(--space-1);
-      font-size: var(--fs-20);
-      font-weight: 600;
-      line-height: 1.3;
-      color: var(--text-strong);
-    }
-    .subtitle {
-      margin: 0;
-      font-size: var(--fs-13);
-      color: var(--text-muted);
-    }
+  .material-symbols-outlined {
+    font-size: 16px;
   }
+}
 
-  .hero-right {
-    display: flex;
-    align-items: center;
-    gap: var(--space-4);
-
-    .hero-meta {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: var(--fs-13);
-      color: var(--text-muted);
-
-      .material-symbols-outlined {
-        font-size: 16px;
-      }
-    }
-  }
+// <app-page-header> öz alt boşluğunu verir, konteynerin gap-i onu ikiqat etməsin
+app-page-header {
+  margin-bottom: calc(-1 * var(--space-5));
 }
 
 // ─── KPI Row ──────────────────────────────────────────────────────────────────
@@ -339,19 +314,6 @@
   .adm-dash {
     padding: var(--space-4);
     gap: var(--space-4);
-  }
-
-  .hero-banner {
-    flex-direction: column;
-    align-items: flex-start;
-
-    .hero-right {
-      flex-wrap: wrap;
-    }
-  }
-
-  .bottom-row {
-    grid-template-columns: minmax(0, 1fr);
   }
 }
 

@@ -1,68 +1,76 @@
-.row-margin {
-    margin-bottom: 30px !important;
-}
-
-.text-soft-danger {
-    background-color: var(--surface) !important;
-    border: 1px solid red !important;
-    height: 36px !important;
-    min-height: 36px !important;
-    line-height: 36px !important;
-    padding: 0 10px !important;
-}
-
-.text-soft-danger:hover {
-    background-color: var(--danger-soft) !important;
-}
-
-.horizontalSpace {
-    margin-top: 30px !important;
-}
-
-::ng-deep .horizontalSpace {
+// Hər plan sadə sətirdir: nömrə · mağaza · tarix · iki vaxt · sil.
+.plan-rows {
     display: flex;
-    gap: 12px;
+    flex-direction: column;
+}
+
+.plan-row {
+    display: grid;
+    grid-template-columns: 28px minmax(220px, 2fr) minmax(150px, 1fr) minmax(130px, 1fr) minmax(130px, 1fr) 36px;
     align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-5) 0;
+    border-bottom: 1px solid var(--border);
 }
 
-::ng-deep .mat-form-field {
-    flex: 1;
+.plan-row-no {
+    align-self: center;
+    margin-bottom: var(--space-4);
+    font-family: var(--font-mono);
+    font-size: var(--fs-12);
+    color: var(--text-muted);
+    text-align: center;
 }
 
-::ng-deep .col-md-1 {
-    flex: 0 0 auto;
+.plan-row .action-btn {
+    margin-bottom: var(--space-4);
 }
 
 .time-input {
     font-variant-numeric: tabular-nums;
-    letter-spacing: 0.02em;
     cursor: pointer;
 }
 
-.time-input__icon {
-    font-size: 20px;
-    opacity: 0.55;
-    user-select: none;
-    cursor: pointer;
+.plan-actions {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-3);
+    padding: var(--space-4) var(--space-5);
 }
 
+// mat-select içindəki axtarış sahəsi: siyahı sürüşəndə yuxarıda qalır
 .select-search-box {
-    padding: 6px 12px;
     position: sticky;
     top: 0;
-    background: var(--surface);
     z-index: 1;
+    padding: var(--space-2) var(--space-3);
+    background: var(--surface);
 
     input {
         width: 100%;
-        padding: 6px 8px;
+        padding: 6px var(--space-2);
         border: 1px solid var(--border);
-        border-radius: 4px;
-        font-size: 13px;
+        border-radius: var(--radius-sm);
+        font-size: var(--fs-13);
         outline: none;
 
         &:focus {
             border-color: var(--accent);
         }
+    }
+}
+
+@media only screen and (max-width: 991px) {
+    .plan-row {
+        grid-template-columns: 1fr 1fr;
+        padding-bottom: var(--space-2);
+    }
+
+    .plan-row-no {
+        display: none;
+    }
+
+    .plan-row-store {
+        grid-column: 1 / -1;
     }
 }

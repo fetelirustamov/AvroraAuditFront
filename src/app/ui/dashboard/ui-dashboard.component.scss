@@ -1,17 +1,9 @@
 // Dashboard — login-dən sonrakı əsas ekran.
 //
-// Səhifə başlığı, cədvəl sarğısı, status nişanı və boş vəziyyət
-// `src/_design-system.scss`-dən, filtr paneli isə ortaq toolbar partial-ından
-// gəlir. Burada yalnız dashboard-a xas olanlar var: bento şəbəkəsi, panel
-// kartı, KPI plitəsi, gauge bloku və reytinq cədvəlindəki bal zolağı.
-
-@import '../reports/report-filter-toolbar';
-
-.report-page-header .header-actions {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
+// Başlıq `<app-page-header>`, filtr kartı və düymələr `styles.scss`-dəki `g-*` sistemi,
+// cədvəl sarğısı və status nişanı `_design-system.scss`-dən, boş/xəta halı `<app-list-state>`-dən
+// gəlir. Burada yalnız dashboard-a xas olanlar var: bento şəbəkəsi, panel kartı, KPI plitəsi,
+// gauge bloku və reytinq cədvəlindəki bal zolağı.
 
 .period-chip {
     display: inline-flex;
@@ -30,41 +22,11 @@
     }
 }
 
-// ── Filtr panelinin «Təmizlə» düyməsi ───────────────────────────────────────
-// Ortaq toolbar-da yalnız `.search-btn` var; sıfırlama dashboard-a xasdır.
-.filter-toolbar-action {
-    gap: 10px;
-}
-
-.reset-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    min-height: 46px;
-    padding: 0 18px;
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    background: var(--surface-muted);
-    color: var(--text-muted);
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
-    white-space: nowrap;
-    transition: background .2s, color .2s, border-color .2s;
-
-    .material-symbols-outlined {
-        font-size: 19px;
-    }
-    &:hover:not(:disabled) {
-        border-color: var(--border-strong);
-        background: var(--surface-subtle);
-        color: var(--text);
-    }
-    &:disabled {
-        opacity: .5;
-        cursor: not-allowed;
-    }
+// Yenidən yükləmə göstəricisi: köhnə göstəricilər yerində qalır
+.list-progress {
+    display: block;
+    height: 3px;
+    margin-bottom: var(--space-3);
 }
 
 // ── Bento şəbəkəsi ──────────────────────────────────────────────────────────
@@ -443,15 +405,6 @@
 @media (max-width: 600px) {
     .kpi-grid {
         grid-template-columns: minmax(0, 1fr);
-    }
-    .filter-toolbar-action {
-        flex-direction: column;
-        align-items: stretch;
-        width: 100%;
-
-        .reset-btn {
-            width: 100%;
-        }
     }
     .panel-body {
         padding: 8px 4px 0;

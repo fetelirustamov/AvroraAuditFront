@@ -1,4 +1,5 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -26,6 +27,8 @@ import { LocationDto } from '../../../models/location.model';
 import { UserDto } from '../../../models/user.model';
 import { StructureChainDto, StructureDto } from '../../../models/structure.model';
 import { levelRoleLabel } from '../../../../shared/utils/approval-level';
+import { queryNumber, queryString, writeQueryState } from '../../../../shared/utils/query-state';
+import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 
 /**
  * Sistem hesablarının e-poçt domeni. Bazada sistem/real hesabı ayırd edən sahə
@@ -116,12 +119,16 @@ interface ImportPlan { chains: StructureChainDto[]; rowOfLocation: Map<number, n
     MatTooltipModule,
     MatProgressBarModule,
     MatMenuModule,
-    AuditLoadingOverlayComponent
+    AuditLoadingOverlayComponent,
+    PageHeaderComponent
   ],
   templateUrl: './location-structure.component.html',
   styleUrl: './location-structure.component.scss'
 })
 export class LocationStructureComponent implements OnInit {
+  private readonly router = inject(Router);
+  /** URL-də saxlanan firma (`firm`) və axtarış (`q`): səhifə yenilənəndə və link paylaşılanda iş itmir. */
+  private readonly query = inject(ActivatedRoute).snapshot.queryParamMap;
 
   // ── Data ──────────────────────────────────────────────────────────────────
   marketNetworks: FirmDto[] = [];
@@ -157,7 +164,7 @@ export class LocationStructureComponent implements OnInit {
   private newStoreOptions: { code: number; name: string; bound: boolean }[] = [];
 
   // ── UI ──────────────────────────────────────────────────────────────────
-  search: string = '';
+  search: string = queryString(this.query, 'q') ?? '';
   showHelp: boolean = false;
   showImport: boolean = false;
 
@@ -197,7 +204,12 @@ export class LocationStructureComponent implements OnInit {
   private loadFirms(): void {
     this.isLoadingFirms = true;
     this.firmService.getAllFirms().subscribe({
-      next: (r: any) => { this.marketNetworks = this.extractArray<FirmDto>(r); this.isLoadingFirms = false; },
+      next: (r: any) => {
+        this.marketNetworks = this.extractArray<FirmDto>(r);
+        this.isLoadingFirms = false;
+        const firm = this.marketNetworks.find(n => n.id === queryNumber(this.query, 'firm'));
+        if (firm) this.onNetworkChange(firm, false);
+      },
       error: (err) => {
         this.marketNetworks = []; this.isLoadingFirms = false;
         this.notify.error(apiErrorMessage(err, 'Firmalar yüklənmədi'));
@@ -205,8 +217,13 @@ export class LocationStructureComponent implements OnInit {
     });
   }
 
-  onNetworkChange(network: FirmDto) {
+  /** `userChange`: firma əl ilə dəyişdi, axtarış sıfırlanır və URL yenilənir (URL-dən bərpada yox). */
+  onNetworkChange(network: FirmDto, userChange = true) {
     this.selectedNetwork = network;
+    if (userChange) {
+      this.search = '';
+      writeQueryState(this.router, { firm: network.id, q: null });
+    }
     this.roots = [];
     this.orphans = [];
     this.expanded.clear();
@@ -520,7 +537,11 @@ export class LocationStructureComponent implements OnInit {
   }
   expandAll() { this.allNodes.forEach(n => { if (this.hasChildrenOrTerritories(n)) this.expanded.add(n.userCode); }); }
   collapseAll() { this.expanded.clear(); }
-  clearSearch() { this.search = ''; }
+  clearSearch() { this.onSearchChange(''); }
+  onSearchChange(value: string) {
+    this.search = value;
+    writeQueryState(this.router, { q: value.trim() });
+  }
 
   trackByNode(_: number, n: PersonNode): number { return n.userCode; }
   trackByStoreRef(_: number, t: StoreRef): number { return t.code; }
@@ -749,9 +770,12 @@ export class LocationStructureComponent implements OnInit {
 
   removeMember(store: StoreEditModel, member: ChainMember) {
     this.confirmDialog.confirm({
-      title: 'İstifadəçi silinsin?',
-      message: `"${member.name}" istifadəçisini "${store.name}" mağazasının təsdiq zəncirindən silmək istədiyinizə əminsiniz?`,
-      confirmText: 'Sil', tone: 'danger'
+      title: 'Şəxs təsdiq zəncirindən silinsin?',
+      message: `Şəxs "${store.name}" mağazasının təsdiq zəncirindən dərhal çıxır, ondan sonrakı pillələrin nömrəsi bir azalır (2-ci pillə 1-ci olur). `
+        + 'Bu mağazanın yeni uyğunsuzluqları onun təsdiqinə getməyəcək. İstifadəçinin özü silinmir; geri qaytarmaq üçün onu zəncirə yenidən əlavə edin.',
+      confirmText: 'Zəncirdən sil',
+      tone: 'danger',
+      items: [`${member.level}. ${member.roleLabel} · ${member.name} (${member.code})`]
     }).subscribe(confirmed => {
       if (!confirmed) return;
 

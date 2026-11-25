@@ -1,102 +1,21 @@
-h6 {
-    margin-bottom: 17px;
+// Cədvəl görünüşü qlobal `.table-card` / `.table-sticky` / `.modern-table`-dən gəlir.
+
+.bulk-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
 }
 
-/* Max width 767px */
-@media only screen and (max-width : 767px) {
-
-    .col-md-4 {
-        &:not(:first-child) {
-            h6 {
-                margin-top: 17px;
-            }
-        }
-    }
-
+// Yenidən yüklənəndə köhnə sətirlər yerində qalır, üstdə nazik xətt görünür.
+// Sabit hündürlük: xətt çıxıb-gedəndə cədvəl tərpənmir.
+.table-progress {
+    height: 4px;
 }
 
-/* Min width 576px to Max width 767px */
-@media only screen and (min-width : 576px) and (max-width : 767px) {
-
-    .col-md-4 {
-        &:not(:first-child) {
-            h6 {
-                margin-top: 20px;
-            }
-        }
-    }
-
+.num {
+    font-variant-numeric: tabular-nums;
 }
 
-::ng-deep {
-    .dt-recent-leads-card {
-        .mat-mdc-card-content {
-            .mat-mdc-table {
-                &.mdc-data-table__table {
-                    .mat-mdc-header-row {
-                        .mat-mdc-header-cell {
-                            &:first-child {
-                                padding-right: 0;
-                            }
-
-                            &:nth-child(2) {
-                                padding-left: 15px;
-                            }
-                        }
-                    }
-
-                    .mdc-data-table__content {
-                        .mat-mdc-row {
-                            .mat-mdc-cell {
-                                &:first-child {
-                                    padding-right: 0;
-                                }
-
-                                &:nth-child(2) {
-                                    padding-left: 15px;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-    }
-}
-
-/* Max width 767px */
-@media only screen and (max-width : 767px) {
-
-    ::ng-deep {
-        .dt-recent-leads-card {
-        }
-    }
-
-}
-
-/* Min width 576px to Max width 767px */
-@media only screen and (min-width : 576px) and (max-width : 767px) {
-
-    ::ng-deep {
-        .dt-recent-leads-card {
-        }
-    }
-
-}
-
-// Action button styles are defined globally in styles.scss
-
-.spaceBetween {
-    margin-right: 10px !important;
-}
-
-.approveSnackbarColor {
-    background-image: none !important;
-    background-color: greenyellow !important;
-    color: black !important;
-}
-
-.topMargin {
-    margin-top: 0;
+tr.is-selected td {
+    background: var(--accent-soft);
 }

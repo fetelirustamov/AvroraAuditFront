@@ -1,42 +1,20 @@
-.topMargin {
-    margin-top: 0;
+// Cədvəl görünüşü qlobal `.table-card` / `.table-sticky` / `.modern-table`-dən gəlir.
+
+.bulk-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
 }
 
-// .text-center {
-//     text-align: center;
-//     margin-bottom: 10px;
-// }
-
-// button .button {
-//     position: absolute;
-// }
-button .material-symbols-outlined {
-    font-size: 20px;
-    line-height: 1;
-    vertical-align: middle;
+// Yenidən yüklənəndə köhnə sətirlər yerində qalır, üstdə nazik xətt görünür.
+.table-progress {
+    height: 4px;
 }
 
-// Action button styles are defined globally in styles.scss
-
-button span.text-center {
-    vertical-align: middle;
+.num {
+    font-variant-numeric: tabular-nums;
 }
 
-.filter-input {
-    // padding: 2px;
-    padding-left: 6px;
-    font-size: 13px;
-    height: 35px;
-    margin-top: 4px;
-
-    background-color: var(--surface);
-}
-
-// .header-title {
-//     text-align: center;
-//     margin-left: 50%;
-// }
-
-.spaceBetween {
-    margin: 10px;
+tr.is-selected td {
+    background: var(--accent-soft);
 }

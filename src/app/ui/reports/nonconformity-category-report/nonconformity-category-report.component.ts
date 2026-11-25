@@ -1,27 +1,32 @@
-import { CommonModule, NgFor, NgIf } from '@angular/common';
-import { Component, OnDestroy, ViewChild } from '@angular/core';
+import { NgFor, NgIf, NgSwitch, NgSwitchCase, NgSwitchDefault } from '@angular/common';
+import { Component, DestroyRef, OnInit, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
-import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatSelectModule } from '@angular/material/select';
-import { MatTableModule, MatTableDataSource } from '@angular/material/table';
-import { MatPaginator, MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatMenuModule } from '@angular/material/menu';
-import { debounceTime, finalize, Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
-import { FileExportService, datedFileName } from '../../../shared/services/file-export.service';
+import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatSelectModule } from '@angular/material/select';
+import { MatTableDataSource, MatTableModule } from '@angular/material/table';
+import { ActivatedRoute, Router } from '@angular/router';
+import { Subject, debounceTime, finalize } from 'rxjs';
 import { TableState } from '../../../models/table-state.model';
-import { InspectionsService } from '../../inspections/inspections.service';
-import { Firm } from '../../inspections/firm.model';
+import { ListStateComponent } from '../../../shared/components/list-state/list-state.component';
+import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
+import { FileExportService, datedFileName } from '../../../shared/services/file-export.service';
 import { NotificationService } from '../../../shared/services/notification.service';
-import { AuditLoadingOverlayComponent } from '../../components/audit-loading-overlay/audit-loading-overlay.component';
+import { apiErrorMessage } from '../../../shared/utils/api-error';
+import { chartColors } from '../../../shared/utils/chart-colors';
+import { queryNumber, writeQueryState } from '../../../shared/utils/query-state';
+import { Firm } from '../../inspections/firm.model';
+import { InspectionsService } from '../../inspections/inspections.service';
+import { MONTH_OPTIONS, PAGE_SIZES, REPORT_YEARS } from '../report-filters';
 import { ReportsService } from '../reports.service';
 import {
     NonconformityCategoryItem,
     NonconformityCategoryReportData,
     NonconformityCategoryRow,
 } from './nonconformity-category-report.model';
-import { chartColors } from '../../../shared/utils/chart-colors';
 
 /** Cədvəl sütunu → API filtr açarı */
 const COLUMN_TO_API_FILTER: Record<string, string> = {
@@ -34,20 +39,26 @@ const COLUMN_TO_API_FILTER: Record<string, string> = {
     say_tasnifat: 'categoryCount',
 };
 
+// Menyuda deyil (qəsdən, bax CLAUDE.md): yalnız URL ilə açılır.
 @Component({
     selector: 'app-uygunsuzluq-tasnifat-hesabati',
     standalone: true,
     imports: [
-        CommonModule, NgIf, NgFor, ReactiveFormsModule,
-        MatButtonModule, MatFormFieldModule, MatSelectModule,
-        MatTableModule, MatPaginatorModule, MatMenuModule,
-        AuditLoadingOverlayComponent,
+        NgIf, NgFor, NgSwitch, NgSwitchCase, NgSwitchDefault, ReactiveFormsModule,
+        MatFormFieldModule, MatSelectModule, MatTableModule, MatPaginatorModule, MatMenuModule, MatProgressBarModule,
+        PageHeaderComponent, ListStateComponent,
     ],
     templateUrl: './nonconformity-category-report.component.html',
     styleUrl: './nonconformity-category-report.component.scss',
 })
-export class UygunsuzluqTasnifatHesabatiComponent implements OnDestroy {
-    @ViewChild(MatPaginator) paginator!: MatPaginator;
+export class UygunsuzluqTasnifatHesabatiComponent implements OnInit {
+    private readonly reportsService = inject(ReportsService);
+    private readonly inspectionsService = inject(InspectionsService);
+    private readonly notify = inject(NotificationService);
+    private readonly fileExport = inject(FileExportService);
+    private readonly router = inject(Router);
+    private readonly route = inject(ActivatedRoute);
+    private readonly destroyRef = inject(DestroyRef);
 
     columns = [
         { key: 'row', label: '№' },
@@ -60,75 +71,58 @@ export class UygunsuzluqTasnifatHesabatiComponent implements OnDestroy {
         { key: 'say_tasnifat', label: 'Uyğunsuzluq təsnifatı üzrə uyğunsuzluq sayı' },
     ];
     displayedColumns = this.columns.map(c => c.key);
+    get filterColumns(): string[] { return this.columns.map(c => c.key + '__filter'); }
     dataSource = new MatTableDataSource<NonconformityCategoryRow>([]);
     allCount = 0;
     totalSaySobe = 0;
     totalSayTasnifat = 0;
 
-    filtersForm = new FormGroup({
-        year: new FormControl<number | null>(new Date().getFullYear()),
+    readonly years = REPORT_YEARS;
+    readonly months = MONTH_OPTIONS;
+    readonly pageSizes = PAGE_SIZES;
+    readonly filtersForm = new FormGroup({
+        year: new FormControl<number | null>(REPORT_YEARS[0]),
         month: new FormControl<number | null>(null),
         firmId: new FormControl<number | null>(null),
     });
-
     firms: Firm[] = [];
     readonly filterInputClass = 'uygunsuzluq-tasnifat-filter-input';
 
-    years = Array.from({ length: 6 }, (_, i) => new Date().getFullYear() - i);
-    months = [
-        { value: 1, label: 'Yanvar' }, { value: 2, label: 'Fevral' },
-        { value: 3, label: 'Mart' }, { value: 4, label: 'Aprel' },
-        { value: 5, label: 'May' }, { value: 6, label: 'İyun' },
-        { value: 7, label: 'İyul' }, { value: 8, label: 'Avqust' },
-        { value: 9, label: 'Sentyabr' }, { value: 10, label: 'Oktyabr' },
-        { value: 11, label: 'Noyabr' }, { value: 12, label: 'Dekabr' },
-    ];
-
-    hasSubmittedSearch = false;
+    searched = false;
     isLoading = false;
     isExporting = false;
+    loadError: string | null = null;
     pageIndex = 0;
-    pageSize = 10;
+    pageSize = PAGE_SIZES[0];
 
-    readonly tableState = new TableState();
+    private readonly tableState = new TableState();
     private columnApiFilters: Record<string, string> = {};
-
-    private readonly destroy$ = new Subject<void>();
     private readonly columnFilterSubject = new Subject<{ key: string; value: string }>();
-
-    get filterColumns(): string[] {
-        return this.columns.map(c => c.key + '__filter');
-    }
 
     get hasActiveColumnFilters(): boolean {
         return Object.keys(this.columnApiFilters).length > 0;
     }
 
-    constructor(
-        private reportsService: ReportsService,
-        private inspectionsService: InspectionsService,
-        private notify: NotificationService,
-        private fileExport: FileExportService,
-    ) {
-        this.tableState.paginator.page = 0;
-        this.tableState.paginator.size = this.pageSize;
-
-        this.inspectionsService.getFirms().pipe(takeUntil(this.destroy$)).subscribe({
-            next: res => { this.firms = res.data ?? []; },
-            error: () => { this.notify.error('Firmalar yüklənmədi'); },
-        });
-
-        this.columnFilterSubject.pipe(
-            debounceTime(400),
-            takeUntil(this.destroy$),
-        ).subscribe(({ key, value }) => {
+    constructor() {
+        this.columnFilterSubject.pipe(debounceTime(400), takeUntilDestroyed()).subscribe(({ key, value }) => {
             this.applyColumnFilterDebounced(key, value);
         });
     }
 
-    ngOnDestroy(): void {
-        this.destroy$.next();
-        this.destroy$.complete();
+    ngOnInit(): void {
+        this.inspectionsService.getFirms().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+            next: res => { this.firms = res.data ?? []; },
+            error: error => { this.notify.error(apiErrorMessage(error, 'Firmalar yüklənmədi')); },
+        });
+
+        // URL-də il varsa əvvəlki axtarış bərpa olunur
+        const q = this.route.snapshot.queryParamMap;
+        const year = queryNumber(q, 'year');
+        if (year == null) return;
+        this.filtersForm.patchValue({ year, month: queryNumber(q, 'month'), firmId: queryNumber(q, 'firm') });
+        this.pageIndex = queryNumber(q, 'page') ?? 0;
+        this.pageSize = queryNumber(q, 'size') ?? PAGE_SIZES[0];
+        this.fetch();
     }
 
     applyColumnFilter(event: Event, key: string): void {
@@ -144,35 +138,42 @@ export class UygunsuzluqTasnifatHesabatiComponent implements OnDestroy {
         } else {
             delete this.columnApiFilters[apiKey];
         }
-        if (!this.hasSubmittedSearch) { return; }
-        this.resetToFirstPage();
+        if (!this.searched) { return; }
+        this.pageIndex = 0;
         this.fetch();
     }
 
-    clearFilters(): void {
+    clearColumnFilters(): void {
         this.columnApiFilters = {};
         document.querySelectorAll<HTMLInputElement>(`.${this.filterInputClass}`).forEach(i => { i.value = ''; });
-        if (!this.hasSubmittedSearch) { return; }
-        this.resetToFirstPage();
+        if (!this.searched) { return; }
+        this.pageIndex = 0;
         this.fetch();
     }
 
     onSearch(): void {
-        this.hasSubmittedSearch = true;
-        this.resetToFirstPage();
+        this.pageIndex = 0;
+        const { year, month, firmId } = this.filtersForm.getRawValue();
+        void writeQueryState(this.router, { year, month, firm: firmId, page: null });
         this.fetch();
+    }
+
+    /** "Təmizlə": filtrlər standart dəyərə qayıdır, nəticə və URL təmizlənir */
+    clearAll(): void {
+        this.filtersForm.reset({ year: REPORT_YEARS[0], month: null, firmId: null });
+        this.columnApiFilters = {};
+        document.querySelectorAll<HTMLInputElement>(`.${this.filterInputClass}`).forEach(i => { i.value = ''; });
+        this.searched = false;
+        this.loadError = null;
+        this.resetSummary();
+        void writeQueryState(this.router, { year: null, month: null, firm: null, page: null, size: null });
     }
 
     onPage(e: PageEvent): void {
-        if (!this.hasSubmittedSearch) { return; }
         this.pageIndex = e.pageIndex;
         this.pageSize = e.pageSize;
+        void writeQueryState(this.router, { page: e.pageIndex || null, size: e.pageSize === PAGE_SIZES[0] ? null : e.pageSize });
         this.fetch();
-    }
-
-    private resetToFirstPage(): void {
-        this.pageIndex = 0;
-        this.paginator?.firstPage();
     }
 
     private syncFilterPayload(): void {
@@ -189,11 +190,13 @@ export class UygunsuzluqTasnifatHesabatiComponent implements OnDestroy {
         this.tableState.paginator.size = this.pageSize;
     }
 
-    private fetch(): void {
+    fetch(): void {
+        this.searched = true;
         this.isLoading = true;
+        this.loadError = null;
         this.syncFilterPayload();
         this.reportsService.getNonconformityCategoryDetails(this.tableState)
-            .pipe(finalize(() => { this.isLoading = false; }))
+            .pipe(finalize(() => { this.isLoading = false; }), takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: res => {
                     const data = this.normalizeData(res?.data);
@@ -203,9 +206,8 @@ export class UygunsuzluqTasnifatHesabatiComponent implements OnDestroy {
                     const start = this.pageIndex * this.pageSize;
                     this.dataSource.data = data.items.map((item, idx) => this.mapRow(item, start + idx + 1));
                 },
-                error: () => {
-                    this.notify.error('Hesabat yüklənmədi', { message: 'İnternet bağlantısını və ya icazəni yoxlayın.' });
-                    this.resetSummary();
+                error: error => {
+                    this.loadError = apiErrorMessage(error, 'Hesabat yüklənmədi. İnternet bağlantısını və ya icazəni yoxlayın.');
                 },
             });
     }
@@ -283,10 +285,10 @@ export class UygunsuzluqTasnifatHesabatiComponent implements OnDestroy {
         });
     }
 
-    /** Export cari səhifəni deyil, filtrə uyğun bütün sətirləri götürür. */
+    /** İxrac cari səhifəni deyil, filtrə uyğun bütün sətirləri götürür. */
     private exportWithAllRows(onReady: (rows: NonconformityCategoryRow[]) => void): void {
-        if (!this.hasSubmittedSearch || this.allCount === 0) {
-            this.notify.error('İxrac üçün məlumat yoxdur', { message: 'Əvvəlcə "Axtar" düyməsini basın.' });
+        if (!this.searched || this.allCount === 0) {
+            this.notify.error('İxrac üçün məlumat yoxdur', { message: 'Əvvəlcə «Axtar» düyməsini basın.' });
             return;
         }
 
@@ -309,8 +311,8 @@ export class UygunsuzluqTasnifatHesabatiComponent implements OnDestroy {
                     }
                     onReady(rows);
                 },
-                error: () => {
-                    this.notify.error('İxrac üçün məlumat yüklənmədi', { message: 'İnternet bağlantısını və ya icazəni yoxlayın.' });
+                error: error => {
+                    this.notify.error(apiErrorMessage(error, 'İxrac üçün məlumat yüklənmədi'));
                 },
             });
     }

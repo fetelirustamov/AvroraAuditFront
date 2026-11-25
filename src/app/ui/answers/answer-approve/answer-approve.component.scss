@@ -1,37 +1,10 @@
-.cancel {
-    color: var(--danger-text) !important;
+// Cədvəl görünüşü qlobal `.table-card` / `.table-sticky` / `.modern-table`-dən gəlir.
+
+// Yenidən yüklənəndə köhnə sətirlər yerində qalır, üstdə nazik xətt görünür.
+.table-progress {
+    height: 4px;
 }
 
-.primary {
-    color: var(--accent) !important;
-}
-
-button .material-symbols-outlined {
-    font-size: 20px;
-    /* istəyə uyğun dəyiş */
-    line-height: 1;
-    vertical-align: middle;
-}
-
-button span.text-center {
-    vertical-align: middle;
-}
-
-.cancel {
-    color: var(--danger-text) !important;
-}
-
-.spaceBetween {
-    margin-right: 10px !important;
-}
-
-
-.approveSnackbarColor {
-    background-image: none !important;
-    background-color: greenyellow !important;
-    color: black !important;
-}
-
-.topMargin {
-    margin-top: 0;
+.num {
+    font-variant-numeric: tabular-nums;
 }

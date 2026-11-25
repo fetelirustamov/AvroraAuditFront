@@ -1,0 +1,86 @@
+// Ortaq təsdiq dialoqu ilə eyni ritm: sakit başlıq, neytral "Ləğv et", vurğu rəngində əsas düymə.
+.dialog-title {
+    font-size: var(--fs-16);
+    font-weight: 600;
+    color: var(--text-strong);
+}
+
+.dialog-body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+}
+
+.disruption-summary {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-3) var(--space-4);
+    margin: 0 0 var(--space-1);
+    padding: var(--space-3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--surface-muted);
+
+    .is-wide {
+        grid-column: 1 / -1;
+    }
+
+    dt {
+        font-size: var(--fs-12);
+        color: var(--text-muted);
+    }
+
+    dd {
+        margin: 2px 0 0;
+        font-size: var(--fs-13);
+        color: var(--text);
+        overflow-wrap: anywhere;
+        white-space: pre-line;
+    }
+}
+
+.returned-note {
+    display: flex;
+    gap: var(--space-2);
+    padding: var(--space-3);
+    border-radius: var(--radius-md);
+    background: var(--warning-soft);
+    color: var(--warning-text);
+    font-size: var(--fs-13);
+
+    .material-symbols-outlined {
+        font-size: 20px;
+    }
+
+    p {
+        margin: var(--space-1) 0 0;
+    }
+}
+
+.file-field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+}
+
+.file-label {
+    font-size: var(--fs-13);
+    font-weight: 500;
+    color: var(--text-strong);
+}
+
+.file-input {
+    font-size: var(--fs-13);
+    color: var(--text);
+}
+
+.file-error {
+    margin: 0;
+    font-size: var(--fs-12);
+    color: var(--danger-text);
+}
+
+.dialog-actions {
+    justify-content: flex-end;
+    gap: var(--space-3);
+}

@@ -1,43 +1,50 @@
-<div class="details-header mb-10">
-    <div class="decision-bar" *ngIf="canDecide">
-        <span class="decision-text">
-            <span class="material-symbols-outlined">pending_actions</span>
-            Bu yoxlama təsdiq gözləyir
-        </span>
-        <button type="button" class="g-approve-btn" (click)="decide(APPROVED)" [disabled]="isSaving">
-            <span class="material-symbols-outlined">check_circle</span>
-            Təsdiqlə
-        </button>
-        <button type="button" class="g-reject-btn" (click)="decide(RETURNED_TO_MOBILE)" [disabled]="isSaving">
-            <span class="material-symbols-outlined">undo</span>
-            Mobilə qaytar
-        </button>
+<!-- backLink filtrli siyahı URL-idir (UrlTree): page-header-in tipi hələ yalnız string | massivdir -->
+<app-page-header [title]="title" [subtitle]="subtitle" [backLink]="backLink" [backLabel]="backLabel">
+    <div headerActions class="header-actions">
+        @if (planInfo) {
+            <app-status-chip [planStatus]="planInfo.status" />
+        }
+        @if (canDecide) {
+            <button type="button" class="g-approve-btn" (click)="approve()" [disabled]="isSaving">
+                <span class="material-symbols-outlined" aria-hidden="true">{{ approveAction.icon }}</span>
+                {{ approveAction.label }}
+            </button>
+            <button type="button" class="g-secondary-btn" (click)="returnToMobile()" [disabled]="isSaving">
+                <span class="material-symbols-outlined" aria-hidden="true">{{ returnAction.icon }}</span>
+                {{ returnAction.label }}
+            </button>
+        }
     </div>
-    <button mat-stroked-button color="primary" (click)="goBack()" class="back-btn">
-        <span class="material-symbols-outlined mr-5">arrow_back</span>
-        Geri
-    </button>
-</div>
+</app-page-header>
 
-<app-plan-info-section [planId]="planId" (planInfoLoaded)="onPlanInfoLoaded($event)"></app-plan-info-section>
+@if (planId == null) {
+    <section class="table-card">
+        <app-list-state state="empty" message="Yoxlama seçilməyib. Siyahıya qayıdıb yoxlamanı seçin" />
+    </section>
+} @else {
+    <app-plan-info-section [planId]="planId" (planInfoLoaded)="onPlanInfoLoaded($event)" />
 
-<mat-card class=" border-radius d-block bg-white border-0 shadow-none">
-    <!-- <mat-card-header>
-        <mat-card-title>
-            <h5 class="mb-0">
-                Yoxlamalar
-            </h5>
-        </mat-card-title>
-    </mat-card-header> -->
-    <mat-card-content>
-        <mat-tab-group>
-            <mat-tab label="Checklist" (click)="onSection()">
-                <app-inspection-section *ngFor="let section of sections" [plan]="planId"
-                    [section]="section" [result]="sectionResults.get(section.headerId)"></app-inspection-section>
+    <section class="table-card details-tabs">
+        <mat-tab-group mat-stretch-tabs="false" animationDuration="0ms">
+            <mat-tab label="Checklist">
+                <div class="tab-body">
+                    @if (sectionsError) {
+                        <app-list-state state="error" [errorMessage]="sectionsError" (retry)="loadSections()" />
+                    } @else if (!sectionsLoading && !sections.length) {
+                        <app-list-state state="empty" message="Bu yoxlamada şöbə yoxdur" />
+                    } @else {
+                        @for (section of sections; track section.id) {
+                            <app-inspection-section [plan]="planId" [section]="section"
+                                [result]="sectionResults.get(section.headerId)" />
+                        }
+                    }
+                </div>
             </mat-tab>
             <mat-tab label="Uyğunsuzluqlar">
-                <app-diruption-section [data]="stateDate"></app-diruption-section>
+                <div class="tab-body">
+                    <app-diruption-section [data]="disruptionPlan" />
+                </div>
             </mat-tab>
         </mat-tab-group>
-    </mat-card-content>
-</mat-card>
+    </section>
+}

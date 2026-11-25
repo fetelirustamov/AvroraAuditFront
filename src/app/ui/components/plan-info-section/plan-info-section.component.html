@@ -1,142 +1,32 @@
-<div class="col-12 mb-25">
-    <mat-card class=" border-radius d-block bg-white border-0">
-        <div class="card-body row">
-            <div class="col-12">
-                <div class="row mb-25">
-                    <div class="col-3">
-                        <div class="row">
-                            <div class="col-3
-									border-right
-									my-auto
-									icon-color-light
-								"><i class="material-symbols-outlined">vpn_key</i>
-                            </div>
-                            <div class="col-9">
-                                <small>Plan ID</small><br />
-                                <small><strong>{{ planId }}</strong></small>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-3">
-                        <div class="row">
-                            <div class=" col-3
-									border-right
-									my-auto
-									icon-color-light
-								"><i class="material-symbols-outlined">schedule</i>
-                            </div>
-                            <div class="col-9">
-                                <small>Yoxlamaya başladı</small><br />
-                                <small><strong>{{
-                                        planInfo?.workStartDate ? (planInfo?.workStartDate | date:'HH:mm') : '—'
-                                        }}</strong></small>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-3">
-                        <div class="row">
-                            <div class=" col-3
-									border-right
-									my-auto
-									icon-color-light
-								"><i class="material-symbols-outlined">schedule</i>
-                            </div>
-                            <div class="col-9">
-                                <small>Yoxlamanı bitirdi</small><br />
-                                <small><strong>{{
-                                        planInfo?.workEndDate ? (planInfo?.workEndDate | date:'HH:mm') : '—'
-                                        }}</strong></small>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-3">
-                        <div class="row">
-                            <div class="col-3
-									border-right
-									my-auto
-									icon-color-light
-								"><i class="material-symbols-outlined">pie_chart</i>
-                            </div>
-                            <div class="col-9">
-                                <small>Checklist nəticəsi</small><br />
-                                <strong><small>{{ checklistScore }}</small></strong><br />
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="row pt-3">
-                    <div class="col-3">
-                        <div *ngIf="type == 0" class="row">
-                            <div class="col-3
-									border-right
-									my-auto
-									icon-color-light
-								">
-                                <i class="material-symbols-outlined">person</i>
-                            </div>
-                            <div class="col-9">
-                                <small>{{ planInfo?.inspectorCode }}</small><br />
-                                <small><strong>{{ planInfo?.inspectorName }}</strong></small>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-3">
-                        <div class="row">
-                            <div class="col-3
-									border-right
-									my-auto
-									icon-color-light
-								"><i class="material-symbols-outlined">calendar_today</i>
-                            </div>
-                            <div class="col-9">
-                                <small>Plan tarixi</small><br />
-                                <small><strong>{{
-                                        planInfo?.startDate | date:'yyyy-MM-dd'
-                                        }}</strong></small>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-3">
-                        <div class="row">
-                            <div class="col-3
-									border-right
-									my-auto
-									icon-color-light
-								"><i class="material-symbols-outlined">play_arrow</i>
-                            </div>
-                            <div class="col-9">
-                                <small>Status</small><br />
-                                <div class="d-flex align-items-center gap-2">
-                                    <span [ngClass]="{
-                                          'bg-success text-white': planInfo?.status === 4,
-                                          'bg-warning text-dark': planInfo?.status === 1 || planInfo?.status === 2 || planInfo?.status === 3,
-                                          'bg-danger text-white': planInfo?.status === -1 || planInfo?.status === 5
-                                        }" class=" checkButton d-inline-block">
-                                        <small><strong>{{ statusLabel(planInfo?.status) }}</strong></small>
-                                    </span>
-
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-3">
-                        <div class="row">
-                            <div class="col-3
-									border-right
-									my-auto
-									icon-color-light
-								"><i class="material-symbols-outlined">home</i>
-                            </div>
-                            <div class="col-9">
-                                <small>{{ planInfo?.locationCode }}</small><br />
-                                <small><strong>{{
-                                        planInfo?.locationName
-                                        }}</strong></small>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </mat-card>
-</div>
+<dl class="plan-info">
+    <div class="plan-info-item">
+        <dt>Müfəttiş</dt>
+        <dd>
+            {{ planInfo?.inspectorName || '—' }}
+            @if (planInfo?.inspectorCode) {
+                <span class="plan-info-sub mono">{{ planInfo?.inspectorCode }}</span>
+            }
+        </dd>
+    </div>
+    <div class="plan-info-item">
+        <dt>Plan vaxtı</dt>
+        <dd class="num">
+            {{ planInfo?.startDate | appDate:'datetime' }}
+            @if (planInfo?.endDate) {
+                <span class="plan-info-sub">bitmə: {{ planInfo?.endDate | appDate:'datetime' }}</span>
+            }
+        </dd>
+    </div>
+    <div class="plan-info-item">
+        <dt>Yoxlamaya başladı</dt>
+        <dd class="num">{{ planInfo?.workStartDate | appDate:'datetime' }}</dd>
+    </div>
+    <div class="plan-info-item">
+        <dt>Yoxlamanı bitirdi</dt>
+        <dd class="num">{{ planInfo?.workEndDate | appDate:'datetime' }}</dd>
+    </div>
+    <div class="plan-info-item">
+        <dt>Checklist nəticəsi</dt>
+        <dd class="num">{{ checklistScore || '—' }}</dd>
+    </div>
+</dl>

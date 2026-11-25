@@ -1,68 +1,79 @@
-<!-- Breadcrumb -->
-<div class="breadcrumb-card mb-25 d-md-flex align-items-center justify-content-between">
-    <h5 class="mb-0">Mağaza profili</h5>
-    <ol class="breadcrumb list-unstyled mt-0 mb-0 p-0">
-        <li class="breadcrumb-item d-inline-block position-relative">
-            <a routerLink="/dashboard" class="d-inline-block position-relative">
-                <i class="material-symbols-outlined">account_box</i>
-                Hesabat və təhlil
-            </a>
-        </li>
-        <li class="breadcrumb-item d-inline-block position-relative">Mağaza profili</li>
-    </ol>
-</div>
+<app-page-header subtitle="Mağazanın yoxlama nəticələri və uyğunsuzluqları">
+    @if (profileView) {
+        <a headerActions *hasPermission="'disruption-tracking'" class="g-secondary-btn"
+           routerLink="/disruptions/tracking" [queryParams]="trackingParams">
+            <span class="material-symbols-outlined" aria-hidden="true">conversion_path</span>
+            Uyğunsuzluqlara bax
+        </a>
+    }
+</app-page-header>
 
-<!-- Filter Card -->
-<div class="g-filter-card mb-25 audit-table-loading-shell audit-table-loading-shell--compact">
+<div class="g-filter-card">
     <div class="g-filter-header">
-        <span class="material-symbols-outlined">filter_list</span>
+        <span class="material-symbols-outlined" aria-hidden="true">filter_list</span>
         <span>Filtrlər</span>
     </div>
-    <form [formGroup]="searchForm" (ngSubmit)="onSearchForm()">
+    <form [formGroup]="searchForm" (ngSubmit)="onSearch()">
         <div class="g-filter-grid">
-
             <div class="g-filter-field">
-                <label class="g-field-label">
-                    <span class="material-symbols-outlined">business</span>
-                    Firma
+                <label class="g-field-label" id="lp-firm">
+                    <span class="material-symbols-outlined" aria-hidden="true">business</span>
+                    Firma <span class="text-danger" aria-hidden="true">*</span>
                 </label>
                 <mat-form-field appearance="outline" class="g-modern-field">
-                    <mat-select formControlName="firmId" (selectionChange)="onSelectFirm($event.value)">
-                        <mat-option *ngFor="let firm of firms" [value]="firm.id">
-                            {{ firm.name }}
-                        </mat-option>
+                    <mat-select formControlName="firmId" required aria-labelledby="lp-firm" (selectionChange)="onSelectFirm($event.value)">
+                        @for (firm of firms; track firm.id) {
+                            <mat-option [value]="firm.id">{{ firm.name }}</mat-option>
+                        }
                     </mat-select>
                 </mat-form-field>
             </div>
 
-            <div class="g-filter-field">
-                <label class="g-field-label">
-                    <span class="material-symbols-outlined">location_on</span>
-                    Mağaza
+            <div class="g-filter-field-wide">
+                <label class="g-field-label" id="lp-location">
+                    <span class="material-symbols-outlined" aria-hidden="true">location_on</span>
+                    Mağaza <span class="text-danger" aria-hidden="true">*</span>
                 </label>
                 <mat-form-field appearance="outline" class="g-modern-field">
-                    <mat-select formControlName="locationCode">
-                        <mat-option *ngFor="let location of locations" [value]="location.locationCode">
-                            {{ location.locationName }}
-                        </mat-option>
+                    <mat-select formControlName="locationCode" required aria-labelledby="lp-location">
+                        @for (location of locations; track location.locationCode) {
+                            <mat-option [value]="location.locationCode">{{ location.locationCode }} · {{ location.locationName }}</mat-option>
+                        }
                     </mat-select>
                 </mat-form-field>
             </div>
 
             <div class="g-filter-actions">
                 <button type="submit" class="g-search-btn" [disabled]="isLoading">
-                    <span class="material-symbols-outlined">search</span>
+                    <span class="material-symbols-outlined" aria-hidden="true">search</span>
                     Axtar
                 </button>
             </div>
-
         </div>
     </form>
-    <app-audit-loading-overlay *ngIf="isLoading"></app-audit-loading-overlay>
 </div>
 
-<!-- KPI Overview Cards -->
-<app-location-overview [profile]="profileView" />
+@if (isLoading) {
+    <mat-progress-bar mode="indeterminate" class="list-progress" />
+}
 
-<!-- Store Profile + Analytics Chart -->
-<app-middle-section [profile]="profileView" />
+@if (loadError) {
+    <div class="table-card">
+        <app-list-state state="error" [errorMessage]="loadError" (retry)="load()" />
+    </div>
+} @else if (!profileView) {
+    @if (!isLoading) {
+        <div class="table-card">
+            <app-list-state state="idle" message="Firma və mağaza seçib «Axtar» düyməsini basın" />
+        </div>
+    }
+} @else {
+    <app-location-overview [profile]="profileView" />
+    @if (profileView.summaries.length) {
+        <app-middle-section [profile]="profileView" />
+    } @else {
+        <div class="table-card">
+            <app-list-state state="empty" message="Bu mağazada hələ yoxlama aparılmayıb" />
+        </div>
+    }
+}

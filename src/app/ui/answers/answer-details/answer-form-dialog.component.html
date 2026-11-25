@@ -1,0 +1,74 @@
+<h2 mat-dialog-title class="dialog-title">Uyğunsuzluğa cavab ver</h2>
+
+<form [formGroup]="form" (ngSubmit)="save()">
+    <mat-dialog-content class="dialog-body">
+        <dl class="disruption-summary">
+            <div>
+                <dt>Şöbə</dt>
+                <dd>{{ row.sectionName || '—' }}</dd>
+            </div>
+            <div>
+                <dt>Səbəb</dt>
+                <dd>{{ row.reasonName || '—' }}</dd>
+            </div>
+            @if (row.description) {
+                <div class="is-wide">
+                    <dt>Açıqlama</dt>
+                    <dd>{{ row.description }}</dd>
+                </div>
+            }
+        </dl>
+
+        @if (row.isReturned) {
+            <div class="returned-note" role="status">
+                <span class="material-symbols-outlined" aria-hidden="true">info</span>
+                <div>
+                    <strong>Cavab rədd edilib, yenidən cavab gözlənilir</strong>
+                    @if (row.returnReason && row.returnReason.trim()) {
+                        <p>Rədd səbəbi: {{ row.returnReason }}</p>
+                    }
+                </div>
+            </div>
+        }
+
+        <mat-form-field appearance="outline" class="g-modern-field">
+            <mat-label>Status</mat-label>
+            <mat-select formControlName="answerStatus" required>
+                @for (status of answerStatuses; track status.value) {
+                    <mat-option [value]="status.value">{{ status.label }}</mat-option>
+                }
+            </mat-select>
+            @if (form.controls.answerStatus.hasError('required')) {
+                <mat-error>Statusu seçin</mat-error>
+            }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="g-modern-field">
+            <mat-label>Açıqlama</mat-label>
+            <textarea matInput formControlName="note" rows="4" required></textarea>
+            <mat-hint align="end">{{ noteLength }} / 10</mat-hint>
+            @if (form.controls.note.hasError('required')) {
+                <mat-error>Açıqlamanı yazın</mat-error>
+            } @else if (form.controls.note.hasError('minlength')) {
+                <mat-error>Ən azı 10 simvol yazın</mat-error>
+            }
+        </mat-form-field>
+
+        <div class="file-field">
+            <label class="file-label" for="answer-image-input">Şəkil <span class="text-danger">*</span></label>
+            <input id="answer-image-input" type="file" class="file-input" [accept]="acceptedImageTypes"
+                [attr.aria-invalid]="form.controls.files.invalid && form.controls.files.touched"
+                aria-describedby="answer-image-error" (change)="onFileChange($event)">
+            @if (form.controls.files.invalid && form.controls.files.touched) {
+                <p id="answer-image-error" class="file-error" role="alert">Şəkil seçin</p>
+            }
+        </div>
+    </mat-dialog-content>
+
+    <mat-dialog-actions class="dialog-actions">
+        <button type="button" class="g-secondary-btn" (click)="cancel()">Ləğv et</button>
+        <button type="submit" class="g-search-btn" [disabled]="isSaving">
+            {{ isSaving ? 'Göndərilir…' : 'Cavabı göndər' }}
+        </button>
+    </mat-dialog-actions>
+</form>

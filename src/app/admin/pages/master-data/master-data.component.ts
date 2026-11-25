@@ -1,35 +1,32 @@
-import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { Component, OnInit, inject } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
-import { MatCardModule } from '@angular/material/card';
-import { AdminBreadcrumbComponent } from '../../shared/breadcrumb/admin-breadcrumb.component';
+import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
+import { ListStateComponent } from '../../../shared/components/list-state/list-state.component';
+import { apiErrorMessage } from '../../../shared/utils/api-error';
+import { queryNumber, writeQueryState } from '../../../shared/utils/query-state';
 import { SectionsComponent } from '../sections/sections.component';
 import { CategoriesComponent } from '../categories/categories.component';
 import { LocationsComponent } from '../locations/locations.component';
+import { MASTER_DATA_TAB_RESET } from './master-data-query';
 import { FirmService } from '../../services/firm.service';
 import { FirmDto } from '../../models/firm.model';
-import { NotificationService } from '../../../shared/services/notification.service';
 
 /**
- * "Audit Strukturu" - Firma / Mağaza / Şöbə / Kateqoriya konsolidasiya səhifəsi.
- * Əvvəllər ayrı-ayrı naviqasiya elementləri olan Şöbələr, Kateqoriyalar və Mağazalar
- * indi burada bir Firma konteksti altında birləşdirilib. Suallar (kateqoriyaya bağlı,
- * öz cavab variantları olan daha geniş bir iş axını olduğu üçün) ayrıca səhifə olaraq qalır.
+ * "Audit strukturu": bir firmanın şöbələri, kateqoriyaları və mağazaları tablarda.
+ * Seçilmiş firma (`firm`) və tab (`tab`) URL-dədir; hər tabın filtri öz açarı ilə (master-data-query.ts).
  */
 @Component({
   selector: 'app-master-data',
   standalone: true,
   imports: [
-    CommonModule,
-    FormsModule,
     MatTabsModule,
     MatFormFieldModule,
     MatSelectModule,
-    MatCardModule,
-    AdminBreadcrumbComponent,
+    PageHeaderComponent,
+    ListStateComponent,
     SectionsComponent,
     CategoriesComponent,
     LocationsComponent
@@ -38,38 +35,47 @@ import { NotificationService } from '../../../shared/services/notification.servi
   styleUrl: './master-data.component.scss'
 })
 export class MasterDataComponent implements OnInit {
-  firms: FirmDto[] = [];
-  selectedFirmId: number | null = null;
-  isLoadingFirms = false;
+  private readonly firmService = inject(FirmService);
+  private readonly router = inject(Router);
+  private readonly query = inject(ActivatedRoute).snapshot.queryParamMap;
 
-  constructor(
-    private firmService: FirmService,
-    private notify: NotificationService
-  ) {}
+  firms: FirmDto[] = [];
+  selectedFirmId: number | null = queryNumber(this.query, 'firm');
+  tabIndex = queryNumber(this.query, 'tab') ?? 0;
+  isLoadingFirms = false;
+  firmsError: string | null = null;
 
   ngOnInit(): void {
     this.loadFirms();
   }
 
-  private loadFirms(): void {
+  loadFirms(): void {
     this.isLoadingFirms = true;
+    this.firmsError = null;
     this.firmService.getAllFirms().subscribe({
-      next: (response) => {
+      next: response => {
         this.firms = Array.isArray(response?.data) ? response.data : [];
-        if (this.firms.length > 0 && this.selectedFirmId == null) {
-          this.selectedFirmId = this.firms[0].id;
+        this.isLoadingFirms = false;
+        // URL-dəki firma yoxdursa (silinib, səhv link) birinci firma seçilir
+        if (!this.firms.some(f => f.id === this.selectedFirmId)) {
+          this.selectedFirmId = this.firms[0]?.id ?? null;
+          writeQueryState(this.router, { firm: this.selectedFirmId });
         }
-        this.isLoadingFirms = false;
       },
-      error: () => {
-        this.firms = [];
+      error: err => {
         this.isLoadingFirms = false;
-        this.notify.error('Firmalar yüklənmədi', { message: 'Serverlə əlaqədə xəta baş verdi. Zəhmət olmasa yenidən cəhd edin.' });
+        this.firmsError = apiErrorMessage(err, 'Firmalar yüklənmədi');
       }
     });
   }
 
-  onFirmChange(): void {
-    // @Input firmId dəyişikliyi ngOnChanges vasitəsilə alt komponentlərə ötürülür.
+  onFirmChange(firmId: number): void {
+    this.selectedFirmId = firmId;
+    writeQueryState(this.router, { firm: firmId, ...MASTER_DATA_TAB_RESET });
+  }
+
+  onTabChange(index: number): void {
+    this.tabIndex = index;
+    writeQueryState(this.router, { tab: index || null });
   }
 }

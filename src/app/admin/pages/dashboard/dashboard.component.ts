@@ -2,6 +2,7 @@ import { Component, OnDestroy, OnInit, AfterViewInit, Inject, PLATFORM_ID } from
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
+import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { DashboardChartsService } from './dashboard-charts.service';
@@ -38,13 +39,6 @@ interface SystemElement {
   icon: string;
 }
 
-// Chrome-un ICU məlumatında Azərbaycan ay adları yoxdur (DatePipe 'az' locale-i ilə
-// ingiliscə ay adı verir), ona görə tarix bu cədvəldən formatlanır.
-const AZ_MONTHS = [
-  'Yanvar', 'Fevral', 'Mart', 'Aprel', 'May', 'İyun',
-  'İyul', 'Avqust', 'Sentyabr', 'Oktyabr', 'Noyabr', 'Dekabr',
-];
-
 /** API cavabları müxtəlif formada gələ bilir ({data:[...]}, {data:{items:[...]}}, birbaşa array) - hamısını unifikasiya edir */
 function extractArray<T>(response: any): T[] {
   if (Array.isArray(response?.data)) return response.data as T[];
@@ -56,7 +50,7 @@ function extractArray<T>(response: any): T[] {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterLink, MatCardModule],
+  imports: [CommonModule, RouterLink, MatCardModule, PageHeaderComponent],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss'
 })
@@ -64,12 +58,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
   private viewReady = false;
   private dataReady = false;
 
-  today = new Date();
   isLoadingStats = true;
-
-  get todayLabel(): string {
-    return `${this.today.getDate()} ${AZ_MONTHS[this.today.getMonth()]}, ${this.today.getFullYear()}`;
-  }
 
   totalUsers = 0;
   activeUsers = 0;

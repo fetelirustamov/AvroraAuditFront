@@ -1,146 +1,114 @@
-<!-- Səhifə başlığı — paylaşılan `.report-page-header` -->
-<div class="report-page-header">
-    <div class="header-content">
-        <div class="header-text">
-            <h1 class="page-title">
-                <span class="material-symbols-outlined title-icon">space_dashboard</span>
-                Əsas səhifə
-            </h1>
-            <p class="page-subtitle">Audit fəaliyyəti və uyğunsuzluqlara ümumi baxış</p>
-        </div>
-        <div class="header-actions">
-            <span class="period-chip" *ngIf="periodLabel">
-                <span class="material-symbols-outlined">event</span>
-                {{ periodLabel }}
-            </span>
-            <button type="button" class="export-btn" (click)="onSearch()" [disabled]="isLoading">
-                <span class="material-symbols-outlined">refresh</span>
-                Yenilə
-            </button>
-        </div>
-    </div>
-</div>
+<app-page-header subtitle="Audit fəaliyyəti və uyğunsuzluqlara ümumi baxış">
+    <span headerActions class="period-chip" *ngIf="periodLabel">
+        <span class="material-symbols-outlined" aria-hidden="true">event</span>
+        {{ periodLabel }}
+    </span>
+    <button headerActions type="button" class="g-secondary-btn" (click)="loadOverview()" [disabled]="isLoading">
+        <span class="material-symbols-outlined" aria-hidden="true">refresh</span>
+        Yenilə
+    </button>
+</app-page-header>
 
-<!-- Filtr paneli — paylaşılan `.filter-card` -->
-<div class="filter-card">
-    <div class="filter-card-body">
-        <div class="filter-card-header">
-            <span class="material-symbols-outlined filter-header-icon">tune</span>
-            <div class="filter-header-text">
-                <span class="filter-header-title">Filtrlər</span>
-                <span class="filter-header-hint">Dövr, firma, bölgə və mağaza seçib göstəriciləri yeniləyin</span>
+<div class="g-filter-card">
+    <div class="g-filter-header">
+        <span class="material-symbols-outlined" aria-hidden="true">filter_list</span>
+        <span>Filtrlər</span>
+    </div>
+    <form [formGroup]="filtersForm" (ngSubmit)="onSearch()">
+        <div class="g-filter-grid">
+            <div class="g-filter-field">
+                <label class="g-field-label" id="dash-year">
+                    <span class="material-symbols-outlined" aria-hidden="true">calendar_today</span>
+                    İl
+                </label>
+                <mat-form-field appearance="outline" class="g-modern-field">
+                    <mat-select formControlName="year" aria-labelledby="dash-year">
+                        <mat-option *ngFor="let y of years" [value]="y">{{ y }}</mat-option>
+                    </mat-select>
+                </mat-form-field>
+            </div>
+
+            <div class="g-filter-field">
+                <label class="g-field-label" id="dash-month">
+                    <span class="material-symbols-outlined" aria-hidden="true">date_range</span>
+                    Ay
+                </label>
+                <mat-form-field appearance="outline" class="g-modern-field">
+                    <mat-select formControlName="month" placeholder="Bütün il" aria-labelledby="dash-month">
+                        <mat-option [value]="null">Bütün il</mat-option>
+                        <mat-option *ngFor="let m of months" [value]="m.value">{{ m.label }}</mat-option>
+                    </mat-select>
+                </mat-form-field>
+            </div>
+
+            <div class="g-filter-field-wide">
+                <label class="g-field-label" id="dash-firm">
+                    <span class="material-symbols-outlined" aria-hidden="true">business</span>
+                    Firma
+                </label>
+                <mat-form-field appearance="outline" class="g-modern-field">
+                    <mat-select formControlName="firmId" placeholder="Hamısı" aria-labelledby="dash-firm">
+                        <mat-option [value]="null">Hamısı</mat-option>
+                        <mat-option *ngFor="let f of firms" [value]="f.id">{{ f.name }}</mat-option>
+                    </mat-select>
+                </mat-form-field>
+            </div>
+
+            <div class="g-filter-field">
+                <label class="g-field-label" id="dash-region">
+                    <span class="material-symbols-outlined" aria-hidden="true">map</span>
+                    Bölgə
+                </label>
+                <mat-form-field appearance="outline" class="g-modern-field">
+                    <mat-select formControlName="regionId" aria-labelledby="dash-region"
+                                [placeholder]="filtersForm.value.firmId ? 'Hamısı' : 'Əvvəlcə firma seçin'">
+                        <mat-option [value]="null">Hamısı</mat-option>
+                        <mat-option *ngFor="let r of regions" [value]="r.id">{{ r.regionName }}</mat-option>
+                    </mat-select>
+                </mat-form-field>
+            </div>
+
+            <div class="g-filter-field-wide">
+                <label class="g-field-label" id="dash-location">
+                    <span class="material-symbols-outlined" aria-hidden="true">store</span>
+                    Mağaza
+                </label>
+                <mat-form-field appearance="outline" class="g-modern-field">
+                    <mat-select formControlName="locationCode" aria-labelledby="dash-location"
+                                [placeholder]="filtersForm.value.firmId ? 'Hamısı' : 'Əvvəlcə firma seçin'">
+                        <mat-option [value]="null">Hamısı</mat-option>
+                        <mat-option *ngFor="let l of locations" [value]="l.code">
+                            {{ l.code }} — {{ l.name }}
+                        </mat-option>
+                    </mat-select>
+                </mat-form-field>
+            </div>
+
+            <div class="g-filter-actions">
+                <button type="submit" class="g-search-btn">
+                    <span class="material-symbols-outlined" aria-hidden="true">search</span>
+                    Axtar
+                </button>
+                <button type="button" class="g-secondary-btn" (click)="clearFilters()" [disabled]="!hasActiveFilters">
+                    <span class="material-symbols-outlined" aria-hidden="true">filter_alt_off</span>
+                    Təmizlə
+                </button>
             </div>
         </div>
-
-        <form [formGroup]="filtersForm" (ngSubmit)="onSearch()" class="filter-form">
-            <div class="filter-toolbar">
-
-                <div class="filter-field">
-                    <span class="field-label">
-                        <span class="material-symbols-outlined label-icon">calendar_today</span>
-                        İl
-                    </span>
-                    <mat-form-field appearance="outline" class="modern-field" subscriptSizing="dynamic">
-                        <mat-select formControlName="year">
-                            <mat-option *ngFor="let y of years" [value]="y">{{ y }}</mat-option>
-                        </mat-select>
-                    </mat-form-field>
-                </div>
-
-                <div class="filter-field">
-                    <span class="field-label">
-                        <span class="material-symbols-outlined label-icon">date_range</span>
-                        Ay
-                    </span>
-                    <mat-form-field appearance="outline" class="modern-field" subscriptSizing="dynamic">
-                        <mat-select formControlName="month" placeholder="Bütün il">
-                            <mat-option [value]="null">Bütün il</mat-option>
-                            <mat-option *ngFor="let m of months" [value]="m.value">{{ m.label }}</mat-option>
-                        </mat-select>
-                    </mat-form-field>
-                </div>
-
-                <div class="filter-field filter-field-firm">
-                    <span class="field-label">
-                        <span class="material-symbols-outlined label-icon">business</span>
-                        Firma
-                    </span>
-                    <mat-form-field appearance="outline" class="modern-field" subscriptSizing="dynamic">
-                        <mat-select formControlName="firmId" placeholder="Hamısı">
-                            <mat-option [value]="null">Hamısı</mat-option>
-                            <mat-option *ngFor="let f of firms" [value]="f.id">{{ f.name }}</mat-option>
-                        </mat-select>
-                    </mat-form-field>
-                </div>
-
-                <div class="filter-field">
-                    <span class="field-label">
-                        <span class="material-symbols-outlined label-icon">map</span>
-                        Bölgə
-                    </span>
-                    <mat-form-field appearance="outline" class="modern-field" subscriptSizing="dynamic">
-                        <mat-select formControlName="regionId"
-                                    [placeholder]="filtersForm.value.firmId ? 'Hamısı' : 'Əvvəlcə firma seçin'">
-                            <mat-option [value]="null">Hamısı</mat-option>
-                            <mat-option *ngFor="let r of regions" [value]="r.id">{{ r.regionName }}</mat-option>
-                        </mat-select>
-                    </mat-form-field>
-                </div>
-
-                <div class="filter-field filter-field-firm">
-                    <span class="field-label">
-                        <span class="material-symbols-outlined label-icon">store</span>
-                        Mağaza
-                    </span>
-                    <mat-form-field appearance="outline" class="modern-field" subscriptSizing="dynamic">
-                        <mat-select formControlName="locationCode"
-                                    [placeholder]="filtersForm.value.firmId ? 'Hamısı' : 'Əvvəlcə firma seçin'">
-                            <mat-option [value]="null">Hamısı</mat-option>
-                            <mat-option *ngFor="let l of locations" [value]="l.code">
-                                {{ l.code }} — {{ l.name }}
-                            </mat-option>
-                        </mat-select>
-                    </mat-form-field>
-                </div>
-
-                <div class="filter-toolbar-action">
-                    <button type="button" class="reset-btn" (click)="clearFilters()" [disabled]="!hasActiveFilters">
-                        <span class="material-symbols-outlined">filter_alt_off</span>
-                        Təmizlə
-                    </button>
-                    <button type="submit" class="search-btn">
-                        <span class="material-symbols-outlined">search</span>
-                        Axtar
-                    </button>
-                </div>
-
-            </div>
-        </form>
-    </div>
+    </form>
 </div>
 
-<!-- Yükləmə xətası: "məlumat yoxdur" kimi göstərilməsin -->
+<!-- Yenidən yükləmə: köhnə göstəricilər yerində qalır -->
+<mat-progress-bar *ngIf="isLoading && hasLoaded" mode="indeterminate" class="list-progress" />
+
+<!-- Yükləmə xətası "məlumat yoxdur" kimi göstərilmir -->
 <div class="table-card" *ngIf="loadError">
-    <div class="empty-state" role="alert">
-        <span class="material-symbols-outlined empty-icon">error</span>
-        <p>{{ loadError }}</p>
-        <button type="button" class="reset-btn empty-action" (click)="onSearch()" [disabled]="isLoading">
-            <span class="material-symbols-outlined">refresh</span>
-            Yenidən cəhd et
-        </button>
-    </div>
+    <app-list-state state="error" [errorMessage]="loadError" (retry)="loadOverview()" />
 </div>
 
 <!-- Boş vəziyyət: yalnız sorğu uğurlu olub və data yoxdursa -->
 <div class="table-card" *ngIf="hasLoaded && !loadError && isEmpty">
-    <div class="empty-state" role="status">
-        <span class="material-symbols-outlined empty-icon">query_stats</span>
-        <p>Seçilmiş dövr və filtrlərə uyğun yoxlama tapılmadı</p>
-        <button type="button" class="reset-btn empty-action" (click)="clearFilters()">
-            <span class="material-symbols-outlined">refresh</span>
-            Filtrləri sıfırla
-        </button>
-    </div>
+    <app-list-state state="empty" message="Seçilmiş dövr və filtrlərə uyğun yoxlama tapılmadı" />
 </div>
 
 <!-- ══ Dashboard məzmunu ══════════════════════════════════════════════════ -->
@@ -308,10 +276,12 @@
                 </div>
             </div>
             <div class="segmented">
-                <button type="button" [class.is-active]="rankingMode === 'risk'" (click)="setRankingMode('risk')">
+                <button type="button" [class.is-active]="rankingMode === 'risk'" [attr.aria-pressed]="rankingMode === 'risk'"
+                        (click)="setRankingMode('risk')">
                     Ən riskli
                 </button>
-                <button type="button" [class.is-active]="rankingMode === 'best'" (click)="setRankingMode('best')">
+                <button type="button" [class.is-active]="rankingMode === 'best'" [attr.aria-pressed]="rankingMode === 'best'"
+                        (click)="setRankingMode('best')">
                     Ən yaxşı
                 </button>
             </div>
@@ -334,7 +304,7 @@
                     <tr *ngFor="let row of ranking; let i = index; trackBy: trackByLocation">
                         <td><span class="row-number">{{ i + 1 }}</span></td>
                         <td class="text-left cell-strong">
-                            <span class="cell-code">{{ row.locationCode }}</span>
+                            <span class="cell-code mono">{{ row.locationCode }}</span>
                             {{ row.locationName }}
                         </td>
                         <td class="text-left">{{ row.regionName || '—' }}</td>
@@ -365,6 +335,6 @@
 
 </div>
 
-<app-audit-loading-overlay *ngIf="isLoading"
+<app-audit-loading-overlay *ngIf="isLoading && !hasLoaded"
                            title="Göstəricilər yüklənir"
                            hint="Əsas səhifə hazırlanır — bir neçə saniyə çəkə bilər" />

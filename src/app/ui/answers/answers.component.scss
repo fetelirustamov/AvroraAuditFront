@@ -1,89 +1,10 @@
-.topMargin {
-    margin-top: 0;
+// Cədvəl görünüşü qlobal `.table-card` / `.table-sticky` / `.modern-table`-dən gəlir.
+
+// Yenidən yüklənəndə köhnə sətirlər yerində qalır, üstdə nazik xətt görünür.
+.table-progress {
+    height: 4px;
 }
 
-.text-center {
-    text-align: center !important;
-    // margin-bottom: 10px;
-}
-
-// button .button {
-//     position: absolute;
-// }
-button .material-symbols-outlined {
-    font-size: 20px;
-    /* istəyə uyğun dəyiş */
-    line-height: 1;
-    vertical-align: middle;
-}
-
-// button span.text-center {
-//     vertical-align: middle;
-// }
-
-.filter-input {
-    // padding: 2px;
-    padding-left: 6px;
-    font-size: 13px;
-    height: 35px;
-    margin-top: 4px;
-
-    background-color: var(--surface);
-}
-
-// .header-title {
-//     text-align: center;
-//     margin-left: 50%;
-// }
-
-.mat-mdc-dialog-container .mat-mdc-dialog-title {
-
-    font-weight: 700 !important;
-}
-
-
-.dialog-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    // padding: 0 8px !important;
-}
-
-.close-button {
-    cursor: pointer;
-    margin-right: 15px;
-    padding: 2px;
-    min-width: auto;
-}
-
-.close-button:hover {
-    background-color: var(--surface-subtle);
-    border-radius: 20px;
-}
-
-.main-label {
-    font-size: 15px;
-    font-weight: 500;
-    margin-bottom: 8px;
-}
-
-.form-group {
-    margin-bottom: 20px;
-}
-
-
-
-.searchButtons {
-    display: flex;
-    justify-content: space-between;
-}
-
-// ─── Answers: yükləmə UX ───────────────────────────────────────────
-
-.answers-card-content {
-    padding-top: 4px;
-}
-
-.answers-card-inner {
-    border-radius: 10px;
+.num {
+    font-variant-numeric: tabular-nums;
 }

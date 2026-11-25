@@ -359,14 +359,29 @@
     gap: 6px;
 }
 
+// `button`-dur: klaviatura ilə də filtr seçilir
 .cal-legend-item {
     display: flex;
     align-items: center;
     gap: 10px;
+    width: 100%;
     cursor: pointer;
     padding: 8px 10px;
+    border: 0;
     border-radius: 8px;
+    background: transparent;
+    font: inherit;
+    text-align: left;
     transition: background 0.15s ease;
+
+    &:focus-visible {
+        outline: none;
+        box-shadow: var(--focus-ring);
+
+        .cal-legend-hint {
+            opacity: 1;
+        }
+    }
 
     &:hover {
         background: var(--surface-muted);
@@ -867,11 +882,6 @@
         font-size: 14px;
         color: var(--text-muted);
     }
-}
-
-.cal-plan-status {
-    font-weight: 600;
-    white-space: nowrap;
 }
 
 .cal-plan-sub {

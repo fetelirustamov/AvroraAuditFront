@@ -1,129 +1,118 @@
-<!-- Breadcrumb -->
-<div class="breadcrumb-card mb-25 d-md-flex align-items-center justify-content-between">
-        <div class="d-flex align-items-center flex-wrap gap-2">
-            <h5 class="mb-0 me-3">
-                {{ isEditMode ? (form.get('name')?.value || 'Qrup') : 'Yeni qrup' }}
-            </h5>
+<app-page-header backLink="/admin/permissions/permission-groups" backLabel="İcazə qruplarına qayıt"
+    [subtitle]="isViewMode ? (form.controls.name.value || '') : ''">
+    @if (isViewMode && editId != null) {
+        <a headerActions class="g-secondary-btn" [routerLink]="['/admin/permissions/permission-groups/edit', editId]">
+            <span class="material-symbols-outlined" aria-hidden="true">edit</span>
+            Redaktə et
+        </a>
+    }
+</app-page-header>
+
+@if (isLoading) {
+    <mat-progress-bar class="page-progress" mode="indeterminate" />
+}
+
+<form [formGroup]="form" (ngSubmit)="save()" novalidate [attr.aria-busy]="isLoading">
+    <section class="form-section" aria-labelledby="group-info-title">
+        <div class="form-section-head">
+            <h2 class="form-section-title" id="group-info-title">Qrup məlumatları</h2>
         </div>
-        <div class="breadcrumb-actions d-flex align-items-center gap-2">
-            <button *ngIf="isViewMode" class="btn-back" mat-flat-button color="primary" type="button"
-                (click)="goBack()">Geri</button>
-            <button *ngIf="isEditMode" mat-flat-button class="btn-success" (click)="save()"
-                [disabled]="form.invalid || isLoading || isSaving">Yadda saxla</button>
-            <button *ngIf="isEditMode" mat-stroked-button color="warn" type="button" (click)="cancel()">Ləğv et</button>
-        </div>
-    </div>
-
-<div class="audit-table-loading-shell groups-add-loading-shell" [attr.aria-busy]="isLoading">
-<div [class.audit-table-muted]="isLoading">
-
-<form [formGroup]="form" class="groups-add-container">
-    <div class="d-flex gap-3 mb-20 action-buttons" *ngIf="!isEditMode && !isViewMode">
-        <button mat-flat-button color="primary" (click)="save()" [disabled]="form.invalid || isLoading || isSaving">
-            <i class="material-symbols-outlined">save</i>
-            Əlavə et
-        </button>
-        <button mat-stroked-button color="warn" type="button" (click)="cancel()">
-            <i class="material-symbols-outlined">close</i>
-            Ləğv et
-        </button>
-    </div>
-
-    <mat-card class="mb-25 border-radius d-block bg-white border-0 shadow-none">
-        <mat-card-content>
-            <div class="row g-3">
-                <div class="col-md-2">
-                    <mat-form-field class="w-100" appearance="outline">
-                        <mat-label>Kodu</mat-label>
-                        <input matInput formControlName="code" placeholder="0" />
-                    </mat-form-field>
-                </div>
-                <div class="col-md-5">
-                    <mat-form-field class="w-100" appearance="outline">
-                        <mat-label>Adı</mat-label>
-                        <input matInput formControlName="name" placeholder="Adı" />
-                        <mat-error *ngIf="form.get('name')?.touched && form.get('name')?.hasError('required')">Ad
-                            məcburidir</mat-error>
-                    </mat-form-field>
-                </div>
-                <div class="col-md-5">
-                    <mat-form-field class="w-100" appearance="outline">
-                        <mat-label>Təsviri</mat-label>
-                        <input matInput formControlName="description" placeholder="Təsviri" />
-                    </mat-form-field>
-                </div>
+        <div class="form-grid">
+            <div class="form-field">
+                <label class="g-field-label" for="group-name">Ad <span class="required-mark" aria-hidden="true">*</span></label>
+                <mat-form-field appearance="outline" class="g-modern-field">
+                    <input id="group-name" matInput formControlName="name" required>
+                    <mat-error>Qrupun adını yazın</mat-error>
+                </mat-form-field>
             </div>
-        </mat-card-content>
-    </mat-card>
+            <div class="form-field">
+                <label class="g-field-label" for="group-description">Təsviri</label>
+                <mat-form-field appearance="outline" class="g-modern-field">
+                    <input id="group-description" matInput formControlName="description">
+                </mat-form-field>
+            </div>
+        </div>
+    </section>
 
-    <mat-card class="mb-25 border-radius d-block bg-white border-0 shadow-none">
-        <mat-card-header>
-            <mat-card-title>İcazələr</mat-card-title>
-        </mat-card-header>
-        <mat-card-content>
-            <div class="table-responsive">
-                <table class="permissions-table">
+    <section class="form-section" aria-labelledby="group-permissions-title">
+        <div class="form-section-head">
+            <h2 class="form-section-title" id="group-permissions-title">İcazələr</h2>
+            <span class="count-badge">{{ shownCount }} / {{ pageRows.length }} səhifə görünür</span>
+        </div>
+        <p class="form-section-hint enforcement-note">
+            <span class="material-symbols-outlined" aria-hidden="true">info</span>
+            Hazırda yalnız «Oxuma» tətbiq olunur: səhifə menyuda görünür və açılır. Yaratma, dəyişmə və silmə
+            icazələri saxlanılır, amma hələ heç bir düyməni gizlətmir. «Oxuma» söndürüləndə qalanları da sönür.
+        </p>
+
+        @if (!isLoading && !pageRows.length) {
+            <app-list-state state="empty" message="Səhifə tapılmadı. Əvvəlcə «Səhifələr» bölməsində səhifə əlavə edin." />
+        } @else {
+            <div class="table-sticky matrix-wrap">
+                <table class="matrix">
                     <thead>
                         <tr>
-                            <th>Səhifə</th>
-                            <th>
-                                <div class="col-header-with-select-all">
-                                    <span>Oxuma</span>
-                                    <mat-checkbox color="primary" [disabled]="isViewMode"
-                                        [checked]="isAllChecked('show')"
-                                        (change)="toggleAllColumn('show', $event.checked)"
-                                        matTooltip="Hamısını seç / seçimi götür"></mat-checkbox>
-                                </div>
+                            <th scope="col" class="col-page">Səhifə</th>
+                            <th scope="col" class="col-check">
+                                <span class="col-head">
+                                    <span class="col-label">Oxuma</span>
+                                    <mat-checkbox [checked]="isAllChecked('show')" [indeterminate]="isSomeChecked('show')"
+                                        [disabled]="isViewMode" (change)="toggleAllColumn('show', $event.checked)"
+                                        aria-label="Bütün səhifələrdə oxuma" />
+                                </span>
                             </th>
-                            <th>
-                                <div class="col-header-with-select-all">
-                                    <span>Yaratma</span>
-                                    <mat-checkbox color="primary" [disabled]="isViewMode"
-                                        [checked]="isAllChecked('add')"
-                                        (change)="toggleAllColumn('add', $event.checked)"
-                                        matTooltip="Hamısını seç / seçimi götür"></mat-checkbox>
-                                </div>
-                            </th>
-                            <th>
-                                <div class="col-header-with-select-all">
-                                    <span>Dəyişmə</span>
-                                    <mat-checkbox color="primary" [disabled]="isViewMode"
-                                        [checked]="isAllChecked('edit')"
-                                        (change)="toggleAllColumn('edit', $event.checked)"
-                                        matTooltip="Hamısını seç / seçimi götür"></mat-checkbox>
-                                </div>
-                            </th>
-                            <th>
-                                <div class="col-header-with-select-all">
-                                    <span>Silmə</span>
-                                    <mat-checkbox color="primary" [disabled]="isViewMode"
-                                        [checked]="isAllChecked('delete')"
-                                        (change)="toggleAllColumn('delete', $event.checked)"
-                                        matTooltip="Hamısını seç / seçimi götür"></mat-checkbox>
-                                </div>
-                            </th>
+                            @for (col of crudColumns; track col.key) {
+                                <th scope="col" class="col-check not-enforced">
+                                    <span class="col-head">
+                                        <span class="col-label">
+                                            {{ col.label }}
+                                            <span class="not-enforced-tag">tətbiq olunmur</span>
+                                        </span>
+                                        <mat-checkbox [checked]="isAllChecked(col.key)" [indeterminate]="isSomeChecked(col.key)"
+                                            [disabled]="isViewMode || !shownCount" (change)="toggleAllColumn(col.key, $event.checked)"
+                                            [aria-label]="'Bütün səhifələrdə ' + col.label.toLocaleLowerCase('az')" />
+                                    </span>
+                                </th>
+                            }
                         </tr>
                     </thead>
-                    <tbody formArrayName="rows">
-                        <tr *ngFor="let row of rows.controls; let i = index" [formGroupName]="i">
-                            <td><span class="page-cell-label">{{ row.get('pageName')?.value }}</span></td>
-                            <td><mat-checkbox formControlName="show" color="primary"></mat-checkbox></td>
-                            <td><mat-checkbox formControlName="add" color="primary"></mat-checkbox></td>
-                            <td><mat-checkbox formControlName="edit" color="primary"></mat-checkbox></td>
-                            <td><mat-checkbox formControlName="delete" color="primary"></mat-checkbox></td>
-                        </tr>
-                    </tbody>
+
+                    @for (section of sections; track section.label) {
+                        <tbody>
+                            <tr class="section-row">
+                                <th scope="colgroup" colspan="5">
+                                    {{ section.label }}
+                                    <span class="section-count">{{ section.rows.length }}</span>
+                                </th>
+                            </tr>
+                            @for (row of section.rows; track row.page.id) {
+                                <tr [formGroup]="row.group">
+                                    <th scope="row" class="col-page">
+                                        <span class="page-name">{{ row.page.name }}</span>
+                                        <span class="mono page-key">{{ row.page.key }}</span>
+                                    </th>
+                                    <td class="col-check">
+                                        <mat-checkbox formControlName="show" [aria-label]="row.page.name + ' — oxuma'" />
+                                    </td>
+                                    @for (col of crudColumns; track col.key) {
+                                        <td class="col-check not-enforced">
+                                            <mat-checkbox [formControlName]="col.key"
+                                                [aria-label]="row.page.name + ' — ' + col.label.toLocaleLowerCase('az')" />
+                                        </td>
+                                    }
+                                </tr>
+                            }
+                        </tbody>
+                    }
                 </table>
             </div>
-            <div *ngIf="rows.length === 0" class="text-center text-muted py-3">
-                Heç bir səhifə tapılmadı
-            </div>
-        </mat-card-content>
-    </mat-card>
-</form>
+        }
+    </section>
 
-</div>
-<app-audit-loading-overlay *ngIf="isLoading"
-    title="Qrup məlumatları yüklənir"
-    hint="Səhifələr və icazələr hazırlanır…"></app-audit-loading-overlay>
-</div>
+    @if (!isViewMode) {
+        <div class="form-actions">
+            <button type="button" class="g-secondary-btn" (click)="cancel()">Ləğv et</button>
+            <button type="submit" class="g-search-btn" [disabled]="isSaving">{{ isEditMode ? 'Yadda saxla' : 'Əlavə et' }}</button>
+        </div>
+    }
+</form>

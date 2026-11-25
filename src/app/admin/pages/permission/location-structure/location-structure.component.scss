@@ -6,20 +6,6 @@
 
 .ls-page { padding: 20px 20px 64px; max-width: 1320px; margin: 0 auto; }
 
-.ls-header {
-    // Başlıq vurğusu qlobal defoltla eynidir (_design-system.scss) — override silindi.
-    // flex-wrap vacibdir: 3 düymə dar ekranda sətrə sığmır, .report-page-header isə
-    // overflow:hidden olduğuna görə sarılmasa görünmədən kəsilirdi.
-    .header-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 10px; }
-    // Səhifə səviyyəli əsas əməliyyat — vurğu rəngində dolu düymə
-    .export-btn.solid {
-        background: var(--accent); color: var(--on-accent);
-        border-color: var(--accent);
-        .material-symbols-outlined { color: var(--on-accent); }
-        &:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
-    }
-}
-
 .panel-card {
     display: flex;
     flex-direction: column;
@@ -615,9 +601,7 @@
 
 // ── Responsiv ────────────────────────────────────────────────────────────────
 // Sınma nöqtələri paylaşılan qata uyğunlaşdırılıb: .g-filter-* sistemi 768px-də
-// (styles.scss), .report-page-header isə 767px-də (_design-system.scss) mobilə keçir.
-// Əvvəl komponent 960/560px işlədirdi və 561–767px aralığında səhifə qlobal qatla
-// uyğunsuz qalırdı (filter kartı içəri çökür, sətirlər həddən sıx olurdu).
+// (styles.scss), <app-page-header> isə 767px-də mobilə keçir.
 @media (max-width: 960px) {
     .struct-layout { grid-template-columns: 1fr; }
     .import-grid { grid-template-columns: 1fr; }
@@ -628,9 +612,6 @@
     .ls-page { padding: 14px 12px 48px; }
     .tpl-actions { flex-direction: column; }
     .tree-card { max-height: 420px; }
-    // Başlıq düymələri dar ekranda tam enə yayılsın, kəsilməsin
-    .ls-header .header-actions { width: 100%; justify-content: stretch; }
-    .ls-header .export-btn { flex: 1 1 auto; justify-content: center; }
 }
 @media (max-width: 560px) {
     .node-code { display: none; }

@@ -6,6 +6,8 @@ export interface InspectionPlanWorkItem {
     status: number;
 }
 
+import { StatusTone } from '../../../shared/status/status-meta';
+
 export interface InspectionPlanWorkRow {
     row: number;
     magaza_kodu: number | string;
@@ -14,7 +16,7 @@ export interface InspectionPlanWorkRow {
     is_bitme: string | null;
     status: number;
     statusLabel: string;
-    statusClass: 'processed' | 'not-processed' | 'unknown';
+    statusTone: StatusTone;
 }
 
 export interface InspectionPlanWorkResponseData {

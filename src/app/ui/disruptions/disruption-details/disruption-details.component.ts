@@ -1,130 +1,123 @@
-import { Component, ViewChild } from '@angular/core';
-import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
-import { Router } from '@angular/router';
+import { Component, DestroyRef, OnInit, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatTableModule } from '@angular/material/table';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { ActivatedRoute, Router, UrlTree } from '@angular/router';
 import { finalize } from 'rxjs';
 import { TableState } from '../../../models/table-state.model';
-import { TableService } from '../../services/table.service';
-import { DisruptionDto } from '../disruption.model';
-import { CommonModule, Location } from '@angular/common';
-import { MatCardModule } from '@angular/material/card';
-import { MatTableModule } from '@angular/material/table';
+import { ListStateComponent } from '../../../shared/components/list-state/list-state.component';
+import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
+import { AppDatePipe } from '../../../shared/pipes/app-date.pipe';
+import { StatusChipComponent } from '../../../shared/status/status-chip.component';
+import { apiErrorMessage } from '../../../shared/utils/api-error';
+import { queryNumber, writeQueryState } from '../../../shared/utils/query-state';
 import { MediaType, Module } from '../../components/media/media-type.enum';
 import { MediaComponent } from '../../components/media/media.component';
-import { NotificationService } from '../../../shared/services/notification.service';
-import { apiErrorMessage } from '../../../shared/utils/api-error';
+import { TableService } from '../../services/table.service';
+import { backLinkFromQuery } from '../disruption-nav';
+import { DisruptionDto } from '../disruption.model';
 
-// Son onaylanmış və ya rədd olunmuş uyğunsuzluqlara yalnız baxış — onay işi Müfəttiş təsdiqi ekranındadır
+const PAGE_SIZES = [10, 20, 50];
+
+// Yekun statuslu (təsdiqlənmiş / rədd edilmiş) uyğunsuzluqlara yalnız baxış — onay işi Müfəttiş təsdiqi ekranındadır.
+// Plan və status URL-dədir (`?plan=…&status=…`): səhifə yenilənəndə və link paylaşılanda açılır.
 @Component({
   selector: 'app-disruption-details',
   standalone: true,
   imports: [
-    MatPaginatorModule,
-    MatCardModule,
-    MatTableModule,
-    CommonModule,
-    MediaComponent
+    MatTableModule, MatPaginatorModule, MatProgressBarModule, MatTooltipModule,
+    PageHeaderComponent, ListStateComponent, StatusChipComponent, AppDatePipe, MediaComponent,
   ],
   templateUrl: './disruption-details.component.html',
   styleUrl: './disruption-details.component.scss'
 })
-export class DisruptionDetailsComponent {
+export class DisruptionDetailsComponent implements OnInit {
+  private readonly tableService = inject(TableService);
+  private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+  private readonly destroyRef = inject(DestroyRef);
 
-  displayedColumns: string[] = ['inspectorName', 'locationCode', 'locationName', 'createdDate', 'sectionName', 'disruptionCategoryName', 'reasonName', 'description', 'media'];
-  public dataSource: DisruptionDto[] = [];
-  allDataCount: number = 0;
-  @ViewChild(MatPaginator) paginator!: MatPaginator;
+  readonly displayedColumns = ['inspectorName', 'createdDate', 'sectionName', 'disruptionCategoryName', 'reasonName', 'description', 'status', 'media'];
+  readonly pageSizeOptions = PAGE_SIZES;
+  readonly MediaType = MediaType;
+  readonly Module = Module;
 
-  public isLoading = false;
-  public searchTerm: string = '';
-  public pageSize: number = 10;
-  public pageSizeOptions: number[] = [5, 10, 20]; // Səhifə ölçüsü seçimləri
-  public data: any;
-  public disruptionStatus: number = 0;
-  private _tableState: TableState = new TableState();
-  MediaType = MediaType;
-  Module = Module;
+  readonly backLink: UrlTree = backLinkFromQuery(this.router, this.route, '/disruptions');
 
-  constructor(
-    private _tableService: TableService,
-    private router: Router,
-    private location: Location,
-    private notify: NotificationService
-  ) {
-    this._tableService.api_url = 'disruptions/getDetails';
-    this._tableState.paginator.page = 0;
-    this._tableState.sorting.direction = 'desc';
-    this._tableState.paginator.size = this.pageSize;
+  planId: number | null = null;
+  rows: DisruptionDto[] = [];
+  total = 0;
+  pageIndex = 0;
+  pageSize = PAGE_SIZES[0];
 
-    this._tableState.filter['inspectionPlanStatus'] = "4";
+  /** Başlıq üçün mağaza: plan bir mağazaya aiddir, ilk sətirdən götürülür */
+  store: { code: number | string; name: string } | null = null;
 
-    const navigation = this.router.getCurrentNavigation();
-    let state: any = navigation?.extras?.state;
+  isLoading = false;
+  loadError: string | null = null;
 
-    if (!state) {
-      // Səhifə yenilənəndə router state itir — sessionStorage-dan bərpa edirik
-      const saved = sessionStorage.getItem('disruption_details_state');
-      state = saved ? JSON.parse(saved) : null;
-    }
+  private readonly tableState = new TableState();
 
-    if (!state) {
-      this.location.back();
+  ngOnInit(): void {
+    const q = this.route.snapshot.queryParamMap;
+    this.planId = queryNumber(q, 'plan');
+    this.pageIndex = queryNumber(q, 'page') ?? 0;
+    this.pageSize = queryNumber(q, 'size') ?? PAGE_SIZES[0];
+
+    if (this.planId == null) {
+      this.loadError = 'Plan seçilməyib. Siyahıya qayıdıb planı yenidən açın.';
       return;
     }
 
-    sessionStorage.setItem('disruption_details_state', JSON.stringify(state));
-
-    this.data = state["data"];
-    this.disruptionStatus = state["status"];
-    this._tableState.filter['disruptionStatus'] = this.disruptionStatus.toString();
-    this._tableState.filter['inspectionPlanId'] = this.data.inspectionPlanId.toString();
+    this.tableService.api_url = 'disruptions/getDetails';
+    this.tableState.sorting.direction = 'desc';
+    this.tableState.filter['inspectionPlanStatus'] = '4';
+    this.tableState.filter['inspectionPlanId'] = String(this.planId);
+    this.tableState.filter['disruptionStatus'] = String(queryNumber(q, 'status') ?? 2);
+    this.fill();
   }
 
-  ngOnInit() {
-    this.fill(); // Məlumatları ilkin yüklə
+  get title(): string {
+    if (!this.store) return this.planId != null ? `Plan №${this.planId}` : 'Uyğunsuzluq detalı';
+    return `${this.store.name} · ${this.store.code}`;
   }
 
-  ngAfterViewInit() {
-    if (this.paginator) {
-      this.paginator.page.subscribe(() => {
-        this._tableState.paginator.page = this.paginator.pageIndex;
-        this.pageSize = this.paginator.pageSize;
-        this._tableState.paginator.size = this.pageSize;
-        this.fill();
-      });
-    } else {
-      console.warn('MatPaginator is not initialized in ngAfterViewInit');
-    }
+  get subtitle(): string {
+    return this.store && this.planId != null ? `Plan №${this.planId} üzrə uyğunsuzluqlar` : '';
   }
 
-  onPageSizeChange(newPageSize: any) {
-    this.pageSize = newPageSize;
-    this._tableState.paginator.size = this.pageSize;
-    if (this.paginator) {
-      this.paginator.pageSize = this.pageSize;
-      this.paginator.pageIndex = 0; // Səhifəni sıfırlayır
-      this.fill();
-    }
+  onPage(e: PageEvent): void {
+    this.pageIndex = e.pageIndex;
+    this.pageSize = e.pageSize;
+    void writeQueryState(this.router, { page: e.pageIndex || null, size: e.pageSize === PAGE_SIZES[0] ? null : e.pageSize });
+    this.fill();
   }
 
-  private fill() {
+  fill(): void {
+    if (this.planId == null) return;
     this.isLoading = true;
-    this._tableState.paginator.size = this.pageSize;
-    if (!this._tableState.filter) {
-      this._tableState.filter = {};
-    }
-    this._tableState.searchTerm = this.searchTerm;
+    this.loadError = null;
+    this.tableState.paginator.page = this.pageIndex;
+    this.tableState.paginator.size = this.pageSize;
 
-    this._tableService.fill(this._tableState).pipe(
-      finalize(() => {
-        this.isLoading = false;
-      })
+    this.tableService.fill(this.tableState).pipe(
+      finalize(() => this.isLoading = false),
+      takeUntilDestroyed(this.destroyRef),
     ).subscribe({
-      next: (response) => {
-        this._tableState.paginator.total = response.data?.total || 0;
-        this.dataSource = response.data?.items || [];
-        this.allDataCount = response.data?.total || 0;
+      next: response => {
+        // TableService xətanı udur və `success: false` qaytarır
+        if (response.success === false) {
+          this.loadError = response.message || 'Uyğunsuzluqlar yüklənmədi';
+          return;
+        }
+        this.rows = response.data?.items ?? [];
+        this.total = response.data?.total ?? 0;
+        const first = this.rows[0];
+        if (first) this.store = { code: first.locationCode, name: first.locationName };
       },
-      error: (error) => this.notify.error(apiErrorMessage(error, 'Uyğunsuzluqlar yüklənmədi'))
+      error: error => this.loadError = apiErrorMessage(error, 'Uyğunsuzluqlar yüklənmədi'),
     });
   }
 }

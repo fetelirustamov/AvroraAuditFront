@@ -17,10 +17,10 @@ describe('AppComponent', () => {
         expect(app).toBeTruthy();
     });
 
-    it(`should have the 'Audit Sistemi' title`, () => {
+    it(`should have the 'Audit sistemi' title`, () => {
         const fixture = TestBed.createComponent(AppComponent);
         const app = fixture.componentInstance;
-        expect(app.title).toEqual('Audit Sistemi');
+        expect(app.title).toEqual('Audit sistemi');
     });
 
     it('should render the router outlet', () => {

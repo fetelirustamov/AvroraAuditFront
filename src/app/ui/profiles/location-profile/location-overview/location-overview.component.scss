@@ -1,100 +1,44 @@
-// KPI kartları neytraldır (hədd yoxdur). Rəng yalnız proqres zolağında
-// məna daşıyanda var: həll edilmiş → success, açıq → danger.
-// Sinif adları (kpi-blue/…) şablondan gəlir, rəngi yox, metriki bildirir:
-//   kpi-blue → orta nəticə, kpi-orange → ümumi uyğunsuzluq,
-//   kpi-green → həll edilmiş, kpi-purple → açıq.
-.kpi-grid {
-    .kpi-card {
-        background: var(--surface);
-        border-radius: var(--radius-lg);
-        padding: 22px 20px 20px;
-        border: 1px solid var(--border);
-        cursor: default;
+// KPI kartları qlobal `.kpi-*`-dır (`_design-system.scss`). Göstəricilərin həddi yoxdur, ona görə neytraldır.
 
-        .kpi-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 18px;
-        }
-
-        .kpi-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: var(--radius-md);
-            background: var(--surface-subtle);
-            color: var(--text-muted);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-
-            .material-symbols-outlined {
-                font-size: 22px;
-            }
-        }
-
-        .kpi-number {
-            font-size: 32px;
-            font-weight: 600;
-            font-variant-numeric: tabular-nums;
-            color: var(--text-strong);
-            line-height: 1;
-            margin-bottom: 6px;
-        }
-
-        .kpi-label {
-            font-size: var(--fs-14);
-            font-weight: 500;
-            color: var(--text-muted);
-            margin-bottom: 3px;
-        }
-
-        .kpi-sub {
-            font-size: var(--fs-12);
-            color: var(--text-muted);
-            margin-bottom: 16px;
-        }
-
-        .kpi-bar {
-            height: 4px;
-            background: var(--surface-subtle);
-            border-radius: 100px;
-            overflow: hidden;
-
-            .kpi-fill {
-                height: 100%;
-                border-radius: 100px;
-                background: var(--gray-500);
-                transition: width 0.7s cubic-bezier(0.4, 0, 0.2, 1);
-            }
-        }
-
-        &.kpi-blue   .kpi-fill { background: var(--accent); }
-        &.kpi-green  .kpi-fill { background: var(--success); }
-        &.kpi-purple .kpi-fill { background: var(--danger); }
-    }
-
+.store-head {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    margin-bottom: var(--space-4);
 }
 
-/* Max width 767px */
-@media only screen and (max-width: 767px) {
-    .kpi-grid .kpi-card {
-        padding: 18px;
+.store-icon {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-md);
+    background: var(--surface-subtle);
+    color: var(--text-muted);
 
-        .kpi-number { font-size: 26px; }
+    .material-symbols-outlined {
+        font-size: 22px;
     }
 }
 
-/* Min width 576px to Max width 767px */
-@media only screen and (min-width: 576px) and (max-width: 767px) {
-    .kpi-grid .kpi-card {
-        padding: 20px;
-    }
+.store-name {
+    margin: 0;
+    font-size: var(--fs-16);
+    font-weight: 600;
+    color: var(--text-strong);
 }
 
-/* Min width 768px to Max width 991px */
-@media only screen and (min-width: 768px) and (max-width: 991px) {
-    .kpi-grid .kpi-card .kpi-number {
-        font-size: 28px;
-    }
+.store-code {
+    margin-left: var(--space-1);
+    font-size: var(--fs-14);
+    font-weight: 500;
+    color: var(--text-muted);
+}
+
+.store-meta {
+    margin: 2px 0 0;
+    font-size: var(--fs-13);
+    color: var(--text-muted);
 }

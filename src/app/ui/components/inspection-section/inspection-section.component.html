@@ -1,173 +1,173 @@
 <mat-card class="inspection-section-card border-radius d-block bg-white border-0 shadow-none">
-
     <mat-card-content>
         <mat-accordion multi="true">
             <mat-expansion-panel class="section-panel" (opened)="onPanelOpened()">
                 <mat-expansion-panel-header class="section-panel-header">
                     <mat-panel-title class="section-title">
-                        <span class="section-icon">
+                        <span class="section-icon" aria-hidden="true">
                             <span class="material-symbols-outlined">checklist</span>
                         </span>
                         <span class="section-name">{{ data?.sectionName }}</span>
                     </mat-panel-title>
                     @if (result != null) {
-                    <span class="section-score" [ngClass]="'section-score--' + complianceTone(result)"
-                        matTooltip="Şöbənin checklist nəticəsi" matTooltipPosition="above">
-                        {{ result | number: '1.0-1' }}%
-                    </span>
+                        <span class="section-score" [ngClass]="'section-score--' + complianceTone(result)"
+                            matTooltip="Şöbənin checklist nəticəsi" matTooltipPosition="above">
+                            {{ result | number: '1.0-1' }}%
+                        </span>
                     }
                 </mat-expansion-panel-header>
 
-                <div class="audit-table-loading-shell" style="min-height: 12rem;">
-                    <div [class.audit-table-muted]="isLoading">
-                        <cdk-accordion class="category-accordion">
-                            @for (group of groupedQuestions; track group; let i = $index) {
-                            <cdk-accordion-item #accordionItem="cdkAccordionItem" class="category-item" role="button"
-                                tabindex="0" [attr.id]="'accordion-header-' + i"
-                                [attr.aria-expanded]="accordionItem.expanded"
-                                [attr.aria-controls]="'accordion-body-' + i">
-
-                                <div class="category-header" [class.category-header--open]="accordionItem.expanded"
-                                    (click)="accordionItem.toggle()">
-                                    <span class="category-header__left">
-                                        <span class="material-symbols-outlined category-header__chevron">
-                                            {{ accordionItem.expanded ? 'expand_more' : 'chevron_right' }}
+                <div class="audit-table-loading-shell section-body" [attr.aria-busy]="isLoading">
+                    @if (loadError) {
+                        <app-list-state state="error" [errorMessage]="loadError" (retry)="loadQuestions()" />
+                    } @else if (loaded && !groupedQuestions.length) {
+                        <app-list-state state="empty" message="Bu şöbədə sual yoxdur" />
+                    } @else {
+                        <cdk-accordion class="category-accordion" [multi]="true">
+                            @for (group of groupedQuestions; track group.categoryName; let i = $index) {
+                                @let headerId = 'q-head-' + data?.headerId + '-' + i;
+                                @let bodyId = 'q-body-' + data?.headerId + '-' + i;
+                                <cdk-accordion-item #accordionItem="cdkAccordionItem" class="category-item">
+                                    <button type="button" class="category-header" [id]="headerId"
+                                        [class.category-header--open]="accordionItem.expanded"
+                                        [attr.aria-expanded]="accordionItem.expanded" [attr.aria-controls]="bodyId"
+                                        (click)="accordionItem.toggle()">
+                                        <span class="category-header__left">
+                                            <span class="material-symbols-outlined category-header__chevron" aria-hidden="true">
+                                                {{ accordionItem.expanded ? 'expand_more' : 'chevron_right' }}
+                                            </span>
+                                            <span class="category-header__name">{{ group.categoryName }}</span>
                                         </span>
-                                        <span class="category-header__name">{{ group.categoryName }}</span>
-                                    </span>
-                                    <span class="section-count">{{ group.questions.length }} sual</span>
-                                </div>
+                                        <span class="section-count">{{ group.questions.length }} sual</span>
+                                    </button>
 
-                                <div class="category-body" role="region"
-                                    [style.display]="accordionItem.expanded ? '' : 'none'"
-                                    [attr.id]="'accordion-body-' + i"
-                                    [attr.aria-labelledby]="'accordion-header-' + i">
-                                    <div class="table-responsive">
-                                        <table mat-table [dataSource]="group.questions" class="section-table question-table">
+                                    <div class="category-body" role="region" [id]="bodyId" [attr.aria-labelledby]="headerId"
+                                        [hidden]="!accordionItem.expanded">
+                                        <div class="table-responsive">
+                                            <table mat-table [dataSource]="group.questions" class="section-table question-table">
 
-                                            <!-- Sıra -->
-                                            <ng-container matColumnDef="position">
-                                                <th mat-header-cell *matHeaderCellDef class="col-position"> № </th>
-                                                <td mat-cell *matCellDef="let element; let i = index" class="col-position">
-                                                    <span class="row-index">{{ i + 1 }}</span>
-                                                </td>
-                                            </ng-container>
+                                                <ng-container matColumnDef="position">
+                                                    <th mat-header-cell *matHeaderCellDef class="col-position">№</th>
+                                                    <td mat-cell *matCellDef="let element; let n = index" class="col-position">
+                                                        <span class="row-index">{{ n + 1 }}</span>
+                                                    </td>
+                                                </ng-container>
 
-                                            <!-- Sual -->
-                                            <ng-container matColumnDef="questionText">
-                                                <th mat-header-cell *matHeaderCellDef> Sual </th>
-                                                <td mat-cell *matCellDef="let element">
-                                                    <span class="question-text">{{ element.questionText }}</span>
-                                                </td>
-                                            </ng-container>
+                                                <ng-container matColumnDef="questionText">
+                                                    <th mat-header-cell *matHeaderCellDef>Sual</th>
+                                                    <td mat-cell *matCellDef="let element">
+                                                        <span class="question-text">{{ element.questionText }}</span>
+                                                    </td>
+                                                </ng-container>
 
-                                            <!-- Rəy -->
-                                            <ng-container matColumnDef="comment">
-                                                <th mat-header-cell *matHeaderCellDef> Rəy </th>
-                                                <td mat-cell *matCellDef="let element">
-                                                    <span *ngIf="element.comment; else noComment"
-                                                        class="comment-text">{{ element.comment }}</span>
-                                                    <ng-template #noComment>
-                                                        <span class="empty-dash">—</span>
-                                                    </ng-template>
-                                                </td>
-                                            </ng-container>
-
-                                            <!-- Media -->
-                                            <ng-container matColumnDef="media">
-                                                <th mat-header-cell *matHeaderCellDef class="col-media"> Media </th>
-                                                <td mat-cell *matCellDef="let element" class="col-media">
-                                                    <div class="media-actions" *ngIf="hasMedia(element); else noMedia">
-                                                        <app-media #mediaCompImg [id]="element.id"
-                                                            [type]="MediaType.Image" [module]="Module.Checklist">
-                                                            <button *ngIf="element.images > 0" type="button"
-                                                                class="media-btn" matTooltip="Şəkillərə bax"
-                                                                (click)="mediaCompImg.open()" media-trigger>
-                                                                <span class="material-symbols-outlined">image</span>
-                                                                <span class="media-btn__count">{{ element.images }}</span>
-                                                            </button>
-                                                        </app-media>
-                                                        <app-media #mediaCompVid [id]="element.id"
-                                                            [type]="MediaType.Video" [module]="Module.Checklist">
-                                                            <button *ngIf="element.videos > 0" type="button"
-                                                                class="media-btn" matTooltip="Videolara bax"
-                                                                (click)="mediaCompVid.open()" media-trigger>
-                                                                <span class="material-symbols-outlined">videocam</span>
-                                                                <span class="media-btn__count">{{ element.videos }}</span>
-                                                            </button>
-                                                        </app-media>
-                                                    </div>
-                                                    <ng-template #noMedia>
-                                                        <span class="empty-dash">—</span>
-                                                    </ng-template>
-                                                </td>
-                                            </ng-container>
-
-                                            <!-- Nəticə -->
-                                            <ng-container matColumnDef="result">
-                                                <th mat-header-cell *matHeaderCellDef class="col-result"> Nəticə </th>
-                                                <td mat-cell *matCellDef="let element" class="col-result">
-
-                                                    <!-- Bəli / Xeyr -->
-                                                    <ng-container *ngIf="element.questionTypeID === 1">
-                                                        @let answer = yesNoAnswer(element);
-                                                        <span class="answer-badge" [ngClass]="'answer-badge--' + answer">
-                                                            <span class="material-symbols-outlined">
-                                                                {{ answer === 'yes' ? 'check_circle' : answer === 'no' ? 'cancel' : 'remove' }}
-                                                            </span>
-                                                            {{ answer === 'yes' ? 'Bəli' : answer === 'no' ? 'Xeyr' : 'Cavab yoxdur' }}
-                                                        </span>
-                                                    </ng-container>
-
-                                                    <!-- Tək seçim (radio) -->
-                                                    <ng-container *ngIf="element.questionTypeID === 2">
-                                                        <div class="answer-chips">
-                                                            <span *ngFor="let ans of element.questionAnswers"
-                                                                class="answer-chip"
-                                                                [class.answer-chip--selected]="isAnswerSelected(element, ans.id)">
-                                                                {{ ans.answer }}
-                                                            </span>
-                                                        </div>
-                                                    </ng-container>
-
-                                                    <!-- Çox seçim (checkbox) -->
-                                                    <ng-container *ngIf="element.questionTypeID === 3">
-                                                        <div class="answer-chips">
-                                                            <span *ngFor="let ans of element.questionAnswers"
-                                                                class="answer-chip"
-                                                                [class.answer-chip--selected]="isAnswerSelected(element, ans.id)">
-                                                                <span *ngIf="isAnswerSelected(element, ans.id)"
-                                                                    class="material-symbols-outlined answer-chip__check">check</span>
-                                                                {{ ans.answer }}
-                                                            </span>
-                                                        </div>
-                                                    </ng-container>
-
-                                                    <!-- Mətn / Rəqəm -->
-                                                    <ng-container
-                                                        *ngIf="element.questionTypeID === 4 || element.questionTypeID === 5">
-                                                        <span *ngIf="element.result !== null && element.result !== undefined && element.result !== ''; else noResult"
-                                                            class="answer-text">{{ element.result }}</span>
-                                                        <ng-template #noResult>
+                                                <ng-container matColumnDef="comment">
+                                                    <th mat-header-cell *matHeaderCellDef>Rəy</th>
+                                                    <td mat-cell *matCellDef="let element">
+                                                        @if (element.comment) {
+                                                            <span class="comment-text">{{ element.comment }}</span>
+                                                        } @else {
                                                             <span class="empty-dash">—</span>
-                                                        </ng-template>
-                                                    </ng-container>
-                                                </td>
-                                            </ng-container>
+                                                        }
+                                                    </td>
+                                                </ng-container>
 
-                                            <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
-                                            <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
-                                        </table>
+                                                <ng-container matColumnDef="media">
+                                                    <th mat-header-cell *matHeaderCellDef class="col-media">Media</th>
+                                                    <td mat-cell *matCellDef="let element" class="col-media">
+                                                        @if (hasMedia(element)) {
+                                                            <div class="media-actions">
+                                                                <app-media #mediaImg [id]="element.id" [type]="MediaType.Image" [module]="Module.Checklist">
+                                                                    @if (element.images > 0) {
+                                                                        <button type="button" class="media-btn" media-trigger
+                                                                            matTooltip="Şəkillərə bax"
+                                                                            [attr.aria-label]="'Şəkillərə bax: ' + element.images"
+                                                                            (click)="mediaImg.open()">
+                                                                            <span class="material-symbols-outlined" aria-hidden="true">image</span>
+                                                                            <span class="media-btn__count">{{ element.images }}</span>
+                                                                        </button>
+                                                                    }
+                                                                </app-media>
+                                                                <app-media #mediaVid [id]="element.id" [type]="MediaType.Video" [module]="Module.Checklist">
+                                                                    @if (element.videos > 0) {
+                                                                        <button type="button" class="media-btn" media-trigger
+                                                                            matTooltip="Videolara bax"
+                                                                            [attr.aria-label]="'Videolara bax: ' + element.videos"
+                                                                            (click)="mediaVid.open()">
+                                                                            <span class="material-symbols-outlined" aria-hidden="true">videocam</span>
+                                                                            <span class="media-btn__count">{{ element.videos }}</span>
+                                                                        </button>
+                                                                    }
+                                                                </app-media>
+                                                            </div>
+                                                        } @else {
+                                                            <span class="empty-dash">—</span>
+                                                        }
+                                                    </td>
+                                                </ng-container>
+
+                                                <ng-container matColumnDef="result">
+                                                    <th mat-header-cell *matHeaderCellDef class="col-result">Nəticə</th>
+                                                    <td mat-cell *matCellDef="let element" class="col-result">
+                                                        <!-- 1 Bəli/Xeyr, 2 tək seçim, 3 çox seçim, 4 mətn, 5 rəqəm -->
+                                                        @switch (element.questionTypeID) {
+                                                            @case (1) {
+                                                                @let answer = yesNoAnswer(element);
+                                                                <span class="answer-badge" [ngClass]="'answer-badge--' + answer">
+                                                                    <span class="material-symbols-outlined" aria-hidden="true">
+                                                                        {{ answer === 'yes' ? 'check_circle' : answer === 'no' ? 'cancel' : 'remove' }}
+                                                                    </span>
+                                                                    {{ answer === 'yes' ? 'Bəli' : answer === 'no' ? 'Xeyr' : 'Cavab yoxdur' }}
+                                                                </span>
+                                                            }
+                                                            @case (2) {
+                                                                <div class="answer-chips">
+                                                                    @for (ans of element.questionAnswers; track ans.id) {
+                                                                        <span class="answer-chip"
+                                                                            [class.answer-chip--selected]="isAnswerSelected(element, ans.id)">
+                                                                            {{ ans.answer }}
+                                                                        </span>
+                                                                    }
+                                                                </div>
+                                                            }
+                                                            @case (3) {
+                                                                <div class="answer-chips">
+                                                                    @for (ans of element.questionAnswers; track ans.id) {
+                                                                        @let selected = isAnswerSelected(element, ans.id);
+                                                                        <span class="answer-chip" [class.answer-chip--selected]="selected">
+                                                                            @if (selected) {
+                                                                                <span class="material-symbols-outlined answer-chip__check" aria-hidden="true">check</span>
+                                                                            }
+                                                                            {{ ans.answer }}
+                                                                        </span>
+                                                                    }
+                                                                </div>
+                                                            }
+                                                            @default {
+                                                                @if (element.questionTypeID === 4 || element.questionTypeID === 5) {
+                                                                    @if (element.result !== null && element.result !== undefined && element.result !== '') {
+                                                                        <span class="answer-text">{{ element.result }}</span>
+                                                                    } @else {
+                                                                        <span class="empty-dash">—</span>
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    </td>
+                                                </ng-container>
+
+                                                <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
+                                                <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+                                            </table>
+                                        </div>
                                     </div>
-                                </div>
-                            </cdk-accordion-item>
+                                </cdk-accordion-item>
                             }
                         </cdk-accordion>
-                    </div>
-                    <app-audit-loading-overlay *ngIf="isLoading" title="Məlumatlar yüklənir"
-                        hint="Suallar hazırlanır…"></app-audit-loading-overlay>
+                    }
+                    @if (isLoading) {
+                        <app-audit-loading-overlay title="Suallar yüklənir" hint="Cavablar hazırlanır…" />
+                    }
                 </div>
-
             </mat-expansion-panel>
         </mat-accordion>
     </mat-card-content>

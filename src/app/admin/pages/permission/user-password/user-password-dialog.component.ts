@@ -1,10 +1,7 @@
 import { Component, Inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
-import { MatButtonModule } from '@angular/material/button';
 import { MatDialogModule, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { HttpErrorResponse } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
@@ -31,15 +28,7 @@ function passwordsMatchValidator(group: AbstractControl): ValidationErrors | nul
 @Component({
     selector: 'app-user-password-dialog',
     standalone: true,
-    imports: [
-        CommonModule,
-        ReactiveFormsModule,
-        MatDialogModule,
-        MatButtonModule,
-        MatFormFieldModule,
-        MatInputModule,
-        MatIconModule
-    ],
+    imports: [ReactiveFormsModule, MatDialogModule, MatFormFieldModule, MatInputModule],
     templateUrl: './user-password-dialog.component.html',
     styleUrl: './user-password-dialog.component.scss'
 })

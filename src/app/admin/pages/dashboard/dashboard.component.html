@@ -1,22 +1,13 @@
 <div class="adm-dash">
 
-  <!-- ─── Hero Banner ─────────────────────────────────────────────────────── -->
-  <div class="hero-banner">
-    <div class="hero-left">
-      <h1>Əsas səhifə</h1>
-      <p class="subtitle">Sistem idarəetmə və konfiqurasiya paneli</p>
-    </div>
-    <div class="hero-right">
-      <div class="hero-meta">
-        <span class="material-symbols-outlined">calendar_today</span>
-        <span>{{ todayLabel }}</span>
-      </div>
-      <div class="hero-meta">
-        <span class="material-symbols-outlined">people</span>
-        <span>{{ activeUsers }} aktiv istifadəçi</span>
-      </div>
-    </div>
-  </div>
+  <app-page-header subtitle="Sistem idarəetmə və konfiqurasiya paneli">
+    @if (!isLoadingStats) {
+      <span headerActions class="header-meta">
+        <span class="material-symbols-outlined" aria-hidden="true">people</span>
+        {{ activeUsers }} aktiv istifadəçi
+      </span>
+    }
+  </app-page-header>
 
   <!-- ─── KPI Cards ────────────────────────────────────────────────────────── -->
   <div class="kpi-row">

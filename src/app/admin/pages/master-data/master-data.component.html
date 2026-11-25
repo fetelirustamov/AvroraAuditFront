@@ -1,47 +1,50 @@
-<app-admin-breadcrumb
-    title="Audit strukturu"
-    [crumbs]="[{label: 'Sistem parametrləri'}, {label: 'Audit strukturu'}]">
-</app-admin-breadcrumb>
+<app-page-header subtitle="Firmanın şöbələri, kateqoriyaları və mağazaları" />
 
-<mat-card class="firm-context-card mb-16 border-radius d-block bg-white border-0 shadow-none">
-    <mat-card-content>
-        <mat-form-field class="firm-context-select">
-            <mat-label>Firma</mat-label>
-            <mat-select [(ngModel)]="selectedFirmId" (selectionChange)="onFirmChange()" [disabled]="isLoadingFirms">
-                <mat-option *ngFor="let f of firms" [value]="f.id">{{ f.name }}</mat-option>
-            </mat-select>
-        </mat-form-field>
-        <p class="firm-context-hint" *ngIf="!isLoadingFirms && firms.length === 0">
-            Heç bir firma tapılmadı. Əvvəlcə "Firmalar" səhifəsindən firma əlavə edin.
-        </p>
-    </mat-card-content>
-</mat-card>
+<section class="g-filter-card">
+    <div class="g-filter-grid">
+        <div class="g-filter-field">
+            <label class="g-field-label" id="master-firm-label">
+                <span class="material-symbols-outlined" aria-hidden="true">business</span>Firma
+            </label>
+            <mat-form-field appearance="outline" class="g-modern-field">
+                <mat-select aria-labelledby="master-firm-label" [value]="selectedFirmId"
+                    (selectionChange)="onFirmChange($event.value)" [disabled]="isLoadingFirms"
+                    placeholder="Firma seçin">
+                    @for (f of firms; track f.id) {
+                        <mat-option [value]="f.id">{{ f.name }}</mat-option>
+                    }
+                </mat-select>
+            </mat-form-field>
+        </div>
+    </div>
+</section>
 
-<ng-container *ngIf="selectedFirmId != null; else noFirmSelected">
-    <mat-tab-group class="master-data-tabs">
+@if (firmsError) {
+    <div class="table-card">
+        <app-list-state state="error" [errorMessage]="firmsError" (retry)="loadFirms()" />
+    </div>
+} @else if (selectedFirmId != null) {
+    <mat-tab-group [selectedIndex]="tabIndex" (selectedIndexChange)="onTabChange($event)" mat-stretch-tabs="false"
+        animationDuration="0ms">
         <mat-tab label="Şöbələr">
-            <div class="tab-content">
-                <app-sections [showBreadcrumb]="false" [firmId]="selectedFirmId"></app-sections>
-            </div>
+            <ng-template matTabContent>
+                <app-sections [firmId]="selectedFirmId" />
+            </ng-template>
         </mat-tab>
-
         <mat-tab label="Kateqoriyalar">
-            <div class="tab-content">
-                <app-categories [showBreadcrumb]="false" [firmId]="selectedFirmId"></app-categories>
-            </div>
+            <ng-template matTabContent>
+                <app-categories [firmId]="selectedFirmId" />
+            </ng-template>
         </mat-tab>
-
         <mat-tab label="Mağazalar">
-            <div class="tab-content">
-                <app-locations [firmId]="selectedFirmId"></app-locations>
-            </div>
+            <ng-template matTabContent>
+                <app-locations [firmId]="selectedFirmId" />
+            </ng-template>
         </mat-tab>
     </mat-tab-group>
-</ng-container>
-
-<ng-template #noFirmSelected>
-    <div class="no-firm-selected" *ngIf="!isLoadingFirms">
-        <span class="material-symbols-outlined">domain</span>
-        <p>Davam etmək üçün yuxarıdan bir firma seçin</p>
+} @else if (!isLoadingFirms) {
+    <div class="table-card">
+        <app-list-state state="idle"
+            [message]="firms.length ? 'Davam etmək üçün firma seçin' : 'Hələ firma yoxdur. Əvvəlcə «Firmalar» səhifəsində firma əlavə edin.'" />
     </div>
-</ng-template>
+}

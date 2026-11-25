@@ -126,6 +126,34 @@
 
 ## Mərhələ 2 — Ortaq komponentlər və nümunələr
 
+> **Status (2026-11-25): tamamlandı.**
+>
+> - **Ortaq bloklar:** `app-page-header`, `AppTitleStrategy`, `status-meta` / `status-actions` / `app-status-chip`, `ConfirmDialogService` (`tone`, `items`, `reason`), `app-list-state`, `appDate`, `query-state`. Bildirişlərdə xəta bağlanana qədər qalır.
+> - **Lokal və tarix:** `LOCALE_ID` `az`-dır. `AzDateAdapter` `dd.MM.yyyy` yazır və oxuyur.
+> - **Çərçivə:** tək `ShellComponent` var. Aktiv bənd detal səhifələrində də seçili qalır, rail seçimi yadda saxlanır. Drawer backdrop, Esc və fokus tələsi ilə işləyir. Profil menyusunda "Admin paneli ↔ Tətbiq" keçidi var.
+> - **Ekranlar:** bütün ekranlar köçürüldü. Hər səhifənin başlığı var, statuslar chip ilə göstərilir, təsdiq dialoqu təsir olunan qeydləri sadalayır. Əl ilə yazılmış popup-lar `MatDialog`-a keçdi. Siyahılarda üç vəziyyət var. Filtr və səhifə URL-də saxlanır. Snapshot keşləri və router state silindi.
+> - **İzləmə:** "N gündür" və "N gün gecikir" göstərilir.
+> - **Hesabatlar** `g-filter` sisteminə keçdi.
+> - **Mağaza profili:** faiz və say ayrı qrafiklərdə göstərilir.
+> - **Admin:**
+>   - CRUD vahid qaydaya düşdü.
+>   - İstifadəçi yaratma bir axındır, "Rol və firma təyinatı" bəndi silindi.
+>   - İcazə matrisində tətbiq olunmayan sütunlar işarələndi.
+>   - Suallar "Şöbə › Kateqoriya" yolu ilə göstərilir.
+> - **Testlər:** 61/61 unit test keçir.
+>
+> **Deploy-dan əvvəl:**
+> - `user-roles` səhifə açarı menyudan çıxdı. Bazada yalnız ona icazəsi olan qruplara `users` icazəsi verilməlidir (`tools/seed-admin-pages.sql`).
+>
+> **Qalanlar (Mərhələ 3):**
+> - Plan, yoxlama və uyğunsuzluq rəddi üçün səbəb sahəsi. Backend və baza dəyişikliyi tələb edir.
+> - Müfəttiş təsdiqində firmasız öz növbəsi. Backend endpoint-i lazımdır.
+> - İzləmədə `stageSince` üzrə sıralama, ↑/↓ keçid və paneldə təsdiq/rədd.
+> - Profildə "gecikən" KPI-ı.
+> - Üç plan təsdiqi ekranını bir komponentdə birləşdirmək.
+> - Admin filtrlərində select oxunun çərçivədən çıxması.
+> - Progress bar yerinin vahid sinfə salınması.
+
 1. **`PageHeader` + `TitleStrategy` + breadcrumb.** Hamısı `data.menu.title`-dan oxuyur. Brauzer tabının adı: "Səhifə · Audit". Bu komponent üç başlıq üslubunu birləşdirir: qradient başlıq, admin breadcrumb və hero-banner.
 2. **Status modeli.** `shared/utils/status-transitions.ts` faylında hər keçid üçün fel, ikon, ton, `requiresReason` və `confirm` qeyd olunur. Bir `status-chip` komponenti yazılır. Etiket statusu "növbə kimdədir" formasında deyir, məsələn "Baş müfəttiş onayında". "Müfəttiş onaylayıb" kimi yazılmır.
 3. **Ortaq təsdiq dialoqu.** `shared/`-də yerləşir və `danger` variantı olur. Dialoq neçə qeydə və hansı mağazalara təsir etdiyini göstərir. Rədd et, Mobilə qaytar və Yenidən aç üçün səbəb sahəsi məcburidir. İlkin fokus "Ləğv et" düyməsində olur. Əl ilə yazılmış popup-lar `MatDialog`-a köçürülür: `answer-details`, `answer-approve-details`, `disruption-middle-details`.

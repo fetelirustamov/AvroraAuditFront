@@ -1,24 +1,22 @@
 @if (disruptionId()) {
     <div class="panel-backdrop" (click)="closed.emit()" aria-hidden="true"></div>
-    <aside class="panel" role="dialog" aria-modal="true" aria-label="Uyğunsuzluq detalları">
+    <aside class="panel" role="dialog" aria-modal="true" aria-label="Uyğunsuzluq detalları"
+           cdkTrapFocus [cdkTrapFocusAutoCapture]="true">
         <header class="panel-head">
             <div class="head-top">
-                <span class="disruption-id">#{{ disruptionId() }}</span>
+                <span class="disruption-id mono">#{{ disruptionId() }}</span>
                 @if (detail) {
                     @let meta = stageMeta(detail.header.stageCode);
-                    <span class="status-chip stage-chip" [class]="meta.tone">
-                        <span class="material-symbols-outlined">{{ meta.icon }}</span>
-                        {{ meta.label }}
-                    </span>
-                    @if (detail.header.isOverdue) {
+                    <app-status-chip [tone]="meta.tone" [label]="meta.label" [icon]="meta.icon" />
+                    @if (overdue) {
                         <span class="overdue-flag">
-                            <span class="material-symbols-outlined">schedule</span>
-                            Gecikir
+                            <span class="material-symbols-outlined" aria-hidden="true">schedule</span>
+                            {{ overdue }}
                         </span>
                     }
                 }
                 <button type="button" class="action-btn close-btn" (click)="closed.emit()" aria-label="Bağla">
-                    <span class="material-symbols-outlined">close</span>
+                    <span class="material-symbols-outlined" aria-hidden="true">close</span>
                 </button>
             </div>
             @if (detail) {
@@ -38,10 +36,7 @@
                     Yüklənir…
                 </div>
             } @else if (loadError) {
-                <div class="panel-state is-error">
-                    <span class="material-symbols-outlined">error</span>
-                    Detallar yüklənmədi və ya bu uyğunsuzluğa baxmaq icazəniz yoxdur.
-                </div>
+                <app-list-state state="error" [errorMessage]="loadError" (retry)="reload()" />
             } @else if (detail) {
                 @let h = detail.header;
 
@@ -53,8 +48,9 @@
                         <span class="holder-role">{{ holder.role }}</span>
                         @if (h.stageSince) {
                             <span class="holder-since">
-                                <span class="material-symbols-outlined">hourglass_top</span>
-                                {{ date(h.stageSince) | date:'dd.MM.yyyy HH:mm':tz }} tarixindən
+                                <span class="material-symbols-outlined" aria-hidden="true">hourglass_top</span>
+                                {{ h.stageSince | appDate:'datetime' }} tarixindən
+                                @if (stageAge) { <span class="dot-sep">·</span> {{ stageAge }} }
                             </span>
                         }
                     } @else {
@@ -69,17 +65,17 @@
                     <dl class="info-grid">
                         <div><dt>Firma</dt><dd>{{ h.firmName || '—' }}</dd></div>
                         <div><dt>Plan</dt><dd>#{{ h.inspectionPlanId }}
-                            @if (h.planStartDate) { <small>{{ date(h.planStartDate) | date:'dd.MM.yyyy':tz }}</small> }
+                            @if (h.planStartDate) { <small>{{ h.planStartDate | appDate }}</small> }
                         </dd></div>
                         <div><dt>Şöbə</dt><dd>{{ h.sectionName || '—' }}</dd></div>
                         <div><dt>Kateqoriya</dt><dd>{{ h.disruptionCategoryName || '—' }}</dd></div>
                         <div><dt>Müfəttiş</dt><dd>{{ h.inspectorName || '—' }}</dd></div>
-                        <div><dt>Yaradılma</dt><dd>{{ date(h.createdDate) | date:'dd.MM.yyyy HH:mm':tz }}</dd></div>
+                        <div><dt>Yaradılma</dt><dd>{{ h.createdDate | appDate:'datetime' }}</dd></div>
                         <div>
                             <dt>Son tarix</dt>
                             <dd [class.is-overdue]="h.isOverdue">
                                 @if (h.deadlineDate) {
-                                    {{ date(h.deadlineDate) | date:'dd.MM.yyyy':tz }}
+                                    {{ h.deadlineDate | appDate }}
                                     <small>{{ h.deadlineDays }} gün</small>
                                 } @else { — }
                             </dd>
@@ -96,21 +92,21 @@
                             <app-media #img [id]="h.disruptionId" [type]="MediaType.Image" [module]="Module.Disruption">
                                 @if (h.image) {
                                     <button type="button" class="media-pill" (click)="img.open()" media-trigger>
-                                        <span class="material-symbols-outlined">image</span>{{ h.image }} şəkil
+                                        <span class="material-symbols-outlined" aria-hidden="true">image</span>{{ h.image }} şəkil
                                     </button>
                                 }
                             </app-media>
                             <app-media #vid [id]="h.disruptionId" [type]="MediaType.Video" [module]="Module.Disruption">
                                 @if (h.video) {
                                     <button type="button" class="media-pill" (click)="vid.open()" media-trigger>
-                                        <span class="material-symbols-outlined">videocam</span>{{ h.video }} video
+                                        <span class="material-symbols-outlined" aria-hidden="true">videocam</span>{{ h.video }} video
                                     </button>
                                 }
                             </app-media>
                             <app-media #doc [id]="h.disruptionId" [type]="MediaType.Document" [module]="Module.Disruption">
                                 @if (h.document) {
                                     <button type="button" class="media-pill" (click)="doc.open()" media-trigger>
-                                        <span class="material-symbols-outlined">description</span>{{ h.document }} sənəd
+                                        <span class="material-symbols-outlined" aria-hidden="true">description</span>{{ h.document }} sənəd
                                     </button>
                                 }
                             </app-media>
@@ -126,18 +122,18 @@
                             <li class="tl-node" [attr.data-state]="node.state">
                                 <span class="tl-marker" aria-hidden="true">
                                     @switch (node.state) {
-                                        @case ('done') { <span class="material-symbols-outlined">check</span> }
-                                        @case ('current') { <span class="material-symbols-outlined">more_horiz</span> }
-                                        @case ('returned') { <span class="material-symbols-outlined">undo</span> }
-                                        @case ('rejected') { <span class="material-symbols-outlined">close</span> }
-                                        @case ('skipped') { <span class="material-symbols-outlined">remove</span> }
+                                        @case ('done') { <span class="material-symbols-outlined" aria-hidden="true">check</span> }
+                                        @case ('current') { <span class="material-symbols-outlined" aria-hidden="true">more_horiz</span> }
+                                        @case ('returned') { <span class="material-symbols-outlined" aria-hidden="true">undo</span> }
+                                        @case ('rejected') { <span class="material-symbols-outlined" aria-hidden="true">close</span> }
+                                        @case ('skipped') { <span class="material-symbols-outlined" aria-hidden="true">remove</span> }
                                     }
                                 </span>
                                 <div class="tl-content">
                                     <div class="tl-head">
                                         <span class="tl-title">{{ node.title }}</span>
                                         @if (node.date) {
-                                            <span class="tl-date">{{ date(node.date) | date:'dd.MM.yyyy HH:mm':tz }}</span>
+                                            <span class="tl-date">{{ node.date | appDate:'datetime' }}</span>
                                         }
                                     </div>
                                     <span class="tl-sub">{{ node.subtitle }}</span>
@@ -152,7 +148,7 @@
                                         <div class="tl-entry">
                                             <div class="entry-head">
                                                 <span class="entry-who">{{ e.who }}</span>
-                                                <span class="status-chip" [class]="e.verdictTone">{{ e.verdict }}</span>
+                                                <app-status-chip [tone]="e.verdictTone" [label]="e.verdict" />
                                             </div>
                                             @if (e.onBehalfOf) {
                                                 <span class="entry-behalf">{{ e.onBehalfOf }} adından</span>
@@ -162,25 +158,25 @@
                                                 <p class="entry-note is-return"><b>Qaytarma səbəbi:</b> {{ e.returnReason }}</p>
                                             }
                                             <div class="entry-foot">
-                                                @if (e.date) { <span>{{ date(e.date) | date:'dd.MM.yyyy HH:mm':tz }}</span> }
+                                                @if (e.date) { <span>{{ e.date | appDate:'datetime' }}</span> }
                                                 <app-media #aImg [id]="e.answerId" [type]="MediaType.Image" [module]="Module.DisAnswer">
                                                     @if (e.image) {
-                                                        <button type="button" class="media-pill is-small" (click)="aImg.open()" media-trigger>
-                                                            <span class="material-symbols-outlined">image</span>{{ e.image }}
+                                                        <button type="button" class="media-pill is-small" (click)="aImg.open()" media-trigger [attr.aria-label]="'Cavab şəkillərinə bax: ' + e.image">
+                                                            <span class="material-symbols-outlined" aria-hidden="true">image</span>{{ e.image }}
                                                         </button>
                                                     }
                                                 </app-media>
                                                 <app-media #aVid [id]="e.answerId" [type]="MediaType.Video" [module]="Module.DisAnswer">
                                                     @if (e.video) {
-                                                        <button type="button" class="media-pill is-small" (click)="aVid.open()" media-trigger>
-                                                            <span class="material-symbols-outlined">videocam</span>{{ e.video }}
+                                                        <button type="button" class="media-pill is-small" (click)="aVid.open()" media-trigger [attr.aria-label]="'Cavab videolarına bax: ' + e.video">
+                                                            <span class="material-symbols-outlined" aria-hidden="true">videocam</span>{{ e.video }}
                                                         </button>
                                                     }
                                                 </app-media>
                                                 <app-media #aDoc [id]="e.answerId" [type]="MediaType.Document" [module]="Module.DisAnswer">
                                                     @if (e.document) {
-                                                        <button type="button" class="media-pill is-small" (click)="aDoc.open()" media-trigger>
-                                                            <span class="material-symbols-outlined">description</span>{{ e.document }}
+                                                        <button type="button" class="media-pill is-small" (click)="aDoc.open()" media-trigger [attr.aria-label]="'Cavab sənədlərinə bax: ' + e.document">
+                                                            <span class="material-symbols-outlined" aria-hidden="true">description</span>{{ e.document }}
                                                         </button>
                                                     }
                                                 </app-media>

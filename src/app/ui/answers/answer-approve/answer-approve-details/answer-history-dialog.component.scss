@@ -1,0 +1,61 @@
+// Media düymələri (`.media-btn`) yoxlama detalındakı bölmə panelləri ilə eynidir.
+@use '../../../components/section-panel' as *;
+
+.dialog-title {
+    font-size: var(--fs-16);
+    font-weight: 600;
+    color: var(--text-strong);
+}
+
+.dialog-body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+}
+
+.disruption-summary {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-3) var(--space-4);
+    margin: 0;
+    padding: var(--space-3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--surface-muted);
+
+    .is-wide {
+        grid-column: 1 / -1;
+    }
+
+    dt {
+        font-size: var(--fs-12);
+        color: var(--text-muted);
+    }
+
+    dd {
+        margin: 2px 0 0;
+        font-size: var(--fs-13);
+        color: var(--text);
+        overflow-wrap: anywhere;
+        white-space: pre-line;
+    }
+}
+
+.table-progress {
+    height: 4px;
+}
+
+.num {
+    font-variant-numeric: tabular-nums;
+}
+
+// Cavab mətni uzun ola bilər: sətirə sığmayanda qırılır
+.history-table td.note-cell {
+    min-width: 220px;
+    white-space: pre-line;
+    overflow-wrap: anywhere;
+}
+
+.dialog-actions {
+    justify-content: flex-end;
+}

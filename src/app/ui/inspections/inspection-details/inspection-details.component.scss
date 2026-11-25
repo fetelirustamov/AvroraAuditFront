@@ -1,48 +1,14 @@
-/* Compact top header for back button */
-.details-header {
+.header-actions {
     display: flex;
-    justify-content: flex-end;
-    align-items: center;
-    gap: 12px;
     flex-wrap: wrap;
-    padding: 8px 0;
-}
-
-/* Təsdiq gözləyən yoxlamada qərar düymələri — Geri düyməsinin solunda */
-.decision-bar {
-    display: flex;
     align-items: center;
-    gap: 10px;
-    flex-wrap: wrap;
-    margin-right: auto;
+    gap: var(--space-2);
 }
 
-.decision-text {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--warning-text);
-
-    .material-symbols-outlined {
-        font-size: 18px;
-    }
+.details-tabs {
+    margin-top: var(--space-5);
 }
 
-.g-approve-btn:disabled,
-.g-reject-btn:disabled {
-    opacity: .5;
-    cursor: not-allowed;
-    transform: none;
-}
-
-.back-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.mr-5 {
-    margin-right: 5px;
+.tab-body {
+    padding: var(--space-4);
 }

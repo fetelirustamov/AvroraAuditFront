@@ -1,13 +1,3 @@
-/* Styles scoped to firms list */
-.firms-card {
-    .add-btn {
-        i {
-            vertical-align: middle;
-            margin-right: 6px;
-        }
-    }
-}
+@use '../../shared/admin';
 
-.table-responsive {
-    overflow-x: auto;
-}
+@include admin.list-page;

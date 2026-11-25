@@ -1,39 +1,29 @@
 <div class="ls-page">
 
-    <!-- ── Header ───────────────────────────────────────────────────────────── -->
-    <div class="report-page-header ls-header">
-        <div class="header-content">
-            <div class="header-text">
-                <h1 class="page-title">
-                    <span class="material-symbols-outlined title-icon">account_tree</span>
-                    Ərazi Bağlantıları
-                </h1>
-                <p class="page-subtitle">Təşkilati struktur — Direktor › Satış müdiri › Mağaza müdiri › mağazalar</p>
-            </div>
-            <div class="header-actions">
-                <button type="button" class="export-btn solid" *ngIf="hasNetwork" (click)="startNewBinding()">
-                    <span class="material-symbols-outlined" aria-hidden="true">add_link</span>
-                    Yeni bağlantı
-                </button>
-                <button type="button" class="export-btn ghost" (click)="toggleImport()">
-                    <span class="material-symbols-outlined" aria-hidden="true">upload_file</span>
-                    Excel idxal
-                </button>
-                <button type="button" class="export-btn" [matMenuTriggerFor]="tplMenu">
-                    <span class="material-symbols-outlined" aria-hidden="true">download</span>
-                    Şablon / İxrac
-                    <span class="material-symbols-outlined arrow-icon" aria-hidden="true">expand_more</span>
-                </button>
-            </div>
-        </div>
-    </div>
+    <app-page-header subtitle="Təşkilati struktur: Direktor › Satış müdiri › Mağaza müdiri › mağazalar">
+        <button headerActions type="button" class="g-export-btn" [matMenuTriggerFor]="tplMenu">
+            <span class="material-symbols-outlined" aria-hidden="true">download</span>
+            Şablon / İxrac
+            <span class="material-symbols-outlined g-arrow" aria-hidden="true">expand_more</span>
+        </button>
+        <button headerActions type="button" class="g-secondary-btn" (click)="toggleImport()" [attr.aria-expanded]="showImport">
+            <span class="material-symbols-outlined" aria-hidden="true">upload_file</span>
+            Excel idxal
+        </button>
+        @if (hasNetwork) {
+            <button headerActions type="button" class="g-search-btn" (click)="startNewBinding()">
+                <span class="material-symbols-outlined" aria-hidden="true">add_link</span>
+                Yeni bağlantı
+            </button>
+        }
+    </app-page-header>
 
-    <mat-menu #tplMenu="matMenu" class="modern-menu">
+    <mat-menu #tplMenu="matMenu">
         <button mat-menu-item (click)="downloadTemplate()">
-            <span class="material-symbols-outlined menu-icon">description</span><span>Boş şablon (.xlsx)</span>
+            <span class="material-symbols-outlined menu-icon" aria-hidden="true">description</span><span>Boş şablon (.xlsx)</span>
         </button>
         <button mat-menu-item (click)="exportCurrentStructure()" [disabled]="!hasNetwork">
-            <span class="material-symbols-outlined menu-icon">table_chart</span><span>Strukturu ixrac et</span>
+            <span class="material-symbols-outlined menu-icon" aria-hidden="true">table_chart</span><span>Strukturu ixrac et</span>
         </button>
     </mat-menu>
 
@@ -44,9 +34,10 @@
             <section class="g-filter-card ls-toolbar">
                 <div class="g-filter-grid">
                     <div class="g-filter-field">
-                        <label class="g-field-label"><span class="material-symbols-outlined">business</span>Firma</label>
+                        <label class="g-field-label" id="ls-firm-label"><span class="material-symbols-outlined" aria-hidden="true">business</span>Firma</label>
                         <mat-form-field appearance="outline" class="g-modern-field">
                             <mat-select [(ngModel)]="selectedNetwork" (selectionChange)="onNetworkChange($event.value)"
+                                aria-labelledby="ls-firm-label"
                                 [disabled]="isLoadingFirms" placeholder="Firma seçin">
                                 <mat-option *ngFor="let n of marketNetworks" [value]="n">{{ n.name }}</mat-option>
                             </mat-select>
@@ -54,10 +45,11 @@
                     </div>
 
                     <div class="g-filter-field-wide" *ngIf="hasNetwork">
-                        <label class="g-field-label"><span class="material-symbols-outlined">search</span>Axtarış</label>
+                        <label class="g-field-label" for="ls-search"><span class="material-symbols-outlined" aria-hidden="true">search</span>Axtarış</label>
                         <mat-form-field appearance="outline" class="g-modern-field">
                             <span matPrefix class="material-symbols-outlined field-pre" aria-hidden="true">search</span>
-                            <input matInput type="text" [(ngModel)]="search" placeholder="Ad, sicil və ya mağaza kodu">
+                            <input id="ls-search" matInput type="text" [ngModel]="search" (ngModelChange)="onSearchChange($event)"
+                                placeholder="Ad, sicil və ya mağaza kodu">
                             <button matSuffix type="button" class="field-clear" *ngIf="search" (click)="clearSearch()"
                                 matTooltip="Təmizlə" aria-label="Axtarışı təmizlə">
                                 <span class="material-symbols-outlined" aria-hidden="true">close</span>

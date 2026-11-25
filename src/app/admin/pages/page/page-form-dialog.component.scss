@@ -1,0 +1,7 @@
+@use '../../shared/admin';
+
+@include admin.form-dialog;
+
+.field-note {
+    margin-top: var(--space-4);
+}

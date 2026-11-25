@@ -1,16 +1,17 @@
 import { Routes } from '@angular/router';
 import { DashboardComponent } from './pages/dashboard/dashboard.component'; // standalone
-import { PermissionComponent } from './pages/permission/permission.component';
 
 // Shell komponentini import etmir: admin.routes.ts bu massivi shell-ə uşaq kimi verir,
 // shell menyunu öz route-unun `children`-indən qurur.
+// Səhifə adı menyu bəndlərində `data.menu.title`-dan, menyusuz səhifələrdə (əlavə, redaktə)
+// route-un `title`-ından gəlir: brauzer tabı və <app-page-header> eyni adı göstərir.
+// Menyusuz alt səhifələr öz siyahısının yolunun altındadır, ona görə menyuda siyahı aktiv qalır.
 export const adminPageRoutes: Routes = [
     { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
     {
         path: 'dashboard',
         component: DashboardComponent,
         data: {
-            title: 'Əsas səhifə',
             menu: {
                 area: 'admin', section: 'Əsas', order: 0,
                 title: 'Əsas səhifə', icon: 'dashboard', pageKey: 'admin-dashboard'
@@ -20,8 +21,6 @@ export const adminPageRoutes: Routes = [
 
     {
         path: 'permissions',
-        component: PermissionComponent,
-        data: { title: 'İstifadəçilər' },
         children: [
             { path: '', redirectTo: 'structure', pathMatch: 'full' },
             {
@@ -29,11 +28,10 @@ export const adminPageRoutes: Routes = [
                 loadComponent: () => import('./pages/permission/location-structure/location-structure.component')
                     .then(m => m.LocationStructureComponent),
                 data: {
-                    title: 'Ərazi Bağlantıları',
                     menu: {
                         area: 'admin', section: 'İstifadəçi idarəetməsi', order: 13,
                         group: 'İstifadəçilər və icazələr', groupIcon: 'inbox_text_person', groupOrder: 10,
-                        title: 'Ərazi Bağlantıları', pageKey: 'location-structure'
+                        title: 'Ərazi bağlantıları', pageKey: 'location-structure'
                     }
                 }
             },
@@ -42,7 +40,6 @@ export const adminPageRoutes: Routes = [
                 loadComponent: () => import('./pages/permission/user-permission/user-permission.component')
                     .then(m => m.UserPermissionComponent),
                 data: {
-                    title: 'İstifadəçilər',
                     menu: {
                         area: 'admin', section: 'İstifadəçi idarəetməsi', order: 10,
                         group: 'İstifadəçilər və icazələr', groupIcon: 'inbox_text_person', groupOrder: 10,
@@ -51,11 +48,17 @@ export const adminPageRoutes: Routes = [
                 }
             },
             {
+                // İstifadəçi redaktəsi: şəxsi məlumatlar, status, firmalar, icazə qrupu, parol
+                path: 'user-permission/:userCode',
+                title: 'İstifadəçi redaktəsi',
+                loadComponent: () => import('./pages/permission/user-add/user-add.component')
+                    .then(m => m.UserAddComponent)
+            },
+            {
                 path: 'permission-groups',
                 loadComponent: () => import('./pages/permission/permission-groups/permission-groups.component')
                     .then(m => m.PermissionGroupsComponent),
                 data: {
-                    title: 'İcazə qrupları',
                     menu: {
                         area: 'admin', section: 'İstifadəçi idarəetməsi', order: 12,
                         group: 'İstifadəçilər və icazələr', groupIcon: 'inbox_text_person', groupOrder: 10,
@@ -65,49 +68,29 @@ export const adminPageRoutes: Routes = [
             },
             {
                 path: 'permission-groups/add',
+                title: 'Yeni icazə qrupu',
                 loadComponent: () => import('./pages/permission/permission-groups/groups-add/groups-add.component')
-                    .then(m => m.GroupsAddComponent),
-                data: { title: 'Yeni qrup' }
+                    .then(m => m.GroupsAddComponent)
             },
             {
                 path: 'permission-groups/edit/:id',
+                title: 'İcazə qrupu redaktəsi',
                 loadComponent: () => import('./pages/permission/permission-groups/groups-add/groups-add.component')
-                    .then(m => m.GroupsAddComponent),
-                data: { title: 'Qrup redaktəsi' }
+                    .then(m => m.GroupsAddComponent)
             },
             {
                 path: 'permission-groups/view/:id',
+                title: 'İcazə qrupu',
                 loadComponent: () => import('./pages/permission/permission-groups/groups-add/groups-add.component')
-                    .then(m => m.GroupsAddComponent),
-                data: { title: 'Qrup detalları' }
-            },
-            {
-                path: 'user-add',
-                loadComponent: () => import('./pages/permission/user-add/user-add.component')
-                    .then(m => m.UserAddComponent),
-                data: {
-                    title: 'Rol və firma təyinatı',
-                    menu: {
-                        area: 'admin', section: 'İstifadəçi idarəetməsi', order: 11,
-                        group: 'İstifadəçilər və icazələr', groupIcon: 'inbox_text_person', groupOrder: 10,
-                        title: 'Rol və firma təyinatı', pageKey: 'user-roles'
-                    }
-                }
-            },
-            {
-                path: 'user-create',
-                redirectTo: 'user-permission',
-                pathMatch: 'full'
+                    .then(m => m.GroupsAddComponent)
             }
         ]
-
     },
     {
         path: 'questions',
         loadComponent: () => import('./pages/questions/questions.component')
             .then(m => m.QuestionsComponent),
         data: {
-            title: 'Suallar',
             menu: {
                 area: 'admin', section: 'Sistem parametrləri', order: 21,
                 group: 'Əsas məlumatlar', groupIcon: 'settings', groupOrder: 20,
@@ -117,28 +100,27 @@ export const adminPageRoutes: Routes = [
     },
     {
         path: 'questions/add',
+        title: 'Yeni sual',
         loadComponent: () => import('./pages/questions/add/question-add.component')
-            .then(m => m.QuestionAddComponent),
-        data: { title: 'Yeni sual' }
+            .then(m => m.QuestionAddComponent)
     },
     {
         path: 'questions/edit/:id',
+        title: 'Sual redaktəsi',
         loadComponent: () => import('./pages/questions/add/question-add.component')
-            .then(m => m.QuestionAddComponent),
-        data: { title: 'Sual redaktəsi' }
+            .then(m => m.QuestionAddComponent)
     },
     {
         path: 'questions/view/:id',
+        title: 'Sual',
         loadComponent: () => import('./pages/questions/add/question-add.component')
-            .then(m => m.QuestionAddComponent),
-        data: { title: 'Sual detalları' }
+            .then(m => m.QuestionAddComponent)
     },
     {
         path: 'master-data',
         loadComponent: () => import('./pages/master-data/master-data.component')
             .then(m => m.MasterDataComponent),
         data: {
-            title: 'Audit strukturu',
             menu: {
                 area: 'admin', section: 'Sistem parametrləri', order: 20,
                 group: 'Əsas məlumatlar', groupIcon: 'settings', groupOrder: 20,
@@ -147,26 +129,10 @@ export const adminPageRoutes: Routes = [
         }
     },
     {
-        path: 'categories',
-        redirectTo: 'master-data',
-        pathMatch: 'full'
-    },
-    {
-        path: 'locations',
-        redirectTo: 'master-data',
-        pathMatch: 'full'
-    },
-    {
-        path: 'sections',
-        redirectTo: 'master-data',
-        pathMatch: 'full'
-    },
-    {
         path: 'pages',
         loadComponent: () => import('./pages/page/page.component')
             .then(m => m.PageComponent),
         data: {
-            title: 'Səhifələr',
             menu: {
                 area: 'admin', section: 'Sistem parametrləri', order: 23,
                 group: 'Əsas məlumatlar', groupIcon: 'settings', groupOrder: 20,
@@ -179,7 +145,6 @@ export const adminPageRoutes: Routes = [
         loadComponent: () => import('./pages/firms/firms.component')
             .then(m => m.FirmsComponent),
         data: {
-            title: 'Firmalar',
             menu: {
                 area: 'admin', section: 'Sistem parametrləri', order: 22,
                 group: 'Əsas məlumatlar', groupIcon: 'settings', groupOrder: 20,
@@ -187,5 +152,4 @@ export const adminPageRoutes: Routes = [
             }
         }
     }
-    // digər admin routelar buraya əlavə oluna bilər
 ];

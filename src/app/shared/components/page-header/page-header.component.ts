@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink, UrlTree } from '@angular/router';
 import { routePageTitle } from '../../../core/app-title.strategy';
 
 /**
@@ -31,8 +31,11 @@ export class PageHeaderComponent {
     readonly subtitle = input<string>();
     /** Başlığın solundakı Material Symbols ikonu (adı). */
     readonly icon = input<string>();
-    /** Geri linki (`routerLink` dəyəri). Verilməsə link göstərilmir. */
-    readonly backLink = input<string | unknown[]>();
+    /**
+     * Geri linki (`routerLink` dəyəri). Verilməsə link göstərilmir.
+     * Filtrli siyahıya qayıtmaq üçün `UrlTree` ver (query parametrləri ilə).
+     */
+    readonly backLink = input<string | unknown[] | UrlTree>();
     /** Geri linkinin mətni. Standart: "Siyahıya qayıt". */
     readonly backLabel = input<string>();
 

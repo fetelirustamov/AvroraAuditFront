@@ -1,27 +1,3 @@
-/* Styles scoped to categories list */
-.categories-card {
-    .add-btn {
-        i {
-            vertical-align: middle;
-            margin-right: 6px;
-        }
-    }
-}
+@use '../../shared/admin';
 
-.table-responsive {
-    overflow-x: auto;
-}
-.section-filter {
-    width: 260px !important;
-    min-width: 260px;
-    flex: 0 0 260px;
-    margin-bottom: -0.25em;
-}
-
-@media (max-width: 768px) {
-    .section-filter {
-        width: 100%;
-        min-width: 100%;
-        margin-bottom: 0;
-    }
-}
+@include admin.list-page;

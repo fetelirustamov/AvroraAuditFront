@@ -1,6 +1,7 @@
-import { AfterViewInit, Component, ElementRef, NgZone, OnDestroy, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, NgZone, OnDestroy, ViewChild, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
 import { MatSelectModule } from '@angular/material/select';
 import { FullCalendarComponent, FullCalendarModule } from '@fullcalendar/angular';
 import {
@@ -18,7 +19,10 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import listPlugin from '@fullcalendar/list';
 import { NotificationService } from '../../../shared/services/notification.service';
 import { isoDateAddDays, toBakuDisplay, toBakuWallClock } from '../../../shared/utils/date.util';
-import { PLAN_STATUS_LABELS, planStatusLabel } from '../../../shared/status/status-meta';
+import { StatusTone, planStatusMeta } from '../../../shared/status/status-meta';
+import { StatusChipComponent } from '../../../shared/status/status-chip.component';
+import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
+import { queryNumber, queryString, writeQueryState } from '../../../shared/utils/query-state';
 import { TableState } from '../../../models/table-state.model';
 import { AuditLoadingOverlayComponent } from '../../components/audit-loading-overlay/audit-loading-overlay.component';
 import { TableService } from '../../services/table.service';
@@ -31,6 +35,24 @@ interface PlanStatusOption {
   color: string;
   tint: string;
   text: string;
+}
+
+/** Təqvimdə göstərilən plan statusları (DB-də real olan kodlar). */
+const PLAN_STATUS_CODES = [1, 2, 3, 4, 5, -1];
+
+/**
+ * Status tonunun təqvim rəngləri. Etiket və ton status-meta.ts-dən gəlir: təqvim, chip və
+ * cədvəllər eyni statusu eyni rənglə göstərir. Rənglər DOM-un inline stilinə yazılır, ona görə token-dir.
+ */
+function statusOption(value: number): PlanStatusOption {
+  const meta = planStatusMeta(value);
+  return { value, label: meta.label, ...toneColors(meta.tone) };
+}
+
+function toneColors(tone: StatusTone): Pick<PlanStatusOption, 'color' | 'tint' | 'text'> {
+  return tone === 'neutral'
+    ? { color: 'var(--gray-400)', tint: 'var(--surface-subtle)', text: 'var(--text)' }
+    : { color: `var(--${tone})`, tint: `var(--${tone}-soft)`, text: `var(--${tone}-text)` };
 }
 
 /** Bir günün status bölgüsü — ay görünüşündəki xülasə çipini qidalandırır. */
@@ -46,18 +68,14 @@ export interface DayPlanRow {
   locationName: string;
   locationCode: number;
   inspectorsName: string;
-  statusLabel: string;
+  status: number;
   statusColor: string;
-  statusTextColor: string;
   timeRange: string;
 }
 
 /** Bir sorğuda gətirilən maksimum plan sayı — bundan çoxu üçün istifadəçiyə xəbərdarlıq göstərilir. */
 const MAX_ROWS = 1000;
-// Rənglər DOM-un inline stilinə yazılır, ona görə birbaşa token-dir (`var(--…)`).
 const FALLBACK_COLOR = 'var(--gray-300)';
-const FALLBACK_TINT = 'var(--surface-subtle)';
-const FALLBACK_TEXT = 'var(--text-muted)';
 
 // Chrome-un ICU məlumatında Azərbaycan ay/gün adları yoxdur (Intl('az') "2026 M09" verir),
 // ona görə təqvimdə görünən bütün tarix mətnləri bu cədvəllərdən formatlanır.
@@ -119,6 +137,8 @@ function azDayLabel(iso: string): string {
     MatSelectModule,
     FullCalendarModule,
     AuditLoadingOverlayComponent,
+    PageHeaderComponent,
+    StatusChipComponent,
   ],
   providers: [TableService],
   templateUrl: './plan-calendar.component.html',
@@ -127,19 +147,8 @@ function azDayLabel(iso: string): string {
 export class PlanCalendarComponent implements AfterViewInit, OnDestroy {
   @ViewChild('calendar') calendarComponent?: FullCalendarComponent;
 
-  /**
-   * Həm status filtrini, həm legend-i idarə edir. Kodlar DB-də real olan dəyərlərdir.
-   * Status rəngi mənadır: gözləyir → warning, mobildə icrada → info, yekun → success,
-   * rədd → danger. Keçid statusu (3) və vaxtı bitmiş (5) neytral şkalanın iki ayrı tonundadır.
-   */
-  readonly planStatuses: PlanStatusOption[] = [
-    { value: 1, label: PLAN_STATUS_LABELS[1], color: 'var(--warning)', tint: 'var(--warning-soft)', text: 'var(--warning-text)' },
-    { value: 2, label: PLAN_STATUS_LABELS[2], color: 'var(--info)', tint: 'var(--info-soft)', text: 'var(--info-text)' },
-    { value: 3, label: PLAN_STATUS_LABELS[3], color: 'var(--gray-700)', tint: 'var(--surface-subtle)', text: 'var(--text)' },
-    { value: 4, label: PLAN_STATUS_LABELS[4], color: 'var(--success)', tint: 'var(--success-soft)', text: 'var(--success-text)' },
-    { value: 5, label: PLAN_STATUS_LABELS[5], color: 'var(--gray-400)', tint: 'var(--surface-subtle)', text: 'var(--text-muted)' },
-    { value: -1, label: PLAN_STATUS_LABELS[-1], color: 'var(--danger)', tint: 'var(--danger-soft)', text: 'var(--danger-text)' },
-  ];
+  /** Həm status filtrini, həm legend-i idarə edir. */
+  readonly planStatuses: PlanStatusOption[] = PLAN_STATUS_CODES.map(statusOption);
 
   calendarForm!: FormGroup;
 
@@ -190,6 +199,10 @@ export class PlanCalendarComponent implements AfterViewInit, OnDestroy {
     this.tableService.api_url = 'inspectionPlans/getDetails';
     this.tableService.fill(tableState).subscribe({
       next: (response) => {
+        // TableService şəbəkə xətasını `success: false` cavabına çevirir, toast vermir
+        if (response && !response.success) {
+          this.notify.error('Təqvim yüklənmədi', { message: response.message });
+        }
         const rows: PlanDetails[] = response?.data?.items ?? [];
         const total = response?.data?.total ?? rows.length;
         const visible = this.applyStoreFilter(rows);
@@ -306,16 +319,21 @@ export class PlanCalendarComponent implements AfterViewInit, OnDestroy {
     eventDidMount: this.styleEvent,
   };
 
+  private readonly router = inject(Router);
+
   constructor(
     private tableService: TableService,
     private fb: FormBuilder,
     private notify: NotificationService,
     private host: ElementRef<HTMLElement>,
-    private zone: NgZone
+    private zone: NgZone,
+    route: ActivatedRoute,
   ) {
+    // Filtr URL-də saxlanır: təqvim ilk sorğunu artıq bu dəyərlərlə göndərir
+    const q = route.snapshot.queryParamMap;
     this.calendarForm = this.fb.group({
-      status: [null],
-      locationName: [''],
+      status: [queryNumber(q, 'status')],
+      locationName: [queryString(q, 'store') ?? ''],
     });
   }
 
@@ -350,15 +368,7 @@ export class PlanCalendarComponent implements AfterViewInit, OnDestroy {
   }
 
   private statusOption(status: number): PlanStatusOption {
-    return (
-      this.planStatuses.find((option) => option.value === status) ?? {
-        value: status,
-        label: planStatusLabel(status),
-        color: FALLBACK_COLOR,
-        tint: FALLBACK_TINT,
-        text: FALLBACK_TEXT,
-      }
-    );
+    return this.planStatuses.find((option) => option.value === status) ?? statusOption(status);
   }
 
   changeCalView(view: string): void {
@@ -378,6 +388,7 @@ export class PlanCalendarComponent implements AfterViewInit, OnDestroy {
   }
 
   onSearch(): void {
+    this.writeFilters();
     this.api?.refetchEvents();
   }
 
@@ -385,12 +396,17 @@ export class PlanCalendarComponent implements AfterViewInit, OnDestroy {
   filterByStatus(status: number): void {
     const next = this.calendarForm.value.status === status ? null : status;
     this.calendarForm.patchValue({ status: next });
-    this.api?.refetchEvents();
+    this.onSearch();
   }
 
   clearFilters(): void {
     this.calendarForm.reset({ status: null, locationName: '' });
-    this.api?.refetchEvents();
+    this.onSearch();
+  }
+
+  private writeFilters(): void {
+    const { status, locationName } = this.calendarForm.value;
+    writeQueryState(this.router, { status, store: String(locationName ?? '').trim() });
   }
 
   isStatusActive(status: number): boolean {
@@ -560,9 +576,8 @@ export class PlanCalendarComponent implements AfterViewInit, OnDestroy {
           locationName: plan.locationName || `Kod ${plan.locationCode}`,
           locationCode: plan.locationCode,
           inspectorsName: plan.inspectorsName || 'Müfəttiş təyin edilməyib',
-          statusLabel: status.label,
+          status: plan.status,
           statusColor: status.color,
-          statusTextColor: status.text,
           timeRange: `${from} – ${to}`,
         };
       });

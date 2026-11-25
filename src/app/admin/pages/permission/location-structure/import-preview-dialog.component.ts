@@ -1,6 +1,5 @@
 import { Component, Inject } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
-import { MatButtonModule } from '@angular/material/button';
 
 /** İdxalda ötürülən (göndərilməyən) fayl sətri. */
 export interface ImportIssue { row: number; message: string; }
@@ -27,7 +26,7 @@ export interface ImportPreviewData {
 @Component({
   selector: 'app-import-preview-dialog',
   standalone: true,
-  imports: [MatDialogModule, MatButtonModule],
+  imports: [MatDialogModule],
   templateUrl: './import-preview-dialog.component.html',
   styleUrl: './import-preview-dialog.component.scss'
 })

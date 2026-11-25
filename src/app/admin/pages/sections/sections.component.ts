@@ -1,92 +1,94 @@
-import { Component, Input, OnInit, OnChanges, SimpleChanges, ViewChild, AfterViewInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { MatCardModule } from '@angular/material/card';
-import { MatButtonModule } from '@angular/material/button';
+import { AfterViewInit, Component, DestroyRef, Input, OnChanges, OnInit, SimpleChanges, ViewChild, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule, MatTableDataSource } from '@angular/material/table';
 import { MatSortModule, MatSort } from '@angular/material/sort';
 import { MatPaginatorModule, MatPaginator } from '@angular/material/paginator';
-import { MatIconModule } from '@angular/material/icon';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatDialogModule, MatDialog } from '@angular/material/dialog';
-import { SectionAddComponent } from './add/section-add.component';
+import { MatDialog } from '@angular/material/dialog';
+import { debounceTime, finalize } from 'rxjs';
+import { SectionAddComponent, SectionDialogData } from './add/section-add.component';
 import { SectionDto } from '../../models/section.model';
 import { SectionService } from '../../services/section.service';
-import { FirmService } from '../../services/firm.service';
-import { FirmDto } from '../../models/firm.model';
 import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
-import { AdminBreadcrumbComponent } from '../../shared/breadcrumb/admin-breadcrumb.component';
-import { AuditLoadingOverlayComponent } from '../../../ui/components/audit-loading-overlay/audit-loading-overlay.component';
+import { ListStateComponent } from '../../../shared/components/list-state/list-state.component';
 import { NotificationService } from '../../../shared/services/notification.service';
 import { apiErrorMessage } from '../../../shared/utils/api-error';
+import { queryString } from '../../../shared/utils/query-state';
+import { TableUrlState } from '../../shared/table-url-state';
+import { MASTER_DATA_QUERY } from '../master-data/master-data-query';
 
-type SectionRow = SectionDto;
+const KEYS = MASTER_DATA_QUERY.sections;
 
+/** "Audit strukturu" səhifəsinin "Şöbələr" tabı: seçilmiş firmanın şöbələri. */
 @Component({
   selector: 'app-sections',
   standalone: true,
   imports: [
-    CommonModule,
-    FormsModule,
-    MatCardModule,
-    MatButtonModule,
+    ReactiveFormsModule,
     MatFormFieldModule,
     MatInputModule,
-    MatSelectModule,
     MatTableModule,
     MatSortModule,
     MatPaginatorModule,
-    MatIconModule,
+    MatProgressBarModule,
     MatTooltipModule,
-    MatDialogModule,
-    AdminBreadcrumbComponent,
-    AuditLoadingOverlayComponent
+    ListStateComponent
   ],
   templateUrl: './sections.component.html',
   styleUrl: './sections.component.scss'
 })
 export class SectionsComponent implements OnInit, OnChanges, AfterViewInit {
-  @Input() showBreadcrumb = true;
-  /** Verilsə, komponent bu firmaya kilidlenir ve oz firma secicisini gizledir (Audit Strukturu sehifesinden istifade ucun). */
-  @Input() firmId: number | null = null;
+  private readonly sectionService = inject(SectionService);
+  private readonly confirmDialog = inject(ConfirmDialogService);
+  private readonly dialog = inject(MatDialog);
+  private readonly notify = inject(NotificationService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly destroyRef = inject(DestroyRef);
+
+  @Input({ required: true }) firmId!: number;
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
 
-  displayedColumns: string[] = ['sectionName', 'actions'];
-  dataSource: MatTableDataSource<SectionRow>;
-  pageSize = 10;
-  rows: SectionRow[] = [];
-  allRows: SectionRow[] = [];
-  firms: FirmDto[] = [];
-  selectedFirmId: number | null = null;
+  readonly displayedColumns = ['sectionName', 'sectionDescription', 'actions'];
+  readonly dataSource = new MatTableDataSource<SectionDto>([]);
+  readonly urlState = new TableUrlState(inject(Router), this.route, KEYS.page);
+  readonly searchControl = new FormControl(queryString(this.route.snapshot.queryParamMap, KEYS.search) ?? '', { nonNullable: true });
 
   isLoading = false;
+  loaded = false;
+  loadError: string | null = null;
 
-  constructor(
-    private sectionService: SectionService,
-    private firmService: FirmService,
-    private confirmDialog: ConfirmDialogService,
-    private dialog: MatDialog,
-    private notify: NotificationService
-  ) {
-    this.dataSource = new MatTableDataSource<SectionRow>(this.rows);
+  constructor() {
+    this.dataSource.filterPredicate = (row, filter) => row.sectionName.toLocaleLowerCase('az').includes(filter);
   }
 
   ngOnInit(): void {
-    if (this.firmId != null) {
-      this.selectedFirmId = this.firmId;
-    }
-    this.loadFirms();
+    this.applySearch();
+    this.searchControl.valueChanges
+      .pipe(debounceTime(250), takeUntilDestroyed(this.destroyRef))
+      .subscribe(value => {
+        this.applySearch();
+        this.paginator.firstPage();
+        this.urlState.writeFilters({ [KEYS.search]: value.trim() });
+      });
     this.load();
   }
 
   ngOnChanges(changes: SimpleChanges): void {
+    // Firma dəyişəndə filtrlər sıfırlanır (URL-i səhifə özü təmizləyir).
+    // Səhifə hadisəsiz sıfırlanır: paginator-un page hadisəsi səhifənin firma naviqasiyasını əvəz edərdi.
     if (changes['firmId'] && !changes['firmId'].firstChange) {
-      this.selectedFirmId = this.firmId;
-      this.applyFirmFilter();
+      this.searchControl.setValue('', { emitEvent: false });
+      this.paginator.pageIndex = 0;
+      this.applySearch();
+      this.loaded = false;
+      this.dataSource.data = [];
+      this.load();
     }
   }
 
@@ -95,110 +97,62 @@ export class SectionsComponent implements OnInit, OnChanges, AfterViewInit {
     this.dataSource.sort = this.sort;
   }
 
-  private load() {
+  private applySearch(): void {
+    this.dataSource.filter = this.searchControl.value.trim().toLocaleLowerCase('az');
+  }
+
+  load(): void {
     this.isLoading = true;
-    this.sectionService.list().subscribe({
-      next: (response) => {
-        if (response.success) {
-          this.allRows = response.data as SectionDto[];
-          this.applyFirmFilter();
-        } else {
-          this.allRows = [];
-          this.rows = [];
-          this.dataSource.data = [];
-        }
-        this.isLoading = false;
-      },
-      error: () => {
-        this.allRows = [];
-        this.rows = [];
-        this.dataSource.data = [];
-        this.isLoading = false;
-        this.notify.error('Şöbələr yüklənmədi', { message: 'Serverlə əlaqədə xəta baş verdi. Zəhmət olmasa yenidən cəhd edin.' });
-      }
-    });
-  }
-
-  private loadFirms() {
-    this.firmService.getAllFirms().subscribe({
-      next: response => {
-        if (response.success) {
-          this.firms = response.data as FirmDto[];
-        }
-      },
-      error: e => this.notify.error(apiErrorMessage(e, 'Firmalar yüklənmədi'))
-    });
-  }
-
-  onFirmChange(): void {
-    this.applyFirmFilter();
-  }
-
-  private applyFirmFilter(): void {
-    const firmId = this.selectedFirmId;
-    this.rows = firmId == null ? [...this.allRows] : this.allRows.filter(x => x.firmId === firmId);
-    this.dataSource.data = this.rows;
-    if (this.dataSource.paginator) this.dataSource.paginator.firstPage();
-  }
-
-  applyFilter(event: Event) {
-    const value = (event.target as HTMLInputElement).value;
-    this.dataSource.filter = value.trim().toLowerCase();
-    if (this.dataSource.paginator) this.dataSource.paginator.firstPage();
-  }
-
-  onPageSizeChange() {
-    if (this.dataSource.paginator) {
-      this.dataSource.paginator.pageSize = this.pageSize;
-      this.dataSource.paginator.firstPage();
-    }
-  }
-
-  add() {
-    const dialogRef = this.dialog.open(SectionAddComponent, {
-      width: '900px',
-      maxWidth: '95vw',
-      disableClose: true,
-      panelClass: 'modal-like-dialog',
-      data: this.firmId != null ? { firmId: this.firmId } : undefined
-    });
-    dialogRef.afterClosed().subscribe((result: any) => {
-      if (result?.created) this.load();
-    });
-  }
-
-  edit(row: SectionRow) {
-    const dialogRef = this.dialog.open(SectionAddComponent, {
-      width: '900px',
-      maxWidth: '95vw',
-      disableClose: true,
-      panelClass: 'modal-like-dialog',
-      data: { mode: 'edit', item: row }
-    });
-    dialogRef.afterClosed().subscribe((result: any) => {
-      if (result?.updated) this.load();
-    });
-  }
-
-  remove(row: SectionRow) {
-    this.confirmDialog
-      .confirm({
-        title: 'Şöbə silinsin?',
-        message: `"${row.sectionName}" şöbəsini silmək istədiyinizə əminsiniz?`,
-        confirmText: 'Sil',
-        tone: 'danger'
-      })
-      .subscribe(confirmed => {
-        if (!confirmed) return;
-        this.sectionService.delete(row.id).subscribe({
-          next: () => {
-            this.notify.success('Şöbə silindi');
-            this.load();
-          },
-          error: () => {
-            this.notify.error('Şöbə silinmədi', { message: 'Bu şöbə istifadə olunur və ya serverlə əlaqədə xəta baş verdi.' });
-          }
-        });
+    this.loadError = null;
+    this.sectionService.getByFirmId(this.firmId)
+      .pipe(finalize(() => this.isLoading = false))
+      .subscribe({
+        next: response => {
+          // Firmanın şöbəsi yoxdursa API 204 qaytarır: gövdə boşdur
+          this.dataSource.data = Array.isArray(response?.data) ? response.data : [];
+          this.loaded = true;
+          this.urlState.restorePage(this.paginator, this.dataSource.filteredData.length);
+        },
+        error: err => this.loadError = apiErrorMessage(err, 'Şöbələr yüklənmədi')
       });
+  }
+
+  add(): void {
+    this.openDialog({ firmId: this.firmId });
+  }
+
+  edit(row: SectionDto): void {
+    this.openDialog({ firmId: row.firmId, item: row });
+  }
+
+  private openDialog(data: SectionDialogData): void {
+    this.dialog.open<SectionAddComponent, SectionDialogData, boolean>(SectionAddComponent, {
+      width: '640px',
+      maxWidth: '95vw',
+      disableClose: true,
+      data
+    }).afterClosed().subscribe(saved => {
+      if (saved) this.load();
+    });
+  }
+
+  remove(row: SectionDto): void {
+    this.confirmDialog.confirm({
+      title: 'Şöbə silinsin?',
+      message: 'Şöbə firmanın siyahılarından çıxacaq. İçindəki kateqoriyalar və suallar ayrıca silinmir, '
+        + 'keçmiş yoxlama nəticələri dəyişmir. Admin panelindən geri qaytarmaq olmur.',
+      confirmText: 'Sil',
+      tone: 'danger',
+      items: [row.sectionName]
+    }).subscribe(result => {
+      if (!result) return;
+      this.sectionService.delete(row.id).subscribe({
+        next: () => {
+          this.notify.success('Şöbə silindi');
+          this.load();
+        },
+        error: err => this.notify.error(apiErrorMessage(err, 'Şöbə silinmədi'))
+      });
+    });
   }
 }

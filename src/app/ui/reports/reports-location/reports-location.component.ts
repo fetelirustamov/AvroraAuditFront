@@ -1,27 +1,30 @@
-// ... existing code ...
-import { CommonModule, NgFor, NgIf } from '@angular/common';
-import { Component, ViewChild } from '@angular/core';
+import { NgFor, NgIf, NgSwitch, NgSwitchCase, NgSwitchDefault } from '@angular/common';
+import { Component, DestroyRef, OnInit, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { MatCardModule } from '@angular/material/card';
-import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
-import { MatTableModule, MatTableDataSource } from '@angular/material/table';
-import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { debounceTime, Subject, finalize } from 'rxjs';
-import { TableService } from '../../services/table.service';
-import { TableState } from '../../../models/table-state.model';
-import { InspectionsService } from '../../inspections/inspections.service';
-import { FileExportService, datedFileName } from '../../../shared/services/file-export.service';
 import { MatMenuModule } from '@angular/material/menu';
-import { Firm } from '../../inspections/firm.model';
-import { AuditLoadingOverlayComponent } from '../../components/audit-loading-overlay/audit-loading-overlay.component';
+import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatSelectModule } from '@angular/material/select';
+import { MatTableDataSource, MatTableModule } from '@angular/material/table';
+import { ActivatedRoute, Router } from '@angular/router';
+import { Subject, debounceTime, finalize } from 'rxjs';
+import { TableState } from '../../../models/table-state.model';
+import { ListStateComponent } from '../../../shared/components/list-state/list-state.component';
+import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
+import { FileExportService, datedFileName } from '../../../shared/services/file-export.service';
 import { NotificationService } from '../../../shared/services/notification.service';
+import { apiErrorMessage } from '../../../shared/utils/api-error';
 import { chartColors } from '../../../shared/utils/chart-colors';
+import { queryNumber, writeQueryState } from '../../../shared/utils/query-state';
+import { Firm } from '../../inspections/firm.model';
+import { InspectionsService } from '../../inspections/inspections.service';
+import { TableService } from '../../services/table.service';
+import { MONTH_OPTIONS, PAGE_SIZES, REPORT_YEARS } from '../report-filters';
 
 type MonthKey = 'jan' | 'feb' | 'mar' | 'apr' | 'may' | 'jun' | 'jul' | 'aug' | 'sep' | 'oct' | 'nov' | 'dec';
+const MONTH_KEYS: MonthKey[] = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
 
 /** POST /api/reports/monthly cavabındakı bir məkan sətri. */
 interface MonthlyLocationReportRow {
@@ -31,169 +34,162 @@ interface MonthlyLocationReportRow {
     months: { month: number; score: number | null; ncCount: number }[];
 }
 
+// Menyuda deyil (qəsdən, bax CLAUDE.md: SQL real datada yoxlanmayıb): yalnız URL ilə açılır.
 @Component({
     selector: 'app-reports',
     standalone: true,
     imports: [
-        CommonModule,
-        NgIf,
-        NgFor,
-        ReactiveFormsModule,
-        MatCardModule,
-        MatButtonModule,
-        MatFormFieldModule,
-        MatInputModule,
-        MatSelectModule,
-        MatTableModule,
-        MatPaginatorModule,
-        MatProgressSpinnerModule,
-        AuditLoadingOverlayComponent,
-        MatMenuModule
+        NgIf, NgFor, NgSwitch, NgSwitchCase, NgSwitchDefault, ReactiveFormsModule,
+        MatFormFieldModule, MatSelectModule, MatTableModule, MatPaginatorModule, MatMenuModule, MatProgressBarModule,
+        PageHeaderComponent, ListStateComponent,
     ],
     templateUrl: './reports-location.component.html',
     styleUrl: './reports-location.component.scss'
 })
-export class ReportsComponent {
-    @ViewChild(MatPaginator) paginator!: MatPaginator;
+export class ReportsComponent implements OnInit {
+    private readonly tableService = inject(TableService);
+    private readonly inspectionsService = inject(InspectionsService);
+    private readonly notify = inject(NotificationService);
+    private readonly fileExport = inject(FileExportService);
+    private readonly router = inject(Router);
+    private readonly route = inject(ActivatedRoute);
+    private readonly destroyRef = inject(DestroyRef);
 
-    public firms: Firm[] = [];
-    public years: number[] = [];
-    public months: { value: number, label: string, key: MonthKey }[] = [
-        { value: 1, label: 'Yanvar', key: 'jan' },
-        { value: 2, label: 'Fevral', key: 'feb' },
-        { value: 3, label: 'Mart', key: 'mar' },
-        { value: 4, label: 'Aprel', key: 'apr' },
-        { value: 5, label: 'May', key: 'may' },
-        { value: 6, label: 'İyun', key: 'jun' },
-        { value: 7, label: 'İyul', key: 'jul' },
-        { value: 8, label: 'Avqust', key: 'aug' },
-        { value: 9, label: 'Sentyabr', key: 'sep' },
-        { value: 10, label: 'Oktyabr', key: 'oct' },
-        { value: 11, label: 'Noyabr', key: 'nov' },
-        { value: 12, label: 'Dekabr', key: 'dec' }
-    ];
+    firms: Firm[] = [];
+    readonly years = REPORT_YEARS;
+    readonly pageSizes = PAGE_SIZES;
+    readonly months = MONTH_OPTIONS.map((m, i) => ({ ...m, key: MONTH_KEYS[i] }));
     /** Hər ay üçün iki sütun: checklist nəticəsi və uyğunsuzluq sayı. */
-    public monthColumns: { key: string, label: string }[] = [];
+    readonly monthColumns = this.months.flatMap(m => ([
+        { key: `${m.key}Score`, label: 'Checklist nəticəsi' },
+        { key: `${m.key}NcCount`, label: 'Uyğunsuzluq sayı' },
+    ]));
 
-    public filtersForm = new FormGroup({
-        firmId: new FormControl<number | null>(null, { nonNullable: false, validators: [Validators.required] }),
-        year: new FormControl<number | null>(new Date().getFullYear()),
+    readonly filtersForm = new FormGroup({
+        firmId: new FormControl<number | null>(null, { validators: [Validators.required] }),
+        year: new FormControl<number | null>(REPORT_YEARS[0]),
         month: new FormControl<number | null>(null)
     });
 
-    public isLoading = false;
-    public rows: any[] = [];
-    public dataSource: MatTableDataSource<any> = new MatTableDataSource<any>([]);
-    public allCount = 0;
-    private tableState: TableState = new TableState();
-    private filterSubject = new Subject<{ key: string, value: string }>();
-    public submitted = false;
+    searched = false;
+    isLoading = false;
+    loadError: string | null = null;
+    dataSource = new MatTableDataSource<any>([]);
+    allCount = 0;
+    pageIndex = 0;
+    pageSize = PAGE_SIZES[0];
+    private readonly tableState = new TableState();
+    private readonly filterSubject = new Subject<{ key: string, value: string }>();
 
-    // Column configuration (static keys to match backend)
-    public baseColumns = [
+    readonly baseColumns = [
         { key: 'row', label: 'Sıra' },
         { key: 'branchName', label: 'Mağaza adı' },
         { key: 'branchCode', label: 'Mağaza kodu' }
     ];
+    readonly displayedColumns = [...this.baseColumns, ...this.monthColumns].map(c => c.key);
+    readonly filterColumns = this.displayedColumns.map(k => `${k}__filter`);
+    readonly groupColumns = [
+        { key: 'group-general', label: 'Ümumi məlumatlar', colspan: this.baseColumns.length },
+        ...this.months.map(m => ({ key: `group-${m.key}`, label: m.label, colspan: 2 }))
+    ];
+    readonly groupHeaderColumnKeys = this.groupColumns.map(g => g.key);
 
-    public displayedColumns: string[] = [];
-    public headerColumns: string[] = this.displayedColumns;
-    public filterColumns: string[] = this.displayedColumns.map(k => `${k}__filter`);
-    public groupColumns: { key: string; label: string; colspan: number }[] = [];
-    public groupHeaderColumnKeys: string[] = [];
-
-    constructor(
-        private tableService: TableService,
-        private inspectionsService: InspectionsService,
-        private notify: NotificationService,
-        private fileExport: FileExportService,
-    ) {
-        this.tableService.api_url = 'reports/monthly';
-        this.tableState.paginator.page = 0;
-        this.tableState.paginator.size = 10;
-        const currentYear = new Date().getFullYear();
-        for (let y = currentYear; y >= currentYear - 5; y--) {
-            this.years.push(y);
-        }
-        this.loadFirms();
-
-        this.filterSubject.pipe(debounceTime(400)).subscribe(({ key, value }) => {
+    constructor() {
+        this.filterSubject.pipe(debounceTime(400), takeUntilDestroyed()).subscribe(({ key, value }) => {
             if (value) {
                 this.tableState.filter[key] = value;
             } else {
                 delete this.tableState.filter[key];
             }
-            this.fetch();
-        });
-
-        // Hər ay bir qrup başlığıdır; altında iki sütun durur
-        this.monthColumns = this.months.flatMap(m => ([
-            { key: `${m.key}Score`, label: 'Checklist nəticəsi' },
-            { key: `${m.key}NcCount`, label: 'Uyğunsuzluq sayı' },
-        ]));
-
-        this.displayedColumns = [...this.baseColumns, ...this.monthColumns].map(c => c.key);
-        this.headerColumns = this.displayedColumns;
-        this.filterColumns = this.displayedColumns.map(k => `${k}__filter`);
-
-        this.groupColumns = [
-            { key: 'group-general', label: 'Ümumi məlumatlar', colspan: this.baseColumns.length },
-            ...this.months.map(m => ({ key: `group-${m.key}`, label: m.label.toUpperCase(), colspan: 2 }))
-        ];
-        this.groupHeaderColumnKeys = this.groupColumns.map(g => g.key);
-    }
-
-    ngAfterViewInit(): void {
-        // Səhifələmə serverdədir: paginator hadisəsi tableState-i yeniləyib yenidən sorğu atır
-        this.paginator?.page.subscribe(() => {
-            this.tableState.paginator.page = this.paginator.pageIndex;
-            this.tableState.paginator.size = this.paginator.pageSize;
+            if (!this.searched) return;
+            this.pageIndex = 0;
             this.fetch();
         });
     }
 
-    private loadFirms() {
-        this.inspectionsService.getFirms().subscribe(res => {
-            this.firms = res.data;
+    ngOnInit(): void {
+        this.inspectionsService.getFirms().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+            next: res => { this.firms = res.data ?? []; },
+            error: error => { this.notify.error(apiErrorMessage(error, 'Firmalar yüklənmədi')); },
         });
-    }
 
-    onSearch() {
-        this.submitted = true;
-        if (this.filtersForm.invalid) {
-            this.filtersForm.markAllAsTouched();
-            return;
-        }
-        const { firmId, year, month } = this.filtersForm.value;
-        this.tableState.filter = this.tableState.filter || {};
-        if (firmId != null) this.tableState.filter['firmId'] = String(firmId);
-        if (year != null) this.tableState.filter['year'] = String(year);
-        if (month != null) this.tableState.filter['month'] = String(month);
+        // Firma məcburidir: URL-də varsa axtarış bərpa olunur
+        const q = this.route.snapshot.queryParamMap;
+        const firmId = queryNumber(q, 'firm');
+        if (firmId == null) return;
+        this.filtersForm.patchValue({ firmId, year: queryNumber(q, 'year') ?? REPORT_YEARS[0], month: queryNumber(q, 'month') });
+        this.pageIndex = queryNumber(q, 'page') ?? 0;
+        this.pageSize = queryNumber(q, 'size') ?? PAGE_SIZES[0];
+        this.applyFormFilter();
         this.fetch();
     }
 
-    applyColumnFilter(event: Event, key: string) {
+    onSearch(): void {
+        if (this.filtersForm.invalid) {
+            this.filtersForm.markAllAsTouched();
+            this.notify.warning('Firma seçin');
+            return;
+        }
+        const { firmId, year, month } = this.filtersForm.getRawValue();
+        this.pageIndex = 0;
+        void writeQueryState(this.router, { firm: firmId, year, month, page: null });
+        this.applyFormFilter();
+        this.fetch();
+    }
+
+    /** "Təmizlə": filtrlər standart dəyərə qayıdır, nəticə və URL təmizlənir */
+    clearAll(): void {
+        this.filtersForm.reset({ firmId: null, year: REPORT_YEARS[0], month: null });
+        this.tableState.filter = {};
+        document.querySelectorAll<HTMLInputElement>('.monthly-filter-input').forEach(i => { i.value = ''; });
+        this.searched = false;
+        this.loadError = null;
+        this.dataSource.data = [];
+        this.allCount = 0;
+        void writeQueryState(this.router, { firm: null, year: null, month: null, page: null, size: null });
+    }
+
+    onPage(e: PageEvent): void {
+        this.pageIndex = e.pageIndex;
+        this.pageSize = e.pageSize;
+        void writeQueryState(this.router, { page: e.pageIndex || null, size: e.pageSize === PAGE_SIZES[0] ? null : e.pageSize });
+        this.fetch();
+    }
+
+    private applyFormFilter(): void {
+        const { firmId, year, month } = this.filtersForm.getRawValue();
+        const f = this.tableState.filter;
+        for (const [key, value] of Object.entries({ firmId, year, month })) {
+            if (value != null) { f[key] = String(value); } else { delete f[key]; }
+        }
+    }
+
+    applyColumnFilter(event: Event, key: string): void {
         const inputValue = (event.target as HTMLInputElement).value.trim();
         this.filterSubject.next({ key, value: inputValue });
     }
 
-    private fetch() {
+    fetch(): void {
+        this.searched = true;
         this.isLoading = true;
+        this.loadError = null;
+        this.tableService.api_url = 'reports/monthly';
+        this.tableState.paginator.page = this.pageIndex;
+        this.tableState.paginator.size = this.pageSize;
         this.tableService.fill(this.tableState)
-            .pipe(finalize(() => this.isLoading = false))
+            .pipe(finalize(() => this.isLoading = false), takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: (res: any) => {
+                    // TableService xətanı udur və `success: false` qaytarır
+                    if (res?.success === false) {
+                        this.loadError = res.message || 'Hesabat yüklənmədi';
+                        return;
+                    }
                     const items: MonthlyLocationReportRow[] = res?.data?.items ?? [];
-                    this.rows = items.map(item => this.toTableRow(item));
+                    this.dataSource.data = items.map(item => this.toTableRow(item));
                     this.allCount = res?.data?.total ?? 0;
-                    this.dataSource.data = this.rows;
                 },
-                error: () => {
-                    this.rows = [];
-                    this.allCount = 0;
-                    this.dataSource.data = [];
-                    this.notify.error('Hesabat yüklənmədi');
-                }
+                error: error => { this.loadError = apiErrorMessage(error, 'Hesabat yüklənmədi'); },
             });
     }
 
@@ -218,8 +214,8 @@ export class ReportsComponent {
         return row;
     }
 
-    getRowNumber(index: number): number {
-        return this.paginator ? index + 1 + (this.paginator.pageIndex * this.paginator.pageSize) : index + 1;
+    rowNumber(index: number): number {
+        return this.pageIndex * this.pageSize + index + 1;
     }
 
     exportExcel(): void {
@@ -291,5 +287,3 @@ export class ReportsComponent {
         void this.fileExport.exportPdf(docDefinition, datedFileName('reports-monthly', 'pdf'));
     }
 }
-
-

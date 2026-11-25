@@ -2,13 +2,18 @@ import { CommonModule } from '@angular/common';
 import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Subject, finalize, takeUntil } from 'rxjs';
 
 import { LocationService } from '../../admin/services/location.service';
 import { NotificationService } from '../../shared/services/notification.service';
+import { ListStateComponent } from '../../shared/components/list-state/list-state.component';
+import { PageHeaderComponent } from '../../shared/components/page-header/page-header.component';
 import { apiErrorMessage } from '../../shared/utils/api-error';
+import { queryNumber, writeQueryState } from '../../shared/utils/query-state';
 import { AuditLoadingOverlayComponent } from '../components/audit-loading-overlay/audit-loading-overlay.component';
 import { Firm } from '../inspections/firm.model';
 import { InspectionsService } from '../inspections/inspections.service';
@@ -77,7 +82,10 @@ const MIN_RADAR_AXES = 3;
         MatFormFieldModule,
         MatSelectModule,
         MatTooltipModule,
-        AuditLoadingOverlayComponent
+        MatProgressBarModule,
+        AuditLoadingOverlayComponent,
+        PageHeaderComponent,
+        ListStateComponent
     ],
     providers: [DashboardVisualsService],
     templateUrl: './ui-dashboard.component.html',
@@ -130,7 +138,9 @@ export class UiDashboardComponent implements OnInit, OnDestroy {
         private readonly inspectionsService: InspectionsService,
         private readonly locationService: LocationService,
         private readonly notify: NotificationService,
-        private readonly cdr: ChangeDetectorRef
+        private readonly cdr: ChangeDetectorRef,
+        private readonly router: Router,
+        private readonly route: ActivatedRoute
     ) { }
 
     // ── Həyat dövrü ──────────────────────────────────────────────────────────
@@ -146,7 +156,36 @@ export class UiDashboardComponent implements OnInit, OnDestroy {
             .pipe(takeUntil(this.destroy$))
             .subscribe(regionId => this.onRegionChange(regionId));
 
+        this.restoreFilters();
         this.loadOverview();
+    }
+
+    /** Filtrlər URL-dədir: səhifə yenilənəndə və link paylaşılanda eyni görünüş açılır */
+    private restoreFilters(): void {
+        const q = this.route.snapshot.queryParamMap;
+        this.filtersForm.patchValue({
+            year: queryNumber(q, 'year') ?? new Date().getFullYear(),
+            month: queryNumber(q, 'month'),
+        });
+        const firmId = queryNumber(q, 'firm');
+        if (firmId == null) { return; }
+        // Firma dəyişəndə bölgə/mağaza siyahıları yüklənir və sıfırlanır: dəyərlər ondan sonra qoyulur
+        this.filtersForm.controls.firmId.setValue(firmId);
+        this.filtersForm.patchValue({
+            regionId: queryNumber(q, 'region'),
+            locationCode: queryNumber(q, 'location')
+        }, { emitEvent: false });
+    }
+
+    private writeFilters(): void {
+        const { year, month, firmId, regionId, locationCode } = this.filtersForm.getRawValue();
+        void writeQueryState(this.router, {
+            year: year === new Date().getFullYear() ? null : year,
+            month,
+            firm: firmId,
+            region: regionId,
+            location: locationCode
+        });
     }
 
     ngOnDestroy(): void {
@@ -228,6 +267,7 @@ export class UiDashboardComponent implements OnInit, OnDestroy {
     }
 
     onSearch(): void {
+        this.writeFilters();
         this.loadOverview();
     }
 
@@ -239,6 +279,7 @@ export class UiDashboardComponent implements OnInit, OnDestroy {
             regionId: null,
             locationCode: null
         });
+        this.writeFilters();
         this.loadOverview();
     }
 
@@ -249,12 +290,12 @@ export class UiDashboardComponent implements OnInit, OnDestroy {
 
     // ── Məlumatın yüklənməsi ─────────────────────────────────────────────────
 
-    private loadOverview(): void {
-        const { year, month, firmId, regionId, locationCode } = this.filtersForm.value;
+    /** Yenidən yükləmədə köhnə göstəricilər yerində qalır, üstündə nazik xətt görünür */
+    loadOverview(): void {
+        const { year, month, firmId, regionId, locationCode } = this.filtersForm.getRawValue();
 
         this.isLoading = true;
         this.loadError = null;
-        this.visuals.destroyAll();
 
         this.dashboardService.getOverview({
             year: year ?? new Date().getFullYear(),
@@ -271,6 +312,7 @@ export class UiDashboardComponent implements OnInit, OnDestroy {
                     this.applyOverview();
                 },
                 error: error => {
+                    this.visuals.destroyAll();
                     this.overview = null;
                     this.hasLoaded = true;
                     this.kpis = [];
@@ -281,6 +323,7 @@ export class UiDashboardComponent implements OnInit, OnDestroy {
     }
 
     private applyOverview(): void {
+        this.visuals.destroyAll();
         if (!this.overview) { return; }
 
         this.kpis = this.buildKpis();

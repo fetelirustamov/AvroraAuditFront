@@ -101,11 +101,15 @@
     }
 }
 
+.list-progress {
+    display: block;
+    height: 3px;
+}
+
 .id-cell {
-    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
     font-size: var(--fs-13);
-    font-weight: 700;
-    color: var(--accent-hover);
+    font-weight: 600;
+    color: var(--text-strong);
 }
 
 .cell-stack {
@@ -136,30 +140,35 @@
     }
 }
 
-.holder-cell .cell-sub { color: var(--accent); font-weight: 600; }
+.holder-cell .holder-role { color: var(--accent-text); font-weight: 600; }
 
-.stage-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    white-space: nowrap;
-
-    .material-symbols-outlined { font-size: 15px; }
-}
-
-.date-text {
+// Mərhələdə qalma müddəti və gecikmə: ikon + mətn, rəng tək daşıyıcı deyil
+.holder-age,
+.overdue-text {
     display: inline-flex;
     align-items: center;
     gap: 3px;
+    white-space: nowrap;
+
+    .material-symbols-outlined { font-size: 14px; }
+}
+
+.holder-age {
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+}
+
+.overdue-text {
+    font-size: var(--fs-12);
+    font-weight: 600;
+    color: var(--danger-text);
+}
+
+.date-text {
     font-size: var(--fs-13);
     white-space: nowrap;
+    font-variant-numeric: tabular-nums;
     color: var(--gray-600);
-
-    &.is-overdue {
-        font-weight: 700;
-        color: var(--danger-text);
-        .material-symbols-outlined { font-size: 15px; }
-    }
 }
 
 .muted { color: var(--gray-400); }

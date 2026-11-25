@@ -1,137 +1,120 @@
-import { Component, OnInit, ViewChild, AfterViewInit, TemplateRef } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup } from '@angular/forms';
-import { MatCardModule } from '@angular/material/card';
-import { MatButtonModule } from '@angular/material/button';
+import { AfterViewInit, Component, DestroyRef, OnInit, ViewChild, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule, MatTableDataSource } from '@angular/material/table';
 import { MatSortModule, MatSort } from '@angular/material/sort';
 import { MatPaginatorModule, MatPaginator } from '@angular/material/paginator';
-import { MatIconModule } from '@angular/material/icon';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatDialogModule, MatDialogRef, MatDialog } from '@angular/material/dialog';
-import { Router } from '@angular/router';
+import { debounceTime, finalize, forkJoin, merge } from 'rxjs';
 import { QuestionService } from '../../services/question.service';
-import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
 import { CategoryService } from '../../services/category.service';
-import { CategoryDto } from '../../models/category.model';
+import { SectionService } from '../../services/section.service';
+import { FirmService } from '../../services/firm.service';
+import { FirmDto } from '../../models/firm.model';
 import { QUESTION_TYPES, QuestionDto, questionTypeLabel, toQuestionTypeId } from '../../models/question.model';
+import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
+import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
+import { ListStateComponent } from '../../../shared/components/list-state/list-state.component';
 import { NotificationService } from '../../../shared/services/notification.service';
 import { apiErrorMessage } from '../../../shared/utils/api-error';
-import { AdminBreadcrumbComponent } from '../../shared/breadcrumb/admin-breadcrumb.component';
-import { AuditLoadingOverlayComponent } from '../../../ui/components/audit-loading-overlay/audit-loading-overlay.component';
+import { queryNumber, queryString } from '../../../shared/utils/query-state';
+import { TableUrlState } from '../../shared/table-url-state';
+import { CategoryOption, categoryOptions } from '../../shared/category-options';
 
-type QuestionRow = QuestionDto;
+interface QuestionRow extends QuestionDto {
+  /** "Şöbə › Kateqoriya" */
+  path: string;
+  firmId: number | null;
+  typeId: number | null;
+  typeLabel: string;
+}
 
 @Component({
   selector: 'app-questions',
   standalone: true,
   imports: [
-    CommonModule,
-    FormsModule,
     ReactiveFormsModule,
-    MatCardModule,
-    MatButtonModule,
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
     MatTableModule,
     MatSortModule,
     MatPaginatorModule,
-    MatIconModule,
+    MatProgressBarModule,
     MatTooltipModule,
-    MatDialogModule,
-    AdminBreadcrumbComponent,
-    AuditLoadingOverlayComponent
+    PageHeaderComponent,
+    ListStateComponent
   ],
   templateUrl: './questions.component.html',
   styleUrl: './questions.component.scss'
 })
 export class QuestionsComponent implements OnInit, AfterViewInit {
+  private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+  private readonly questionService = inject(QuestionService);
+  private readonly categoryService = inject(CategoryService);
+  private readonly sectionService = inject(SectionService);
+  private readonly firmService = inject(FirmService);
+  private readonly confirmDialog = inject(ConfirmDialogService);
+  private readonly notify = inject(NotificationService);
+  private readonly destroyRef = inject(DestroyRef);
+
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
 
-  displayedColumns: string[] = ['order', 'type', 'question', 'actions'];
-  dataSource: MatTableDataSource<QuestionRow>;
-  pageSize = 10;
-
-  rows: QuestionRow[] = [];
-  categories: CategoryDto[] = [];
+  readonly displayedColumns = ['order', 'path', 'question', 'typeLabel', 'actions'];
+  readonly dataSource = new MatTableDataSource<QuestionRow>([]);
+  readonly urlState = new TableUrlState(this.router, this.route);
   readonly questionTypes = QUESTION_TYPES;
 
-  // Advanced search
-  searchForm!: FormGroup;
-  private searchDialogRef?: MatDialogRef<any>;
-  @ViewChild('searchTpl') searchTpl!: TemplateRef<any>;
+  private readonly query = this.route.snapshot.queryParamMap;
+  readonly filters = inject(FormBuilder).group({
+    firm: [queryNumber(this.query, 'firm')],
+    category: [queryNumber(this.query, 'category')],
+    type: [queryNumber(this.query, 'type')],
+    q: [queryString(this.query, 'q') ?? '']
+  });
+
+  firms: FirmDto[] = [];
+  private allCategories: CategoryOption[] = [];
+  private allRows: QuestionRow[] = [];
 
   isLoading = false;
+  loaded = false;
+  loadError: string | null = null;
 
-  constructor(
-    private router: Router,
-    private questionService: QuestionService,
-    private fb: FormBuilder,
-    private categoryService: CategoryService,
-    private confirmDialog: ConfirmDialogService,
-    private dialog: MatDialog,
-    private notify: NotificationService
-  ) {
-    this.dataSource = new MatTableDataSource<QuestionRow>(this.rows);
-    this.dataSource.filterPredicate = (row, filter) => QuestionsComponent.matches(row, filter);
+  /** Kateqoriya seçimi firmaya görə süzülür. */
+  get categoryOptions(): CategoryOption[] {
+    const firmId = this.filters.controls.firm.value;
+    return firmId == null ? this.allCategories : this.allCategories.filter(c => c.firmId === firmId);
+  }
+
+  get hasFilters(): boolean {
+    const v = this.filters.getRawValue();
+    return v.firm != null || v.category != null || v.type != null || !!v.q?.trim();
+  }
+
+  constructor() {
+    this.dataSource.sortingDataAccessor = (row, column) =>
+      column === 'order' ? (row.order ?? row.questionLine ?? 0) : String((row as unknown as Record<string, unknown>)[column] ?? '');
   }
 
   ngOnInit(): void {
+    const { firm, category, type, q } = this.filters.controls;
+    // Firma dəyişəndə başqa firmanın kateqoriyası seçili qalmasın
+    firm.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(firmId => {
+      const selected = this.allCategories.find(c => c.id === category.value);
+      if (firmId != null && selected && selected.firmId !== firmId) category.setValue(null, { emitEvent: false });
+    });
+    merge(firm.valueChanges, category.valueChanges, type.valueChanges, q.valueChanges.pipe(debounceTime(250)))
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.onFiltersChange());
     this.load();
-    this.searchForm = this.fb.group({
-      type: [null],
-      question: [''],
-      categoryId: [null]
-    });
-    this.loadCategories();
-  }
-
-  private load() {
-    this.isLoading = true;
-    this.questionService.list().subscribe({
-      next: (response: any) => {
-
-        let items: QuestionRow[] = [];
-
-        // 1) Backend: { success, message, data: [...] }
-        if (response && Array.isArray(response.data)) {
-          items = response.data as QuestionRow[];
-        }
-        // 2) Backend: { success, message, data: { items: [...] } }
-        else if (response?.data?.items && Array.isArray(response.data.items)) {
-          items = response.data.items as QuestionRow[];
-        }
-        // 3) Fallback: birbaşa array gəlirsə
-        else if (Array.isArray(response)) {
-          items = response as QuestionRow[];
-        }
-
-        this.rows = items;
-        this.dataSource.data = items;
-        this.isLoading = false;
-      },
-      error: (error) => {
-        this.rows = [];
-        this.dataSource.data = [];
-        this.isLoading = false;
-      }
-    });
-  }
-
-  private loadCategories(): void {
-    this.categoryService.getAllCategories().subscribe({
-      next: (response) => {
-        if ((response as any)?.success !== false && Array.isArray(response.data)) {
-          this.categories = response.data;
-        }
-      },
-      error: (e) => this.notify.error(apiErrorMessage(e, 'Kateqoriyalar yüklənmədi'))
-    });
   }
 
   ngAfterViewInit(): void {
@@ -139,68 +122,94 @@ export class QuestionsComponent implements OnInit, AfterViewInit {
     this.dataSource.sort = this.sort;
   }
 
-  openModal(tpl: TemplateRef<any>): void {
-    this.searchDialogRef = this.dialog.open(tpl, {
-      width: '400px',
-      height: '100vh',
-      position: { right: '0' },
-      panelClass: 'right-panel'
-    });
-    this.searchDialogRef?.afterClosed().subscribe(() => { });
-  }
-
-  closeModal(): void {
-    this.searchDialogRef?.close();
-  }
-
-  onSearchSubmit(): void {
-    const { type, question, categoryId } = this.searchForm.getRawValue();
-    // Hər sahə ayrıca yoxlanılır (filterPredicate); boş sahə süzgəcə daxil olmur
-    this.dataSource.filter = JSON.stringify({
-      type: toQuestionTypeId(type),
-      question: (question ?? '').trim().toLocaleLowerCase('az'),
-      categoryId: categoryId ?? null
-    });
-    if (this.dataSource.paginator) this.dataSource.paginator.firstPage();
-    this.closeModal();
-  }
-
-  private static matches(row: QuestionRow, filter: string): boolean {
-    const f = JSON.parse(filter) as { type: number | null; question: string; categoryId: number | null };
-    return (f.type === null || toQuestionTypeId(row.questionType ?? row.questionTypeID) === f.type)
-      && (f.categoryId === null || row.categoryId === f.categoryId)
-      && (!f.question || (row.questionText ?? '').toLocaleLowerCase('az').includes(f.question));
-  }
-
-  typeLabel(row: QuestionRow): string {
-    return questionTypeLabel(row.questionType ?? row.questionTypeID);
-  }
-
-  resetForm(): void {
-    this.searchForm.reset();
-    this.dataSource.filter = '';
-  }
-
-  add() { this.router.navigate(['/admin/questions/add']); }
-  edit(row: QuestionRow) { this.router.navigate(['/admin/questions/edit', row.id], { state: row }); }
-  remove(row: QuestionRow) {
-    this.confirmDialog
-      .confirm({
-        title: 'Sual silinsin?',
-        message: `"${row.questionText}" sualını silmək istədiyinizə əminsiniz?`,
-        confirmText: 'Sil',
-        tone: 'danger'
-      })
-      .subscribe(confirmed => {
-        if (!confirmed) return;
-        this.questionService.delete(row.id).subscribe({
-          next: () => {
-            this.notify.success('Sual silindi', { message: 'Sual mobil checklist-dən çıxarıldı. Köhnə yoxlama nəticələri dəyişmir.' });
-            this.load();
-          },
-          error: (err) => this.notify.error('Sual silinmədi', { message: err?.error?.message || 'Serverlə əlaqədə xəta baş verdi.' })
-        });
+  load(): void {
+    this.isLoading = true;
+    this.loadError = null;
+    forkJoin({
+      questions: this.questionService.list(),
+      categories: this.categoryService.getAllCategories(),
+      sections: this.sectionService.list(),
+      firms: this.firmService.getAllFirms()
+    })
+      .pipe(finalize(() => this.isLoading = false))
+      .subscribe({
+        next: ({ questions, categories, sections, firms }) => {
+          this.firms = Array.isArray(firms?.data) ? firms.data : [];
+          this.allCategories = categoryOptions(
+            Array.isArray(categories?.data) ? categories.data : [],
+            Array.isArray(sections?.data) ? sections.data : []
+          );
+          const categoryById = new Map(this.allCategories.map(c => [c.id, c]));
+          this.allRows = (Array.isArray(questions?.data) ? questions.data : []).map(q => {
+            const category = categoryById.get(q.categoryId);
+            const typeValue = q.questionType ?? q.questionTypeID;
+            return {
+              ...q,
+              path: category?.path ?? q.categoryName ?? '—',
+              firmId: category?.firmId ?? null,
+              typeId: toQuestionTypeId(typeValue),
+              typeLabel: questionTypeLabel(typeValue)
+            };
+          });
+          this.applyFilters();
+          this.loaded = true;
+          this.urlState.restorePage(this.paginator, this.dataSource.data.length);
+        },
+        error: err => this.loadError = apiErrorMessage(err, 'Suallar yüklənmədi')
       });
   }
-  view(row: QuestionRow) { this.router.navigate(['/admin/questions/view', row.id], { state: row }); }
+
+  clearFilters(): void {
+    this.filters.reset({ firm: null, category: null, type: null, q: '' }, { emitEvent: false });
+    this.onFiltersChange();
+  }
+
+  private onFiltersChange(): void {
+    this.applyFilters();
+    this.paginator.firstPage();
+    const v = this.filters.getRawValue();
+    this.urlState.writeFilters({ firm: v.firm, category: v.category, type: v.type, q: v.q?.trim() });
+  }
+
+  private applyFilters(): void {
+    const { firm, category, type, q } = this.filters.getRawValue();
+    const search = (q ?? '').trim().toLocaleLowerCase('az');
+    this.dataSource.data = this.allRows.filter(r =>
+      (firm == null || r.firmId === firm)
+      && (category == null || r.categoryId === category)
+      && (type == null || r.typeId === type)
+      && (!search || (r.questionText ?? '').toLocaleLowerCase('az').includes(search)));
+  }
+
+  add(): void {
+    this.router.navigate(['/admin/questions/add']);
+  }
+
+  edit(row: QuestionRow): void {
+    this.router.navigate(['/admin/questions/edit', row.id]);
+  }
+
+  view(row: QuestionRow): void {
+    this.router.navigate(['/admin/questions/view', row.id]);
+  }
+
+  remove(row: QuestionRow): void {
+    this.confirmDialog.confirm({
+      title: 'Sual silinsin?',
+      message: 'Sual mobil checklist-dən çıxacaq və yeni yoxlamalarda soruşulmayacaq. Keçmiş yoxlama nəticələri dəyişmir. '
+        + 'Admin panelindən geri qaytarmaq olmur.',
+      confirmText: 'Sil',
+      tone: 'danger',
+      items: [`${row.path}: ${row.questionText}`]
+    }).subscribe(result => {
+      if (!result) return;
+      this.questionService.delete(row.id).subscribe({
+        next: () => {
+          this.notify.success('Sual silindi');
+          this.load();
+        },
+        error: err => this.notify.error(apiErrorMessage(err, 'Sual silinmədi'))
+      });
+    });
+  }
 }

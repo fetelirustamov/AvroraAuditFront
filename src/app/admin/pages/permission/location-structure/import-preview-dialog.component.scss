@@ -1,4 +1,4 @@
-// Görünüş admin/shared/confirm-dialog ilə eynidir; yalnız ön baxış cədvəli əlavədir.
+// Görünüş shared/components/confirm-dialog-un danger variantı ilə eynidir; yalnız ön baxış cədvəli əlavədir.
 .preview-dialog {
   padding: 24px;
 }
@@ -13,7 +13,7 @@
 }
 
 .icon {
-  color: var(--warning);
+  color: var(--danger);
   font-size: 24px;
 }
 

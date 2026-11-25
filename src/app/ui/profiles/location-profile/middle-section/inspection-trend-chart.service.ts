@@ -1,82 +1,94 @@
-import { Injectable, Inject, PLATFORM_ID } from '@angular/core';
-import { isPlatformBrowser } from '@angular/common';
+import { Injectable, OnDestroy } from '@angular/core';
 
 import { chartColors } from '../../../../shared/utils/chart-colors';
 
-/** Qrafikin render olunduğu element */
-export const INSPECTION_TREND_CHART_ID = 'location_inspection_trend_chart';
+export interface TrendPoint {
+    /** X oxundakı etiket (yoxlama tarixi) */
+    label: string;
+    /** Yoxlama nəticəsi, faiz */
+    result: number;
+    solved: number;
+    open: number;
+}
 
 /**
- * Ərazi profilindəki yoxlama dinamikası qrafiki (sütun diaqramı).
+ * Mağaza profilindəki yoxlama dinamikası. Faiz və say eyni oxda göstərilmir:
+ * nəticə faizi ayrıca xətt qrafikidir, uyğunsuzluqlar ayrıca sütun qrafikidir.
  *
- * Əvvəl bu məntiq şablonun demo səhifəsindən (`pages/ecommerce-page/
- * e-seller-details/revenue/revenue.service.ts`) idxal olunurdu — real səhifə
- * silinməli demo koda bağlı qalırdı. Servis buraya köçürüldü, DOM id-si
- * `ep_revenue_chart`-dan mənalı ada dəyişdirildi və rənglər tema
- * dəyişənlərindən oxunur.
+ * Komponentdə `providers` ilə verilir: hər profil öz qrafiklərini yaradır və
+ * komponentlə birlikdə sökür (köhnə mağazanın qrafiki ekranda qalmır).
+ * ApexCharts dinamik `import()` ilə yüklənir.
  */
-@Injectable({ providedIn: 'root' })
-export class InspectionTrendChartService {
+@Injectable()
+export class InspectionTrendChartService implements OnDestroy {
+    private charts: { destroy(): void }[] = [];
+    /** Hər render bir nəsildir: gecikən `import()` köhnə məlumatla qrafik yaratmasın */
+    private generation = 0;
 
-    private isBrowser: boolean;
-    private chart: any;
+    async render(resultHost: HTMLElement, countHost: HTMLElement, points: TrendPoint[]): Promise<void> {
+        this.destroy();
+        const generation = this.generation;
+        if (!points.length) { return; }
 
-    constructor(@Inject(PLATFORM_ID) private platformId: any) {
-        this.isBrowser = isPlatformBrowser(this.platformId);
+        const ApexCharts = (await import('apexcharts')).default;
+        if (generation !== this.generation) { return; }
+
+        const c = chartColors();
+        const categories = points.map(p => p.label);
+        const axisLabels = { style: { colors: c.textMuted, fontSize: '12px' } };
+        const base = {
+            chart: { height: 260, toolbar: { show: false }, zoom: { enabled: false }, fontFamily: 'inherit' },
+            grid: { borderColor: c.border, strokeDashArray: 3 },
+            dataLabels: { enabled: false },
+            xaxis: {
+                categories,
+                axisTicks: { show: false },
+                axisBorder: { color: c.border },
+                labels: axisLabels,
+            },
+        };
+
+        const result = new ApexCharts(resultHost, {
+            ...base,
+            chart: { ...base.chart, type: 'line' },
+            series: [{ name: 'Nəticə', data: points.map(p => Math.round(p.result * 10) / 10) }],
+            colors: [c.accent],
+            stroke: { width: 2, curve: 'straight' },
+            markers: { size: 4, strokeColors: c.surface, strokeWidth: 2 },
+            yaxis: { min: 0, max: 100, tickAmount: 4, labels: { ...axisLabels, formatter: (v: number) => `${Math.round(v)}%` } },
+            tooltip: { y: { formatter: (v: number) => `${v}%` } },
+            legend: { show: false },
+        });
+
+        const counts = new ApexCharts(countHost, {
+            ...base,
+            chart: { ...base.chart, type: 'bar' },
+            series: [
+                { name: 'Həll edilmiş', data: points.map(p => p.solved) },
+                { name: 'Açıq', data: points.map(p => p.open) },
+            ],
+            // Həll edilmiş / açıq vəziyyətdir: rəng statusdan, ad legend-dən gəlir
+            colors: [c.success, c.danger],
+            plotOptions: { bar: { columnWidth: '50%', borderRadius: 4, borderRadiusApplication: 'end' } },
+            stroke: { show: true, width: 2, colors: ['transparent'] },
+            yaxis: { min: 0, forceNiceScale: true, labels: { ...axisLabels, formatter: (v: number) => String(Math.round(v)) } },
+            legend: { show: true, position: 'top', horizontalAlign: 'left', fontSize: '12px', labels: { colors: c.text } },
+            tooltip: { shared: true, intersect: false },
+        });
+
+        this.charts = [result, counts];
+        await Promise.all([result.render(), counts.render()]);
     }
 
-    async loadChart(series: { name: string; data: number[] }[], categories: string[]): Promise<void> {
-        if (!this.isBrowser) {
-            return;
-        }
-        const host = document.querySelector(`#${INSPECTION_TREND_CHART_ID}`);
-        if (!host) {
-            return;
-        }
-        try {
-            const ApexCharts = (await import('apexcharts')).default;
-            const c = chartColors();
-            const border = c.border;
-            const label = c.textMuted;
-
-            this.chart = new ApexCharts(host, {
-                series,
-                chart: { type: 'bar', height: 430, toolbar: { show: true }, fontFamily: 'inherit' },
-                // Seriya sırası: Nəticə % (əsas → vurğu), Ümumi (neytral), Həll (success), Açıq (danger)
-                colors: [c.accent, c.neutral[2], c.success, c.danger],
-                plotOptions: { bar: { columnWidth: '50%' } },
-                grid: { show: true, borderColor: border },
-                dataLabels: { enabled: false },
-                stroke: { width: 5, show: true, colors: ['transparent'] },
-                xaxis: {
-                    categories,
-                    axisTicks: { show: false, color: border },
-                    axisBorder: { show: false, color: border },
-                    labels: { show: true, style: { colors: label, fontSize: '12px' } },
-                },
-                yaxis: {
-                    min: 0,
-                    labels: { style: { colors: label, fontSize: '12px' } },
-                    axisBorder: { show: false, color: border },
-                    axisTicks: { show: false, color: border },
-                },
-                legend: {
-                    show: true,
-                    position: 'top',
-                    fontSize: '12px',
-                    horizontalAlign: 'left',
-                    itemMargin: { horizontal: 8, vertical: 0 },
-                    labels: { colors: label },
-                    markers: { size: 7, offsetX: -2, offsetY: -.5, shape: 'diamond' },
-                },
-            });
-            this.chart.render();
-        } catch (error) {
-            console.error('Yoxlama dinamikası qrafiki yüklənmədi:', error);
-        }
+    destroy(): void {
+        this.generation++;
+        this.charts.forEach(chart => {
+            try { chart.destroy(); } catch { /* artıq sökülüb */ }
+        });
+        this.charts = [];
     }
 
-    updateChart(series: { name: string; data: number[] }[], categories: string[]): void {
-        this.chart?.updateOptions({ series, xaxis: { categories } });
+    ngOnDestroy(): void {
+        this.destroy();
     }
 }

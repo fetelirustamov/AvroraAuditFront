@@ -1,274 +1,249 @@
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { DatePipe } from '@angular/common';
 import { SelectionModel } from '@angular/cdk/collections';
-import { AsyncPipe, CommonModule, DatePipe, JsonPipe, NgFor, NgIf } from '@angular/common';
-import { Component, ViewChild } from '@angular/core';
-import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
+import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
 import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { MatMenuModule } from '@angular/material/menu';
-import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
+import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSelectModule } from '@angular/material/select';
-import { MatTableDataSource, MatTableModule } from '@angular/material/table';
-import { Router } from '@angular/router';
-import { FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { InspectionsService } from '../inspections.service';
-import { finalize, Observable, of } from 'rxjs';
+import { Subscription, finalize } from 'rxjs';
+import { InspectionPlan } from '../InpectionPlan.model';
 import { Firm } from '../firm.model';
-import { MatDatepickerModule } from '@angular/material/datepicker';
+import { InspectionsService } from '../inspections.service';
 import { TableState } from '../../../models/table-state.model';
 import { TableService } from '../../services/table.service';
-import { apiErrorMessage } from '../../../shared/utils/api-error';
-import { InspectionPlan } from '../InpectionPlan.model';
-import { NotificationService } from '../../../shared/services/notification.service';
 import { PlanApprove } from '../../plans/plan.model';
 import { PlanService } from '../../plans/plan.service';
-import { AuditLoadingOverlayComponent } from '../../components/audit-loading-overlay/audit-loading-overlay.component';
-import { InspectionApproveCacheService } from './inspection-approve-cache.service';
+import { planStoreLabel } from '../../plans/plan-row';
+import { NotificationService } from '../../../shared/services/notification.service';
+import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
+import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
+import { ListStateComponent } from '../../../shared/components/list-state/list-state.component';
+import { STATUS_ACTIONS, StatusAction, statusActionConfirm } from '../../../shared/status/status-actions';
+import { AppDatePipe } from '../../../shared/pipes/app-date.pipe';
+import { apiErrorMessage } from '../../../shared/utils/api-error';
 import { setFilter } from '../../../shared/utils/table-filter';
+import { queryDate, queryNumber, writeQueryState } from '../../../shared/utils/query-state';
 
+/** `InspectionPlans.Status`: 3 = yoxlama təsdiq gözləyir; təsdiq 3→4, mobilə qaytarma 3→2. */
+const AWAITING_APPROVAL = 3;
+const APPROVED = 4;
+const RETURNED_TO_MOBILE = 2;
+
+const PAGE_SIZES = [10, 25, 50];
 
 @Component({
   selector: 'app-inspection-approve',
   standalone: true,
-  imports: [MatCardModule, MatInputModule, MatFormFieldModule, MatSelectModule, MatButtonModule, MatPaginatorModule, MatTableModule, MatCheckboxModule, MatMenuModule, MatTooltipModule, MatDatepickerModule, FormsModule, ReactiveFormsModule, NgFor, CommonModule, AuditLoadingOverlayComponent],
-  providers: [DatePipe],
+  imports: [
+    ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatDatepickerModule,
+    MatTableModule, MatCheckboxModule, MatPaginatorModule, MatProgressBarModule, MatTooltipModule,
+    PageHeaderComponent, ListStateComponent, AppDatePipe,
+  ],
+  providers: [DatePipe, TableService],
   templateUrl: './inspection-approve.component.html',
   styleUrl: './inspection-approve.component.scss'
 })
+export class InspectionApproveComponent implements OnInit, OnDestroy {
+  private readonly inspectionService = inject(InspectionsService);
+  private readonly tableService = inject(TableService);
+  private readonly planService = inject(PlanService);
+  private readonly notify = inject(NotificationService);
+  private readonly confirmDialog = inject(ConfirmDialogService);
+  private readonly datePipe = inject(DatePipe);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
 
+  readonly displayedColumns = ['select', 'inspectorsName', 'locationCode', 'locationName', 'startDate', 'endDate', 'action'];
+  readonly pageSizes = PAGE_SIZES;
+  readonly approveAction = STATUS_ACTIONS.approve;
+  readonly returnAction = STATUS_ACTIONS.returnToMobile;
+  readonly storeLabel = planStoreLabel;
 
-export class InspectionApproveComponent {
-  displayedColumns: string[] = ['select', 'inspectorsName', 'locationCode', 'locationName', 'startDate', 'endDate', 'action'];
-  public dataSource: InspectionPlan[] = [];  // Düzəldildi
-  selection = new SelectionModel<InspectionPlan>(true, []);  // Düzəldildi
-  allDataCount: number = 0;
-  @ViewChild(MatPaginator) paginator!: MatPaginator;
+  readonly form = new FormGroup({
+    firmId: new FormControl<number | null>(null, Validators.required),
+    dateRange: new FormGroup({
+      start: new FormControl<Date | null>(null),
+      end: new FormControl<Date | null>(null),
+    }),
+  });
 
-  public firms: Firm[] = [];
-  planForm!: FormGroup;
-  public isLoading = false;
-  public isSaving = false;
-  public searchTerm: string = '';
-  public pageSize: number = 10;
+  firms: Firm[] = [];
+  rows: InspectionPlan[] = [];
+  readonly selection = new SelectionModel<InspectionPlan>(true, []);
+  total = 0;
+  pageIndex = 0;
+  pageSize = PAGE_SIZES[0];
+  searched = false;
+  isLoading = false;
+  isSaving = false;
+  loadError: string | null = null;
 
-  // public rows$: Observable<InspectionPlan[]> = new Observable<InspectionPlan[]>();
-  private _tableState: TableState = new TableState();
-  private planApproveList: PlanApprove[] = [];
-  private planApprove: PlanApprove = new PlanApprove();
-  //public firmId: number = 0;
+  private readonly tableState = new TableState();
+  private loadSub?: Subscription;
 
-  constructor(private inspectionService: InspectionsService,
-    private _tableService: TableService,
-    private fb: FormBuilder,
-    private datePipe: DatePipe,
-    private planService: PlanService,
-    private notify: NotificationService,
-    private router: Router,
-    private approveCache: InspectionApproveCacheService
-  ) {
+  constructor() {
+    this.tableService.api_url = 'inspectionPlans/getDetails';
+    this.tableState.filter['status'] = String(AWAITING_APPROVAL);
+    this.tableState.sorting.direction = 'desc';
+  }
+
+  ngOnInit(): void {
     this.getFirms();
 
-    this._tableState = new TableState();
-    this._tableService.api_url = "inspectionPlans/getDetails";
-    //this._authenticationService.currentUser.subscribe(x => (this.currentUser = x));
-    this._tableState.filter['status'] = "3";
-    this._tableState.paginator.page = 0;
-    this._tableState.sorting.direction = "desc";
-    this._tableState.paginator.size = Number(this.pageSize);
-    this.createForm();
+    // Detal səhifəsindən qayıdanda filtr və səhifə URL-dən bərpa olunur, data yenidən çəkilir
+    const q = this.route.snapshot.queryParamMap;
+    this.form.patchValue({
+      firmId: queryNumber(q, 'firm'),
+      dateRange: { start: queryDate(q, 'from'), end: queryDate(q, 'to') },
+    });
+    this.pageIndex = queryNumber(q, 'page') ?? 0;
+    this.pageSize = queryNumber(q, 'size') ?? PAGE_SIZES[0];
 
-    // Detal səhifəsindən qayıdış: filtrlər və səhifə bərpa olunur, data isə
-    // yenidən çəkilir (orada verilən qərar siyahını dəyişmiş ola bilər).
-    const restored = this.approveCache.consumeSnapshot();
-    if (restored) {
-      this.planForm.patchValue(restored.formValue as object);
-      this._tableState.filter = { ...restored.filter };
-      this._tableState.paginator.page = restored.page;
-      this.fill();
+    if (this.form.valid) {
+      this.applyFilters();
+      this.load();
     }
   }
 
-
-  ngAfterViewInit() {
-    this.paginator.pageIndex = this._tableState.paginator.page;
-    this.paginator.page.subscribe(() => {
-      this._tableState.paginator.page = this.paginator.pageIndex;
-      this.pageSize = this.paginator.pageSize;
-      this.fill();
-    });
+  ngOnDestroy(): void {
+    this.loadSub?.unsubscribe();
   }
 
-  isAllSelected() {
-    const numSelected = this.selection.selected.length;
-    const numRows = this.dataSource.length;
-    return numSelected === numRows;
+  isAllSelected(): boolean {
+    return this.rows.length > 0 && this.selection.selected.length === this.rows.length;
+  }
+
+  toggleAllRows(): void {
+    if (this.isAllSelected()) {
+      this.selection.clear();
+    } else {
+      this.selection.select(...this.rows);
+    }
   }
 
   checkboxLabel(row?: InspectionPlan): string {
     if (!row) {
       return this.isAllSelected() ? 'Bütün seçimləri götür' : 'Hamısını seç';
     }
-    return `${this.selection.isSelected(row) ? 'Seçimi götür' : 'Seç'}: sətir ${row.id + 1}`;
+    return `${this.selection.isSelected(row) ? 'Seçimi götür' : 'Sətri seç'}: ${planStoreLabel(row)}`;
   }
 
-  toggleAllRows() {
-    if (this.isAllSelected()) {
-      this.selection.clear();
-      return;
-    }
-    this.selection.select(...this.dataSource);
-  }
-
-
-  getFirms() {
-    this.inspectionService.getFirms().subscribe({
-      next: (response) => {
-        this.firms = response.data;
-      },
-      error: (error) => this.notify.error(apiErrorMessage(error, 'Firma siyahısı yüklənmədi')),
-    });
-  }
-
-  // public inspectionForm = new FormGroup({
-  //   firmId: new FormControl<number | null>(null),
-  //   locationCode: new FormControl<number | null>(null),
-  //   eraziKodu: new FormControl<string>(''),
-  //   dateRange: new FormGroup({
-  //     start: new FormControl<Date | null>(null),
-  //     end: new FormControl<Date | null>(null),
-  //   }),
-  // });
-
-
-  createForm() {
-    this.planForm = this.fb.group({
-      firmId: [null, Validators.required],
-      // start: [null, Validators.required],
-      // end: [null, Validators.required],
-      dateRange: new FormGroup({
-        start: new FormControl<Date | null>(null),
-        end: new FormControl<Date | null>(null),
-      }),
-    });
-  }
-
-
-  onSearch() {
-    if (this.planForm.invalid) {
-      this.planForm.markAllAsTouched();
+  onSearch(): void {
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
       this.notify.warning('Məcburi sahələr seçilməyib', { message: 'Firmanı seçin.' });
       return;
     }
-
-    const formData = this.planForm.value;
-    const startDate = this.datePipe.transform(formData.dateRange?.start, 'yyyy-MM-dd');
-    const endDate = this.datePipe.transform(formData.dateRange?.end, 'yyyy-MM-dd');
-
-    setFilter(this._tableState.filter, 'startDate', startDate);
-    setFilter(this._tableState.filter, 'endDate', endDate);
-    setFilter(this._tableState.filter, 'firmId', formData.firmId);
-    // Yeni axtarış ilk səhifədən başlasın
-    this._tableState.paginator.page = 0;
-    if (this.paginator) this.paginator.pageIndex = 0;
-
-    this.fill();
+    this.pageIndex = 0;
+    const { firmId, dateRange } = this.form.getRawValue();
+    writeQueryState(this.router, { firm: firmId, from: dateRange.start, to: dateRange.end, page: null });
+    this.applyFilters();
+    this.load();
   }
 
+  onPage(event: PageEvent): void {
+    this.pageIndex = event.pageIndex;
+    this.pageSize = event.pageSize;
+    writeQueryState(this.router, { page: event.pageIndex || null, size: event.pageSize });
+    this.load();
+  }
 
-  private fill() {
+  load(): void {
+    this.loadSub?.unsubscribe();
     this.isLoading = true;
-    this._tableState.paginator.size = Number(this.pageSize);
-    if (!this._tableState.filter) {
-      this._tableState.filter = {};
-    }
-    this._tableState.searchTerm = this.searchTerm;
+    this.loadError = null;
+    this.tableState.paginator.page = this.pageIndex;
+    this.tableState.paginator.size = this.pageSize;
 
-    this._tableService.fill(this._tableState).pipe(
-      finalize(() => this.isLoading = false)
-    ).subscribe({
-      next: (response) => {
-        const items = response.data?.items || [];
-        // Son sətir təsdiqlənib/rədd edilibsə boş qalan səhifədən bir əvvəlkinə keç
-        if (items.length === 0 && this._tableState.paginator.page > 0) {
-          this._tableState.paginator.page--;
-          if (this.paginator) this.paginator.pageIndex = this._tableState.paginator.page;
-          this.fill();
-          return;
-        }
-        this._tableState.paginator.total = response.data?.total || 0;
-        this.dataSource = items;
-        // Toplu əməliyyat yalnız ekranda görünən sətirlərə tətbiq olunsun
-        this.selection.clear();
-        this.allDataCount = response.data?.total || 0;
-      },
-      error: (error) => this.notify.error(apiErrorMessage(error, 'Yoxlamalar yüklənmədi')),
-    });
+    this.loadSub = this.tableService.fill(this.tableState)
+      .pipe(finalize(() => (this.isLoading = false)))
+      .subscribe({
+        next: (response) => {
+          if (!response.success) {
+            this.loadError = response.message;
+            return;
+          }
+          const items = response.data?.items ?? [];
+          // Son sətir təsdiqlənib/qaytarılıbsa boş qalan səhifədən bir əvvəlkinə keç
+          if (items.length === 0 && this.pageIndex > 0) {
+            this.pageIndex--;
+            writeQueryState(this.router, { page: this.pageIndex || null });
+            this.load();
+            return;
+          }
+          this.searched = true;
+          this.rows = items;
+          this.total = response.data?.total ?? 0;
+          this.selection.clear();
+        },
+        error: (error) => (this.loadError = apiErrorMessage(error, 'Yoxlamalar yüklənmədi')),
+      });
   }
 
-  // onSelectFirm(selectedFirmId: number) {
-  //   this.getLocations(selectedFirmId);
-  // }
-
-  // onApprove(value: any) {
-  //   console.log(value);
-
-
-  // }
-
-  onDetails(row: InspectionPlan) {
-    this.approveCache.save({
-      formValue: this.planForm.getRawValue(),
-      filter: { ...this._tableState.filter },
-      page: this._tableState.paginator.page,
-    });
-    this.router.navigate(['/inspections/details'], {
-      queryParams: { id: row.id, planId: row.id, returnUrl: this.router.url },
-      state: { ...row, planId: row.id, returnUrl: this.router.url }
-    });
+  /** Detal səhifəsi ID-ni URL-dən alır; geri linki siyahının filtrli URL-inə qayıdır. */
+  openDetails(row: InspectionPlan): void {
+    this.router.navigate(['/inspections/details'], { queryParams: { id: row.id, returnUrl: this.router.url } });
   }
 
-  changePlanStatus(row: any, status: number) {
-    const item = new PlanApprove();
-    item.planId = row.id;
-    item.status = status;
-    this.submitStatuses([item]);
+  approve(row: InspectionPlan): void {
+    this.submit([row], APPROVED);
   }
 
-  changeSelectedPlanStatus(status: number) {
-    const items = this.selection.selected.map((row) => {
-      const item = new PlanApprove();
-      item.planId = row.id;
-      item.status = status;
-      return item;
-    });
-    if (items.length === 0) {
-      this.notify.warning('Heç bir plan seçilməyib');
-      return;
-    }
-    this.submitStatuses(items);
+  approveSelected(): void {
+    this.confirmThenSubmit(this.approveAction, this.selection.selected, APPROVED);
   }
 
-  private submitStatuses(items: PlanApprove[]): void {
+  returnToMobile(rows: InspectionPlan[]): void {
+    this.confirmThenSubmit(this.returnAction, rows, RETURNED_TO_MOBILE);
+  }
+
+  private confirmThenSubmit(action: StatusAction, rows: InspectionPlan[], status: number): void {
+    if (rows.length === 0) return;
+    this.confirmDialog.confirm(statusActionConfirm(action, rows.length, rows.map(planStoreLabel)))
+      .subscribe(result => {
+        if (result) this.submit(rows, status);
+      });
+  }
+
+  private submit(rows: InspectionPlan[], status: number): void {
     if (this.isSaving) return;
+    const items = rows.map(row => ({ planId: row.id, status }) as PlanApprove);
+
     this.isSaving = true;
     this.planService.aprovePlan(items)
       .pipe(finalize(() => (this.isSaving = false)))
       .subscribe({
         next: (data) => {
           if (data.success) {
-            // Bildiriş düymədəki feli təkrarlayır: 4 Təsdiqlə, 2 Mobilə qaytar
-            this.notify.success(items[0]?.status === 4 ? 'Yoxlama təsdiqləndi' : 'Yoxlama mobilə qaytarıldı');
+            // Bildiriş düymədəki feli təkrarlayır
+            this.notify.success(status === APPROVED ? 'Yoxlama təsdiqləndi' : 'Yoxlama mobilə qaytarıldı');
+          } else {
+            this.notify.error(data.message || 'Status dəyişmədi');
           }
-          this.selection.clear();
-          this.fill();
+          this.load();
         },
-        error: (error) => this.notify.error(apiErrorMessage(error, 'Status dəyişmədi'))
+        error: (error) => this.notify.error(apiErrorMessage(error, 'Status dəyişmədi')),
       });
   }
 
+  private getFirms(): void {
+    this.inspectionService.getFirms().subscribe({
+      next: (response) => (this.firms = response.data ?? []),
+      error: (error) => this.notify.error(apiErrorMessage(error, 'Firma siyahısı yüklənmədi')),
+    });
+  }
+
+  private applyFilters(): void {
+    const { firmId, dateRange } = this.form.getRawValue();
+    setFilter(this.tableState.filter, 'firmId', firmId);
+    setFilter(this.tableState.filter, 'startDate', this.datePipe.transform(dateRange.start, 'yyyy-MM-dd'));
+    setFilter(this.tableState.filter, 'endDate', this.datePipe.transform(dateRange.end, 'yyyy-MM-dd'));
+  }
 }
-
-
-

@@ -1,188 +1,114 @@
-<app-admin-breadcrumb *ngIf="!isDialog" title="Yeni istifadəçi"
-    [crumbs]="[{label: 'İstifadəçi idarəetməsi'}, {label: 'Yeni istifadəçi'}]">
-</app-admin-breadcrumb>
+<form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <h2 mat-dialog-title class="form-dialog-title">Yeni istifadəçi</h2>
 
-<div class="modal-like audit-table-loading-shell" [attr.aria-busy]="isLoading || isSaving">
-    <mat-card>
-        <mat-card-header>
-            <div class="header-container">
-                <mat-card-title>İstifadəçi məlumatları</mat-card-title>
-                <div class="top-actions">
-                    <button mat-flat-button color="primary" type="button" (click)="submit()"
-                        [disabled]="isSaving || isLoading">
-                        {{ isSaving ? 'Saxlanılır...' : 'Yadda saxla' }}
-                    </button>
-                    <button mat-stroked-button color="warn" type="button" (click)="cancel()" [disabled]="isSaving">
-                        Ləğv et
-                    </button>
-                </div>
+    <mat-dialog-content>
+        <div class="form-grid">
+            <div class="form-field">
+                <label class="g-field-label" for="user-code">İstifadəçi kodu <span class="required-mark" aria-hidden="true">*</span></label>
+                <mat-form-field appearance="outline" class="g-modern-field">
+                    <input id="user-code" matInput class="mono" type="number" formControlName="userCode" required placeholder="Məs: 10254">
+                    @if (form.controls.userCode.hasError('required')) {
+                        <mat-error>İstifadəçi kodunu yazın</mat-error>
+                    } @else if (form.controls.userCode.hasError('min')) {
+                        <mat-error>Kod 0-dan böyük olmalıdır</mat-error>
+                    }
+                </mat-form-field>
             </div>
-        </mat-card-header>
 
-        <mat-card-content>
-            <form [formGroup]="form" (ngSubmit)="submit()" class="row g-3 admin-input-design" novalidate>
+            <div class="form-field">
+                <label class="g-field-label" for="user-email">E-poçt <span class="required-mark" aria-hidden="true">*</span></label>
+                <mat-form-field appearance="outline" class="g-modern-field">
+                    <input id="user-email" matInput type="email" formControlName="email" required
+                        autocomplete="off" placeholder="ad.soyad@sirket.az">
+                    @if (form.controls.email.hasError('required')) {
+                        <mat-error>E-poçtu yazın</mat-error>
+                    } @else {
+                        <mat-error>E-poçt formatı düzgün deyil</mat-error>
+                    }
+                </mat-form-field>
+                <p class="field-note">E-poçt həm də giriş ünvanıdır.</p>
+            </div>
 
-                <div class="col-md-4">
-                    <div class="form-group">
-                        <label class="main-label">
-                            İstifadəçi kodu
-                            <span class="text-danger">*</span>
-                        </label>
-                        <mat-form-field class="w-100">
-                            <input matInput type="number" formControlName="userCode" required
-                                placeholder="Məsələn: 10254" />
-                            <mat-error *ngIf="hasError('userCode', 'required')">
-                                İstifadəçi kodu tələb olunur
-                            </mat-error>
-                            <mat-error *ngIf="hasError('userCode', 'min')">
-                                Kod 0-dan böyük olmalıdır
-                            </mat-error>
-                        </mat-form-field>
-                    </div>
-                </div>
+            <div class="form-field">
+                <label class="g-field-label" for="user-name">Ad <span class="required-mark" aria-hidden="true">*</span></label>
+                <mat-form-field appearance="outline" class="g-modern-field">
+                    <input id="user-name" matInput formControlName="name" required>
+                    <mat-error>Adı yazın</mat-error>
+                </mat-form-field>
+            </div>
 
-                <div class="col-md-4">
-                    <div class="form-group">
-                        <label class="main-label">
-                            Ad
-                            <span class="text-danger">*</span>
-                        </label>
-                        <mat-form-field class="w-100">
-                            <input matInput formControlName="name" required placeholder="Adı daxil edin" />
-                            <mat-error *ngIf="hasError('name', 'required')">
-                                Ad tələb olunur
-                            </mat-error>
-                        </mat-form-field>
-                    </div>
-                </div>
+            <div class="form-field">
+                <label class="g-field-label" for="user-surname">Soyad <span class="required-mark" aria-hidden="true">*</span></label>
+                <mat-form-field appearance="outline" class="g-modern-field">
+                    <input id="user-surname" matInput formControlName="surName" required>
+                    <mat-error>Soyadı yazın</mat-error>
+                </mat-form-field>
+            </div>
 
-                <div class="col-md-4">
-                    <div class="form-group">
-                        <label class="main-label">
-                            Soyad
-                            <span class="text-danger">*</span>
-                        </label>
-                        <mat-form-field class="w-100">
-                            <input matInput formControlName="surName" required placeholder="Soyadı daxil edin" />
-                            <mat-error *ngIf="hasError('surName', 'required')">
-                                Soyad tələb olunur
-                            </mat-error>
-                        </mat-form-field>
-                    </div>
-                </div>
+            <div class="form-field">
+                <label class="g-field-label" for="user-father">Ata adı</label>
+                <mat-form-field appearance="outline" class="g-modern-field">
+                    <input id="user-father" matInput formControlName="fatherName">
+                </mat-form-field>
+            </div>
 
-                <div class="col-md-4">
-                    <div class="form-group">
-                        <label class="main-label">Ata adı</label>
-                        <mat-form-field class="w-100">
-                            <input matInput formControlName="fatherName" placeholder="Ata adını daxil edin" />
-                        </mat-form-field>
-                    </div>
-                </div>
+            <div class="form-field">
+                <label class="g-field-label" for="user-password">Parol <span class="required-mark" aria-hidden="true">*</span></label>
+                <mat-form-field appearance="outline" class="g-modern-field">
+                    <input id="user-password" matInput [type]="hidePassword ? 'password' : 'text'" formControlName="password"
+                        required autocomplete="new-password" placeholder="Ən azı 6 simvol">
+                    <button matSuffix type="button" class="action-btn" (click)="hidePassword = !hidePassword"
+                        [attr.aria-label]="hidePassword ? 'Parolu göstər' : 'Parolu gizlət'">
+                        <span class="material-symbols-outlined" aria-hidden="true">{{ hidePassword ? 'visibility' : 'visibility_off' }}</span>
+                    </button>
+                    @if (form.controls.password.hasError('required')) {
+                        <mat-error>Parolu yazın</mat-error>
+                    } @else {
+                        <mat-error>Parol ən azı 6 simvol olmalıdır</mat-error>
+                    }
+                </mat-form-field>
+            </div>
 
-                <div class="col-md-4">
-                    <div class="form-group">
-                        <label class="main-label">
-                            E-poçt
-                            <span class="text-danger">*</span>
-                        </label>
-                        <mat-form-field class="w-100">
-                            <input matInput type="email" formControlName="email" required
-                                placeholder="ad.soyad@sirket.az" />
-                            <mat-error *ngIf="hasError('email', 'required')">
-                                E-poçt tələb olunur
-                            </mat-error>
-                            <mat-error *ngIf="hasError('email', 'email')">
-                                E-poçt formatı düzgün deyil
-                            </mat-error>
-                        </mat-form-field>
-                    </div>
-                </div>
+            <div class="form-field">
+                <label class="g-field-label" id="user-firms-label">Firmalar <span class="required-mark" aria-hidden="true">*</span></label>
+                <mat-form-field appearance="outline" class="g-modern-field">
+                    <mat-select formControlName="firmIds" aria-labelledby="user-firms-label" multiple required placeholder="Firma seçin">
+                        @for (f of firms; track f.id) {
+                            <mat-option [value]="f.id">{{ f.name }}</mat-option>
+                        }
+                    </mat-select>
+                    <mat-error>Ən azı bir firma seçin</mat-error>
+                </mat-form-field>
+            </div>
 
-                <div class="col-md-4">
-                    <div class="form-group">
-                        <label class="main-label">
-                            Parol
-                            <span class="text-danger">*</span>
-                        </label>
-                        <mat-form-field class="w-100">
-                            <input matInput [type]="hidePassword ? 'password' : 'text'" formControlName="password"
-                                required autocomplete="new-password" placeholder="Ən azı 6 simvol" />
-                            <button mat-icon-button matSuffix type="button" (click)="hidePassword = !hidePassword"
-                                [attr.aria-label]="hidePassword ? 'Parolu göstər' : 'Parolu gizlət'">
-                                <i class="material-symbols-outlined">
-                                    {{ hidePassword ? 'visibility' : 'visibility_off' }}
-                                </i>
-                            </button>
-                            <mat-error *ngIf="hasError('password', 'required')">
-                                Parol tələb olunur
-                            </mat-error>
-                            <mat-error *ngIf="hasError('password', 'minlength')">
-                                Parol ən azı 6 simvol olmalıdır
-                            </mat-error>
-                        </mat-form-field>
-                    </div>
-                </div>
+            <div class="form-field">
+                <label class="g-field-label" id="user-role-label">İcazə qrupu <span class="required-mark" aria-hidden="true">*</span></label>
+                <mat-form-field appearance="outline" class="g-modern-field">
+                    <mat-select formControlName="roleId" aria-labelledby="user-role-label" required placeholder="Qrup seçin">
+                        @for (r of roles; track r.id) {
+                            <mat-option [value]="r.id">{{ r.name }}</mat-option>
+                        }
+                    </mat-select>
+                    <mat-error>İcazə qrupunu seçin</mat-error>
+                </mat-form-field>
+            </div>
+        </div>
 
-                <!-- Autentifikasiya növü istifadəçi tələbi ilə formadan gizlədilib -
-                     avtomatik olaraq defolt dəyər arxa planda təyin edilir (bax: pickDefaultAuthSetting). -->
-                <div class="col-12" *ngIf="!isLoading && authSettings.length === 0">
-                    <p class="form-note form-note-warn">
-                        <i class="material-symbols-outlined">warning</i>
-                        Sistemdə heç bir autentifikasiya növü tapılmadı. Zəhmət olmasa İT dəstəyi ilə əlaqə saxlayın.
-                    </p>
-                </div>
+        @if (authSettingsMissing) {
+            <p class="field-note is-warning">
+                <span class="material-symbols-outlined" aria-hidden="true">warning</span>
+                Sistemdə autentifikasiya növü tapılmadı, istifadəçi yaradıla bilməz. İT dəstəyi ilə əlaqə saxlayın.
+            </p>
+        } @else {
+            <p class="field-note">
+                <span class="material-symbols-outlined" aria-hidden="true">info</span>
+                İstifadəçi aktiv statusla yaradılır. Vəzifə və digər məlumatları sonra redaktə səhifəsində dəyişə bilərsiniz.
+            </p>
+        }
+    </mat-dialog-content>
 
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <label class="main-label">
-                            Firma(lar)
-                            <span class="text-danger">*</span>
-                        </label>
-                        <mat-form-field class="w-100">
-                            <mat-select formControlName="firmIds" required multiple placeholder="Firma seçin">
-                                <mat-option *ngFor="let f of firms" [value]="f.id">{{ f.name }}</mat-option>
-                            </mat-select>
-                            <mat-error *ngIf="hasError('firmIds', 'required')">
-                                Ən azı bir firma seçilməlidir
-                            </mat-error>
-                        </mat-form-field>
-                        <small class="field-hint" *ngIf="firms.length === 0">
-                            Firma tapılmadı.
-                        </small>
-                    </div>
-                </div>
-
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <label class="main-label">
-                            İcazə qrupu
-                            <span class="text-danger">*</span>
-                        </label>
-                        <mat-form-field class="w-100">
-                            <mat-select formControlName="roleId" required placeholder="İcazə qrupu seçin">
-                                <mat-option *ngFor="let r of roles" [value]="r.id">{{ r.name }}</mat-option>
-                            </mat-select>
-                            <mat-error *ngIf="hasError('roleId', 'required')">
-                                İcazə qrupu seçilməlidir
-                            </mat-error>
-                        </mat-form-field>
-                        <small class="field-hint" *ngIf="roles.length === 0">
-                            İcazə qrupu tapılmadı.
-                        </small>
-                    </div>
-                </div>
-
-                <div class="col-12">
-                    <p class="form-note">
-                        <i class="material-symbols-outlined">info</i>
-                        İstifadəçi aktiv statusla, seçdiyiniz firma(lar)a və icazə qrupuna bağlı olaraq yaradılır.
-                    </p>
-                </div>
-            </form>
-        </mat-card-content>
-    </mat-card>
-
-    <app-audit-loading-overlay *ngIf="isLoading || isSaving" [title]="overlayTitle" [hint]="overlayHint">
-    </app-audit-loading-overlay>
-</div>
+    <mat-dialog-actions align="end">
+        <button type="button" class="g-secondary-btn" (click)="cancel()">Ləğv et</button>
+        <button type="submit" class="g-search-btn" [disabled]="isSaving">Əlavə et</button>
+    </mat-dialog-actions>
+</form>

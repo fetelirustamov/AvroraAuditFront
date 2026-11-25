@@ -2,11 +2,10 @@
     <mat-card-content>
         <div class="audit-table-loading-shell" [style.min-height]="sectionsLoading ? '12rem' : null">
 
-            @if (!sectionsLoading && sections.length === 0) {
-            <div class="empty-state">
-                <span class="material-symbols-outlined empty-icon">task_alt</span>
-                <p>Bu plan üzrə uyğunsuzluq yoxdur</p>
-            </div>
+            @if (sectionsError) {
+                <app-list-state state="error" [errorMessage]="sectionsError" (retry)="getSections()" />
+            } @else if (!sectionsLoading && sections.length === 0) {
+                <app-list-state state="empty" message="Bu plan üzrə uyğunsuzluq yoxdur" />
             }
 
             <mat-accordion multi="true" class="disruption-accordion">
@@ -14,7 +13,7 @@
                 <mat-expansion-panel class="section-panel" (opened)="onPanelOpened(section)">
                     <mat-expansion-panel-header class="section-panel-header">
                         <mat-panel-title class="section-title">
-                            <span class="section-icon section-icon--danger">
+                            <span class="section-icon section-icon--danger" aria-hidden="true">
                                 <span class="material-symbols-outlined">report</span>
                             </span>
                             <span class="section-name">{{ section.sectionName }}</span>
@@ -26,33 +25,36 @@
                         }
                     </mat-expansion-panel-header>
 
+                    @if (sectionErrors.get(section.id); as sectionError) {
+                        <app-list-state state="error" [errorMessage]="sectionError" (retry)="onPanelOpened(section)" />
+                    } @else {
                     <div class="audit-table-loading-shell" style="min-height: 8rem;">
-                        <div class="table-responsive" [class.audit-table-muted]="loadingSectionIds.has(section.id)">
+                        <div class="table-sticky" style="--table-max-h: 480px" [class.audit-table-muted]="loadingSectionIds.has(section.id)">
                             <table mat-table [dataSource]="disruptionsMap.get(section.id) || []" class="section-table">
 
                                 <ng-container matColumnDef="position">
-                                    <th mat-header-cell *matHeaderCellDef class="col-position"> № </th>
+                                    <th mat-header-cell *matHeaderCellDef class="col-position">№</th>
                                     <td mat-cell *matCellDef="let element; let i = index" class="col-position">
                                         <span class="row-index">{{ i + 1 }}</span>
                                     </td>
                                 </ng-container>
 
                                 <ng-container matColumnDef="disruptionCategoryName">
-                                    <th mat-header-cell *matHeaderCellDef> Kateqoriya </th>
+                                    <th mat-header-cell *matHeaderCellDef>Kateqoriya</th>
                                     <td mat-cell *matCellDef="let element">
                                         <span class="category-chip">{{ element.disruptionCategoryName }}</span>
                                     </td>
                                 </ng-container>
 
                                 <ng-container matColumnDef="reasonName">
-                                    <th mat-header-cell *matHeaderCellDef> Səbəb </th>
+                                    <th mat-header-cell *matHeaderCellDef>Səbəb</th>
                                     <td mat-cell *matCellDef="let element">
                                         <span class="reason-text">{{ element.reasonName }}</span>
                                     </td>
                                 </ng-container>
 
                                 <ng-container matColumnDef="description">
-                                    <th mat-header-cell *matHeaderCellDef> Açıqlama </th>
+                                    <th mat-header-cell *matHeaderCellDef>Açıqlama</th>
                                     <td mat-cell *matCellDef="let element">
                                         @if (element.description) {
                                         <span class="description-text">{{ element.description }}</span>
@@ -63,34 +65,38 @@
                                 </ng-container>
 
                                 <ng-container matColumnDef="createdDate">
-                                    <th mat-header-cell *matHeaderCellDef class="col-date"> Tarix </th>
+                                    <th mat-header-cell *matHeaderCellDef class="col-date">Tarix</th>
                                     <td mat-cell *matCellDef="let element" class="col-date">
-                                        <span class="date-text">{{ element.createdDate | date: 'yyyy-MM-dd HH:mm' : '+0400' }}</span>
+                                        <span class="date-text">{{ element.createdDate | appDate:'datetime' }}</span>
                                     </td>
                                 </ng-container>
 
                                 <ng-container matColumnDef="media">
-                                    <th mat-header-cell *matHeaderCellDef class="col-media"> Media </th>
+                                    <th mat-header-cell *matHeaderCellDef class="col-media">Media</th>
                                     <td mat-cell *matCellDef="let element" class="col-media">
                                         @if (hasMedia(element)) {
                                         <div class="media-actions">
                                             <app-media #mediaCompImg [id]="element.id" [type]="MediaType.Image"
                                                 [module]="Module.Disruption">
-                                                <button *ngIf="element.image > 0" type="button" class="media-btn"
-                                                    matTooltip="Şəkillərə bax" (click)="mediaCompImg.open()"
-                                                    media-trigger>
-                                                    <span class="material-symbols-outlined">image</span>
+                                                @if (element.image > 0) {
+                                                <button type="button" class="media-btn" matTooltip="Şəkillərə bax"
+                                                    [attr.aria-label]="'Şəkillərə bax: ' + element.image"
+                                                    (click)="mediaCompImg.open()" media-trigger>
+                                                    <span class="material-symbols-outlined" aria-hidden="true">image</span>
                                                     <span class="media-btn__count">{{ element.image }}</span>
                                                 </button>
+                                                }
                                             </app-media>
                                             <app-media #mediaCompVid [id]="element.id" [type]="MediaType.Video"
                                                 [module]="Module.Disruption">
-                                                <button *ngIf="element.video > 0" type="button" class="media-btn"
-                                                    matTooltip="Videolara bax" (click)="mediaCompVid.open()"
-                                                    media-trigger>
-                                                    <span class="material-symbols-outlined">videocam</span>
+                                                @if (element.video > 0) {
+                                                <button type="button" class="media-btn" matTooltip="Videolara bax"
+                                                    [attr.aria-label]="'Videolara bax: ' + element.video"
+                                                    (click)="mediaCompVid.open()" media-trigger>
+                                                    <span class="material-symbols-outlined" aria-hidden="true">videocam</span>
                                                     <span class="media-btn__count">{{ element.video }}</span>
                                                 </button>
+                                                }
                                             </app-media>
                                         </div>
                                         } @else {
@@ -99,19 +105,22 @@
                                     </td>
                                 </ng-container>
 
-                                <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
+                                <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
                                 <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
                             </table>
                         </div>
-                        <app-audit-loading-overlay *ngIf="loadingSectionIds.has(section.id)"
-                            title="Məlumatlar yüklənir" hint="Uyğunsuzluqlar hazırlanır…"></app-audit-loading-overlay>
+                        @if (loadingSectionIds.has(section.id)) {
+                            <app-audit-loading-overlay title="Məlumatlar yüklənir" hint="Uyğunsuzluqlar hazırlanır…" />
+                        }
                     </div>
+                    }
                 </mat-expansion-panel>
                 }
             </mat-accordion>
 
-            <app-audit-loading-overlay *ngIf="sectionsLoading" title="Məlumatlar yüklənir"
-                hint="Bölmələr hazırlanır…"></app-audit-loading-overlay>
+            @if (sectionsLoading) {
+                <app-audit-loading-overlay title="Məlumatlar yüklənir" hint="Şöbələr hazırlanır…" />
+            }
         </div>
     </mat-card-content>
 </mat-card>

@@ -1,225 +1,38 @@
-// ─── Store Profile Card ────────────────────────────────────────────────────────
-.store-card {
-    background: var(--surface);
-    border-radius: var(--radius-lg);
-    border: 1px solid var(--border);
-    overflow: hidden;
-    height: 100%;
+// Kart, cədvəl və sticky başlıq `_design-system.scss`-dən gəlir (`.table-card`, `.table-sticky`, `.modern-table`).
+
+:host {
     display: flex;
     flex-direction: column;
-
-    // Başlıq zonası düz və neytraldır — qradient/bəzək yoxdur
-    .store-hero {
-        background: var(--surface-muted);
-        border-bottom: 1px solid var(--border);
-        padding: 32px 20px 28px;
-        position: relative;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-
-        .store-avatar {
-            width: 72px;
-            height: 72px;
-            border-radius: 50%;
-            background: var(--surface-subtle);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-
-            .material-symbols-outlined {
-                font-size: 36px;
-                color: var(--text-muted);
-            }
-        }
-    }
-
-    .store-body {
-        padding: 22px 20px 20px;
-        flex: 1;
-
-        .store-name {
-            font-size: var(--fs-16);
-            font-weight: 600;
-            color: var(--text-strong);
-            text-align: center;
-            margin: 0 0 6px;
-        }
-
-        .store-email {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 5px;
-            font-size: var(--fs-13);
-            color: var(--text-muted);
-            margin: 0 0 18px;
-
-            .material-symbols-outlined { font-size: 15px; }
-        }
-
-        .store-divider {
-            height: 1px;
-            background: var(--border);
-            margin-bottom: 18px;
-        }
-
-        .store-stats {
-            display: flex;
-            flex-direction: column;
-            gap: 14px;
-        }
-
-        .stat-row {
-            display: flex;
-            align-items: flex-start;
-            gap: 12px;
-        }
-
-        // Nöqtə yalnız mənalı sətirdə rənglidir: açıq → danger, həll → success
-        .stat-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            margin-top: 4px;
-            flex-shrink: 0;
-            background: var(--gray-400);
-
-            &.dot-purple { background: var(--danger); }
-            &.dot-green  { background: var(--success); }
-        }
-
-        .stat-info {
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
-
-            .stat-label {
-                font-size: var(--fs-12);
-                color: var(--text-muted);
-                line-height: 1.3;
-            }
-
-            .stat-value {
-                font-size: var(--fs-14);
-                font-weight: 600;
-                font-variant-numeric: tabular-nums;
-                color: var(--text-strong);
-            }
-        }
-    }
-
+    gap: var(--space-5);
 }
 
-// ─── Analytics Chart Card ──────────────────────────────────────────────────────
-.chart-card {
-    background: var(--surface);
-    border-radius: var(--radius-lg);
-    border: 1px solid var(--border);
-    overflow: hidden;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-
-    .chart-card-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 20px 24px;
-        border-bottom: 1px solid var(--border);
-        flex-wrap: wrap;
-        gap: 12px;
-
-        .chart-title-wrap {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            flex-wrap: wrap;
-
-            .chart-title {
-                font-size: var(--fs-14);
-                font-weight: 600;
-                color: var(--text-strong);
-                margin: 0;
-            }
-
-            .chart-score-pill {
-                display: inline-flex;
-                align-items: center;
-                gap: 6px;
-                background: var(--surface-subtle);
-                border-radius: var(--radius-sm);
-                padding: 2px var(--space-2);
-
-                .chart-score-val {
-                    font-size: var(--fs-14);
-                    font-weight: 600;
-                    font-variant-numeric: tabular-nums;
-                    color: var(--text-strong);
-                }
-
-                .chart-score-sub {
-                    font-size: var(--fs-12);
-                    color: var(--text-muted);
-                }
-            }
-        }
-
-        .chart-time-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            font-size: var(--fs-13);
-            font-weight: 500;
-            color: var(--text-muted);
-            border: 1px solid var(--border-strong);
-            border-radius: var(--radius-md);
-            height: 36px;
-            padding: 0 12px;
-            min-width: auto;
-            transition: background var(--transition), color var(--transition);
-
-            .material-symbols-outlined { font-size: 18px; }
-
-            &:hover {
-                background: var(--surface-muted);
-                color: var(--text-strong);
-            }
-        }
-    }
-
-    .chart-card-body {
-        flex: 1;
-        padding: 4px 8px 0;
-
-        #location_inspection_trend_chart {
-            min-height: 370px;
-        }
-    }
-
+.trend-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-5);
 }
 
-// ─── Responsive ───────────────────────────────────────────────────────────────
-@media only screen and (max-width: 767px) {
-    .chart-card .chart-card-header {
-        flex-direction: column;
-        align-items: flex-start;
-
-        .chart-title-wrap {
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 8px;
-        }
-    }
+.table-title {
+    margin: 0;
 }
 
-// ─── ApexCharts tooltip tweak ──────────────────────────────────────────────────
-::ng-deep {
-    .chart-card {
-        .apexcharts-tooltip-series-group {
-            &.apexcharts-active {
-                padding-bottom: 4px;
-            }
-        }
+.chart-unit {
+    font-size: var(--fs-12);
+    color: var(--text-muted);
+}
+
+.chart-area {
+    min-height: 260px;
+    padding: var(--space-3) var(--space-4) var(--space-2);
+}
+
+.num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 991px) {
+    .trend-grid {
+        grid-template-columns: minmax(0, 1fr);
     }
 }

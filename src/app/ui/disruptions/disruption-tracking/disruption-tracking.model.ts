@@ -1,4 +1,7 @@
+import { formatDate } from '@angular/common';
+import { StatusTone, disruptionStatusMeta } from '../../../shared/status/status-meta';
 import { levelRoleLabel } from '../../../shared/utils/approval-level';
+import { BAKU_TZ, parseApiUtcDate } from '../../../shared/utils/date.util';
 
 /**
  * Backend-in hesabladığı mərhələ (DisruptionRepository.TrackingCte):
@@ -9,24 +12,29 @@ export type StageCode =
     | 'STORE_ANSWER' | 'CHAIN_APPROVAL' | 'RETURNED'
     | 'CLOSED' | 'NO_CHAIN' | 'REJECTED' | 'UNKNOWN';
 
-export type ChipTone = 'is-warning' | 'is-info' | 'is-danger' | 'is-success' | 'is-neutral';
-
 export interface StageMeta {
     label: string;
     icon: string;
-    tone: ChipTone;
+    tone: StatusTone;
 }
 
+/** Faza A mərhələləri `Disruptions.Status`-un özüdür: etiket və ton status-meta-dan gəlir */
+const fromStatus = (status: number, icon: string): StageMeta => ({ ...disruptionStatusMeta(status), icon });
+
+/**
+ * Mağaza zənciri mərhələləri (faza B) yalnız izləmə ekranına xasdır, `Disruptions.Status`-da qarşılığı yoxdur:
+ * status 2 ("Təsdiqlənib") burada cavab/zəncir addımına görə bölünür.
+ */
 export const STAGE_META: Record<StageCode, StageMeta> = {
-    INSPECTOR: { label: 'Müfəttişin təsdiqində', icon: 'person_search', tone: 'is-warning' },
-    HEAD_INSPECTOR: { label: 'Baş müfəttişin təsdiqində', icon: 'supervisor_account', tone: 'is-warning' },
-    STORE_ANSWER: { label: 'Mağazanın cavabında', icon: 'storefront', tone: 'is-info' },
-    CHAIN_APPROVAL: { label: 'Zəncirin təsdiqində', icon: 'account_tree', tone: 'is-info' },
-    RETURNED: { label: 'Qaytarılıb, yenidən cavab gözləyir', icon: 'undo', tone: 'is-danger' },
-    CLOSED: { label: 'Bağlanıb', icon: 'task_alt', tone: 'is-success' },
-    NO_CHAIN: { label: 'Təsdiq zənciri yoxdur', icon: 'link_off', tone: 'is-neutral' },
-    REJECTED: { label: 'Rədd edilib', icon: 'block', tone: 'is-danger' },
-    UNKNOWN: { label: 'Naməlum', icon: 'help', tone: 'is-neutral' },
+    INSPECTOR: fromStatus(0, 'person_search'),
+    HEAD_INSPECTOR: fromStatus(1, 'supervisor_account'),
+    STORE_ANSWER: { label: 'Mağazanın cavabında', icon: 'storefront', tone: 'info' },
+    CHAIN_APPROVAL: { label: 'Zəncirin təsdiqində', icon: 'account_tree', tone: 'info' },
+    RETURNED: { label: 'Qaytarılıb, yenidən cavab gözləyir', icon: 'undo', tone: 'danger' },
+    CLOSED: { label: 'Bağlanıb', icon: 'task_alt', tone: 'success' },
+    NO_CHAIN: { label: 'Təsdiq zənciri yoxdur', icon: 'link_off', tone: 'neutral' },
+    REJECTED: fromStatus(-1, 'block'),
+    UNKNOWN: { label: 'Naməlum', icon: 'help', tone: 'neutral' },
 };
 
 /** Filtrdəki mərhələ seçimləri — iş axını sırası ilə */
@@ -161,6 +169,41 @@ export function currentHolder(item: DisruptionTrackingItem): Holder | null {
     }
 }
 
+// ── Müddətlər: "6 gündür", "3 gün gecikir" ─────────────────────────────────
+
+/** Tarixin Bakı vaxtı ilə təqvim günü (həmin günün UTC gecəyarısı, ms). Yalnız tarix (`yyyy-MM-dd`) zonaya çevrilmir. */
+function bakuDay(value: string | Date): number | null {
+    if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value.trim())) {
+        return Date.parse(`${value.trim()}T00:00:00Z`);
+    }
+    const normalized = parseApiUtcDate(value);
+    if (!normalized) return null;
+    const day = Date.parse(`${formatDate(normalized, 'yyyy-MM-dd', 'en-US', BAKU_TZ)}T00:00:00Z`);
+    return Number.isNaN(day) ? null : day;
+}
+
+/** `from`-dan bu günə qədər keçən tam təqvim günləri (Bakı vaxtı). Tarix yoxdursa `null`. */
+export function daysSince(from: string | null | undefined, today: Date = new Date()): number | null {
+    if (!from) return null;
+    const start = bakuDay(from);
+    const end = bakuDay(today);
+    return start == null || end == null ? null : Math.round((end - start) / 86_400_000);
+}
+
+/** Qeyd cari mərhələdə nə qədərdir: "6 gündür", "Bu gündən". Mərhələ tarixi yoxdursa `null`. */
+export function stageAgeLabel(item: DisruptionTrackingItem): string | null {
+    const days = daysSince(item.stageSince);
+    if (days == null || days < 0) return null;
+    return days === 0 ? 'Bu gündən' : `${days} gündür`;
+}
+
+/** Son tarix keçibsə neçə gün gecikdiyi: "3 gün gecikir". Gecikmirsə `null`. */
+export function overdueLabel(item: DisruptionTrackingItem): string | null {
+    if (!item.isOverdue) return null;
+    const days = daysSince(item.deadlineDate);
+    return days != null && days > 0 ? `${days} gün gecikir` : 'Gecikir';
+}
+
 export type TrackState = 'done' | 'current' | 'todo' | 'void';
 
 /**
@@ -190,7 +233,7 @@ export type TimelineState = 'done' | 'current' | 'pending' | 'returned' | 'rejec
 export interface TimelineEntry {
     who: string;
     verdict: string;
-    verdictTone: ChipTone;
+    verdictTone: StatusTone;
     note: string | null;
     returnReason: string | null;
     date: string | null;
@@ -213,19 +256,20 @@ export interface TimelineNode {
     date: string | null;
 }
 
-const APPROVE_LABELS: Record<number, [string, ChipTone]> = {
-    0: ['Cavab gözlənilir', 'is-neutral'],
-    1: ['Həll edildi', 'is-success'],
-    2: ['Gözləmədə', 'is-warning'],
-    3: ['Razı deyiləm', 'is-danger'],
+/** Mağazanın cavabı (`DisruptionAnswers.ApproveStatus`) — status-meta-da qarşılığı yoxdur */
+const APPROVE_LABELS: Record<number, [string, StatusTone]> = {
+    0: ['Cavab gözlənilir', 'neutral'],
+    1: ['Həll edildi', 'success'],
+    2: ['Gözləmədə', 'warning'],
+    3: ['Razı deyiləm', 'danger'],
 };
 
-function eventVerdict(e: DisruptionTrackingEvent): [string, ChipTone] {
+function eventVerdict(e: DisruptionTrackingEvent): [string, StatusTone] {
     switch (e.actionType) {
-        case 'REJECTED': return ['Geri qaytardı', 'is-danger'];
-        case 'CONFIRMED': return ['Təsdiqlədi', 'is-success'];
+        case 'REJECTED': return ['Geri qaytardı', 'danger'];
+        case 'CONFIRMED': return ['Təsdiqlədi', 'success'];
         // ANSWERED — mağazanın cavabı ApproveStatus-dadır
-        default: return APPROVE_LABELS[e.approveStatus] ?? [e.actionType, 'is-neutral'];
+        default: return APPROVE_LABELS[e.approveStatus] ?? [e.actionType, 'neutral'];
     }
 }
 

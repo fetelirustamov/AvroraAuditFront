@@ -1,152 +1,124 @@
-import { CommonModule, NgFor } from '@angular/common';
-import { Component } from '@angular/core';
-import { FormArray, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
+import { Component, OnInit, inject } from '@angular/core';
+import { FormArray, FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { ActivatedRoute, Router, UrlTree } from '@angular/router';
 import { MatDatepickerModule } from '@angular/material/datepicker';
-import { MatExpansionModule } from '@angular/material/expansion';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { NgxMaterialTimepickerModule } from 'ngx-material-timepicker';
-import { ActivatedRoute, Router } from '@angular/router';
+import { catchError, finalize, forkJoin, map, of } from 'rxjs';
 import { InspectionsService } from '../../../inspections/inspections.service';
-import { PlanService } from '../../plan.service';
 import { InspectionPlan } from '../../../inspections/InpectionPlan.model';
 import { Location } from '../../../inspections/location.model';
+import { PlanService } from '../../plan.service';
 import { NotificationService } from '../../../../shared/services/notification.service';
+import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
+import { ListStateComponent } from '../../../../shared/components/list-state/list-state.component';
 import { apiErrorMessage } from '../../../../shared/utils/api-error';
-import { catchError, finalize, forkJoin, map, of } from 'rxjs';
+import { queryNumber, queryNumbers } from '../../../../shared/utils/query-state';
 
+type PlanRowForm = FormGroup<{
+  location: FormControl<string | null>;
+  date: FormControl<Date | null>;
+  startTime: FormControl<string>;
+  endTime: FormControl<string>;
+}>;
+
+/** Seçilmiş müfəttişlər üçün plan yaradır. Firma və müfəttişlər URL-dən gəlir: `?firm=1&inspector=12&inspector=15`. */
 @Component({
   selector: 'app-plan-create',
   standalone: true,
   imports: [
-    ReactiveFormsModule,
-    FormsModule,
-    CommonModule,
-    MatCardModule,
-    MatInputModule,
-    MatFormFieldModule,
-    MatSelectModule,
-    MatButtonModule,
-    MatDatepickerModule,
-    MatExpansionModule,
-    NgxMaterialTimepickerModule,
-    NgFor,
+    ReactiveFormsModule, FormsModule, MatInputModule, MatFormFieldModule, MatSelectModule, MatDatepickerModule,
+    NgxMaterialTimepickerModule, PageHeaderComponent, ListStateComponent,
   ],
   templateUrl: './plan-create.component.html',
   styleUrls: ['./plan-create.component.scss']
 })
-export class PlanCreateComponent {
-  public locations: Location[] = [];
-  public filteredLocations: Location[] = [];
-  public locationFilter: string = '';
-  public data: any;
-  public isLoading = false;
-  public planForm!: FormGroup;
+export class PlanCreateComponent implements OnInit {
+  private readonly inspectionService = inject(InspectionsService);
+  private readonly planService = inject(PlanService);
+  private readonly notify = inject(NotificationService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+
+  firmId: number | null = null;
+  inspectorCodes: number[] = [];
+  /** Başlıqdakı izah: firma adı və seçilmiş müfəttişlər. */
+  subtitle = '';
+  backLink: UrlTree = this.router.parseUrl('/plans/add');
+
+  locations: Location[] = [];
+  filteredLocations: Location[] = [];
+  locationFilter = '';
+  isSaving = false;
+
+  readonly rows = new FormArray<PlanRowForm>([]);
+  readonly form = new FormGroup({ rows: this.rows });
+
   /** Datepicker-də keçmiş günlər seçilmir. */
-  public readonly minDate = (() => {
+  readonly minDate = (() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     return today;
   })();
 
-  constructor(
-    private fb: FormBuilder,
-    private router: Router,
-    private inspectionService: InspectionsService,
-    private route: ActivatedRoute,
-    private planService: PlanService,
-    private notify: NotificationService
-  ) {
-    // Form həmişə qurulmalıdır: naviqasiya tamamlanana qədər template bir dəfə render olunur
-    // və [formGroup] undefined olarsa NG01052 ilə çökür.
-    this.initializeForm();
-
-    const navigation = this.router.getCurrentNavigation();
-    const state = navigation?.extras?.state as { data?: any };
-
-    if (!state?.data) {
-      this.router.navigate(["plans/add"]);
-      return;
+  ngOnInit(): void {
+    const q = this.route.snapshot.queryParamMap;
+    this.firmId = queryNumber(q, 'firm');
+    this.inspectorCodes = queryNumbers(q, 'inspector');
+    if (this.firmId != null) {
+      this.backLink = this.router.createUrlTree(['/plans/add'], { queryParams: { firm: this.firmId } });
     }
+    if (this.firmId == null || !this.hasContext) return;
 
-    this.data = state.data;
-    this.loadLocations();
+    this.addRow();
+    this.loadContext(this.firmId);
   }
 
-  private initializeForm(): void {
-    this.planForm = this.fb.group({
-      panels: this.fb.array([])
-    });
-    this.addPanel(); // Default panel
+  /** Firma və ən azı bir müfəttiş URL-də olmalıdır (müfəttiş siyahısından gəlir). */
+  get hasContext(): boolean {
+    return this.firmId != null && this.inspectorCodes.length > 0;
   }
 
-  private loadLocations(): void {
-    this.inspectionService
-      .getLocationByFirmId(this.data.organization)
-      .subscribe({
-        next: (locations) => {
-          this.locations = locations.data;
-          this.filteredLocations = locations.data;
-        },
-        error: (error) => this.notify.error(apiErrorMessage(error, 'Mağaza siyahısı yüklənmədi')),
-      });
+  get submitLabel(): string {
+    return this.rows.length > 1 ? `${this.rows.length} plan yarat` : 'Plan yarat';
   }
 
   onLocationFilterChange(): void {
     const term = this.locationFilter.trim().toLowerCase();
     this.filteredLocations = !term
       ? this.locations
-      : this.locations.filter(l =>
-        `${l.locationCode} ${l.locationName}`.toLowerCase().includes(term));
+      : this.locations.filter(l => `${l.locationCode} ${l.locationName}`.toLowerCase().includes(term));
   }
 
-  get panels(): FormArray {
-    return this.planForm.get('panels') as FormArray;
-  }
-
-  createPanelFormGroup(): FormGroup {
-    return this.fb.group({
-      location: ['', Validators.required],
-      date: [null, Validators.required],
-      startTime: ['07:00', Validators.required],
-      endTime: ['23:00', Validators.required]
-    });
-  }
-
-  addPanel(): void {
-    this.panels.push(this.createPanelFormGroup());
+  addRow(): void {
+    this.rows.push(new FormGroup({
+      location: new FormControl<string | null>(null, Validators.required),
+      date: new FormControl<Date | null>(null, Validators.required),
+      startTime: new FormControl('07:00', { nonNullable: true, validators: Validators.required }),
+      endTime: new FormControl('23:00', { nonNullable: true, validators: Validators.required }),
+    }));
   }
 
   /** Sonuncu sətir silinmir: boş forma göndəriləndə heç bir sorğu getmir. */
-  removePanel(index: number): void {
-    if (this.panels.length <= 1) return;
-    this.panels.removeAt(index);
+  removeRow(index: number): void {
+    if (this.rows.length <= 1) return;
+    this.rows.removeAt(index);
   }
 
-  createPlan(): void {
-    if (this.isLoading) return;
-    if (this.panels.length === 0) {
-      this.notify.warning('Plan yoxdur', {
-        message: 'Ən azı bir plan sətri əlavə edin.',
-      });
-      return;
-    }
-    if (this.planForm.invalid) {
-      this.planForm.markAllAsTouched();
-      this.notify.warning('Forma tamamlanmayıb', {
-        message: 'Zəhmət olmasa bütün məcburi sahələri doldurun.',
-      });
+  createPlans(): void {
+    if (this.isSaving) return;
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      this.notify.warning('Forma tamamlanmayıb', { message: 'Bütün məcburi sahələri doldurun.' });
       return;
     }
 
-    const panels: any[] = this.planForm.value.panels;
-    const plans = panels.map((formValue) => ({
-      start: this.combineDateAndTimeToUTC(formValue.date, formValue.startTime),
-      end: this.combineDateAndTimeToUTC(formValue.date, formValue.endTime),
-      location: formValue.location
+    const plans = this.rows.getRawValue().map(row => ({
+      start: this.combineDateAndTime(row.date!, row.startTime),
+      end: this.combineDateAndTime(row.date!, row.endTime),
+      location: row.location!,
     }));
 
     const invalidIndex = plans.findIndex(p => p.end <= p.start);
@@ -157,7 +129,7 @@ export class PlanCreateComponent {
       return;
     }
 
-    // Bütün panellər birlikdə göndərilir; hər birinin nəticəsi ayrıca toplanır ki, biri
+    // Bütün planlar birlikdə göndərilir; hər birinin nəticəsi ayrıca toplanır ki, biri
     // uğursuz olanda uğurlu olanlar formadan çıxsın və təkrar cəhd dublikat yaratmasın.
     const requests = plans.map(p => this.planService.addPlan(new InspectionPlan(
       0,
@@ -165,10 +137,10 @@ export class PlanCreateComponent {
       p.start.toISOString(),
       p.end.toISOString(),
       1,
-      this.data.selected,
+      this.inspectorCodes,
       "0",
       "0",
-      this.data.organization,
+      this.firmId!,
       0,
       new Date().toISOString()
     )).pipe(
@@ -176,33 +148,52 @@ export class PlanCreateComponent {
       catchError((error) => of(apiErrorMessage(error, 'Plan əlavə edilmədi.')))
     ));
 
-    this.isLoading = true;
+    this.isSaving = true;
     forkJoin(requests)
-      .pipe(finalize(() => (this.isLoading = false)))
+      .pipe(finalize(() => (this.isSaving = false)))
       .subscribe((errors) => {
-        const failed = errors.map((message, index) => ({ message, index })).filter(e => e.message !== null);
+        const failed = errors.filter((message): message is string => message !== null);
         if (failed.length === 0) {
-          this.notify.success(plans.length > 1 ? 'Planlar əlavə edildi' : 'Plan əlavə edildi', {
-            message: 'Yeni plan sistemə qeydə alındı.',
-          });
-          this.router.navigate(['plans/add']);
+          this.notify.success(plans.length > 1 ? 'Planlar yaradıldı' : 'Plan yaradıldı');
+          this.router.navigateByUrl(this.backLink);
           return;
         }
 
-        // Uğurlu panelləri formadan çıxar (sondan əvvələ - indekslər sürüşməsin)
+        // Uğurlu sətirləri formadan çıxar (sondan əvvələ - indekslər sürüşməsin)
         for (let i = plans.length - 1; i >= 0; i--) {
-          if (errors[i] === null) this.panels.removeAt(i);
+          if (errors[i] === null) this.rows.removeAt(i);
         }
-        this.notify.error(`${failed.length} plan əlavə edilmədi`, {
-          message: failed.map(f => f.message).join(' '),
-        });
+        this.notify.error(`${failed.length} plan yaradılmadı`, { message: failed.join(' ') });
       });
   }
 
-  combineDateAndTimeToUTC(date: Date, time: string): Date {
+  private combineDateAndTime(date: Date, time: string): Date {
     const [hours, minutes] = time.trim().split(':').map(Number);
-    const combinedDate = new Date(date);
-    combinedDate.setHours(hours, minutes, 0, 0);
-    return combinedDate;
+    const combined = new Date(date);
+    combined.setHours(hours, minutes, 0, 0);
+    return combined;
+  }
+
+  /** Mağazalar seçim üçün, firma və müfəttiş adları başlıq üçün. */
+  private loadContext(firmId: number): void {
+    this.inspectionService.getLocationByFirmId(firmId).subscribe({
+      next: (response) => {
+        this.locations = response.data ?? [];
+        this.filteredLocations = this.locations;
+      },
+      error: (error) => this.notify.error(apiErrorMessage(error, 'Mağaza siyahısı yüklənmədi')),
+    });
+
+    forkJoin({
+      firms: this.inspectionService.getFirms().pipe(map(r => r.data ?? []), catchError(() => of([]))),
+      inspectors: this.planService.getInspectors(firmId).pipe(map(r => r.data ?? []), catchError(() => of([]))),
+    }).subscribe(({ firms, inspectors }) => {
+      const firmName = firms.find(f => f.id === firmId)?.name;
+      const names = inspectors
+        .filter(user => this.inspectorCodes.includes(user.userCode))
+        .map(user => `${user.name} ${user.surName}`.trim());
+      const who = names.length ? names.join(', ') : `${this.inspectorCodes.length} müfəttiş`;
+      this.subtitle = [firmName, who].filter(Boolean).join(' · ');
+    });
   }
 }

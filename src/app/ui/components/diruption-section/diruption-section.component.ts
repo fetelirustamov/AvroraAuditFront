@@ -1,68 +1,88 @@
-import { Component, Input, SimpleChanges } from '@angular/core';
-import { MatExpansionModule } from '@angular/material/expansion';
+import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
-import { CommonModule } from '@angular/common';
+import { MatExpansionModule } from '@angular/material/expansion';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { ComponentService } from '../component.service';
-import { Section } from '../../inspections/section.model';
+import { ListStateComponent } from '../../../shared/components/list-state/list-state.component';
+import { AppDatePipe } from '../../../shared/pipes/app-date.pipe';
+import { apiErrorMessage } from '../../../shared/utils/api-error';
 import { DisruptionDto } from '../../disruptions/disruption.model';
-import { MediaComponent } from '../media/media.component';
-import { MediaType, Module } from '../media/media-type.enum';
+import { Section } from '../../inspections/section.model';
 import { AuditLoadingOverlayComponent } from '../audit-loading-overlay/audit-loading-overlay.component';
+import { ComponentService } from '../component.service';
+import { MediaType, Module } from '../media/media-type.enum';
+import { MediaComponent } from '../media/media.component';
 
+/** Yoxlama detalında planın uyğunsuzluqları: şöbə üzrə akkordeon, şöbə açılanda sətirlər yüklənir. */
 @Component({
   selector: 'app-diruption-section',
-  imports: [MatCardModule, MatExpansionModule, CommonModule, MatTableModule, MatTooltipModule,
-    MediaComponent, AuditLoadingOverlayComponent],
+  standalone: true,
+  imports: [MatCardModule, MatExpansionModule, MatTableModule, MatTooltipModule,
+    MediaComponent, AuditLoadingOverlayComponent, ListStateComponent, AppDatePipe],
   templateUrl: './diruption-section.component.html',
   styleUrl: './diruption-section.component.scss'
 })
-export class DiruptionSectionComponent {
+export class DiruptionSectionComponent implements OnChanges {
   @Input() data: any;
 
-  MediaType = MediaType;
-  Module = Module;
-  displayedColumns: string[] = ['position', 'disruptionCategoryName', 'reasonName', 'description', 'createdDate', 'media'];
-  public sections: Section[] = [];
-  public sectionsLoading = false;
-  public disruptionsMap = new Map<number, DisruptionDto[]>();
-  public loadingSectionIds = new Set<number>();
+  readonly MediaType = MediaType;
+  readonly Module = Module;
+  readonly displayedColumns: string[] = ['position', 'disruptionCategoryName', 'reasonName', 'description', 'createdDate', 'media'];
 
-  constructor(private _componentService: ComponentService) { }
+  sections: Section[] = [];
+  sectionsLoading = false;
+  sectionsError: string | null = null;
+  readonly disruptionsMap = new Map<number, DisruptionDto[]>();
+  readonly loadingSectionIds = new Set<number>();
+  readonly sectionErrors = new Map<number, string>();
+
+  private planId: number | null = null;
+
+  constructor(private componentService: ComponentService) { }
 
   ngOnChanges(changes: SimpleChanges): void {
     const planId = changes['data']?.currentValue?.id;
     if (planId) {
-      this.getSections(planId);
+      this.planId = planId;
+      this.getSections();
     }
   }
 
-  getSections(planId: number) {
+  getSections(): void {
+    if (!this.planId) return;
     this.sectionsLoading = true;
+    this.sectionsError = null;
     this.disruptionsMap.clear();
-    this._componentService.getDisruptionSectionByPlanId(planId).subscribe({
-      next: (response) => {
+    this.sectionErrors.clear();
+    this.componentService.getDisruptionSectionByPlanId(this.planId).subscribe({
+      next: response => {
         this.sections = response.success ? response.data : [];
         this.sectionsLoading = false;
       },
-      error: () => this.sectionsLoading = false,
+      error: error => {
+        this.sectionsError = apiErrorMessage(error, 'Uyğunsuzluq şöbələri yüklənmədi');
+        this.sectionsLoading = false;
+      },
     });
   }
 
-  onPanelOpened(section: Section) {
+  onPanelOpened(section: Section): void {
     if (this.disruptionsMap.has(section.id) || this.loadingSectionIds.has(section.id)) {
       return;
     }
     this.loadingSectionIds.add(section.id);
-    this._componentService.GetDisruptionsBySection(section.inspectionPlanId, section.id).subscribe({
-      next: (response) => {
+    this.sectionErrors.delete(section.id);
+    this.componentService.GetDisruptionsBySection(section.inspectionPlanId, section.id).subscribe({
+      next: response => {
         if (response.success) {
           this.disruptionsMap.set(section.id, response.data);
         }
         this.loadingSectionIds.delete(section.id);
       },
-      error: () => this.loadingSectionIds.delete(section.id),
+      error: error => {
+        this.sectionErrors.set(section.id, apiErrorMessage(error, 'Uyğunsuzluqlar yüklənmədi'));
+        this.loadingSectionIds.delete(section.id);
+      },
     });
   }
 

@@ -1,253 +1,111 @@
-import { Component, Input, OnInit, OnChanges, SimpleChanges, ViewChild, AfterViewInit, TemplateRef } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup } from '@angular/forms';
-import { MatCardModule } from '@angular/material/card';
-import { MatButtonModule } from '@angular/material/button';
+import { AfterViewInit, Component, DestroyRef, Input, OnChanges, OnInit, SimpleChanges, ViewChild, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule, MatTableDataSource } from '@angular/material/table';
 import { MatSortModule, MatSort } from '@angular/material/sort';
 import { MatPaginatorModule, MatPaginator } from '@angular/material/paginator';
-import { MatIconModule } from '@angular/material/icon';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
-import { MatDatepickerModule } from '@angular/material/datepicker';
-import { LocationAddComponent } from './add/location-add.component';
-import { FirmService } from '../../services/firm.service';
-import { FirmDto } from '../../models/firm.model';
+import { MatDialog } from '@angular/material/dialog';
+import { debounceTime, finalize } from 'rxjs';
+import { LocationAddComponent, LocationDialogData } from './add/location-add.component';
 import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
+import { ListStateComponent } from '../../../shared/components/list-state/list-state.component';
 import { LocationService } from '../../services/location.service';
 import { LocationDto } from '../../models/location.model';
-import { AdminBreadcrumbComponent } from '../../shared/breadcrumb/admin-breadcrumb.component';
-import { AuditLoadingOverlayComponent } from '../../../ui/components/audit-loading-overlay/audit-loading-overlay.component';
 import { NotificationService } from '../../../shared/services/notification.service';
 import { apiErrorMessage } from '../../../shared/utils/api-error';
+import { queryNumber, queryString } from '../../../shared/utils/query-state';
+import { TableUrlState } from '../../shared/table-url-state';
+import { MASTER_DATA_QUERY } from '../master-data/master-data-query';
 
-interface LocationRow {
-  id?: number;
-  firmId: number;
-  regionId?: number;
-  firmName: string;
-  locationCode?: number;
-  locationName: string;
-  locationAddress?: string;
-  locationType?: number;
-  contactNumber?: string;
-  responsiblePersonId?: number;
-  latitude?: string;
-  longitude?: string;
-  radius?: number;
+const KEYS = MASTER_DATA_QUERY.locations;
+
+interface RegionOption {
+  id: number;
+  name: string;
 }
 
+/** API region ID-ni üç fərqli adla qaytara bilir. */
+function regionIdOf(location: LocationDto): number | null {
+  const id = location.regionId ?? location.RegionId ?? location.regionID;
+  return id == null ? null : Number(id);
+}
+
+/** "Audit strukturu" səhifəsinin "Mağazalar" tabı: seçilmiş firmanın mağazaları. */
 @Component({
   selector: 'app-locations',
   standalone: true,
   imports: [
-    CommonModule,
-    FormsModule,
     ReactiveFormsModule,
-    MatCardModule,
-    MatButtonModule,
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
     MatTableModule,
     MatSortModule,
     MatPaginatorModule,
-    MatIconModule,
+    MatProgressBarModule,
     MatTooltipModule,
-    MatDialogModule,
-    MatDatepickerModule,
-    AdminBreadcrumbComponent,
-    AuditLoadingOverlayComponent
+    ListStateComponent
   ],
   templateUrl: './locations.component.html',
   styleUrl: './locations.component.scss'
 })
 export class LocationsComponent implements OnInit, OnChanges, AfterViewInit {
-  /** Verilse, komponent bu firmaya kilidlenir ve oz firma secicisini gizledir (Audit Strukturu sehifesinden istifade ucun). */
-  @Input() firmId: number | null = null;
+  private readonly dialog = inject(MatDialog);
+  private readonly confirmDialog = inject(ConfirmDialogService);
+  private readonly locationService = inject(LocationService);
+  private readonly notify = inject(NotificationService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly destroyRef = inject(DestroyRef);
+
+  @Input({ required: true }) firmId!: number;
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
 
-  get displayedColumns(): string[] {
-    return this.firmId != null
-      ? ['locationCode', 'locationName', 'contactNumber', 'latitude', 'longitude', 'actions']
-      : ['firmName', 'locationCode', 'locationName', 'contactNumber', 'latitude', 'longitude', 'actions'];
-  }
-  dataSource: MatTableDataSource<LocationRow>;
-  pageSize = 10;
-  firms: FirmDto[] = [];
-  regions: any[] = [];
+  readonly displayedColumns = ['locationCode', 'locationName', 'contactNumber', 'coordinates', 'actions'];
+  readonly dataSource = new MatTableDataSource<LocationDto>([]);
+  readonly urlState = new TableUrlState(inject(Router), this.route, KEYS.page);
+  readonly searchControl = new FormControl(queryString(this.route.snapshot.queryParamMap, KEYS.search) ?? '', { nonNullable: true });
+  readonly regionControl = new FormControl<number | null>(queryNumber(this.route.snapshot.queryParamMap, KEYS.region));
 
-  rows: LocationRow[] = [];
+  /** Bütün firmaların mağazaları (API firmaya görə süzmür). */
+  private allLocations: LocationDto[] = [];
+  regions: RegionOption[] = [];
 
   isLoading = false;
-  /** Siyahı serverdən gəlmədi: boş siyahı ("mağaza yoxdur") ilə qarışdırılmasın */
-  loadFailed = false;
+  loaded = false;
+  loadError: string | null = null;
 
-  // Advanced search
-  searchForm!: FormGroup;
-  private searchDialogRef?: MatDialogRef<any>;
-  @ViewChild('modalContent') modalContent!: TemplateRef<any>;
-
-  constructor(
-    private dialog: MatDialog,
-    private firmService: FirmService,
-    private fb: FormBuilder,
-    private confirmDialog: ConfirmDialogService,
-    private locationService: LocationService,
-    private notify: NotificationService,
-  ) {
-    this.dataSource = new MatTableDataSource<LocationRow>([]);
-    this.setupFilterPredicate();
-  }
-
-  private setupFilterPredicate(): void {
-    this.dataSource.filterPredicate = (data: LocationRow, filter: string) => {
-      if (!filter) {
-        return true;
-      }
-
-      let criteria: {
-        firmId?: number | null;
-        regionId?: number | null;
-        locationCode?: string | number | null;
-        locationName?: string | null;
-      };
-
-      try {
-        criteria = JSON.parse(filter);
-      } catch {
-        return true;
-      }
-
-      const { firmId, regionId, locationCode, locationName } = criteria;
-
-      if (firmId != null && data.firmId !== firmId) {
-        return false;
-      }
-
-      if (regionId != null && data.regionId !== regionId) {
-        return false;
-      }
-
-      if (locationCode != null && String(locationCode).trim() !== '') {
-        const code = String(data.locationCode ?? '').toLowerCase();
-        if (!code.includes(String(locationCode).trim().toLowerCase())) {
-          return false;
-        }
-      }
-
-      if (locationName != null && String(locationName).trim() !== '') {
-        const name = (data.locationName ?? '').toLowerCase();
-        if (!name.includes(String(locationName).trim().toLowerCase())) {
-          return false;
-        }
-      }
-
-      return true;
-    };
+  get hasFilters(): boolean {
+    return !!this.searchControl.value.trim() || this.regionControl.value != null;
   }
 
   ngOnInit(): void {
-    this.loadFirms();
-    this.searchForm = this.fb.group({
-      firmId: [this.firmId],
-      regionId: [null],
-      locationCode: [null],
-      locationName: [''],
-      date: [null]
-    });
+    this.searchControl.valueChanges
+      .pipe(debounceTime(250), takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.onFiltersChange());
+    this.regionControl.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.onFiltersChange());
+    this.load();
+    this.loadRegions();
   }
 
   ngOnChanges(changes: SimpleChanges): void {
+    // Firma dəyişəndə filtrlər sıfırlanır (URL-i səhifə özü təmizləyir).
+    // Səhifə hadisəsiz sıfırlanır: paginator-un page hadisəsi səhifənin firma naviqasiyasını əvəz edərdi.
     if (changes['firmId'] && !changes['firmId'].firstChange) {
-      this.applyFirmScope();
+      this.searchControl.setValue('', { emitEvent: false });
+      this.regionControl.setValue(null, { emitEvent: false });
+      this.paginator.pageIndex = 0;
+      this.applyFilters();
+      this.loadRegions();
     }
-  }
-
-  private applyFirmScope(): void {
-    if (this.dataSource.paginator) this.dataSource.paginator.firstPage();
-    this.dataSource.filter = this.firmId != null ? JSON.stringify({ firmId: this.firmId }) : '';
-  }
-
-  private loadFirms(): void {
-    this.isLoading = true;
-    this.firmService.getAllFirms().subscribe({
-      next: (response: any) => {
-
-        let firms: FirmDto[] = [];
-
-        if (response && Array.isArray(response.data)) {
-          firms = response.data as FirmDto[];
-        } else if (Array.isArray(response)) {
-          firms = response as FirmDto[];
-        } else if (response?.data?.items && Array.isArray(response.data.items)) {
-          firms = response.data.items as FirmDto[];
-        }
-
-        this.firms = firms;
-        // Firmalar gəldikdən sonra location-ları yükləyək ki, firmName düzgün xəritələnsin
-        this.loadLocations();
-      },
-      error: (error) => {
-        this.isLoading = false;
-        this.firms = [];
-        this.loadFailed = true;
-        this.notify.error(apiErrorMessage(error, 'Firmalar yüklənmədi'));
-      }
-    });
-  }
-
-  /** Yükləmə xətasından sonra "Yenidən cəhd et" */
-  reload(): void {
-    if (this.firms.length) this.loadLocations();
-    else this.loadFirms();
-  }
-
-  private loadLocations(): void {
-    this.isLoading = true;
-    this.loadFailed = false;
-    this.locationService.list().subscribe({
-      next: (response) => {
-        if (!response || !response.data) {
-          this.rows = [];
-          this.dataSource.data = [];
-          this.isLoading = false;
-          return;
-        }
-
-        const locations = response.data as unknown as LocationDto[];
-        this.rows = locations.map((loc) => ({
-          id: loc.id,
-          firmId: loc.firmId,
-          regionId: loc.regionId ?? loc.RegionId ?? loc.regionID,
-          firmName: this.resolveFirmName(loc.firmId),
-          locationCode: loc.locationCode,
-          locationName: loc.locationName,
-          locationAddress: loc.locationAddress,
-          locationType: loc.locationType,
-          contactNumber: loc.contactNumber,
-          responsiblePersonId: loc.responsiblePersonId,
-          latitude: loc.latitude,
-          longitude: loc.longitude,
-          radius: loc.radius
-        }));
-
-        this.dataSource.data = this.rows;
-        this.applyFirmScope();
-        this.isLoading = false;
-      },
-      error: (error) => {
-        this.rows = [];
-        this.dataSource.data = [];
-        this.isLoading = false;
-        this.loadFailed = true;
-        this.notify.error(apiErrorMessage(error, 'Mağazalar yüklənmədi'));
-      }
-    });
   }
 
   ngAfterViewInit(): void {
@@ -255,120 +113,88 @@ export class LocationsComponent implements OnInit, OnChanges, AfterViewInit {
     this.dataSource.sort = this.sort;
   }
 
-  openModal(tpl: TemplateRef<any>): void {
-    this.searchDialogRef = this.dialog.open(tpl, {
-      width: '400px',
-      height: '100vh',
-      position: { right: '0' },
-      panelClass: 'right-panel'
-    });
-    this.searchDialogRef.afterClosed().subscribe(() => { });
+  load(): void {
+    this.isLoading = true;
+    this.loadError = null;
+    this.locationService.list()
+      .pipe(finalize(() => this.isLoading = false))
+      .subscribe({
+        next: response => {
+          this.allLocations = Array.isArray(response?.data) ? response.data : [];
+          this.applyFilters();
+          this.loaded = true;
+          this.urlState.restorePage(this.paginator, this.dataSource.data.length);
+        },
+        error: err => this.loadError = apiErrorMessage(err, 'Mağazalar yüklənmədi')
+      });
   }
 
-  closeModal(): void {
-    this.searchDialogRef?.close();
-  }
-
-  onSearchSubmit(): void {
-    const criteria = this.searchForm.getRawValue();
-    const hasCriteria = Object.values(criteria).some(
-      (value) => value != null && String(value).trim() !== ''
-    );
-    this.dataSource.filter = hasCriteria ? JSON.stringify(criteria) : '';
-    if (this.dataSource.paginator) this.dataSource.paginator.firstPage();
-    this.closeModal();
-  }
-
-  resetForm(): void {
-    this.searchForm.reset();
+  private loadRegions(): void {
     this.regions = [];
-    if (this.firmId != null) {
-      this.searchForm.patchValue({ firmId: this.firmId }, { emitEvent: false });
-      this.applyFirmScope();
-    } else {
-      this.dataSource.filter = '';
-    }
-  }
-
-  onFirmChange(firmId: number | null): void {
-    this.regions = [];
-    this.searchForm.patchValue({ regionId: null }, { emitEvent: false });
-
-    if (!firmId) return;
-
-    this.locationService.getRegionsByFirmId(firmId).subscribe({
-      next: (response: any) => {
-        if (response && Array.isArray(response.data)) {
-          this.regions = response.data;
-        } else if (Array.isArray(response)) {
-          this.regions = response;
-        } else {
-          this.regions = [];
-        }
+    this.locationService.getRegionsByFirmId(this.firmId).subscribe({
+      next: response => {
+        const rows: any[] = Array.isArray(response?.data) ? response.data : (Array.isArray(response) ? response : []);
+        this.regions = rows
+          .map(r => ({ id: Number(r.id ?? r.regionId ?? r.RegionId ?? r.regionID), name: r.regionName || r.name || '—' }))
+          .filter(r => Number.isFinite(r.id));
       },
-      error: (error) => {
-        this.regions = [];
-        this.notify.error(apiErrorMessage(error, 'Regionlar yüklənmədi'));
-      }
+      error: err => this.notify.error(apiErrorMessage(err, 'Regionlar yüklənmədi'))
     });
   }
 
-  add() {
-    const dialogRef = this.dialog.open(LocationAddComponent, {
+  private onFiltersChange(): void {
+    this.applyFilters();
+    this.paginator.firstPage();
+    this.urlState.writeFilters({ [KEYS.search]: this.searchControl.value.trim(), [KEYS.region]: this.regionControl.value });
+  }
+
+  private applyFilters(): void {
+    const regionId = this.regionControl.value;
+    const search = this.searchControl.value.trim().toLocaleLowerCase('az');
+    this.dataSource.data = this.allLocations.filter(l =>
+      l.firmId === this.firmId
+      && (regionId == null || regionIdOf(l) === regionId)
+      && (!search
+        || (l.locationName ?? '').toLocaleLowerCase('az').includes(search)
+        || String(l.locationCode ?? '').includes(search)));
+  }
+
+  add(): void {
+    this.openDialog({ firmId: this.firmId });
+  }
+
+  edit(row: LocationDto): void {
+    this.openDialog({ firmId: row.firmId, item: row });
+  }
+
+  private openDialog(data: LocationDialogData): void {
+    this.dialog.open<LocationAddComponent, LocationDialogData, boolean>(LocationAddComponent, {
       width: '980px',
       maxWidth: '95vw',
       disableClose: true,
-      panelClass: 'modal-like-dialog',
-      data: this.firmId != null ? { firmId: this.firmId } : undefined
-    });
-    dialogRef.afterClosed().subscribe((result: any) => {
-      if (result?.created) {
-        this.loadLocations();
-      }
+      data
+    }).afterClosed().subscribe(saved => {
+      if (saved) this.load();
     });
   }
 
-  edit(row: LocationRow) {
-    const dialogRef = this.dialog.open(LocationAddComponent, {
-      width: '980px',
-      maxWidth: '95vw',
-      disableClose: true,
-      panelClass: 'modal-like-dialog',
-      data: { mode: 'edit', item: row }
-    });
-    dialogRef.afterClosed().subscribe((result: any) => {
-      if (result?.updated) {
-        this.loadLocations();
-      }
-    });
-  }
-
-  remove(row: LocationRow) {
+  remove(row: LocationDto): void {
     this.confirmDialog.confirm({
       title: 'Mağaza silinsin?',
-      message: `"${row.locationName}" mağazasını silmək istədiyinizə əminsiniz?`,
+      message: 'Mağaza siyahılardan və yeni plan seçimlərindən çıxacaq. Keçmiş yoxlamaları və hesabatları qalır. '
+        + 'Admin panelindən geri qaytarmaq olmur, kod isə tutulu qalır: bu kodla yeni mağaza yaratmaq olmayacaq.',
       confirmText: 'Sil',
-      tone: 'danger'
-    }).subscribe(confirmed => {
-      if (!confirmed) return;
-
-      if (!row.id) {
-        this.notify.error('Mağaza silinmədi', { message: 'Mağazanın ID-si tapılmadı.' });
-        return;
-      }
-
+      tone: 'danger',
+      items: [`${row.locationCode ?? '—'} · ${row.locationName}`]
+    }).subscribe(result => {
+      if (!result || row.id == null) return;
       this.locationService.delete(row.id).subscribe({
         next: () => {
           this.notify.success('Mağaza silindi');
-          this.loadLocations();
+          this.load();
         },
-        error: (error) => this.notify.error(apiErrorMessage(error, 'Mağaza silinmədi'))
+        error: err => this.notify.error(apiErrorMessage(err, 'Mağaza silinmədi'))
       });
     });
-  }
-
-  private resolveFirmName(firmId: number): string {
-    const firm = this.firms.find(f => f.id === firmId);
-    return firm ? firm.name : '—';
   }
 }

@@ -23,6 +23,7 @@ export class DisruptionDto {
     status!: number;
     image!: number;
     video!: number;
+    document?: number;
 }
 
 export class Disruption {

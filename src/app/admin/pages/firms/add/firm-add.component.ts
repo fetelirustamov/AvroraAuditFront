@@ -1,95 +1,67 @@
-import { Component, Inject, Optional } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { MatCardModule } from '@angular/material/card';
-import { MatButtonModule } from '@angular/material/button';
+import { Component, inject } from '@angular/core';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import { finalize } from 'rxjs';
 import { NotificationService } from '../../../../shared/services/notification.service';
-import { Router } from '@angular/router';
-import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { apiErrorMessage } from '../../../../shared/utils/api-error';
 import { FirmService } from '../../../services/firm.service';
 import { FirmDto } from '../../../models/firm.model';
 
+/** `item` verilsə redaktə, verilməsə yeni firma. */
+export interface FirmDialogData {
+    item?: FirmDto;
+}
+
+/** Firma forması (dialoq). Nəticə: saxlanılıbsa `true`. */
 @Component({
     selector: 'app-firm-add',
     standalone: true,
-    imports: [
-        CommonModule,
-        ReactiveFormsModule,
-        MatCardModule,
-        MatButtonModule,
-        MatFormFieldModule,
-        MatInputModule
-    ],
+    imports: [ReactiveFormsModule, MatDialogModule, MatFormFieldModule, MatInputModule],
     templateUrl: './firm-add.component.html',
     styleUrl: './firm-add.component.scss'
 })
 export class FirmAddComponent {
-    form: FormGroup;
-    pageTitle = 'Yeni firma';
+    private readonly notify = inject(NotificationService);
+    private readonly firmService = inject(FirmService);
+    private readonly dialogRef = inject<MatDialogRef<FirmAddComponent, boolean>>(MatDialogRef);
+    private readonly item = inject<FirmDialogData>(MAT_DIALOG_DATA).item;
+
+    readonly isEdit = !!this.item;
     isSaving = false;
-    private readonly editId: number | null;
 
-    constructor(
-        private fb: FormBuilder,
-        private router: Router,
-        private notify: NotificationService,
-        private firmService: FirmService,
-        @Optional() private dialogRef?: MatDialogRef<FirmAddComponent>,
-        @Optional() @Inject(MAT_DIALOG_DATA) public data?: { mode: 'edit'; item: FirmDto }
-    ) {
-        const item = data?.mode === 'edit' ? data.item : null;
-        this.editId = item?.id ?? null;
-        if (item) this.pageTitle = 'Firmanı redaktə et';
-
-        this.form = this.fb.group({
-            name: [item?.name ?? '', Validators.required],
-            description: [item?.description ?? ''],
-            address: [item?.address ?? ''],
-            phone: [item?.phone ?? ''],
-            email: [item?.email ?? '', Validators.email],
-            website: [item?.website ?? '']
-        });
-    }
+    readonly form = inject(FormBuilder).nonNullable.group({
+        name: [this.item?.name ?? '', Validators.required],
+        description: [this.item?.description ?? ''],
+        address: [this.item?.address ?? ''],
+        phone: [this.item?.phone ?? ''],
+        email: [this.item?.email ?? '', Validators.email],
+        website: [this.item?.website ?? '']
+    });
 
     submit(): void {
+        if (this.isSaving) return;
         if (this.form.invalid) {
             this.form.markAllAsTouched();
-            this.notify.warning('Forma tamamlanmayıb', { message: 'Zəhmət olmasa tələb olunan sahələri doldurun.' });
             return;
         }
-        this.isSaving = true;
         const payload = this.form.getRawValue();
-        const isEdit = this.editId !== null;
-        const request = isEdit
-            ? this.firmService.updateFirm(this.editId!, payload)
+        const request = this.item
+            ? this.firmService.updateFirm(this.item.id, payload)
             : this.firmService.createFirm(payload);
 
-        request.subscribe({
-            next: (res) => {
-                this.isSaving = false;
-                this.notify.success(isEdit ? 'Firma yeniləndi' : 'Firma uğurla əlavə edildi');
-                if (this.dialogRef) {
-                    this.dialogRef.close(isEdit ? { updated: true } : { created: true, data: res });
-                } else {
-                    this.router.navigate(['/admin/firms']);
-                }
+        this.isSaving = true;
+        request.pipe(finalize(() => this.isSaving = false)).subscribe({
+            next: () => {
+                this.notify.success(this.isEdit ? 'Firma yeniləndi' : 'Firma əlavə edildi');
+                this.dialogRef.close(true);
             },
-            error: (err) => {
-                this.isSaving = false;
-                this.notify.error(isEdit ? 'Firma yenilənmədi' : 'Firma əlavə edilmədi', {
-                    message: err?.error?.message || 'Serverlə əlaqədə xəta baş verdi. Zəhmət olmasa yenidən cəhd edin.'
-                });
-            }
+            error: err => this.notify.error(apiErrorMessage(err, this.isEdit ? 'Firma yenilənmədi' : 'Firma əlavə edilmədi'))
         });
     }
 
     cancel(): void {
-        if (this.dialogRef) {
-            this.dialogRef.close();
-        } else {
-            this.router.navigate(['/admin/firms']);
-        }
+        this.dialogRef.close(false);
     }
 }

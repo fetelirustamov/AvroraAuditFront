@@ -1,88 +1,90 @@
-<app-admin-breadcrumb *ngIf="showBreadcrumb" title="Firmalar" [crumbs]="[{label: 'Sistem parametrləri'}, {label: 'Firmalar'}]">
-</app-admin-breadcrumb>
+<app-page-header subtitle="Sistemdə audit aparılan firmalar">
+    <button headerActions type="button" class="g-search-btn" (click)="add()">
+        <span class="material-symbols-outlined" aria-hidden="true">add</span>
+        Yeni firma
+    </button>
+</app-page-header>
 
-<mat-card class="firms-card mb-25 border-radius d-block bg-white border-0 shadow-none">
-    <mat-card-header class="admin-card-header">
-        <mat-card-title>
-            <button class="add-btn" type="button" mat-flat-button color="primary" (click)="add()">
-                <i class="material-symbols-outlined">add</i>
-                Yeni firma
-            </button>
-        </mat-card-title>
-        <mat-card-subtitle>
-            <div class="d-flex align-items-center justify-content-between w-100">
-                <form class="search-box position-relative">
-                    <label>
-                        <i class="material-symbols-outlined">search</i>
-                    </label>
-                    <input type="text" class="input-search" placeholder="Axtarış sözü..." (keyup)="applyFilter($event)">
-                </form>
-            </div>
-        </mat-card-subtitle>
-    </mat-card-header>
-
-    <mat-card-content class="audit-table-loading-shell" [attr.aria-busy]="isLoading">
-        <div class="table-responsive" [class.audit-table-muted]="isLoading">
-            <table mat-table [dataSource]="dataSource" matSort>
-                <ng-container matColumnDef="name">
-                    <th mat-header-cell *matHeaderCellDef mat-sort-header> Adı </th>
-                    <td mat-cell *matCellDef="let r"> {{r.name}} </td>
-                </ng-container>
-
-                <ng-container matColumnDef="description">
-                    <th mat-header-cell *matHeaderCellDef> Açıqlama </th>
-                    <td mat-cell *matCellDef="let r"> {{r.description}} </td>
-                </ng-container>
-
-                <ng-container matColumnDef="address">
-                    <th mat-header-cell *matHeaderCellDef> Ünvan </th>
-                    <td mat-cell *matCellDef="let r"> {{r.address}} </td>
-                </ng-container>
-
-                <ng-container matColumnDef="phone">
-                    <th mat-header-cell *matHeaderCellDef> Telefon </th>
-                    <td mat-cell *matCellDef="let r"> {{r.phone}} </td>
-                </ng-container>
-
-                <ng-container matColumnDef="email">
-                    <th mat-header-cell *matHeaderCellDef> E-poçt </th>
-                    <td mat-cell *matCellDef="let r"> {{r.email}} </td>
-                </ng-container>
-
-                <ng-container matColumnDef="actions">
-                    <th mat-header-cell *matHeaderCellDef> Əməliyyatlar </th>
-                    <td mat-cell *matCellDef="let r">
-                        <div class="action-buttons">
-                            <button type="button" class="action-btn edit-btn" (click)="edit(r)" matTooltip="Redaktə et"
-                                matTooltipPosition="above">
-                                <span class="material-symbols-outlined">edit</span>
-                            </button>
-                            <button type="button" class="action-btn delete-btn" (click)="remove(r)" matTooltip="Sil"
-                                matTooltipPosition="above">
-                                <span class="material-symbols-outlined">delete</span>
-                            </button>
-                        </div>
-                    </td>
-                </ng-container>
-
-                <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-                <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
-
-                <tr class="mat-row" *matNoDataRow>
-                    <td class="mat-cell text-center" [attr.colspan]="displayedColumns.length">
-                        <div class="no-data-message">
-                            <span class="material-symbols-outlined">search_off</span>
-                            <p>Firma tapılmadı</p>
-                            <small>Yeni firma əlavə etmək üçün yuxarıdakı düymədən istifadə edin</small>
-                        </div>
-                    </td>
-                </tr>
-            </table>
+<section class="g-filter-card">
+    <div class="g-filter-grid">
+        <div class="g-filter-field-wide">
+            <label class="g-field-label" for="firm-search">
+                <span class="material-symbols-outlined" aria-hidden="true">search</span>Axtarış
+            </label>
+            <mat-form-field appearance="outline" class="g-modern-field">
+                <input id="firm-search" matInput type="search" [formControl]="searchControl"
+                    placeholder="Ad, ünvan, telefon və ya e-poçt">
+            </mat-form-field>
         </div>
+    </div>
+</section>
 
-        <mat-paginator [pageSizeOptions]="[10,25,50,100]" showFirstLastButtons [disabled]="isLoading"></mat-paginator>
-        <app-audit-loading-overlay *ngIf="isLoading"
-            title="Firmalar yüklənir"
-            hint="Firma siyahısı hazırlanır…"></app-audit-loading-overlay>
-    </mat-card-content>
-</mat-card>
+<div class="table-card" [attr.aria-busy]="isLoading">
+    @if (isLoading) {
+        <mat-progress-bar class="list-progress" mode="indeterminate" />
+    }
+
+    @if (loadError) {
+        <app-list-state state="error" [errorMessage]="loadError" (retry)="load()" />
+    }
+
+    <div class="table-sticky" [hidden]="!!loadError">
+        <table mat-table [dataSource]="dataSource" matSort>
+            <ng-container matColumnDef="name">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>Ad</th>
+                <td mat-cell *matCellDef="let r">{{ r.name }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="description">
+                <th mat-header-cell *matHeaderCellDef>Açıqlama</th>
+                <td mat-cell *matCellDef="let r">{{ r.description || '—' }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="address">
+                <th mat-header-cell *matHeaderCellDef>Ünvan</th>
+                <td mat-cell *matCellDef="let r">{{ r.address || '—' }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="phone">
+                <th mat-header-cell *matHeaderCellDef>Telefon</th>
+                <td mat-cell *matCellDef="let r">{{ r.phone || '—' }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="email">
+                <th mat-header-cell *matHeaderCellDef>E-poçt</th>
+                <td mat-cell *matCellDef="let r">{{ r.email || '—' }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="actions">
+                <th mat-header-cell *matHeaderCellDef>Əməliyyatlar</th>
+                <td mat-cell *matCellDef="let r">
+                    <div class="action-buttons">
+                        <button type="button" class="action-btn" (click)="edit(r)"
+                            matTooltip="Redaktə et" aria-label="Redaktə et">
+                            <span class="material-symbols-outlined" aria-hidden="true">edit</span>
+                        </button>
+                        <button type="button" class="action-btn delete-btn" (click)="remove(r)"
+                            matTooltip="Sil" aria-label="Sil">
+                            <span class="material-symbols-outlined" aria-hidden="true">delete</span>
+                        </button>
+                    </div>
+                </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+
+            <tr class="mat-row" *matNoDataRow>
+                <td class="mat-cell" [attr.colspan]="displayedColumns.length">
+                    @if (loaded) {
+                        <app-list-state state="empty"
+                            [message]="dataSource.filter ? 'Axtarışa uyğun firma tapılmadı' : 'Hələ firma əlavə edilməyib'" />
+                    }
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <mat-paginator [hidden]="!!loadError" [pageSizeOptions]="[10, 25, 50, 100]" showFirstLastButtons
+        aria-label="Firmalar siyahısının səhifəsini seç" (page)="urlState.writePage($event)"></mat-paginator>
+</div>

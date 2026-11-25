@@ -1,92 +1,83 @@
-<form [formGroup]="planForm" (ngSubmit)="createPlan()" class="row g-0">
-    <mat-accordion [multi]="true">
-        <!-- FormArray üçün div -->
-        <div formArrayName="panels">
-            <!-- *ngFor ilə panel-ləri göstər -->
-            <mat-expansion-panel *ngFor="let panel of panels.controls; let i = index" [formGroupName]="i"
-                [expanded]="true" class=" row-margin "> <!-- İlk panel açıq olsun -->
+<!-- backLink firmanı saxlayan UrlTree-dir: page-header-in tipi hələ yalnız string | massivdir -->
+<app-page-header title="Yeni plan" [subtitle]="subtitle" [backLink]="backLink" backLabel="Müfəttişlərə qayıt" />
 
+@if (!hasContext) {
+    <section class="table-card">
+        <app-list-state state="empty" message="Müfəttiş seçilməyib. Müfəttişlər siyahısından firma və müfəttiş seçin" />
+    </section>
+}
 
-                <div class="row horizontalSpace compact-mat-fields">
-                    <!-- Location -->
-                    <div class="col-md-4">
-                        <mat-form-field>
-                            <mat-label>Mağaza</mat-label>
-                            <mat-select formControlName="location" required>
-                                <div class="select-search-box" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
-                                    <input type="text" placeholder="Axtar..." [(ngModel)]="locationFilter"
-                                        [ngModelOptions]="{standalone: true}" (ngModelChange)="onLocationFilterChange()">
-                                </div>
-                                <mat-option *ngFor="let location of filteredLocations" [value]="location.locationCode">
-                                    {{ location.locationCode }} - {{ location.locationName }}
-                                </mat-option>
-                            </mat-select>
-                            <mat-error *ngIf="panel.get('location')?.invalid && panel.get('location')?.touched">
-                                Bu sahə tələb olunur
-                            </mat-error>
-                        </mat-form-field>
-                    </div>
+<form [formGroup]="form" (ngSubmit)="createPlans()" [hidden]="!hasContext">
+    <section class="table-card">
+        <div class="table-card-header">
+            <div class="table-info">
+                <span class="material-symbols-outlined table-info-icon" aria-hidden="true">event_note</span>
+                <span class="table-title">Planlar</span>
+                <span class="result-badge">{{ rows.length }} sətir</span>
+            </div>
+        </div>
 
-                    <!-- Date -->
-                    <div class="col-md-2">
-                        <mat-form-field>
-                            <mat-label>Tarix</mat-label>
-                            <input matInput [matDatepicker]="picker" [min]="minDate" formControlName="date" required>
-                            <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
-                            <mat-datepicker #picker></mat-datepicker>
-                            <mat-error *ngIf="panel.get('date')?.invalid && panel.get('date')?.touched">
-                                {{ panel.get('date')?.hasError('matDatepickerMin') ? 'Keçmiş tarix seçilə bilməz' : 'Tarix tələb olunur' }}
-                            </mat-error>
-                        </mat-form-field>
-                    </div>
+        <div class="plan-rows" formArrayName="rows">
+            @for (row of rows.controls; track row; let i = $index) {
+                <div class="plan-row" [formGroupName]="i">
+                    <span class="plan-row-no" aria-hidden="true">{{ i + 1 }}</span>
 
-                    <!-- Start Time -->
-                    <div class="col-md-2">
-                        <mat-form-field class="time-form-field">
-                            <mat-label>Başlanğıc vaxtı</mat-label>
-                            <input matInput [format]="24" [ngxTimepicker]="startPicker" formControlName="startTime" class="time-input" required readonly>
-                            <span matIconSuffix class="material-symbols-outlined time-input__icon" (click)="startPicker.open()">schedule</span>
-                            <ngx-material-timepicker #startPicker [format]="24"></ngx-material-timepicker>
-                            <mat-error *ngIf="panel.get('startTime')?.invalid && panel.get('startTime')?.touched">
-                                Vaxt tələb olunur
-                            </mat-error>
-                        </mat-form-field>
-                    </div>
+                    <mat-form-field appearance="outline" class="g-modern-field plan-row-store">
+                        <mat-label>Mağaza</mat-label>
+                        <mat-select formControlName="location" required>
+                            <div class="select-search-box" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
+                                <input type="text" placeholder="Axtar…" aria-label="Mağaza axtarışı" [(ngModel)]="locationFilter"
+                                    [ngModelOptions]="{ standalone: true }" (ngModelChange)="onLocationFilterChange()">
+                            </div>
+                            @for (location of filteredLocations; track location.locationCode) {
+                                <mat-option [value]="location.locationCode">{{ location.locationCode }} · {{ location.locationName }}</mat-option>
+                            }
+                        </mat-select>
+                        @if (row.controls.location.hasError('required')) {
+                            <mat-error>Mağazanı seçin</mat-error>
+                        }
+                    </mat-form-field>
 
-                    <!-- End Time -->
-                    <div class="col-md-2">
-                        <mat-form-field class="time-form-field">
-                            <mat-label>Bitmə vaxtı</mat-label>
-                            <input matInput [format]="24" [ngxTimepicker]="endPicker" formControlName="endTime" class="time-input" required readonly>
-                            <span matIconSuffix class="material-symbols-outlined time-input__icon" (click)="endPicker.open()">schedule</span>
-                            <ngx-material-timepicker #endPicker [format]="24"></ngx-material-timepicker>
-                            <mat-error *ngIf="panel.get('endTime')?.invalid && panel.get('endTime')?.touched">
-                                Vaxt tələb olunur
-                            </mat-error>
-                        </mat-form-field>
-                    </div>
+                    <mat-form-field appearance="outline" class="g-modern-field">
+                        <mat-label>Tarix</mat-label>
+                        <input matInput [matDatepicker]="picker" [min]="minDate" formControlName="date" required>
+                        <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+                        <mat-datepicker #picker></mat-datepicker>
+                        @if (row.controls.date.hasError('matDatepickerMin')) {
+                            <mat-error>Keçmiş tarix seçilə bilməz</mat-error>
+                        } @else if (row.controls.date.invalid) {
+                            <mat-error>Tarixi seçin</mat-error>
+                        }
+                    </mat-form-field>
 
-                    <!-- Remove Button -->
-                    <div class="col-md-1">
-                        <button type="button" mat-stroked-button class="text-soft-danger" (click)="removePanel(i)"
-                            [disabled]="panels.length <= 1" aria-label="Sətri sil" title="Sətri sil">
-                            <span class="material-symbols-outlined">close</span>
-                        </button>
-                    </div>
+                    <mat-form-field appearance="outline" class="g-modern-field">
+                        <mat-label>Başlanğıc vaxtı</mat-label>
+                        <input matInput [format]="24" [ngxTimepicker]="startPicker" formControlName="startTime" class="time-input" required readonly>
+                        <ngx-material-timepicker #startPicker [format]="24"></ngx-material-timepicker>
+                    </mat-form-field>
+
+                    <mat-form-field appearance="outline" class="g-modern-field">
+                        <mat-label>Bitmə vaxtı</mat-label>
+                        <input matInput [format]="24" [ngxTimepicker]="endPicker" formControlName="endTime" class="time-input" required readonly>
+                        <ngx-material-timepicker #endPicker [format]="24"></ngx-material-timepicker>
+                    </mat-form-field>
+
+                    <button type="button" class="action-btn delete-btn" (click)="removeRow(i)"
+                        [disabled]="rows.length <= 1" [attr.aria-label]="'Sətri sil: ' + (i + 1)">
+                        <span class="material-symbols-outlined" aria-hidden="true">close</span>
+                    </button>
                 </div>
-            </mat-expansion-panel>
+            }
         </div>
-    </mat-accordion>
 
-    <!-- Buttons -->
-    <div class="row ">
-        <div class="col-md-6 text-start">
-            <button type="button" mat-flat-button (click)="addPanel()">Əlavə et</button>
-        </div>
-        <div class="col-md-6 text-end">
-            <button type="submit" mat-flat-button color="primary" [disabled]="isLoading">
-                {{ isLoading ? 'Saxlanılır…' : 'Yadda saxla' }}
+        <div class="plan-actions">
+            <button type="button" class="g-secondary-btn" (click)="addRow()">
+                <span class="material-symbols-outlined" aria-hidden="true">add</span>
+                Mağaza əlavə et
+            </button>
+            <button type="submit" class="g-search-btn" [disabled]="isSaving">
+                {{ isSaving ? 'Yaradılır…' : submitLabel }}
             </button>
         </div>
-    </div>
+    </section>
 </form>

@@ -1,0 +1,84 @@
+<h2 mat-dialog-title class="dialog-title">Cavab tarixçəsi</h2>
+
+<mat-dialog-content class="dialog-body">
+    <dl class="disruption-summary">
+        <div>
+            <dt>Şöbə</dt>
+            <dd>{{ row.sectionName || '—' }}</dd>
+        </div>
+        <div>
+            <dt>Səbəb</dt>
+            <dd>{{ row.reasonName || '—' }}</dd>
+        </div>
+        @if (row.description) {
+            <div class="is-wide">
+                <dt>Açıqlama</dt>
+                <dd>{{ row.description }}</dd>
+            </div>
+        }
+    </dl>
+
+    <div class="table-progress">
+        @if (isLoading) {
+            <mat-progress-bar mode="indeterminate" aria-label="Cavablar yüklənir" />
+        }
+    </div>
+
+    @if (loadError) {
+        <app-list-state state="error" [errorMessage]="loadError" (retry)="load()" />
+    } @else if (loaded && !answers.length) {
+        <app-list-state state="empty" message="Bu uyğunsuzluğa hələ cavab verilməyib" />
+    } @else if (answers.length) {
+        <table mat-table [dataSource]="answers" class="modern-table history-table">
+            <ng-container matColumnDef="answeredUser">
+                <th mat-header-cell *matHeaderCellDef>Cavablandıran</th>
+                <td mat-cell *matCellDef="let answer">{{ answer.answeredUser || '—' }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="createdDate">
+                <th mat-header-cell *matHeaderCellDef>Tarix</th>
+                <td mat-cell *matCellDef="let answer" class="num">{{ answer.createdDate | appDate:'datetime' }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="note">
+                <th mat-header-cell *matHeaderCellDef>Cavab</th>
+                <td mat-cell *matCellDef="let answer" class="note-cell">{{ answer.note || '—' }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="media">
+                <th mat-header-cell *matHeaderCellDef>Media</th>
+                <td mat-cell *matCellDef="let answer">
+                    <div class="media-actions">
+                        <app-media #answerImg [id]="answer.id" [type]="MediaType.Image" [module]="Module.DisAnswer">
+                            <button type="button" class="media-btn" media-trigger matTooltip="Şəkillərə bax"
+                                aria-label="Cavabın şəkillərinə bax" (click)="answerImg.open()">
+                                <span class="material-symbols-outlined" aria-hidden="true">image</span>
+                            </button>
+                        </app-media>
+                        <app-media #answerVid [id]="answer.id" [type]="MediaType.Video" [module]="Module.DisAnswer">
+                            <button type="button" class="media-btn" media-trigger matTooltip="Videolara bax"
+                                aria-label="Cavabın videolarına bax" (click)="answerVid.open()">
+                                <span class="material-symbols-outlined" aria-hidden="true">videocam</span>
+                            </button>
+                        </app-media>
+                    </div>
+                </td>
+            </ng-container>
+
+            <ng-container matColumnDef="status">
+                <th mat-header-cell *matHeaderCellDef>Status</th>
+                <td mat-cell *matCellDef="let answer">
+                    @let meta = statusMeta(answer.approveStatus);
+                    <app-status-chip [tone]="meta.tone" [label]="meta.label" />
+                </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let answer; columns: displayedColumns;"></tr>
+        </table>
+    }
+</mat-dialog-content>
+
+<mat-dialog-actions class="dialog-actions">
+    <button type="button" class="g-secondary-btn" mat-dialog-close cdkFocusInitial>Bağla</button>
+</mat-dialog-actions>

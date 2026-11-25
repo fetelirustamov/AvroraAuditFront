@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpTestingController } from '@angular/common/http/testing';
+import { Router } from '@angular/router';
 import { of } from 'rxjs';
 
 import { LocationStructureComponent } from './location-structure.component';
@@ -322,6 +323,35 @@ describe('LocationStructureComponent', () => {
       component.exportCurrentStructure();
 
       expect(exportSpy).not.toHaveBeenCalled();
+    });
+  });
+
+  // ── URL vəziyyəti (query-state) ──────────────────────────────────────────────
+
+  describe('URL vəziyyəti', () => {
+    it('firma seçimi URL-ə yazılır, axtarış sıfırlanır', async () => {
+      component.search = '4336';
+
+      loadNetwork([]);
+      await fixture.whenStable();
+
+      const url = TestBed.inject(Router).url;
+      expect(url).toContain('firm=1');
+      expect(url).not.toContain('q=');
+      expect(component.search).toBe('');
+    });
+
+    it('URL-dəki firma və axtarış açılışda bərpa olunur', async () => {
+      await TestBed.inject(Router).navigateByUrl('/?firm=1&q=4336');
+
+      const restored = TestBed.createComponent(LocationStructureComponent);
+      restored.detectChanges();
+      httpMock.match(req => req.url.includes('/firms'))
+        .forEach(req => req.flush({ success: true, message: '', data: [{ id: 1, name: 'Test' }, { id: 2, name: 'Digər' }] }));
+      flushHierarchy([]);
+
+      expect(restored.componentInstance.selectedNetwork?.id).toBe(1);
+      expect(restored.componentInstance.search).toBe('4336');
     });
   });
 

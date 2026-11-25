@@ -37,6 +37,9 @@ export class DisruptionAnswerDTO extends DisruptionAnswer {
     sectionName!: string;
     disruptionCategoryName!: string;
     inspector!: string;
+    inspectorName?: string;
+    /** Cavab tarixçəsində: cavabı yazan istifadəçi. */
+    answeredUser?: string;
     description!: string;
     locationName!: string;
     drDate!: Date;

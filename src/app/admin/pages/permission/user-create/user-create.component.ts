@@ -1,19 +1,12 @@
-import { Component, OnInit, Inject, Optional } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
-import { Router } from '@angular/router';
-import { MatCardModule } from '@angular/material/card';
-import { MatButtonModule } from '@angular/material/button';
+import { Component, OnInit, inject } from '@angular/core';
+import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
-import { MatIconModule } from '@angular/material/icon';
-import { HttpErrorResponse } from '@angular/common/http';
-import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
-import { firstValueFrom } from 'rxjs';
+import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import { catchError, finalize, map, of, switchMap } from 'rxjs';
 import { NotificationService } from '../../../../shared/services/notification.service';
-import { AuditLoadingOverlayComponent } from '../../../../ui/components/audit-loading-overlay/audit-loading-overlay.component';
-import { AdminBreadcrumbComponent } from '../../../shared/breadcrumb/admin-breadcrumb.component';
+import { apiErrorMessage } from '../../../../shared/utils/api-error';
 import { UserService } from '../../../services/user.service';
 import { AuthSettingService } from '../../../services/auth-setting.service';
 import { FirmService } from '../../../services/firm.service';
@@ -23,211 +16,134 @@ import { UserCreateDto } from '../../../models/user.model';
 import { FirmDto } from '../../../models/firm.model';
 import { RoleDto } from '../../../models/role.model';
 
-/** mat-select multiple üçün "ən azı 1 seçim" validatoru - Validators.required boş array-i keçərli sayır */
+/** Dialoqun nəticəsi. `assigned: false`: istifadəçi yarandı, firma/qrup təyinatı alınmadı. */
+export interface UserCreateResult {
+    userCode: number;
+    assigned: boolean;
+}
+
+/** mat-select multiple üçün "ən azı 1 seçim": Validators.required boş massivi keçərli sayır. */
 function minSelectionValidator(control: AbstractControl): ValidationErrors | null {
     return Array.isArray(control.value) && control.value.length > 0 ? null : { required: true };
 }
 
+/**
+ * İstifadəçi yaratma (dialoq): şəxsi məlumatlar, parol, firmalar və icazə qrupu bir addımda.
+ * Server iki sorğu ilə yazır: əvvəl istifadəçi, sonra təyinatlar.
+ *
+ * Autentifikasiya növü formada göstərilmir: mövcud növlərdən yerli (LocalDB) olan avtomatik seçilir.
+ */
 @Component({
     selector: 'app-user-create',
     standalone: true,
-    imports: [
-        CommonModule,
-        ReactiveFormsModule,
-        MatCardModule,
-        MatButtonModule,
-        MatFormFieldModule,
-        MatInputModule,
-        MatSelectModule,
-        MatIconModule,
-        AdminBreadcrumbComponent,
-        AuditLoadingOverlayComponent
-    ],
+    imports: [ReactiveFormsModule, MatDialogModule, MatFormFieldModule, MatInputModule, MatSelectModule],
     templateUrl: './user-create.component.html',
     styleUrl: './user-create.component.scss'
 })
 export class UserCreateComponent implements OnInit {
-    form: FormGroup;
+    private readonly fb = inject(FormBuilder).nonNullable;
+    private readonly notify = inject(NotificationService);
+    private readonly userService = inject(UserService);
+    private readonly authSettingService = inject(AuthSettingService);
+    private readonly firmService = inject(FirmService);
+    private readonly roleService = inject(RoleService);
+    private readonly dialogRef = inject<MatDialogRef<UserCreateComponent, UserCreateResult>>(MatDialogRef);
 
-    authSettings: AuthSettingDto[] = [];
     firms: FirmDto[] = [];
     roles: RoleDto[] = [];
-    isLoading = false;
+    authSettingsMissing = false;
     isSaving = false;
     hidePassword = true;
+    private authSettingId: string | null = null;
 
-    constructor(
-        private fb: FormBuilder,
-        private router: Router,
-        private notify: NotificationService,
-        private userService: UserService,
-        private authSettingService: AuthSettingService,
-        private firmService: FirmService,
-        private roleService: RoleService,
-        @Optional() private dialogRef?: MatDialogRef<UserCreateComponent>,
-        @Optional() @Inject(MAT_DIALOG_DATA) public data?: unknown
-    ) {
-        this.form = this.fb.group({
-            userCode: [null, [Validators.required, Validators.min(1)]],
-            name: ['', [Validators.required, Validators.maxLength(150)]],
-            surName: ['', [Validators.required, Validators.maxLength(150)]],
-            fatherName: ['', Validators.maxLength(150)],
-            email: ['', [Validators.required, Validators.email, Validators.maxLength(150)]],
-            password: ['', [Validators.required, Validators.minLength(6)]],
-            authSettingId: [null, Validators.required],
-            firmIds: [[], minSelectionValidator],
-            roleId: [null, Validators.required]
-        });
-    }
+    readonly form = this.fb.group({
+        userCode: this.fb.control<number | null>(null, [Validators.required, Validators.min(1)]),
+        name: ['', [Validators.required, Validators.maxLength(150)]],
+        surName: ['', [Validators.required, Validators.maxLength(150)]],
+        fatherName: ['', Validators.maxLength(150)],
+        email: ['', [Validators.required, Validators.email, Validators.maxLength(150)]],
+        password: ['', [Validators.required, Validators.minLength(6)]],
+        firmIds: this.fb.control<number[]>([], minSelectionValidator),
+        roleId: this.fb.control<number | null>(null, Validators.required)
+    });
 
     ngOnInit(): void {
-        this.loadAuthSettings();
-        this.loadFirms();
-        this.loadRoles();
-    }
-
-    /** Dialoq kimi açılıbmı - şablonda breadcrumb-u gizlətmək üçün istifadə olunur */
-    get isDialog(): boolean {
-        return !!this.dialogRef;
-    }
-
-    get overlayTitle(): string {
-        return this.isSaving ? 'Saxlanılır' : 'Məlumatlar yüklənir';
-    }
-
-    get overlayHint(): string {
-        return this.isSaving ? 'İstifadəçi qeydi və təyinatlar yazılır…' : 'Forma hazırlanır…';
-    }
-
-    /**
-     * "Autentifikasiya növü" sahəsi formadan gizlədilib (istifadəçi tələbi ilə) - burada
-     * avtomatik olaraq mövcud dəyərlərdən uyğun defolt seçilir və arxa planda göndərilir.
-     * Adında "local/standart/defolt" keçən variant üstünlük təşkil edir, tapılmasa siyahıdakı ilk dəyər istifadə olunur.
-     */
-    private loadAuthSettings(): void {
-        this.isLoading = true;
         this.authSettingService.getAllAuthSettings().subscribe({
             next: response => {
-                this.authSettings = response?.data ?? [];
-                this.isLoading = false;
-
-                const defaultSetting = this.pickDefaultAuthSetting(this.authSettings);
-                if (defaultSetting) {
-                    this.form.patchValue({ authSettingId: String(defaultSetting.id) });
-                }
+                const settings = response?.data ?? [];
+                const setting = this.pickDefaultAuthSetting(settings);
+                this.authSettingId = setting ? String(setting.id) : null;
+                this.authSettingsMissing = !setting;
             },
-            error: () => {
-                this.authSettings = [];
-                this.isLoading = false;
-                this.notify.error('Autentifikasiya növü avtomatik təyin edilə bilmədi', {
-                    message: 'Zəhmət olmasa İT dəstəyi ilə əlaqə saxlayın.'
-                });
+            error: err => {
+                this.authSettingsMissing = true;
+                this.notify.error(apiErrorMessage(err, 'Autentifikasiya növləri yüklənmədi'));
             }
         });
-    }
-
-    private pickDefaultAuthSetting(settings: AuthSettingDto[]): AuthSettingDto | null {
-        if (settings.length === 0) return null;
-        const preferred = settings.find(s => /local|standart|defolt|default/i.test(s.name));
-        return preferred ?? settings[0];
-    }
-
-    private loadFirms(): void {
         this.firmService.getAllFirms().subscribe({
-            next: (response: any) => {
-                this.firms = Array.isArray(response?.data) ? response.data : [];
-            },
-            error: () => {
-                this.firms = [];
-                this.notify.error('Firmalar yüklənə bilmədi');
-            }
+            next: response => this.firms = Array.isArray(response?.data) ? response.data : [],
+            error: err => this.notify.error(apiErrorMessage(err, 'Firmalar yüklənmədi'))
         });
-    }
-
-    private loadRoles(): void {
         this.roleService.getAllRoles().subscribe({
-            next: (response: any) => {
-                this.roles = Array.isArray(response?.data) ? response.data : [];
-            },
-            error: () => {
-                this.roles = [];
-                this.notify.error('İcazə qrupları yüklənə bilmədi');
-            }
+            next: response => this.roles = Array.isArray(response?.data) ? response.data : [],
+            error: err => this.notify.error(apiErrorMessage(err, 'İcazə qrupları yüklənmədi'))
         });
     }
 
-    hasError(controlName: string, errorType: string): boolean {
-        const control = this.form.get(controlName);
-        return !!control && control.hasError(errorType) && control.touched;
+    /** Adında "local/standart/defolt" keçən növ üstündür, tapılmasa siyahıdakı birinci. */
+    private pickDefaultAuthSetting(settings: AuthSettingDto[]): AuthSettingDto | null {
+        return settings.find(s => /local|standart|defolt|default/i.test(s.name)) ?? settings[0] ?? null;
     }
 
-    async submit(): Promise<void> {
+    submit(): void {
+        if (this.isSaving) return;
         if (this.form.invalid) {
             this.form.markAllAsTouched();
-            this.notify.warning('Forma tamamlanmayıb', { message: 'Zəhmət olmasa tələb olunan sahələri doldurun (firma və icazə qrupu daxil).' });
+            return;
+        }
+        if (!this.authSettingId) {
+            this.notify.error('İstifadəçi yaradıla bilməz', { message: 'Sistemdə autentifikasiya növü tapılmadı. İT dəstəyi ilə əlaqə saxlayın.' });
             return;
         }
 
         const raw = this.form.getRawValue();
-        const createPayload: UserCreateDto = {
-            userCode: Number(raw.userCode),
+        const userCode = Number(raw.userCode);
+        const payload: UserCreateDto = {
+            userCode,
             name: raw.name.trim(),
             surName: raw.surName.trim(),
-            fatherName: raw.fatherName?.trim() || undefined,
+            fatherName: raw.fatherName.trim() || undefined,
             position: '',
             email: raw.email.trim(),
             password: raw.password,
-            authSettingId: String(raw.authSettingId)
+            authSettingId: this.authSettingId
         };
 
         this.isSaving = true;
-        this.userService.createUser(createPayload).subscribe({
-            next: async () => {
-                // İstifadəçi bazaya yazıldı - indi eyni əməliyyat daxilində firma(lar) və rolu təyin edirik,
-                // ki "İstifadəçi İcazələri" siyahısında dərhal düzgün Müəssisə/Qrup görünsün.
-                try {
-                    await firstValueFrom(this.userService.updateUserAssignments(createPayload.userCode, {
-                        status: 1,
-                        firmIds: raw.firmIds,
-                        roleId: raw.roleId
-                    }));
-                    this.isSaving = false;
-                    this.notify.success('İstifadəçi uğurla əlavə edildi', {
-                        message: `${createPayload.name} ${createPayload.surName} (kod: ${createPayload.userCode}) firma və rol təyinatı ilə birlikdə yaradıldı.`
+        this.userService.createUser(payload).pipe(
+            // İstifadəçi yarandı: təyinat xətası yaratmanı geri qaytarmır, nəticədə bildirilir
+            switchMap(() => this.userService.updateUserAssignments(userCode, { status: 1, firmIds: raw.firmIds, roleId: raw.roleId! }).pipe(
+                map(() => true),
+                catchError(() => of(false))
+            )),
+            finalize(() => this.isSaving = false)
+        ).subscribe({
+            next: assigned => {
+                if (assigned) {
+                    this.notify.success('İstifadəçi əlavə edildi', { message: `${payload.name} ${payload.surName} (kod ${userCode})` });
+                } else {
+                    this.notify.warning('İstifadəçi yaradıldı, firma və qrup təyin edilmədi', {
+                        message: 'Redaktə səhifəsi açılır: firmaları və icazə qrupunu orada yenidən seçin.'
                     });
-                    if (this.dialogRef) {
-                        this.dialogRef.close({ created: true });
-                    } else {
-                        this.router.navigate(['/admin/permissions/user-permission']);
-                    }
-                } catch {
-                    this.isSaving = false;
-                    this.notify.error('İstifadəçi yaradıldı, amma firma/rol təyinatı alınmadı', {
-                        message: 'İndi "Rol və firma təyinatı" səhifəsindən əl ilə tamamlaya bilərsiniz.'
-                    });
-                    if (this.dialogRef) {
-                        this.dialogRef.close({ created: true, userCode: createPayload.userCode });
-                    } else {
-                        this.router.navigate(['/admin/permissions/user-add'], {
-                            queryParams: { userId: createPayload.userCode }
-                        });
-                    }
                 }
+                this.dialogRef.close({ userCode, assigned });
             },
-            error: (err: HttpErrorResponse) => {
-                this.isSaving = false;
-                // API 409 halında təkrarlanan e-poçt/kod mesajını qaytarır
-                const message = err?.error?.message;
-                this.notify.error(message || 'İstifadəçi əlavə edilə bilmədi. Zəhmət olmasa yenidən cəhd edin.');
-            }
+            // 409: kod və ya e-poçt artıq istifadə olunub - səbəb serverin mesajındadır
+            error: err => this.notify.error(apiErrorMessage(err, 'İstifadəçi əlavə edilmədi'))
         });
     }
 
     cancel(): void {
-        if (this.dialogRef) {
-            this.dialogRef.close();
-        } else {
-            this.router.navigate(['/admin/permissions/user-permission']);
-        }
+        this.dialogRef.close();
     }
 }

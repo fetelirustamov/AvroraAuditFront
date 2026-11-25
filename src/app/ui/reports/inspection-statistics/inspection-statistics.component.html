@@ -1,280 +1,253 @@
-<!-- Page Header -->
-<div class="report-page-header">
-    <div class="header-content">
-        <div class="header-text">
-            <h1 class="page-title">
-                <span class="material-symbols-outlined title-icon">event_available</span>
-                Yoxlama statistikası
-            </h1>
-            <p class="page-subtitle">Planlı və plandankənar yoxlamaların aylıq statistikası</p>
-        </div>
-        <div class="header-actions">
-            <button class="export-btn" [matMenuTriggerFor]="downloadMenu">
-                <span class="material-symbols-outlined">download</span>
-                İxrac et
-                <span class="material-symbols-outlined arrow-icon">expand_more</span>
-            </button>
-        </div>
-    </div>
-</div>
+<app-page-header subtitle="Planlı və plandankənar yoxlamaların aylıq statistikası">
+    <button headerActions type="button" class="g-export-btn" [matMenuTriggerFor]="downloadMenu"
+        [disabled]="!searched || !(activeTab === 0 ? storeTotal : employeeTotal)">
+        <span class="material-symbols-outlined" aria-hidden="true">download</span>
+        İxrac et
+        <span class="material-symbols-outlined g-arrow" aria-hidden="true">expand_more</span>
+    </button>
+</app-page-header>
 
-<mat-menu #downloadMenu="matMenu" class="modern-menu">
-    <button mat-menu-item (click)="exportExcel(activeTab === 0 ? 'store' : 'employee')">
-        <span class="material-symbols-outlined menu-icon excel-icon">table_chart</span>
+<mat-menu #downloadMenu="matMenu">
+    <button mat-menu-item type="button" (click)="exportExcel()">
+        <span class="material-symbols-outlined menu-icon" aria-hidden="true">table_chart</span>
         <span>Excel (.xlsx)</span>
     </button>
-    <button mat-menu-item (click)="exportPdf(activeTab === 0 ? 'store' : 'employee')">
-        <span class="material-symbols-outlined menu-icon pdf-icon">picture_as_pdf</span>
+    <button mat-menu-item type="button" (click)="exportPdf()">
+        <span class="material-symbols-outlined menu-icon" aria-hidden="true">picture_as_pdf</span>
         <span>PDF (.pdf)</span>
     </button>
 </mat-menu>
 
-<!-- Filter toolbar -->
-<div class="filter-card">
-    <div class="filter-card-body">
-        <div class="filter-card-header">
-            <span class="material-symbols-outlined filter-header-icon">tune</span>
-            <div class="filter-header-text">
-                <span class="filter-header-title">Filtrlər</span>
-                <span class="filter-header-hint">İl, ay və firma seçib nəticəni yeniləyin</span>
+<div class="g-filter-card">
+    <div class="g-filter-header">
+        <span class="material-symbols-outlined" aria-hidden="true">filter_list</span>
+        <span>Filtrlər</span>
+    </div>
+    <form [formGroup]="filtersForm" (ngSubmit)="onSearch()">
+        <div class="g-filter-grid">
+            <div class="g-filter-field">
+                <label class="g-field-label" id="is-year">
+                    <span class="material-symbols-outlined" aria-hidden="true">calendar_today</span>
+                    İl
+                </label>
+                <mat-form-field appearance="outline" class="g-modern-field">
+                    <mat-select formControlName="year" aria-labelledby="is-year">
+                        <mat-option *ngFor="let y of years" [value]="y">{{ y }}</mat-option>
+                    </mat-select>
+                </mat-form-field>
+            </div>
+            <div class="g-filter-field">
+                <label class="g-field-label" id="is-month">
+                    <span class="material-symbols-outlined" aria-hidden="true">date_range</span>
+                    Ay
+                </label>
+                <mat-form-field appearance="outline" class="g-modern-field">
+                    <mat-select formControlName="month" placeholder="Hamısı" aria-labelledby="is-month">
+                        <mat-option [value]="null">Hamısı</mat-option>
+                        <mat-option *ngFor="let m of months" [value]="m.value">{{ m.label }}</mat-option>
+                    </mat-select>
+                </mat-form-field>
+            </div>
+            <div class="g-filter-field-wide">
+                <label class="g-field-label" id="is-firm">
+                    <span class="material-symbols-outlined" aria-hidden="true">business</span>
+                    Firma
+                </label>
+                <mat-form-field appearance="outline" class="g-modern-field">
+                    <mat-select formControlName="firmId" placeholder="Hamısı" aria-labelledby="is-firm">
+                        <mat-option [value]="null">Hamısı</mat-option>
+                        <mat-option *ngFor="let firm of firms" [value]="firm.id">{{ firm.name }}</mat-option>
+                    </mat-select>
+                </mat-form-field>
+            </div>
+            <div class="g-filter-actions">
+                <button type="submit" class="g-search-btn">
+                    <span class="material-symbols-outlined" aria-hidden="true">search</span>
+                    Axtar
+                </button>
+                <button type="button" class="g-secondary-btn" (click)="clearAll()">
+                    <span class="material-symbols-outlined" aria-hidden="true">filter_alt_off</span>
+                    Təmizlə
+                </button>
             </div>
         </div>
-        <form [formGroup]="filtersForm" (ngSubmit)="onSearch()" class="filter-form">
-            <div class="filter-toolbar">
-                <div class="filter-field">
-                    <span class="field-label">
-                        <span class="material-symbols-outlined label-icon">calendar_today</span>
-                        İl
-                    </span>
-                    <mat-form-field appearance="outline" class="modern-field" subscriptSizing="dynamic">
-                        <mat-select formControlName="year">
-                            <mat-option *ngFor="let y of years" [value]="y">{{ y }}</mat-option>
-                        </mat-select>
-                    </mat-form-field>
-                </div>
-                <div class="filter-field">
-                    <span class="field-label">
-                        <span class="material-symbols-outlined label-icon">date_range</span>
-                        Ay
-                    </span>
-                    <mat-form-field appearance="outline" class="modern-field" subscriptSizing="dynamic">
-                        <mat-select formControlName="month" placeholder="Hamısı">
-                            <mat-option [value]="null">Hamısı</mat-option>
-                            <mat-option *ngFor="let m of months" [value]="m.value">{{ m.label }}</mat-option>
-                        </mat-select>
-                    </mat-form-field>
-                </div>
-                <div class="filter-field filter-field-firm">
-                    <span class="field-label">
-                        <span class="material-symbols-outlined label-icon">business</span>
-                        Firma
-                    </span>
-                    <mat-form-field appearance="outline" class="modern-field" subscriptSizing="dynamic">
-                        <mat-select formControlName="firmId" placeholder="Hamısı">
-                            <mat-option [value]="null">Hamısı</mat-option>
-                            <mat-option *ngFor="let firm of firms" [value]="firm.id">{{ firm.name }}</mat-option>
-                        </mat-select>
-                    </mat-form-field>
-                </div>
-                <div class="filter-toolbar-action">
-                    <button type="submit" class="search-btn">
-                        <span class="material-symbols-outlined">search</span>
-                        Axtar
-                    </button>
-                </div>
-            </div>
-        </form>
-    </div>
+    </form>
 </div>
 
-<!-- Tabs -->
-<div class="table-card audit-table-loading-shell" [attr.aria-busy]="loadingStore || loadingEmployee">
-    <mat-tab-group animationDuration="200ms" class="report-tabs" [class.audit-table-muted]="loadingStore || loadingEmployee"
-        (selectedIndexChange)="onTabIndexChange($event)">
+<div class="table-card" [attr.aria-busy]="isLoading">
+    <mat-progress-bar *ngIf="isLoading" mode="indeterminate" class="list-progress" />
 
-        <!-- TAB 1: Mağaza bazında -->
-        <mat-tab>
-            <ng-template mat-tab-label>
-                <span class="material-symbols-outlined tab-icon">store</span>
-                Mağaza və bölgə bazında
-            </ng-template>
+    @if (loadError) {
+        <app-list-state state="error" [errorMessage]="loadError" (retry)="fetchBoth()" />
+    } @else if (!searched) {
+        <app-list-state state="idle" message="İl, ay və ya firma seçib «Axtar» düyməsini basın" />
+    } @else {
+        <mat-tab-group animationDuration="200ms" class="report-tabs" [selectedIndex]="activeTab"
+            (selectedIndexChange)="onTabIndexChange($event)">
 
-            <!-- KPI Summary -->
-            <div class="kpi-row" *ngIf="storeCount > 0">
-                <div class="kpi-card">
-                    <div class="kpi-icon plan-icon">
-                        <span class="material-symbols-outlined">checklist</span>
+            <!-- Mağaza bazında -->
+            <mat-tab>
+                <ng-template mat-tab-label>
+                    <span class="material-symbols-outlined tab-icon" aria-hidden="true">store</span>
+                    Mağaza və bölgə bazında
+                </ng-template>
+
+                <div class="kpi-row" *ngIf="storeTotal > 0">
+                    <div class="kpi-card">
+                        <div class="kpi-icon"><span class="material-symbols-outlined" aria-hidden="true">checklist</span></div>
+                        <div class="kpi-body">
+                            <div class="kpi-value">{{ getStoreTotal('planli_say') }}</div>
+                            <div class="kpi-label">Ümumi planlı yoxlama</div>
+                        </div>
                     </div>
-                    <div class="kpi-body">
-                        <div class="kpi-value">{{ getStoreTotal('planli_say') }}</div>
-                        <div class="kpi-label">Ümumi planlı yoxlama</div>
+                    <div class="kpi-card">
+                        <div class="kpi-icon"><span class="material-symbols-outlined" aria-hidden="true">add_task</span></div>
+                        <div class="kpi-body">
+                            <div class="kpi-value">{{ getStoreTotal('plandankanar_say') }}</div>
+                            <div class="kpi-label">Ümumi plandankənar yoxlama</div>
+                        </div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-icon"><span class="material-symbols-outlined" aria-hidden="true">corporate_fare</span></div>
+                        <div class="kpi-body">
+                            <div class="kpi-value">{{ storeTotal }}</div>
+                            <div class="kpi-label">Mağaza sayı</div>
+                        </div>
                     </div>
                 </div>
-                <div class="kpi-card">
-                    <div class="kpi-icon extra-icon">
-                        <span class="material-symbols-outlined">add_task</span>
+
+                <div class="table-card-header">
+                    <div class="table-info">
+                        <span class="material-symbols-outlined table-info-icon" aria-hidden="true">table_view</span>
+                        <span class="table-title">Mağaza bazında nəticələr</span>
+                        <span class="result-badge">{{ storeTotal }} qeyd</span>
                     </div>
-                    <div class="kpi-body">
-                        <div class="kpi-value">{{ getStoreTotal('plandankanar_say') }}</div>
-                        <div class="kpi-label">Ümumi plandankənar yoxlama</div>
+                    <button type="button" class="g-secondary-btn" *ngIf="hasStoreTableColumnFilters" (click)="clearStoreFilters()">
+                        <span class="material-symbols-outlined" aria-hidden="true">filter_alt_off</span>
+                        Sütun filtrlərini sil
+                    </button>
+                </div>
+                <div class="table-sticky">
+                    <table mat-table [dataSource]="storeDataSource" class="modern-table">
+                        <ng-container *ngFor="let col of storeColumns" [matColumnDef]="col.key">
+                            <th mat-header-cell *matHeaderCellDef class="data-header-cell">{{ col.label }}</th>
+                            <td mat-cell *matCellDef="let row">
+                                <ng-container [ngSwitch]="col.key">
+                                    <span *ngSwitchCase="'row'" class="row-number">{{ row[col.key] }}</span>
+                                    <span *ngSwitchCase="'magaza_kodu'" class="code-badge">{{ row[col.key] }}</span>
+                                    <span *ngSwitchCase="'magaza_adi'" class="branch-name">{{ row[col.key] }}</span>
+                                    <span *ngSwitchCase="'bolge'" class="region-badge">{{ row[col.key] }}</span>
+                                    <span *ngSwitchCase="'planli_say'" class="count-chip">{{ row[col.key] }}</span>
+                                    <span *ngSwitchCase="'plandankanar_say'" class="count-chip">{{ row[col.key] }}</span>
+                                    <span *ngSwitchDefault>{{ row[col.key] }}</span>
+                                </ng-container>
+                            </td>
+                        </ng-container>
+
+                        <ng-container *ngFor="let col of storeColumns" [matColumnDef]="col.key + '__filter'">
+                            <th mat-header-cell *matHeaderCellDef class="filter-header-cell">
+                                <div class="filter-input-wrap" *ngIf="col.key !== 'row' && col.key !== 'planli_say' && col.key !== 'plandankanar_say'">
+                                    <span class="material-symbols-outlined filter-input-icon" aria-hidden="true">search</span>
+                                    <input class="filter-input store-filter-input" (input)="applyStoreFilter($event, col.key)"
+                                        [placeholder]="col.label + '...'" [attr.aria-label]="col.label + ' üzrə süz'" />
+                                </div>
+                            </th>
+                        </ng-container>
+
+                        <tr mat-header-row *matHeaderRowDef="storeDisplayedColumns" class="data-header-row"></tr>
+                        <tr mat-header-row *matHeaderRowDef="storeFilterColumns" class="filter-row"></tr>
+                        <tr mat-row *matRowDef="let row; columns: storeDisplayedColumns" class="data-row"></tr>
+                    </table>
+                    @if (!loadingStore && storeDataSource.data.length === 0) {
+                        <app-list-state state="empty" message="Bu filtrlərlə yoxlama tapılmadı" />
+                    }
+                </div>
+                <mat-paginator [length]="storeTotal" [pageIndex]="storeTableState.paginator.page"
+                    [pageSize]="storeTableState.paginator.size" [pageSizeOptions]="pageSizes"
+                    (page)="onPage('store', $event)" showFirstLastButtons class="modern-paginator"></mat-paginator>
+            </mat-tab>
+
+            <!-- Əməkdaş bazında -->
+            <mat-tab>
+                <ng-template mat-tab-label>
+                    <span class="material-symbols-outlined tab-icon" aria-hidden="true">badge</span>
+                    Əməkdaş bazında
+                </ng-template>
+
+                <div class="kpi-row" *ngIf="employeeTotal > 0">
+                    <div class="kpi-card">
+                        <div class="kpi-icon"><span class="material-symbols-outlined" aria-hidden="true">checklist</span></div>
+                        <div class="kpi-body">
+                            <div class="kpi-value">{{ getEmployeeTotal('planli_say') }}</div>
+                            <div class="kpi-label">Ümumi planlı yoxlama</div>
+                        </div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-icon"><span class="material-symbols-outlined" aria-hidden="true">add_task</span></div>
+                        <div class="kpi-body">
+                            <div class="kpi-value">{{ getEmployeeTotal('plandankanar_say') }}</div>
+                            <div class="kpi-label">Ümumi plandankənar yoxlama</div>
+                        </div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-icon"><span class="material-symbols-outlined" aria-hidden="true">group</span></div>
+                        <div class="kpi-body">
+                            <div class="kpi-value">{{ employeeTotal }}</div>
+                            <div class="kpi-label">Əməkdaş sayı</div>
+                        </div>
                     </div>
                 </div>
-                <div class="kpi-card">
-                    <div class="kpi-icon store-icon">
-                        <span class="material-symbols-outlined">corporate_fare</span>
+
+                <div class="table-card-header">
+                    <div class="table-info">
+                        <span class="material-symbols-outlined table-info-icon" aria-hidden="true">table_view</span>
+                        <span class="table-title">Əməkdaş bazında nəticələr</span>
+                        <span class="result-badge">{{ employeeTotal }} qeyd</span>
                     </div>
-                    <div class="kpi-body">
-                        <div class="kpi-value">{{ storeCount }}</div>
-                        <div class="kpi-label">Mağaza sayı</div>
-                    </div>
+                    <button type="button" class="g-secondary-btn" *ngIf="hasEmployeeTableColumnFilters" (click)="clearEmployeeFilters()">
+                        <span class="material-symbols-outlined" aria-hidden="true">filter_alt_off</span>
+                        Sütun filtrlərini sil
+                    </button>
                 </div>
-            </div>
+                <div class="table-sticky">
+                    <table mat-table [dataSource]="employeeDataSource" class="modern-table">
+                        <ng-container *ngFor="let col of employeeColumns" [matColumnDef]="col.key">
+                            <th mat-header-cell *matHeaderCellDef class="data-header-cell">{{ col.label }}</th>
+                            <td mat-cell *matCellDef="let row">
+                                <ng-container [ngSwitch]="col.key">
+                                    <span *ngSwitchCase="'row'" class="row-number">{{ row[col.key] }}</span>
+                                    <span *ngSwitchCase="'user_kodu'" class="code-badge">{{ row[col.key] }}</span>
+                                    <span *ngSwitchCase="'emekdas_adi'" class="branch-name">{{ row[col.key] }}</span>
+                                    <span *ngSwitchCase="'planli_say'" class="count-chip">{{ row[col.key] }}</span>
+                                    <span *ngSwitchCase="'plandankanar_say'" class="count-chip">{{ row[col.key] }}</span>
+                                    <span *ngSwitchDefault>{{ row[col.key] }}</span>
+                                </ng-container>
+                            </td>
+                        </ng-container>
 
-            <div class="tab-table-header">
-                <div class="table-info">
-                    <span class="material-symbols-outlined table-info-icon">table_view</span>
-                    <span class="table-title">Mağaza bazında nəticələr</span>
-                    <span class="result-badge">{{ storeTotal }} qeyd</span>
+                        <ng-container *ngFor="let col of employeeColumns" [matColumnDef]="col.key + '__filter'">
+                            <th mat-header-cell *matHeaderCellDef class="filter-header-cell">
+                                <div class="filter-input-wrap" *ngIf="col.key !== 'row' && col.key !== 'planli_say' && col.key !== 'plandankanar_say'">
+                                    <span class="material-symbols-outlined filter-input-icon" aria-hidden="true">search</span>
+                                    <input class="filter-input emp-filter-input" (input)="applyEmployeeFilter($event, col.key)"
+                                        [placeholder]="col.label + '...'" [attr.aria-label]="col.label + ' üzrə süz'" />
+                                </div>
+                            </th>
+                        </ng-container>
+
+                        <tr mat-header-row *matHeaderRowDef="employeeDisplayedColumns" class="data-header-row"></tr>
+                        <tr mat-header-row *matHeaderRowDef="employeeFilterColumns" class="filter-row"></tr>
+                        <tr mat-row *matRowDef="let row; columns: employeeDisplayedColumns" class="data-row"></tr>
+                    </table>
+                    @if (!loadingEmployee && employeeDataSource.data.length === 0) {
+                        <app-list-state state="empty" message="Bu filtrlərlə yoxlama tapılmadı" />
+                    }
                 </div>
-                <button class="clear-filter-btn" *ngIf="hasStoreTableColumnFilters" (click)="clearStoreFilters()">
-                    <span class="material-symbols-outlined">filter_alt_off</span>
-                    Filtrləri sil
-                </button>
-            </div>
-            <div class="table-responsive-wrapper">
-                <table mat-table [dataSource]="storeDataSource" class="modern-table">
-                    <ng-container *ngFor="let col of storeColumns" [matColumnDef]="col.key">
-                        <th mat-header-cell *matHeaderCellDef class="data-header-cell">{{ col.label }}</th>
-                        <td mat-cell *matCellDef="let row">
-                            <ng-container [ngSwitch]="col.key">
-                                <span *ngSwitchCase="'row'" class="row-number">{{ row[col.key] }}</span>
-                                <span *ngSwitchCase="'magaza_kodu'" class="code-badge">{{ row[col.key] }}</span>
-                                <span *ngSwitchCase="'magaza_adi'" class="branch-name">{{ row[col.key] }}</span>
-                                <span *ngSwitchCase="'bolge'" class="region-badge">{{ row[col.key] }}</span>
-                                <span *ngSwitchCase="'planli_say'" class="count-chip plan">{{ row[col.key] }}</span>
-                                <span *ngSwitchCase="'plandankanar_say'" class="count-chip extra">{{ row[col.key] }}</span>
-                                <span *ngSwitchDefault>{{ row[col.key] }}</span>
-                            </ng-container>
-                        </td>
-                    </ng-container>
+                <mat-paginator [length]="employeeTotal" [pageIndex]="employeeTableState.paginator.page"
+                    [pageSize]="employeeTableState.paginator.size" [pageSizeOptions]="pageSizes"
+                    (page)="onPage('employee', $event)" showFirstLastButtons class="modern-paginator"></mat-paginator>
+            </mat-tab>
 
-                    <!-- Store tab filter row -->
-                    <ng-container *ngFor="let col of storeColumns" [matColumnDef]="col.key + '__filter'">
-                        <th mat-header-cell *matHeaderCellDef class="filter-header-cell">
-                            <div class="filter-input-wrap" *ngIf="col.key !== 'row' && col.key !== 'planli_say' && col.key !== 'plandankanar_say'">
-                                <span class="material-symbols-outlined filter-input-icon">search</span>
-                                <input class="filter-input store-filter-input"
-                                    (input)="applyStoreFilter($event, col.key)"
-                                    [placeholder]="col.label + '...'" />
-                            </div>
-                        </th>
-                    </ng-container>
-
-                    <tr mat-header-row *matHeaderRowDef="storeDisplayedColumns" class="data-header-row"></tr>
-                    <tr mat-header-row *matHeaderRowDef="storeFilterColumns" class="filter-row"></tr>
-                    <tr mat-row *matRowDef="let row; columns: storeDisplayedColumns" class="data-row"></tr>
-                </table>
-                <div class="empty-state" *ngIf="!(loadingStore || loadingEmployee) && storeDataSource.data.length === 0">
-                    <span class="material-symbols-outlined empty-icon">inbox</span>
-                    <p>{{ searched ? 'Nəticə tapılmadı.' : 'Filtrlər seçib "Axtar" düyməsini basın' }}</p>
-                </div>
-            </div>
-            <mat-paginator #storePaginator [length]="storeTotal" [pageSize]="10" [pageSizeOptions]="[10, 25, 50]"
-                showFirstLastButtons class="modern-paginator"></mat-paginator>
-        </mat-tab>
-
-        <!-- TAB 2: Əməkdaş bazında -->
-        <mat-tab>
-            <ng-template mat-tab-label>
-                <span class="material-symbols-outlined tab-icon">badge</span>
-                Əməkdaş bazında
-            </ng-template>
-
-            <!-- KPI Summary -->
-            <div class="kpi-row" *ngIf="employeeCount > 0">
-                <div class="kpi-card">
-                    <div class="kpi-icon plan-icon">
-                        <span class="material-symbols-outlined">checklist</span>
-                    </div>
-                    <div class="kpi-body">
-                        <div class="kpi-value">{{ getEmployeeTotal('planli_say') }}</div>
-                        <div class="kpi-label">Ümumi planlı yoxlama</div>
-                    </div>
-                </div>
-                <div class="kpi-card">
-                    <div class="kpi-icon extra-icon">
-                        <span class="material-symbols-outlined">add_task</span>
-                    </div>
-                    <div class="kpi-body">
-                        <div class="kpi-value">{{ getEmployeeTotal('plandankanar_say') }}</div>
-                        <div class="kpi-label">Ümumi plandankənar yoxlama</div>
-                    </div>
-                </div>
-                <div class="kpi-card">
-                    <div class="kpi-icon store-icon">
-                        <span class="material-symbols-outlined">group</span>
-                    </div>
-                    <div class="kpi-body">
-                        <div class="kpi-value">{{ employeeCount }}</div>
-                        <div class="kpi-label">Əməkdaş sayı</div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="tab-table-header">
-                <div class="table-info">
-                    <span class="material-symbols-outlined table-info-icon">table_view</span>
-                    <span class="table-title">Əməkdaş bazında nəticələr</span>
-                    <span class="result-badge">{{ employeeTotal }} qeyd</span>
-                </div>
-                <button class="clear-filter-btn" *ngIf="hasEmployeeTableColumnFilters" (click)="clearEmployeeFilters()">
-                    <span class="material-symbols-outlined">filter_alt_off</span>
-                    Filtrləri sil
-                </button>
-            </div>
-            <div class="table-responsive-wrapper">
-                <table mat-table [dataSource]="employeeDataSource" class="modern-table">
-                    <ng-container *ngFor="let col of employeeColumns" [matColumnDef]="col.key">
-                        <th mat-header-cell *matHeaderCellDef class="data-header-cell">{{ col.label }}</th>
-                        <td mat-cell *matCellDef="let row">
-                            <ng-container [ngSwitch]="col.key">
-                                <span *ngSwitchCase="'row'" class="row-number">{{ row[col.key] }}</span>
-                                <span *ngSwitchCase="'user_kodu'" class="code-badge">{{ row[col.key] }}</span>
-                                <span *ngSwitchCase="'emekdas_adi'" class="branch-name">{{ row[col.key] }}</span>
-                                <span *ngSwitchCase="'planli_say'" class="count-chip plan">{{ row[col.key] }}</span>
-                                <span *ngSwitchCase="'plandankanar_say'" class="count-chip extra">{{ row[col.key] }}</span>
-                                <span *ngSwitchDefault>{{ row[col.key] }}</span>
-                            </ng-container>
-                        </td>
-                    </ng-container>
-
-                    <!-- Employee tab filter row -->
-                    <ng-container *ngFor="let col of employeeColumns" [matColumnDef]="col.key + '__filter'">
-                        <th mat-header-cell *matHeaderCellDef class="filter-header-cell">
-                            <div class="filter-input-wrap" *ngIf="col.key !== 'row' && col.key !== 'planli_say' && col.key !== 'plandankanar_say'">
-                                <span class="material-symbols-outlined filter-input-icon">search</span>
-                                <input class="filter-input emp-filter-input"
-                                    (input)="applyEmployeeFilter($event, col.key)"
-                                    [placeholder]="col.label + '...'" />
-                            </div>
-                        </th>
-                    </ng-container>
-
-                    <tr mat-header-row *matHeaderRowDef="employeeDisplayedColumns" class="data-header-row"></tr>
-                    <tr mat-header-row *matHeaderRowDef="employeeFilterColumns" class="filter-row"></tr>
-                    <tr mat-row *matRowDef="let row; columns: employeeDisplayedColumns" class="data-row"></tr>
-                </table>
-                <div class="empty-state" *ngIf="!(loadingStore || loadingEmployee) && employeeDataSource.data.length === 0">
-                    <span class="material-symbols-outlined empty-icon">inbox</span>
-                    <p>{{ searched ? 'Nəticə tapılmadı.' : 'Filtrlər seçib "Axtar" düyməsini basın' }}</p>
-                </div>
-            </div>
-            <mat-paginator #employeePaginator [length]="employeeTotal" [pageSize]="10" [pageSizeOptions]="[10, 25, 50]"
-                showFirstLastButtons class="modern-paginator"></mat-paginator>
-        </mat-tab>
-
-    </mat-tab-group>
-    <app-audit-loading-overlay *ngIf="loadingStore || loadingEmployee"
-        title="Hesabat hazırlanır"
-        hint="Yoxlama statistikası yüklənir…"></app-audit-loading-overlay>
+        </mat-tab-group>
+    }
 </div>

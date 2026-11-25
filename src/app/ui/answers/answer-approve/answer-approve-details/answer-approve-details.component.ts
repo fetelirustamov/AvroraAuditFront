@@ -1,310 +1,219 @@
-
-import { Component, ViewChild } from '@angular/core';
-import { FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { finalize, Observable } from 'rxjs';
-import { SelectionModel } from '@angular/cdk/collections';
-import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
-import { CommonModule, DatePipe, NgFor, Location } from '@angular/common';
-import { MatCardModule } from '@angular/material/card';
-import { MatButtonModule } from '@angular/material/button';
-import { MatMenuModule } from '@angular/material/menu';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { ActivatedRoute, Router, UrlTree } from '@angular/router';
+import { MatDialog } from '@angular/material/dialog';
+import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatTableModule } from '@angular/material/table';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatInputModule } from '@angular/material/input';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatSelectModule } from '@angular/material/select';
-import { MatDatepickerModule } from '@angular/material/datepicker';
-import { FileUploadModule } from '@iplab/ngx-file-upload';
-import { NgxMaterialTimepickerModule } from 'ngx-material-timepicker';
-import { NotificationService } from '../../../../shared/services/notification.service';
-import { apiErrorMessage } from '../../../../shared/utils/api-error';
-import { DisruptionAnswerApproveDto, DisruptionAnswerDTO } from '../../disruption-answer.model';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { Subscription, finalize } from 'rxjs';
 import { TableState } from '../../../../models/table-state.model';
-import { DisruptionAnswerService } from '../../disruption-answer.service';
-import { InspectionsService } from '../../../inspections/inspections.service';
 import { TableService } from '../../../services/table.service';
-import { Router } from '@angular/router';
-import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MediaType, Module } from '../../../components/media/media-type.enum';
+import { DisruptionAnswerApproveDto, DisruptionAnswerDTO } from '../../disruption-answer.model';
+import { DisruptionAnswerService } from '../../disruption-answer.service';
 import { MediaComponent } from '../../../components/media/media.component';
+import { MediaType, Module } from '../../../components/media/media-type.enum';
+import { planStoreLabel } from '../../../plans/plan-row';
+import { NotificationService } from '../../../../shared/services/notification.service';
+import { ConfirmDialogService } from '../../../../shared/components/confirm-dialog/confirm-dialog.service';
+import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
+import { ListStateComponent } from '../../../../shared/components/list-state/list-state.component';
+import { STATUS_ACTIONS, statusActionConfirm } from '../../../../shared/status/status-actions';
+import { AppDatePipe } from '../../../../shared/pipes/app-date.pipe';
+import { apiErrorMessage } from '../../../../shared/utils/api-error';
+import { queryNumber, queryString, writeQueryState } from '../../../../shared/utils/query-state';
+import { AnswerHistoryDialogComponent } from './answer-history-dialog.component';
 
+/** `confirmStatus`: 1 təsdiq, 2 rədd (səbəb `returnReason`-da saxlanır). */
+const CONFIRM_APPROVE = 1;
+const CONFIRM_REJECT = 2;
+
+const LIST_URL = '/answers/approve';
+const PAGE_SIZES = [10, 25, 50];
+
+/** Bir planın mağaza cavabları: hər cavab təsdiqlənir və ya səbəblə rədd edilir. Plan `?planId=` ilə gəlir. */
 @Component({
   selector: 'app-answer-approve-details',
-  imports: [MatCardModule, MatButtonModule, MatMenuModule, MatTableModule, CommonModule, MatPaginatorModule, MatProgressSpinnerModule, MatInputModule, MatFormFieldModule, MatSelectModule, MatDatepickerModule, FormsModule, ReactiveFormsModule, NgxMaterialTimepickerModule, FileUploadModule, MatCheckboxModule, MediaComponent],
-  providers: [DatePipe],
+  standalone: true,
+  imports: [
+    MatTableModule, MatPaginatorModule, MatProgressBarModule, MatTooltipModule,
+    MediaComponent, PageHeaderComponent, ListStateComponent, AppDatePipe,
+  ],
+  providers: [TableService],
   templateUrl: './answer-approve-details.component.html',
   styleUrl: './answer-approve-details.component.scss'
 })
-export class AnswerApproveDetailsComponent {
+export class AnswerApproveDetailsComponent implements OnInit, OnDestroy {
+  private readonly tableService = inject(TableService);
+  private readonly answerService = inject(DisruptionAnswerService);
+  private readonly notify = inject(NotificationService);
+  private readonly confirmDialog = inject(ConfirmDialogService);
+  private readonly dialog = inject(MatDialog);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
 
-  displayedColumns: string[] = ['select', 'position', 'inspectorName', 'sectionName', 'reasonName', 'createdDate', 'note', 'media', 'details', 'actions'];
-  displayedColumnsModal: string[] = ['reasonName', 'disruptionNote', 'media', 'answeredUser', 'answerNote', 'answerMedia', 'answerStatus'];
-  public answerStatus: any[] = [
-    { value: '1', viewValue: 'Həll edildi' },
-    { value: '3', viewValue: 'Razı deyiləm' }
-  ];
-  public dataSource: DisruptionAnswerDTO[] = [];
-  public dataSourceModal: DisruptionAnswerDTO[] = [];
+  readonly displayedColumns = ['position', 'sectionName', 'reasonName', 'createdDate', 'description', 'media', 'answer', 'actions'];
+  readonly pageSizes = PAGE_SIZES;
+  readonly MediaType = MediaType;
+  readonly Module = Module;
+  readonly approveAction = STATUS_ACTIONS.approve;
+  readonly rejectAction = STATUS_ACTIONS.reject;
 
-  selection = new SelectionModel<DisruptionAnswerDTO>(true, []);
-  @ViewChild(MatPaginator) paginator!: MatPaginator;
+  planId: number | null = null;
+  /** Geri linki: siyahının filtrli URL-i (query `returnUrl`). */
+  backLink: UrlTree = this.router.parseUrl(LIST_URL);
 
-  allDataCount: number = 0;
+  rows: DisruptionAnswerDTO[] = [];
+  total = 0;
+  pageIndex = 0;
+  pageSize = PAGE_SIZES[0];
+  loaded = false;
+  isLoading = false;
+  isSaving = false;
+  loadError: string | null = null;
 
-  public selectedFirmId: number = 0;
-  public selectedLocationId: number = 0;
-  private _tableState: TableState = new TableState();
-  public pageSize: number = 10;
-  public pageSizeOptions: number[] = [5, 10, 20]; // Səhifə ölçüsü seçimləri
-  public isLoading: boolean = false;
-  public isSaving = false;
-  public rows$: Observable<any[]> = new Observable<any[]>();
-  public data: any;
-  public action: boolean = false;
-  private searchTerm: string = "";
-  MediaType = MediaType;
-  Module = Module;
-  selectedDisruption: DisruptionAnswerDTO | null = null;
-  private disruptionAnswerApprove: DisruptionAnswerApproveDto = new DisruptionAnswerApproveDto();
-  isDetailsDialogOpen = false;
+  private readonly tableState = new TableState();
+  private loadSub?: Subscription;
 
-  isRejectDialogOpen = false;
-  selectedRowForReject: DisruptionAnswerDTO | null = null;
-  rejectNote = '';
-  rejectNoteError = false;
-
-
-  constructor(
-    private disruptionAnswerService: DisruptionAnswerService,
-    private _tableService: TableService,
-    private router: Router,
-
-    private notify: NotificationService,
-    private location: Location,) {
-
-
-    this._tableState = new TableState();
-    this._tableService.api_url = "disruptionAnswers/getDetails";
-    this._tableState.filter['disruptionStatus'] = "2";
-    this._tableState.filter['disruptionAnswerStatus'] = "1";
-    this._tableState.filter['isCurrent'] = "1"; // Cari olanlar
+  constructor() {
+    this.tableService.api_url = 'disruptionAnswers/getDetails';
+    this.tableState.filter['disruptionStatus'] = '2';
+    this.tableState.filter['disruptionAnswerStatus'] = '1';
+    this.tableState.filter['isCurrent'] = '1'; // Cari olanlar
     // Yalnız mağazanın cavabladığı (level > 1) sətirlər — Admin süzgəcsiz hamısını görür və
     // level 1 sətri burada təsdiqlənsə mağaza cavabı ötürülüb zəncir cavabsız irəliləyir
-    this._tableState.filter['isAnswered'] = "true";
+    this.tableState.filter['isAnswered'] = 'true';
+    this.tableState.sorting.direction = 'desc';
+  }
 
-    this._tableState.paginator.page = 0;
-    this._tableState.sorting.direction = "desc";
-    this._tableState.paginator.size = Number(this.pageSize);
-    const navigation = this.router.getCurrentNavigation();
-    if (navigation?.extras?.state) {
-      const state = navigation.extras.state;
-      this.data = state["data"]; // row obyekti
-      this.action = state["action"];
-
-      this._tableState.filter['inspectionPlanId'] = this.data.inspectionPlanId.toString();
-
-    } else {
-      this.location.back();
-      return;
+  ngOnInit(): void {
+    const q = this.route.snapshot.queryParamMap;
+    const returnUrl = queryString(q, 'returnUrl');
+    if (returnUrl?.startsWith(LIST_URL) && !returnUrl.startsWith(`${LIST_URL}-`)) {
+      this.backLink = this.router.parseUrl(returnUrl);
     }
+
+    this.planId = queryNumber(q, 'planId');
+    if (this.planId == null) return;
+    this.tableState.filter['inspectionPlanId'] = String(this.planId);
+    this.pageIndex = queryNumber(q, 'page') ?? 0;
+    this.pageSize = queryNumber(q, 'size') ?? PAGE_SIZES[0];
+    this.load();
   }
 
-
-  ngOnInit() {
-
-
-    this.fill(); // Məlumatları ilkin yüklə
+  ngOnDestroy(): void {
+    this.loadSub?.unsubscribe();
   }
 
-  ngAfterViewInit() {
-    if (this.paginator) {
-      this.paginator.page.subscribe(() => {
-        this._tableState.paginator.page = this.paginator.pageIndex;
-        this.pageSize = this.paginator.pageSize;
-        this._tableState.paginator.size = this.pageSize;
-        this.fill();
-      });
-    } else {
-      console.warn('MatPaginator is not initialized in ngAfterViewInit');
-    }
+  /** Mağaza planın bütün sətirlərində eynidir: başlıq ilk sətirdən qurulur. */
+  get title(): string {
+    const first = this.rows[0];
+    return first ? planStoreLabel(first) : `Plan № ${this.planId}`;
   }
 
-
-  isAllSelected() {
-    const numSelected = this.selection.selected.length;
-    const numRows = this.dataSource.length;
-    return numSelected === numRows;
+  get subtitle(): string {
+    return [`Plan № ${this.planId}`, this.rows[0]?.inspectorName].filter(Boolean).join(' · ');
   }
 
-
-  openDetailsDialog(disruption: DisruptionAnswerDTO) {
-    this.selectedDisruption = disruption;
-
-    this.isDetailsDialogOpen = true;
-    this.getAnswerByDisruptionId(disruption.disruptionId.toString());
-    // Load reasons for the category
-    //  this.loadReasons(disruption.disruptionCategoryId);
+  onPage(event: PageEvent): void {
+    this.pageIndex = event.pageIndex;
+    this.pageSize = event.pageSize;
+    writeQueryState(this.router, { page: event.pageIndex || null, size: event.pageSize });
+    this.load();
   }
 
-  getAnswerByDisruptionId(id: string) {
-    this.disruptionAnswerService.GetDisruptionAnswerByDisruptionId(id).subscribe({
-      next: (response) => {
-        this.dataSourceModal = response.data;
-        this.isDetailsDialogOpen = true;
-      },
-      error: (error) => this.notify.error(apiErrorMessage(error, 'Cavab tarixçəsi yüklənmədi')),
-    });
-  }
-
-  checkboxLabel(row?: DisruptionAnswerDTO): string {
-    if (!row) {
-      return this.isAllSelected() ? 'Bütün seçimləri götür' : 'Hamısını seç';
-    }
-    return `${this.selection.isSelected(row) ? 'Seçimi götür' : 'Seç'}: sətir ${row.id + 1}`;
-  }
-
-
-  toggleAllRows() {
-    if (this.isAllSelected()) {
-      this.selection.clear();
-      return;
-    }
-    this.selection.select(...this.dataSource);
-  }
-
-  onPageSizeChange(newPageSize: any) {
-    this.pageSize = newPageSize;
-    this._tableState.paginator.size = this.pageSize;
-    if (this.paginator) {
-      this.paginator.pageSize = this.pageSize;
-      this.paginator.pageIndex = 0; // Səhifəni sıfırlayır
-      this.fill();
-    }
-  }
-
-
-  getRowNumber(index: number): number {
-    return this.paginator ? index + 1 + (this.paginator.pageIndex * this.paginator.pageSize) : index + 1;
-  }
-
-
-  private fill() {
+  load(): void {
+    this.loadSub?.unsubscribe();
     this.isLoading = true;
-    this._tableState.paginator.size = this.pageSize;
-    if (!this._tableState.filter) {
-      this._tableState.filter = {};
-    }
-    this._tableState.searchTerm = this.searchTerm;
+    this.loadError = null;
+    this.tableState.paginator.page = this.pageIndex;
+    this.tableState.paginator.size = this.pageSize;
 
-    this._tableService.fill(this._tableState).pipe(
-      finalize(() => {
-        this.isLoading = false;
-        // this.cdr.detectChanges();
-      })
-    ).subscribe({
-      next: (response) => {
-        this._tableState.paginator.total = response.data?.total || 0;
-        this.dataSource = response.data?.items || [];
-        this.allDataCount = response.data?.total || 0;
-      },
-      error: (error) => this.notify.error(apiErrorMessage(error, 'Cavablar yüklənmədi')),
+    this.loadSub = this.tableService.fill(this.tableState)
+      .pipe(finalize(() => (this.isLoading = false)))
+      .subscribe({
+        next: (response) => {
+          if (!response.success) {
+            this.loadError = response.message;
+            return;
+          }
+          const items = response.data?.items ?? [];
+          // Səhifənin son cavabı təsdiqlənib/rədd edilibsə boş qalan səhifədən bir əvvəlkinə keç
+          if (items.length === 0 && this.pageIndex > 0) {
+            this.pageIndex--;
+            writeQueryState(this.router, { page: this.pageIndex || null });
+            this.load();
+            return;
+          }
+          this.loaded = true;
+          this.rows = items;
+          this.total = response.data?.total ?? 0;
+        },
+        error: (error) => (this.loadError = apiErrorMessage(error, 'Cavablar yüklənmədi')),
+      });
+  }
+
+  rowNumber(index: number): number {
+    return this.pageIndex * this.pageSize + index + 1;
+  }
+
+  /** Sətrin dialoqda və ekran oxuyucusunda adı: mağaza və uyğunsuzluğun səbəbi. */
+  rowLabel(row: DisruptionAnswerDTO): string {
+    return [planStoreLabel(row), row.reasonName || row.sectionName].filter(Boolean).join(' — ');
+  }
+
+  openHistory(row: DisruptionAnswerDTO): void {
+    this.dialog.open(AnswerHistoryDialogComponent, {
+      data: row,
+      width: '880px',
+      maxWidth: '95vw',
     });
   }
 
-
-
-
-  changeDisruptionAnswerStatus(row: DisruptionAnswerDTO, status: number) {
-    this.disruptionAnswerApprove = new DisruptionAnswerApproveDto();
-    this.disruptionAnswerApprove.Id = row.id;
-    this.disruptionAnswerApprove.Level = row.level;
-    this.disruptionAnswerApprove.confirmStatus = status;
-    this.disruptionAnswerApprove.Note = row.note ?? '';
-    this.disruptionAnswerApprove.answerStatus = row.approveStatus!;
-
-    this.submitAnswer(this.disruptionAnswerApprove);
+  approve(row: DisruptionAnswerDTO): void {
+    const dto = this.baseDto(row, CONFIRM_APPROVE);
+    dto.Note = row.note ?? '';
+    this.submit(dto);
   }
 
-  /** Təsdiq və geri qaytarma: ikiqat klik ikinci addım yaratmasın, server mesajı göstərilsin. */
-  private submitAnswer(dto: DisruptionAnswerApproveDto, onSuccess?: () => void): void {
+  /** Server rədd səbəbini (`returnReason`) saxlayır və mağazaya göstərir: səbəb məcburidir. */
+  reject(row: DisruptionAnswerDTO): void {
+    this.confirmDialog.confirm({
+      ...statusActionConfirm(this.rejectAction, 1, [this.rowLabel(row)]),
+      message: 'Cavab rədd ediləcək və mağaza yenidən cavab verəcək. Səbəb mağazaya göstərilir.',
+      reason: { required: true, minLength: 10, label: 'Rədd səbəbi' },
+    }).subscribe(result => {
+      if (!result?.reason) return;
+      const dto = this.baseDto(row, CONFIRM_REJECT);
+      dto.returnReason = result.reason;
+      this.submit(dto);
+    });
+  }
+
+  private baseDto(row: DisruptionAnswerDTO, confirmStatus: number): DisruptionAnswerApproveDto {
+    const dto = new DisruptionAnswerApproveDto();
+    dto.Id = row.id;
+    dto.Level = row.level;
+    dto.confirmStatus = confirmStatus;
+    dto.answerStatus = row.approveStatus!;
+    return dto;
+  }
+
+  /** Təsdiq və rədd: ikiqat klik ikinci addım yaratmasın, server mesajı göstərilsin. */
+  private submit(dto: DisruptionAnswerApproveDto): void {
     if (this.isSaving) return;
     this.isSaving = true;
-    this.disruptionAnswerService.AddDisruptionAnswer(dto)
+    this.answerService.AddDisruptionAnswer(dto)
       .pipe(finalize(() => (this.isSaving = false)))
       .subscribe({
         next: (data) => {
           if (data.success) {
-            // confirmStatus: 1 Təsdiqlə, 2 Rədd et
-            this.notify.success(dto.confirmStatus === 2 ? 'Cavab rədd edildi' : 'Cavab təsdiqləndi');
+            this.notify.success(dto.confirmStatus === CONFIRM_REJECT ? 'Cavab rədd edildi' : 'Cavab təsdiqləndi');
+          } else {
+            this.notify.error(data.message || 'Əməliyyat alınmadı');
           }
-          onSuccess?.();
-          this.fill();
+          this.load();
         },
-        error: (error) => this.notify.error(apiErrorMessage(error, 'Əməliyyat alınmadı'))
+        error: (error) => this.notify.error(apiErrorMessage(error, 'Əməliyyat alınmadı')),
       });
   }
-
-  closeDetailsDialog() {
-    this.isDetailsDialogOpen = false;
-  }
-
-  openRejectDialog(row: DisruptionAnswerDTO) {
-    this.selectedRowForReject = row;
-    this.rejectNote = '';
-    this.rejectNoteError = false;
-    this.isRejectDialogOpen = true;
-  }
-
-  closeRejectDialog() {
-    this.isRejectDialogOpen = false;
-    this.selectedRowForReject = null;
-    this.rejectNote = '';
-    this.rejectNoteError = false;
-  }
-
-  confirmReject() {
-    if (!this.rejectNote.trim()) {
-      this.rejectNoteError = true;
-      return;
-    }
-    if (!this.selectedRowForReject) return;
-
-    this.disruptionAnswerApprove = new DisruptionAnswerApproveDto();
-    this.disruptionAnswerApprove.Id = this.selectedRowForReject.id;
-    this.disruptionAnswerApprove.Level = this.selectedRowForReject.level;
-    this.disruptionAnswerApprove.confirmStatus = 2;
-    this.disruptionAnswerApprove.answerStatus = this.selectedRowForReject.approveStatus!;
-    this.disruptionAnswerApprove.returnReason = this.rejectNote;
-
-    this.submitAnswer(this.disruptionAnswerApprove, () => this.closeRejectDialog());
-  }
-
-
-  getStatusText(status: number): string {
-    switch (status) {
-      case 1:
-        return 'Həll edildi';
-      case 2:
-        return 'Gözləmədə';
-      case 3:
-        return 'Razı deyiləm';
-      default:
-        return 'Naməlum';
-    }
-  }
-
-  getStatusClass(status: number): string {
-    switch (status) {
-      case 1:
-        return 'badge text-outline-success';   // yaşıl
-      case 2:
-        return 'badge text-outline-warning';    // narıncı
-      case 3:
-        return 'badge text-outline-danger';   // qırmızı
-      default:
-        return 'badge text-outline-unknown';    // boz
-    }
-  }
-
-
 }

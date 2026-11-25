@@ -5,7 +5,6 @@ import { BehaviorSubject, Observable, of } from "rxjs";
 import { catchError, tap } from "rxjs/operators";
 import { environment } from "../../../environments/environment";
 import { TableResponse, TableState } from "../../models/table-state.model";
-import { NotificationService } from "../../shared/services/notification.service";
 
 @Injectable({
 	providedIn: "any",
@@ -13,7 +12,7 @@ import { NotificationService } from "../../shared/services/notification.service"
 export class TableService<T = any> {
 	public api_url: string = "";
 	private _items$ = new BehaviorSubject<T[]>([]);
-	constructor(private _httpClient: HttpClient, private _notify: NotificationService) { }
+	constructor(private _httpClient: HttpClient) { }
 
 	get items$() {
 		return this._items$.asObservable();
@@ -32,13 +31,11 @@ export class TableService<T = any> {
 					this._items$.next([]);
 				}
 			}),
-			// Sorğu düşəndə cədvəl köhnə məlumatla qalmasın və istifadəçi xəbərsiz olmasın.
+			// Sorğu düşəndə cədvəl köhnə məlumatla qalmasın. Xətanı çağıran ekran göstərir
+			// (`success: false` + `message`, adətən <app-list-state state="error">), toast burada verilmir:
+			// əks halda istifadəçi eyni xətanı iki dəfə görür.
 			catchError((error: HttpErrorResponse) => {
 				this._items$.next([]);
-				// 401-i interceptor login-ə yönləndirir — üstünə toast göstərməyə ehtiyac yoxdur.
-				if (error.status !== 401) {
-					this._notify.error(this.errorMessage(error));
-				}
 				return of(this.emptyResponse(error));
 			})
 		);

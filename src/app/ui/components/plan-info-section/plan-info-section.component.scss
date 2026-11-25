@@ -1,31 +1,46 @@
-button {
-    font-size: 14px !important;
-    padding: 2px !important;
-    min-width: 0 !important;
-    //height: 32px !important;
-    //line-height: 32px !important;
-    border-radius: 4px !important;
-    //margin-left: 8px !important;
+// Sakit məlumat zolağı: etiket kiçik və neytral, dəyər oxunaqlı. Rəng yoxdur, məna başlıqdakı status chip-dədir.
+:host {
+    display: block;
 }
 
-.checkButton {
-    padding: 0px 8px 2px 8px !important;
-    border-radius: 20px !important;
+.plan-info {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: var(--space-4) var(--space-6);
+    margin: 0;
+    padding: var(--space-4) var(--space-5);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
 }
 
-.icon-color-light {
-    color: var(--text-faint);
+.plan-info-item {
+    min-width: 0;
+
+    dt {
+        margin-bottom: var(--space-1);
+        font-size: var(--fs-12);
+        font-weight: 500;
+        color: var(--text-muted);
+    }
+
+    dd {
+        margin: 0;
+        font-size: var(--fs-14);
+        font-weight: 500;
+        color: var(--text-strong);
+        overflow-wrap: anywhere;
+    }
 }
 
-mat-card {
-    font-size: 18px !important;
+.plan-info-sub {
+    display: block;
+    margin-top: 2px;
+    font-size: var(--fs-12);
+    font-weight: 400;
+    color: var(--text-muted);
 }
 
-.my-auto {
-    margin-top: auto !important;
-    margin-bottom: auto !important;
-}
-
-div>small:first-child {
-    margin-bottom: 8px;
+.num {
+    font-variant-numeric: tabular-nums;
 }

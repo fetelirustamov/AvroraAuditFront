@@ -7,7 +7,9 @@ const APP_NAME = 'Audit';
 
 /**
  * Aktiv route zəncirində ən dərindəki səhifə adını qaytarır:
- * əvvəl `data.menu.title` (menyudakı ad), yoxdursa route-un string `title`-ı.
+ * əvvəl route-un öz string `title`-ı (detal səhifələri), yoxdursa `data.menu.title`.
+ * `data` komponentsiz valideyndən miras qalır, ona görə detal route-unun öz
+ * `title`-ı valideynin menyu adından üstündür.
  * Səhifə başlığı və brauzer tabı eyni mənbədən oxuyur.
  */
 export function routePageTitle(root: ActivatedRouteSnapshot): string | undefined {
@@ -15,8 +17,8 @@ export function routePageTitle(root: ActivatedRouteSnapshot): string | undefined
     for (let route: ActivatedRouteSnapshot | null = root; route; route = route.firstChild) {
         const menuTitle = route.data?.['menu']?.title;
         const routeTitle = route.routeConfig?.title;
-        title = (typeof menuTitle === 'string' && menuTitle)
-            || (typeof routeTitle === 'string' && routeTitle)
+        title = (typeof routeTitle === 'string' && routeTitle)
+            || (typeof menuTitle === 'string' && menuTitle)
             || title;
     }
     return title;

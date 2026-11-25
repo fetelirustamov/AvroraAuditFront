@@ -1,38 +1,47 @@
-import { DatePipe } from '@angular/common';
-import { Component, HostListener, OnChanges, SimpleChanges, input, output } from '@angular/core';
+import { CdkTrapFocus } from '@angular/cdk/a11y';
+import { Component, HostListener, OnChanges, SimpleChanges, inject, input, output } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { finalize } from 'rxjs';
-import { BAKU_TZ, parseApiUtcDate } from '../../../../shared/utils/date.util';
+import { ListStateComponent } from '../../../../shared/components/list-state/list-state.component';
+import { AppDatePipe } from '../../../../shared/pipes/app-date.pipe';
+import { StatusChipComponent } from '../../../../shared/status/status-chip.component';
+import { apiErrorMessage } from '../../../../shared/utils/api-error';
 import { MediaComponent } from '../../../components/media/media.component';
 import { MediaType, Module } from '../../../components/media/media-type.enum';
 import {
-    DisruptionTrackingDetail, Holder, TimelineNode, buildTimeline, currentHolder, stageMeta,
+    DisruptionTrackingDetail, Holder, TimelineNode, buildTimeline, currentHolder, overdueLabel, stageAgeLabel, stageMeta,
 } from '../disruption-tracking.model';
 import { DisruptionTrackingService } from '../disruption-tracking.service';
 
+/**
+ * Uyğunsuzluğun yan paneli. Açılanda fokus panelə keçir və orada qalır (`cdkTrapFocus`),
+ * bağlananda CDK fokusu paneli açan elementə (cədvəl sətrinə) qaytarır.
+ */
 @Component({
     selector: 'app-tracking-detail-panel',
     standalone: true,
-    imports: [DatePipe, MediaComponent],
+    imports: [CdkTrapFocus, AppDatePipe, StatusChipComponent, ListStateComponent, MediaComponent],
     templateUrl: './tracking-detail-panel.component.html',
     styleUrl: './tracking-detail-panel.component.scss',
 })
 export class TrackingDetailPanelComponent implements OnChanges {
+    private readonly trackingService = inject(DisruptionTrackingService);
+    private readonly dialog = inject(MatDialog);
+
     readonly disruptionId = input<number | null>(null);
     readonly closed = output<void>();
 
     readonly MediaType = MediaType;
     readonly Module = Module;
-    readonly tz = BAKU_TZ;
     readonly stageMeta = stageMeta;
 
     detail: DisruptionTrackingDetail | null = null;
     timeline: TimelineNode[] = [];
     holder: Holder | null = null;
+    stageAge: string | null = null;
+    overdue: string | null = null;
     isLoading = false;
-    loadError = false;
-
-    constructor(private trackingService: DisruptionTrackingService, private dialog: MatDialog) { }
+    loadError: string | null = null;
 
     ngOnChanges(changes: SimpleChanges): void {
         if (changes['disruptionId']) {
@@ -47,13 +56,14 @@ export class TrackingDetailPanelComponent implements OnChanges {
         if (this.disruptionId() && this.dialog.openDialogs.length === 0) { this.closed.emit(); }
     }
 
-    date(value: string | null | undefined): string | null {
-        return parseApiUtcDate(value);
+    reload(): void {
+        const id = this.disruptionId();
+        if (id) { this.load(id); }
     }
 
     private load(id: number): void {
         this.isLoading = true;
-        this.loadError = false;
+        this.loadError = null;
         this.detail = null;
         this.trackingService.detail(id)
             .pipe(finalize(() => { this.isLoading = false; }))
@@ -62,8 +72,12 @@ export class TrackingDetailPanelComponent implements OnChanges {
                     this.detail = res.data;
                     this.timeline = buildTimeline(res.data);
                     this.holder = currentHolder(res.data.header);
+                    this.stageAge = stageAgeLabel(res.data.header);
+                    this.overdue = overdueLabel(res.data.header);
                 },
-                error: () => { this.loadError = true; },
+                error: error => {
+                    this.loadError = apiErrorMessage(error, 'Detallar yüklənmədi və ya bu uyğunsuzluğa baxmaq icazəniz yoxdur.');
+                },
             });
     }
 }

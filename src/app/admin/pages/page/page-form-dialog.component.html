@@ -1,0 +1,45 @@
+<form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <h2 mat-dialog-title class="form-dialog-title">{{ isEdit ? 'Səhifəni redaktə et' : 'Yeni səhifə' }}</h2>
+
+    <mat-dialog-content>
+        <div class="form-grid">
+            <div class="form-field">
+                <label class="g-field-label" for="page-name">Səhifə adı <span class="required-mark" aria-hidden="true">*</span></label>
+                <mat-form-field appearance="outline" class="g-modern-field">
+                    <input id="page-name" matInput formControlName="name" required placeholder="Məs: Planla">
+                    @if (form.controls.name.hasError('required')) {
+                        <mat-error>Səhifə adını yazın</mat-error>
+                    } @else if (form.controls.name.hasError('minlength')) {
+                        <mat-error>Ən azı 2 simvol yazın</mat-error>
+                    }
+                </mat-form-field>
+            </div>
+
+            <div class="form-field">
+                <label class="g-field-label" for="page-key">Açar <span class="required-mark" aria-hidden="true">*</span></label>
+                <mat-form-field appearance="outline" class="g-modern-field">
+                    <input id="page-key" matInput class="mono" formControlName="key" required placeholder="Məs: plans">
+                    @if (form.controls.key.hasError('required')) {
+                        <mat-error>Açarı yazın</mat-error>
+                    } @else if (form.controls.key.hasError('minlength')) {
+                        <mat-error>Ən azı 2 simvol yazın</mat-error>
+                    }
+                </mat-form-field>
+            </div>
+        </div>
+
+        <p class="field-note">
+            <span class="material-symbols-outlined" aria-hidden="true">info</span>
+            @if (isEdit) {
+                Açar route-dakı pageKey və rol icazələri ilə bağlıdır, ona görə dəyişdirilmir.
+            } @else {
+                Açar route-dakı pageKey ilə dəqiq eyni olmalıdır, sonra dəyişdirilmir.
+            }
+        </p>
+    </mat-dialog-content>
+
+    <mat-dialog-actions align="end">
+        <button type="button" class="g-secondary-btn" (click)="cancel()">Ləğv et</button>
+        <button type="submit" class="g-search-btn" [disabled]="isSaving">{{ isEdit ? 'Yadda saxla' : 'Əlavə et' }}</button>
+    </mat-dialog-actions>
+</form>

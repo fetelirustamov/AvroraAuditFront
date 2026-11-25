@@ -1,0 +1,34 @@
+.edit-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+}
+
+// Dəyişməyən sahələr form sahəsi kimi yox, kontekst kimi göstərilir
+.edit-context {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-3);
+    margin: 0 0 var(--space-2);
+
+    dt {
+        font-size: var(--fs-12);
+        color: var(--text-muted);
+    }
+
+    dd {
+        margin: 2px 0 0;
+        font-size: var(--fs-14);
+        font-weight: 500;
+        color: var(--text-strong);
+    }
+}
+
+.upload-field {
+    display: flex;
+    flex-direction: column;
+}
+
+mat-dialog-actions {
+    gap: var(--space-3);
+}

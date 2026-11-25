@@ -1,196 +1,197 @@
-import { SelectionModel } from '@angular/cdk/collections';
-import { CommonModule, DatePipe, NgFor } from '@angular/common';
-import { Component, ViewChild } from '@angular/core';
-import { FormsModule, ReactiveFormsModule, FormGroup, FormControl, Validators } from '@angular/forms';
-import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { DatePipe } from '@angular/common';
+import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { MatMenuModule } from '@angular/material/menu';
-import { MatPaginatorModule, MatPaginator } from '@angular/material/paginator';
+import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
-import { Router } from '@angular/router';
-import { FileUploadModule } from '@iplab/ngx-file-upload';
-import { NgxMaterialTimepickerModule } from 'ngx-material-timepicker';
-import { Observable, finalize } from 'rxjs';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { Subscription, finalize } from 'rxjs';
 import { TableState } from '../../models/table-state.model';
 import { TableService } from '../services/table.service';
 import { Firm } from '../inspections/firm.model';
-import { InspectionPlan } from '../inspections/InpectionPlan.model';
-import { InspectionsService } from '../inspections/inspections.service';
-import { DisruptionAnswerService } from './disruption-answer.service';
-
 import { Location } from '../inspections/location.model';
-import { AuditLoadingOverlayComponent } from '../components/audit-loading-overlay/audit-loading-overlay.component';
-import { setFilter } from '../../shared/utils/table-filter';
-import { apiErrorMessage } from '../../shared/utils/api-error';
+import { InspectionsService } from '../inspections/inspections.service';
+import { DisruptionAnswerDTO } from './disruption-answer.model';
+import { planStoreLabel } from '../plans/plan-row';
 import { NotificationService } from '../../shared/services/notification.service';
+import { PageHeaderComponent } from '../../shared/components/page-header/page-header.component';
+import { ListStateComponent } from '../../shared/components/list-state/list-state.component';
+import { AppDatePipe } from '../../shared/pipes/app-date.pipe';
+import { apiErrorMessage } from '../../shared/utils/api-error';
+import { setFilter } from '../../shared/utils/table-filter';
+import { queryDate, queryNumber, writeQueryState } from '../../shared/utils/query-state';
 
+const PAGE_SIZES = [10, 25, 50];
+
+/** Mağazanın cavab gözləyən planları: plan seçilir, uyğunsuzluqlara detal səhifəsində cavab verilir. */
 @Component({
   selector: 'app-answers',
-  imports: [MatCardModule, MatButtonModule, MatMenuModule, MatTableModule, CommonModule, MatPaginatorModule, MatInputModule, MatFormFieldModule, MatSelectModule, MatDatepickerModule, FormsModule, ReactiveFormsModule, NgxMaterialTimepickerModule, NgFor, FileUploadModule, AuditLoadingOverlayComponent],
-  providers: [DatePipe],
+  standalone: true,
+  imports: [
+    ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatDatepickerModule,
+    MatTableModule, MatPaginatorModule, MatProgressBarModule, MatTooltipModule,
+    PageHeaderComponent, ListStateComponent, AppDatePipe,
+  ],
+  providers: [DatePipe, TableService],
   templateUrl: './answers.component.html',
   styleUrl: './answers.component.scss'
 })
-export class AnswersComponent {
+export class AnswersComponent implements OnInit, OnDestroy {
+  private readonly inspectionsService = inject(InspectionsService);
+  private readonly tableService = inject(TableService);
+  private readonly notify = inject(NotificationService);
+  private readonly datePipe = inject(DatePipe);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
 
-  displayedColumns: string[] = ['position', 'inspectorName', 'locationCode', 'locationName', 'startDate', 'details'];
-  public dataSource: InspectionPlan[] = [];
+  readonly displayedColumns = ['position', 'inspectorName', 'locationCode', 'locationName', 'startDate', 'details'];
+  readonly pageSizes = PAGE_SIZES;
+  readonly storeLabel = planStoreLabel;
 
-  @ViewChild(MatPaginator) paginator!: MatPaginator;
-
-
-  range = new FormGroup({
-    start: new FormControl<Date | null>(null),
-    end: new FormControl<Date | null>(null),
-  });
-
-  selection = new SelectionModel<InspectionPlan>(true, []);
-  allDataCount: number = 0;
-
-  public selectedFirmId: number = 0;
-  public selectedLocationId: number = 0;
-  public firms: Firm[] = [];
-  public locations: Location[] = [];
-  private _tableState: TableState = new TableState();
-  public pageSize: Number = 10;
-  public isLoading: boolean = false;
-  public rows$: Observable<any[]> = new Observable<any[]>();
-
-  classApplied = false;
-  private searchTerm: string = "";
-
-  constructor(private inspectionsService: InspectionsService, private disruptionAnswerService: DisruptionAnswerService, private _tableService: TableService, private datePipe: DatePipe, private router: Router, private notify: NotificationService) {
-
-    this.getFirms();
-
-    this._tableState = new TableState();
-    this._tableService.api_url = "disruptionAnswers/disruptionAnswersByLocations";
-    this._tableState.filter['disruptionStatus'] = "2";
-    this._tableState.filter['disruptionAnswerStatus'] = "1";
-    this._tableState.filter['isAnswered'] = "false";
-    this._tableState.filter['approveStatus'] = "0";
-
-
-    // this._tableState.filter['level'] = "1";
-    this._tableState.filter['isCurrent'] = "true";
-    this._tableState.paginator.page = 0;
-    this._tableState.sorting.direction = "desc";
-    this._tableState.paginator.size = Number(this.pageSize);
-
-  }
-
-  ngAfterViewInit() {
-    this.paginator.page.subscribe(() => {
-      this._tableState.paginator.page = this.paginator.pageIndex;
-      this.pageSize = this.paginator.pageSize;
-      this.fill();
-    });
-  }
-
-  isAllSelected() {
-    const numSelected = this.selection.selected.length;
-    const numRows = this.dataSource.length;
-    return numSelected === numRows;
-  }
-
-  getFirms() {
-    this.inspectionsService.getFirms().subscribe({
-      next: (response) => {
-        this.firms = response.data;
-      },
-      error: (error) => this.notify.error(apiErrorMessage(error, 'Firma siyahısı yüklənmədi')),
-    });
-  }
-
-
-  getLocations(firmId: number) {
-    this.inspectionsService.getLocationByFirmId(firmId).subscribe({
-      next: (response) => {
-        this.locations = response.data;
-      },
-      error: (error) => this.notify.error(apiErrorMessage(error, 'Mağaza siyahısı yüklənmədi')),
-    });
-  }
-
-  onSelectFirm(selectedFirmId: number) {
-    this.getLocations(selectedFirmId);
-  }
-
-  onSelectLocation(selectedLocationId: number) {
-    // console.log(selectedLocationId);
-
-  }
-  toggleClass() {
-    this.classApplied = !this.classApplied;
-  }
-
-  onFormSubmit() {
-    if (this.answerForm.invalid) {
-      this.answerForm.markAllAsTouched();
-      this.notify.warning('Məcburi sahələr seçilməyib', { message: 'Firmanı seçin.' });
-      return;
-    }
-
-    const formData = this.answerForm.value;
-    const startDate = this.datePipe.transform(formData.dateRange?.start, 'yyyy-MM-dd');
-    const endDate = this.datePipe.transform(formData.dateRange?.end, 'yyyy-MM-dd');
-    setFilter(this._tableState.filter, 'startDate', startDate);
-    setFilter(this._tableState.filter, 'endDate', endDate);
-    setFilter(this._tableState.filter, 'locationCode', formData.locationCode);
-    setFilter(this._tableState.filter, 'firmId', formData.firmId);
-    // Yeni axtarış ilk səhifədən başlasın
-    this._tableState.paginator.page = 0;
-    if (this.paginator) this.paginator.pageIndex = 0;
-
-    this.fill();
-  }
-
-
-  private fill() {
-    this.isLoading = true;
-    this._tableState.paginator.size = Number(this.pageSize);
-    if (!this._tableState.filter) {
-      this._tableState.filter = {};
-    }
-    this._tableState.searchTerm = this.searchTerm;
-    this._tableService.fill(this._tableState).pipe(
-      finalize(() => this.isLoading = false)
-    ).subscribe({
-      next: (response) => {
-        this._tableState.paginator.total = response.data?.total || 0;
-        this.dataSource = response.data?.items || [];
-        this.allDataCount = response.data?.total || 0;
-      },
-      error: (error) => this.notify.error(apiErrorMessage(error, 'Cavablar yüklənmədi')),
-    });
-  }
-
-  public answerForm = new FormGroup({
-    firmId: new FormControl<number | null>(null, { validators: [Validators.required] }),
+  readonly form = new FormGroup({
+    firmId: new FormControl<number | null>(null, Validators.required),
     locationCode: new FormControl<number | null>(null),
-    eraziKodu: new FormControl<string>(''),
     dateRange: new FormGroup({
       start: new FormControl<Date | null>(null),
       end: new FormControl<Date | null>(null),
     }),
   });
 
-  getRowNumber(index: number): number {
-    return this.paginator ? index + 1 + (this.paginator.pageIndex * this.paginator.pageSize) : index + 1;
+  firms: Firm[] = [];
+  locations: Location[] = [];
+  rows: DisruptionAnswerDTO[] = [];
+  total = 0;
+  pageIndex = 0;
+  pageSize = PAGE_SIZES[0];
+  searched = false;
+  isLoading = false;
+  loadError: string | null = null;
+
+  private readonly tableState = new TableState();
+  private loadSub?: Subscription;
+
+  constructor() {
+    this.tableService.api_url = 'disruptionAnswers/disruptionAnswersByLocations';
+    this.tableState.filter['disruptionStatus'] = '2';
+    this.tableState.filter['disruptionAnswerStatus'] = '1';
+    this.tableState.filter['isAnswered'] = 'false';
+    this.tableState.filter['approveStatus'] = '0';
+    this.tableState.filter['isCurrent'] = 'true';
+    this.tableState.sorting.direction = 'desc';
   }
 
-  onDetails(row: InspectionPlan) {
+  ngOnInit(): void {
+    this.getFirms();
 
-    // row.disruptionStatus = 2; // Burada disruptionStatus-u 2 olaraq təyin edirik
-    this.router.navigate(['answers/details'], { state: { data: row, action: false, status: 1, isCurrent: true } });
+    const q = this.route.snapshot.queryParamMap;
+    const firmId = queryNumber(q, 'firm');
+    this.form.patchValue({
+      firmId,
+      locationCode: queryNumber(q, 'store'),
+      dateRange: { start: queryDate(q, 'from'), end: queryDate(q, 'to') },
+    });
+    this.pageIndex = queryNumber(q, 'page') ?? 0;
+    this.pageSize = queryNumber(q, 'size') ?? PAGE_SIZES[0];
 
+    if (firmId != null) {
+      this.getLocations(firmId);
+    }
+    if (this.form.valid) {
+      this.applyFilters();
+      this.load();
+    }
   }
 
+  ngOnDestroy(): void {
+    this.loadSub?.unsubscribe();
+  }
+
+  onSelectFirm(firmId: number): void {
+    this.form.controls.locationCode.setValue(null);
+    this.getLocations(firmId);
+  }
+
+  onSearch(): void {
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      this.notify.warning('Məcburi sahələr seçilməyib', { message: 'Firmanı seçin.' });
+      return;
+    }
+    this.pageIndex = 0;
+    const { firmId, locationCode, dateRange } = this.form.getRawValue();
+    writeQueryState(this.router, {
+      firm: firmId, store: locationCode, from: dateRange.start, to: dateRange.end, page: null,
+    });
+    this.applyFilters();
+    this.load();
+  }
+
+  onPage(event: PageEvent): void {
+    this.pageIndex = event.pageIndex;
+    this.pageSize = event.pageSize;
+    writeQueryState(this.router, { page: event.pageIndex || null, size: event.pageSize });
+    this.load();
+  }
+
+  load(): void {
+    this.loadSub?.unsubscribe();
+    this.isLoading = true;
+    this.loadError = null;
+    this.tableState.paginator.page = this.pageIndex;
+    this.tableState.paginator.size = this.pageSize;
+
+    this.loadSub = this.tableService.fill(this.tableState)
+      .pipe(finalize(() => (this.isLoading = false)))
+      .subscribe({
+        next: (response) => {
+          if (!response.success) {
+            this.loadError = response.message;
+            return;
+          }
+          this.searched = true;
+          this.rows = response.data?.items ?? [];
+          this.total = response.data?.total ?? 0;
+        },
+        error: (error) => (this.loadError = apiErrorMessage(error, 'Cavablar yüklənmədi')),
+      });
+  }
+
+  rowNumber(index: number): number {
+    return this.pageIndex * this.pageSize + index + 1;
+  }
+
+  /** Detal səhifəsi planı URL-dən alır: yenilənəndə və geri qayıdanda iş itmir. */
+  openDetails(row: DisruptionAnswerDTO): void {
+    this.router.navigate(['/answers/details'], {
+      queryParams: { planId: row.inspectionPlanId, returnUrl: this.router.url },
+    });
+  }
+
+  private getFirms(): void {
+    this.inspectionsService.getFirms().subscribe({
+      next: (response) => (this.firms = response.data ?? []),
+      error: (error) => this.notify.error(apiErrorMessage(error, 'Firma siyahısı yüklənmədi')),
+    });
+  }
+
+  private getLocations(firmId: number): void {
+    this.inspectionsService.getLocationByFirmId(firmId).subscribe({
+      // API kodu string qaytarır, URL-dən oxunan isə rəqəmdir: mat-select seçimi tanısın
+      next: (response) => (this.locations = (response.data ?? []).map(l => ({ ...l, locationCode: Number(l.locationCode) }))),
+      error: (error) => this.notify.error(apiErrorMessage(error, 'Mağaza siyahısı yüklənmədi')),
+    });
+  }
+
+  private applyFilters(): void {
+    const { firmId, locationCode, dateRange } = this.form.getRawValue();
+    setFilter(this.tableState.filter, 'firmId', firmId);
+    setFilter(this.tableState.filter, 'locationCode', locationCode);
+    setFilter(this.tableState.filter, 'startDate', this.datePipe.transform(dateRange.start, 'yyyy-MM-dd'));
+    setFilter(this.tableState.filter, 'endDate', this.datePipe.transform(dateRange.end, 'yyyy-MM-dd'));
+  }
 }
-
-
-

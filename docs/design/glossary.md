@@ -24,7 +24,7 @@ Soldakı söz işlənir. Sağdakılar işlənmir.
 | **Şöbə** | Seksiya | Mağazanın şöbəsi. Cəmi: "Şöbələr". |
 | **Kateqoriya** | Kategoriya | Şöbənin içindəki sual qrupu. |
 | **Təsnifat** | Tasnifat | Hesabatlarda: "Əsas təsnifat", "Uyğunsuzluq təsnifatı". |
-| **İcazə qrupu** | Yetki qrupu, Səlahiyyət qrupu, İzin qrupu, Rol | Cəmi: "İcazə qrupları". Qrupun tərkibi: "İcazələr". "Rol" yalnız "Rol və firma təyinatı" səhifəsinin adında qalır. |
+| **İcazə qrupu** | Yetki qrupu, Səlahiyyət qrupu, İzin qrupu, Rol | Cəmi: "İcazə qrupları". Qrupun tərkibi: "İcazələr". "Rol" sözü interfeysdə işlənmir. |
 | **Parol** | Şifrə | "Parolu göstər", "Parolu sıfırla". |
 | **E-poçt** | Email, E-mail | |
 | **Son tarix** | Deadline | |

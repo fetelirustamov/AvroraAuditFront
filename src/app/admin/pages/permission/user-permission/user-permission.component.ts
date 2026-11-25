@@ -1,214 +1,173 @@
-import { Component, OnInit, ViewChild, AfterViewInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
-import { of } from 'rxjs';
-import { catchError } from 'rxjs/operators';
-import { MatCardModule } from '@angular/material/card';
-import { MatButtonModule } from '@angular/material/button';
+import { AfterViewInit, Component, DestroyRef, OnInit, ViewChild, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule, MatTableDataSource } from '@angular/material/table';
 import { MatSortModule, MatSort } from '@angular/material/sort';
 import { MatPaginatorModule, MatPaginator } from '@angular/material/paginator';
-import { MatIconModule } from '@angular/material/icon';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatChipsModule } from '@angular/material/chips';
-import { MatDialog, MatDialogModule } from '@angular/material/dialog';
-import { AuditLoadingOverlayComponent } from '../../../../ui/components/audit-loading-overlay/audit-loading-overlay.component';
+import { MatDialog } from '@angular/material/dialog';
+import { debounceTime, finalize } from 'rxjs';
 import { ConfirmDialogService } from '../../../../shared/components/confirm-dialog/confirm-dialog.service';
+import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
+import { ListStateComponent } from '../../../../shared/components/list-state/list-state.component';
 import { NotificationService } from '../../../../shared/services/notification.service';
 import { apiErrorMessage } from '../../../../shared/utils/api-error';
+import { queryString } from '../../../../shared/utils/query-state';
 import { UserService } from '../../../services/user.service';
 import { UserDetail } from '../../../models/user.model';
-import { AdminBreadcrumbComponent } from '../../../shared/breadcrumb/admin-breadcrumb.component';
-import { UserCreateComponent } from '../user-create/user-create.component';
+import { TableUrlState } from '../../../shared/table-url-state';
+import { UserCreateComponent, UserCreateResult } from '../user-create/user-create.component';
 
-interface UserPermission {
-  /** UserCode (sicil nömrəsi) - redaktə və silmə bununla işləyir */
-  id: number;
-  userName: string;
-  /** E-poçt həm də giriş ünvanıdır — adın altında ikinci sətir kimi göstərilir */
+interface UserRow {
+  /** UserCode (sicil nömrəsi): redaktə və passiv etmə bununla işləyir. */
+  userCode: number;
+  fullName: string;
+  /** E-poçt həm də giriş ünvanıdır. */
   email: string;
-  institutions: string[];
-  groups: string[];
-  status: 'active' | 'passive';
+  firms: string[];
+  roleName: string;
+  active: boolean;
+  /** Sıralama üçün: aktivlər əvvəl. */
+  status: number;
 }
 
+function toRow(dto: UserDetail): UserRow {
+  const userCode = dto.userCode ?? dto.id;
+  const nameParts = [dto.name, dto.surName, dto.fatherName].filter(Boolean);
+  return {
+    userCode,
+    fullName: nameParts.length ? nameParts.join(' ') : `Kod ${userCode}`,
+    email: dto.email ?? '',
+    firms: dto.firms?.map(f => f.firmName) ?? [],
+    roleName: dto.roleName ?? '',
+    active: dto.status === 1,
+    status: dto.status === 1 ? 1 : 0
+  };
+}
+
+/**
+ * İstifadəçilər: siyahı, yaratma (dialoq: şəxsi məlumatlar + firmalar + icazə qrupu) və passiv etmə.
+ * Redaktə ayrıca səhifədir: `user-permission/:userCode`.
+ * Passiv istifadəçilər və firması/qrupu olmayanlar da siyahıdadır: admin onları tapıb düzəldə bilsin.
+ */
 @Component({
   selector: 'app-user-permission',
   standalone: true,
   imports: [
-    CommonModule,
-    FormsModule,
-    MatCardModule,
-    MatButtonModule,
+    ReactiveFormsModule,
+    RouterLink,
     MatFormFieldModule,
     MatInputModule,
-    MatSelectModule,
     MatTableModule,
     MatSortModule,
     MatPaginatorModule,
-    MatIconModule,
+    MatProgressBarModule,
     MatTooltipModule,
-    MatChipsModule,
-    MatDialogModule,
-    AuditLoadingOverlayComponent,
-    AdminBreadcrumbComponent
+    PageHeaderComponent,
+    ListStateComponent
   ],
   templateUrl: './user-permission.component.html',
   styleUrl: './user-permission.component.scss'
 })
 export class UserPermissionComponent implements OnInit, AfterViewInit {
+  private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+  private readonly confirmDialog = inject(ConfirmDialogService);
+  private readonly notify = inject(NotificationService);
+  private readonly userService = inject(UserService);
+  private readonly dialog = inject(MatDialog);
+  private readonly destroyRef = inject(DestroyRef);
 
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
 
-  // Table data
-  displayedColumns: string[] = ['id', 'userName', 'institutions', 'groups', 'status', 'actions'];
-  dataSource: MatTableDataSource<UserPermission>;
+  readonly displayedColumns = ['userCode', 'fullName', 'firms', 'roleName', 'status', 'actions'];
+  readonly dataSource = new MatTableDataSource<UserRow>([]);
+  readonly urlState = new TableUrlState(this.router, this.route);
+  readonly searchControl = new FormControl(queryString(this.route.snapshot.queryParamMap, 'q') ?? '', { nonNullable: true });
 
-  // Pagination
-  pageSize: number = 10;
+  isLoading = false;
+  loaded = false;
+  loadError: string | null = null;
 
-  // Loading state
-  isLoading: boolean = false;
-
-  // Users
-  users: UserPermission[] = [];
-  userDetails: UserDetail[] = [];
-
-  constructor(
-    private router: Router,
-    private confirmDialog: ConfirmDialogService,
-    private notify: NotificationService,
-    private userService: UserService,
-    private dialog: MatDialog
-  ) {
-    this.dataSource = new MatTableDataSource<UserPermission>(this.users);
+  constructor() {
+    // Axtarış koda, ada, e-poçta, firmalara və qrupa baxır
+    this.dataSource.filterPredicate = (row, filter) =>
+      [String(row.userCode), row.fullName, row.email, row.roleName, ...row.firms]
+        .some(value => value.toLocaleLowerCase('az').includes(filter));
   }
 
-  ngOnInit() {
-    this.loadUsers();
+  ngOnInit(): void {
+    this.applySearch();
+    this.searchControl.valueChanges
+      .pipe(debounceTime(250), takeUntilDestroyed(this.destroyRef))
+      .subscribe(value => {
+        this.applySearch();
+        this.paginator.firstPage();
+        this.urlState.writeFilters({ q: value.trim() });
+      });
+    this.load();
   }
 
-  private loadUsers() {
-    this.isLoading = true;
-
-    // Passiv istifadəçilər və firması/rolu olmayanlar da siyahıdadır (admin onları tapıb düzəldə bilsin)
-    this.userService.getUserDetails().pipe(catchError(() => of(null))).subscribe(details => {
-      if (!details) {
-        this.userDetails = [];
-        this.users = [];
-        this.dataSource.data = [];
-        this.isLoading = false;
-        this.notify.error('İstifadəçilər yüklənmədi', { message: 'Serverlə əlaqədə xəta baş verdi. Zəhmət olmasa yenidən cəhd edin.' });
-        return;
-      }
-
-      let items: UserDetail[] = [];
-      const response: any = details;
-      if (response && Array.isArray(response.data)) {
-        items = response.data;
-      } else if (response?.data?.items && Array.isArray(response.data.items)) {
-        items = response.data.items;
-      } else if (Array.isArray(response)) {
-        items = response;
-      }
-
-      this.userDetails = items;
-      this.users = items.map((u, index) => this.mapToPermission(u, index + 1));
-      this.dataSource.data = this.users;
-      this.isLoading = false;
-    });
-  }
-
-  private mapToPermission(dto: UserDetail, index: number): UserPermission {
-    const nameParts = [dto.name, dto.surName, dto.fatherName].filter(Boolean);
-    const fullName = nameParts.length > 0 ? nameParts.join(' ') : `ID: ${dto.userCode ?? dto.id}`;
-
-    // API: status 1 = aktiv, 0 (və ya digər) = passiv
-    const groups = dto.roleName ? [dto.roleName] : [];
-    const institutions = dto.firms?.map(f => f.firmName) ?? [];
-
-    return {
-      id: dto.userCode ?? dto.id ?? index,
-      userName: fullName,
-      email: dto.email ?? '',
-      institutions,
-      groups,
-      status: dto.status === 1 ? 'active' : 'passive'
-    };
-  }
-
-  ngAfterViewInit() {
+  ngAfterViewInit(): void {
     this.dataSource.paginator = this.paginator;
     this.dataSource.sort = this.sort;
   }
 
-  // Search functionality
-  applyFilter(event: Event) {
-    const filterValue = (event.target as HTMLInputElement).value;
-    this.dataSource.filter = filterValue.trim().toLowerCase();
-
-    if (this.dataSource.paginator) {
-      this.dataSource.paginator.firstPage();
-    }
+  private applySearch(): void {
+    this.dataSource.filter = this.searchControl.value.trim().toLocaleLowerCase('az');
   }
 
-  // Page size change handler
-  onPageSizeChange() {
-    if (this.dataSource.paginator) {
-      this.dataSource.paginator.pageSize = this.pageSize;
-      this.dataSource.paginator.firstPage();
-    }
+  load(): void {
+    this.isLoading = true;
+    this.loadError = null;
+    this.userService.getUserDetails()
+      .pipe(finalize(() => this.isLoading = false))
+      .subscribe({
+        next: response => {
+          this.dataSource.data = (Array.isArray(response?.data) ? response.data : []).map(toRow);
+          this.loaded = true;
+          this.urlState.restorePage(this.paginator, this.dataSource.filteredData.length);
+        },
+        error: err => this.loadError = apiErrorMessage(err, 'İstifadəçilər yüklənmədi')
+      });
   }
 
-  // Action methods
-  addNewUser() {
-    const dialogRef = this.dialog.open(UserCreateComponent, {
-      width: '1100px',
+  addNewUser(): void {
+    this.dialog.open<UserCreateComponent, void, UserCreateResult>(UserCreateComponent, {
+      width: '760px',
       maxWidth: '95vw',
-      disableClose: true,
-      panelClass: 'modal-like-dialog'
-    });
-    dialogRef.afterClosed().subscribe((result: any) => {
-      this.loadUsers();
-      if (result?.created && result?.userCode != null) {
-        // İstifadəçi yaradıldıqdan sonra dərhal firma/rol təyinatı səhifəsinə keçirik
-        this.router.navigate(['/admin/permissions/user-add'], {
-          queryParams: { userId: result.userCode }
-        });
+      disableClose: true
+    }).afterClosed().subscribe(result => {
+      if (!result) return;
+      this.load();
+      // Firma və qrup təyinatı alınmayıbsa admin redaktə səhifəsində tamamlayır
+      if (!result.assigned) {
+        this.router.navigate(['/admin/permissions/user-permission', result.userCode]);
       }
     });
   }
 
-  viewUser(user: UserPermission) {
-    // Hazırda UI-da "Bax" düyməsi deaktivdir (template-də comment-ə alınıb).
-    // Aktivləşdiriləndə burada detal görünüşü (dialog/route) əlavə olunmalıdır.
-  }
-
-  editUser(user: UserPermission) {
-    this.router.navigate(['/admin/permissions/user-add'], {
-      queryParams: { userId: user.id }
-    });
-  }
-
-  deleteUser(user: UserPermission) {
+  deactivate(user: UserRow): void {
     this.confirmDialog.confirm({
       title: 'İstifadəçi passiv edilsin?',
-      message: `"${user.userName}" istifadəçisi passiv ediləcək: sistemə daxil ola bilməyəcək, tarixçəsi qalacaq.`,
+      message: 'İstifadəçi sistemə və mobil tətbiqə daxil ola bilməyəcək. Yoxlamaları, planları və təsdiq zəncirindəki yeri qalır. '
+        + 'Geri qaytarmaq olar: redaktə səhifəsində statusu yenidən aktiv edin.',
       confirmText: 'Passiv et',
-      tone: 'danger'
-    }).subscribe(confirmed => {
-      if (!confirmed) return;
-      this.userService.deleteUser(user.id).subscribe({
+      tone: 'danger',
+      items: [`${user.userCode} · ${user.fullName}`]
+    }).subscribe(result => {
+      if (!result) return;
+      this.userService.deleteUser(user.userCode).subscribe({
         next: () => {
           this.notify.success('İstifadəçi passiv edildi');
-          this.loadUsers();
+          this.load();
         },
-        error: (e) => this.notify.error(apiErrorMessage(e, 'İstifadəçi passiv edilmədi'))
+        error: err => this.notify.error(apiErrorMessage(err, 'İstifadəçi passiv edilmədi'))
       });
     });
   }
